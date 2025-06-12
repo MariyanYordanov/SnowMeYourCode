@@ -13,22 +13,29 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    // Добавяме session middleware за Socket.IO
+    allowRequest: (req, callback) => {
+        // Това позволява на Socket.IO да има достъп до session
+        sessionMiddleware(req, req.res || {}, callback);
+    }
+});
 
 const PORT = 8080;
 const PRACTICE_SERVER_PORT = 3030;
 
-// Middleware
-app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
-
-// Session middleware
-app.use(session({
+// Session middleware - изнасяме го в променлива за да го използваме и в Socket.IO
+const sessionMiddleware = session({
     secret: 'exam-monitor-secret-key',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }
-}));
+});
+
+// Middleware
+app.use(express.json());
+app.use(express.static(join(__dirname, 'public')));
+app.use(sessionMiddleware);
 
 // Storage за upload
 const upload = multer({ dest: 'uploads/' });
@@ -46,7 +53,7 @@ app.use('/jsonstore', (req, res, next) => {
 }, createProxyMiddleware({
     target: `http://localhost:${PRACTICE_SERVER_PORT}`,
     changeOrigin: true,
-    logLevel: 'debug', 
+    logLevel: 'debug',
     onError: (err, req, res) => {
         console.error('Proxy error:', err);
         res.status(504).send('Error occurred while proxying to practice server');
@@ -56,10 +63,10 @@ app.use('/jsonstore', (req, res, next) => {
 // Routes
 app.get('/', (req, res) => {
     res.send(`
-        <h1>Exam Monitor System</h1>
-        <p><a href="/teacher">Teacher Dashboard</a></p>
-        <p><a href="/student">Student Workspace</a></p>
-    `);
+       <h1>Exam Monitor System</h1>
+       <p><a href="/teacher">Teacher Dashboard</a></p>
+       <p><a href="/student">Student Workspace</a></p>
+   `);
 });
 
 app.get('/teacher', (req, res) => {
@@ -68,6 +75,11 @@ app.get('/teacher', (req, res) => {
 
 app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/index.html'));
+});
+
+// Middleware за Socket.IO да има достъп до session
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, socket.request.res || {}, next);
 });
 
 // WebSocket handling 
@@ -82,7 +94,10 @@ io.on('connection', (socket) => {
         // Запазваме в session
         if (socket.request.session) {
             socket.request.session.studentId = socket.studentId;
-            socket.request.session.save();
+            socket.request.session.save((err) => {
+                if (err) console.error('Session save error:', err);
+                else console.log('Session saved with studentId:', socket.studentId);
+            });
         }
 
         io.to('teachers').emit('student-connected', {
