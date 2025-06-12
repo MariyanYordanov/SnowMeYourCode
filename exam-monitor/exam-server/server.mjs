@@ -13,32 +13,28 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
-    // Добавяме session middleware за Socket.IO
-    allowRequest: (req, callback) => {
-        // Това позволява на Socket.IO да има достъп до session
-        sessionMiddleware(req, req.res || {}, callback);
-    }
-});
+const io = new Server(server);
 
 const PORT = 8080;
 const PRACTICE_SERVER_PORT = 3030;
 
-// Session middleware - изнасяме го в променлива за да го използваме и в Socket.IO
-const sessionMiddleware = session({
+// Middleware
+app.use(express.json());
+app.use(express.static(join(__dirname, 'public')));
+
+// Session middleware
+app.use(session({
     secret: 'exam-monitor-secret-key',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }
-});
-
-// Middleware
-app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
-app.use(sessionMiddleware);
+}));
 
 // Storage за upload
 const upload = multer({ dest: 'uploads/' });
+
+// Съхраняваме student ID mapping
+const socketToStudentId = new Map();
 
 // Proxy middleware за JSONStore 
 app.use('/jsonstore', (req, res, next) => {
@@ -46,13 +42,27 @@ app.use('/jsonstore', (req, res, next) => {
     console.log('Proxy request:', req.method, req.url);
     console.log('Session ID:', req.session?.studentId);
 
-    if (req.session && req.session.studentId) {
-        req.headers['x-student-id'] = req.session.studentId;
+    // Опитваме да вземем studentId от различни източници
+    let studentId = req.session?.studentId;
+
+    // Ако няма в session, опитваме от query parameters
+    if (!studentId && req.query.studentId) {
+        studentId = req.query.studentId;
+        req.session.studentId = studentId;
+        req.session.save();
     }
+
+    if (studentId) {
+        req.headers['x-student-id'] = studentId;
+    }
+
     next();
 }, createProxyMiddleware({
     target: `http://localhost:${PRACTICE_SERVER_PORT}`,
     changeOrigin: true,
+    pathRewrite: {
+        '^/jsonstore': '/jsonstore'  // Запазваме пътя както е
+    },
     logLevel: 'debug',
     onError: (err, req, res) => {
         console.error('Proxy error:', err);
@@ -63,10 +73,10 @@ app.use('/jsonstore', (req, res, next) => {
 // Routes
 app.get('/', (req, res) => {
     res.send(`
-       <h1>Exam Monitor System</h1>
-       <p><a href="/teacher">Teacher Dashboard</a></p>
-       <p><a href="/student">Student Workspace</a></p>
-   `);
+        <h1>Exam Monitor System</h1>
+        <p><a href="/teacher">Teacher Dashboard</a></p>
+        <p><a href="/student">Student Workspace</a></p>
+    `);
 });
 
 app.get('/teacher', (req, res) => {
@@ -77,9 +87,21 @@ app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/index.html'));
 });
 
-// Middleware за Socket.IO да има достъп до session
-io.use((socket, next) => {
-    sessionMiddleware(socket.request, socket.request.res || {}, next);
+// API endpoint за запазване на student ID в session
+app.post('/api/save-student-id', (req, res) => {
+    const { studentId } = req.body;
+    if (studentId) {
+        req.session.studentId = studentId;
+        req.session.save((err) => {
+            if (err) {
+                res.status(500).json({ error: 'Failed to save session' });
+            } else {
+                res.json({ success: true, studentId });
+            }
+        });
+    } else {
+        res.status(400).json({ error: 'Student ID required' });
+    }
 });
 
 // WebSocket handling 
@@ -91,14 +113,11 @@ io.on('connection', (socket) => {
         socket.studentId = `${data.name}-${data.class}`.replace(/\s+/g, '-').toLowerCase();
         socket.join('students');
 
-        // Запазваме в session
-        if (socket.request.session) {
-            socket.request.session.studentId = socket.studentId;
-            socket.request.session.save((err) => {
-                if (err) console.error('Session save error:', err);
-                else console.log('Session saved with studentId:', socket.studentId);
-            });
-        }
+        // Запазваме mapping
+        socketToStudentId.set(socket.id, socket.studentId);
+
+        // Изпращаме student ID обратно към клиента
+        socket.emit('student-id-assigned', socket.studentId);
 
         io.to('teachers').emit('student-connected', {
             socketId: socket.id,
@@ -121,6 +140,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        socketToStudentId.delete(socket.id);
         io.to('teachers').emit('student-disconnected', socket.id);
     });
 });
