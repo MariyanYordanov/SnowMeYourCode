@@ -58,10 +58,10 @@ app.use('/jsonstore', (req, res, next) => {
 
     next();
 }, createProxyMiddleware({
-    target: `http://localhost:${PRACTICE_SERVER_PORT}`,
+    target: `http://localhost:${PRACTICE_SERVER_PORT}/jsonstore`,
     changeOrigin: true,
     pathRewrite: {
-        '^/jsonstore': '/jsonstore'  // Запазваме пътя както е
+        '^/jsonstore': ''  // Премахваме /jsonstore от началото
     },
     logLevel: 'debug',
     onError: (err, req, res) => {
