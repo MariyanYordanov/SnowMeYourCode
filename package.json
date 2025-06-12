@@ -1,0 +1,23 @@
+{
+  "name": "exam-monitor",
+  "version": "1.0.0",
+  "description": "Live coding exam monitor",
+  "type": "module",
+  "main": "exam-server/server.js",
+  "scripts": {
+    "start": "node --watch exam-monitor/exam-server/server.mjs",
+    "start-practice": "node exam-monitor/practice-server/server.mjs",
+    "dev": "npm run start & npm run start-practice"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-session": "^1.18.1",
+    "http-proxy-middleware": "^3.0.0",
+    "multer": "^2.0.0-rc.4",
+    "socket.io": "^4.7.5",
+    "unzipper": "^0.12.2"
+  }
+}
