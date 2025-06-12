@@ -7,7 +7,7 @@ uploads/
 *.tmp
 
 # Student data (sensitive)
-student-data/
+# student-data/
 
 # Logs
 logs/
