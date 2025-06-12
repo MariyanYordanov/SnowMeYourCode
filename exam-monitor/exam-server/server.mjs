@@ -110,7 +110,7 @@ io.on('connection', (socket) => {
 
     socket.on('student-join', (data) => {
         socket.studentInfo = data;
-        socket.studentId = `${data.name}-${data.class}`.replace(/\s+/g, '-').toLowerCase();
+        socket.studentId = `student-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         socket.join('students');
 
         // Запазваме mapping

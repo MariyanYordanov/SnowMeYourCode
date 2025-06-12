@@ -73,6 +73,21 @@ window.joinExam = function () {
         initWorkspace();
     });
 
+    // Слушаме за student ID от сървъра
+    socket.on('student-id-assigned', (id) => {
+        window.studentId = id;
+        console.log('Received student ID:', id);
+
+        // Запазваме в session през API
+        fetch('/api/save-student-id', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentId: id })
+        }).then(r => r.json())
+            .then(data => console.log('Session saved:', data))
+            .catch(err => console.error('Session save error:', err));
+    });
+
     socket.on('disconnect', () => {
         console.log('Disconnected from server');
         showWarning('Връзката със сървъра е прекъсната!');
@@ -149,10 +164,9 @@ function updatePreview(code) {
     const preview = document.getElementById('preview');
     const consoleOutput = document.getElementById('console');
 
-    if (!preview || !consoleOutput) {
-        return;
-    }
-    
+    if (!preview || !consoleOutput) return;
+
+    // Създаваме HTML с injected JavaScript
     const html = `
         <!DOCTYPE html>
         <html>
@@ -233,7 +247,7 @@ function showWarning(message) {
 }
 
 function startTimer() {
-    let timeLeft = 180 * 60; 
+    let timeLeft = 180 * 60; // 180 minutes in seconds
 
     setInterval(() => {
         if (timeLeft > 0) {
@@ -262,3 +276,12 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// Override fetch за автоматично добавяне на studentId
+window.fetchWithStudentId = function (url, options = {}) {
+    if (window.studentId && url.startsWith('/jsonstore')) {
+        const separator = url.includes('?') ? '&' : '?';
+        url = `${url}${separator}studentId=${window.studentId}`;
+    }
+    return fetch(url, options);
+};
