@@ -9,7 +9,7 @@
     "start-practice": "node exam-monitor/practice-server/server.mjs",
     "dev": "concurrently \"npm run start\" \"npm run start-practice\"",
     "kill": "taskkill /F /IM node.exe",
-    "watch-exam": "nodemon exam-monitor/exam-server/server.mjs --exec node --ignore 'exam-monitor/exam-server/student-data/**'",
+    "watch-exam": "nodemon exam-monitor/exam-server/server.mjs --exec node --ignore 'exam-monitor/exam-server/student-data/**' --ignore 'exam-monitor/exam-server/student-sessions.json' --ignore 'exam-monitor/exam-server/*.tmp' --ignore 'exam-monitor/exam-server/*.backup'",
     "watch-practice": "nodemon exam-monitor/practice-server/server.mjs --exec node --ignore 'exam-monitor/practice-server/data/**'",
     "watch": "concurrently \"npm run watch-exam\" \"npm run watch-practice\""
   },

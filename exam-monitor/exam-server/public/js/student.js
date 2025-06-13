@@ -2,42 +2,7 @@ let socket;
 let studentInfo = {};
 let currentCode = '';
 
-window.socket = null;
-window.sendCodeUpdate = sendCodeUpdate;
-
-// Anti-cheat: Block copy/paste
-document.addEventListener('copy', (e) => {
-    e.preventDefault();
-    logSuspiciousActivity('Опит за копиране');
-    return false;
-});
-
-document.addEventListener('paste', (e) => {
-    e.preventDefault();
-    logSuspiciousActivity('Опит за поставяне');
-    return false;
-});
-
-document.addEventListener('cut', (e) => {
-    e.preventDefault();
-    logSuspiciousActivity('Опит за изрязване');
-    return false;
-});
-
-// Anti-cheat: Block right click
-document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    return false;
-});
-
-// Anti-cheat: Detect tab switch
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        logSuspiciousActivity('Превключване на таб');
-        showWarning('Върнете се към изпита!');
-    }
-});
-
+// Join exam function
 window.joinExam = function () {
     const name = document.getElementById('student-name').value.trim();
     const classValue = document.getElementById('student-class').value.trim().toUpperCase();
@@ -51,29 +16,38 @@ window.joinExam = function () {
 
     // Connect to server
     socket = io();
-    window.socket = socket; // Debgging
 
     socket.on('connect', () => {
         console.log('Connected to server');
         socket.emit('student-join', studentInfo);
+    });
+
+    socket.on('student-id-assigned', (id) => {
+        console.log('Received student ID:', id);
+        window.studentId = id;
+
+        // Hide login and show workspace
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('workspace').style.display = 'grid';
         initWorkspace();
-    });
 
-    // Receive student ID from server
-    socket.on('student-id-assigned', (id) => {
-        window.studentId = id;
-        console.log('Received student ID:', id);
-
-        // Save student ID to session
+        // Save to session
         fetch('/api/save-student-id', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studentId: id })
+            body: JSON.stringify({
+                studentId: id,
+                studentName: studentInfo.name,
+                studentClass: studentInfo.class
+            })
         }).then(r => r.json())
             .then(data => console.log('Session saved:', data))
-            .catch(err => console.error('Session save error:', err));
+            .catch(err => console.error('Session error:', err));
+    });
+
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        alert(error.message || 'Възникна грешка');
     });
 
     socket.on('disconnect', () => {
@@ -83,7 +57,6 @@ window.joinExam = function () {
 }
 
 function initWorkspace() {
-    // Hide login form and show workspace
     document.getElementById('workspace').innerHTML = `
         <div class="header">
             <div>Изпит - ${studentInfo.name} (${studentInfo.class})</div>
@@ -91,14 +64,13 @@ function initWorkspace() {
         </div>
         <div class="files-panel">
             <div style="color: #999; padding: 10px;">Файлове</div>
-            <div style="color: #fff; padding: 5px 10px; cursor: pointer;">📄 main.js</div>
+            <div style="color: #fff; padding: 5px 10px;">📄 main.js</div>
         </div>
         <div class="editor-panel">
             <textarea id="code-editor" 
                 style="width: 100%; height: 100%; background: #1e1e1e; 
-                       color: #d4d4d4; font-family: 'Consolas', 'Courier New', monospace; 
-                       font-size: 14px; padding: 20px; border: none; resize: none; 
-                       outline: none; line-height: 1.5;"
+                       color: #d4d4d4; font-family: monospace; 
+                       font-size: 14px; padding: 20px; border: none; resize: none;"
                 placeholder="// Започнете да пишете вашия код тук..."></textarea>
         </div>
         <div class="preview-panel">
@@ -109,74 +81,41 @@ function initWorkspace() {
         </div>
         <div class="footer">
             <span>Ready</span>
-            <span style="margin-left: 20px;">JavaScript</span>
-            <span style="margin-left: 20px;">UTF-8</span>
         </div>
     `;
 
-    // Track code changes
     const editor = document.getElementById('code-editor');
     if (editor) {
-        console.log('Editor initialized successfully');
-        currentCode = '';
-
-        editor.addEventListener('input', debounce(() => {
+        editor.addEventListener('input', () => {
             currentCode = editor.value;
-            sendCodeUpdate(currentCode);
+            if (socket && socket.connected) {
+                socket.emit('code-update', {
+                    code: currentCode,
+                    filename: 'main.js'
+                });
+            }
             updatePreview(currentCode);
-        }, 1000));
-
-        // Focus на editor
-        editor.focus();
-    } else {
-        console.error('Failed to initialize editor');
+        });
     }
 
     startTimer();
 }
 
-function sendCodeUpdate(code) {
-    if (socket && socket.connected) {
-        console.log('Sending code update:', code.substring(0, 50) + '...');
-        socket.emit('code-update', {
-            code: code,
-            filename: 'main.js',
-            timestamp: Date.now()
-        });
-    } else {
-        console.error('Socket not connected');
-    }
-}
-
 function updatePreview(code) {
     const preview = document.getElementById('preview');
-    const consoleOutput = document.getElementById('console');
-
-    if (!preview || !consoleOutput) return;
-    consoleOutput.innerHTML = '';
+    if (!preview) return;
 
     const html = `
         <!DOCTYPE html>
         <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-            </style>
-        </head>
         <body>
-            <h3>Preview</h3>
-            <div id="output"></div>
             <script>
-                // Override console.log
-                const originalLog = console.log;
                 console.log = function(...args) {
-                    originalLog.apply(console, args);
                     window.parent.postMessage({
                         type: 'console',
-                        data: args.map(arg => String(arg)).join(' ')
+                        data: args.join(' ')
                     }, '*');
                 };
-                
                 try {
                     ${code}
                 } catch (error) {
@@ -189,87 +128,45 @@ function updatePreview(code) {
         </body>
         </html>
     `;
-
     preview.srcdoc = html;
 }
 
-// Listen for console messages from preview
 window.addEventListener('message', (event) => {
     const consoleOutput = document.getElementById('console');
     if (!consoleOutput) return;
 
+    const line = document.createElement('div');
     if (event.data.type === 'console') {
-        const line = document.createElement('div');
         line.style.color = '#4CAF50';
         line.textContent = '> ' + event.data.data;
-        consoleOutput.appendChild(line);
-    } else if (event.data.type === 'error') {
-        const line = document.createElement('div');
+    } else {
         line.style.color = '#F44336';
         line.textContent = '❌ ' + event.data.data;
-        consoleOutput.appendChild(line);
     }
+    consoleOutput.appendChild(line);
 });
-
-function logSuspiciousActivity(activity) {
-    if (socket && socket.connected) {
-        socket.emit('code-update', {
-            code: currentCode,
-            filename: 'main.js',
-            suspicious: activity,
-            timestamp: Date.now()
-        });
-    }
-}
 
 function showWarning(message) {
     const overlay = document.createElement('div');
     overlay.className = 'warning-overlay';
-    overlay.style.display = 'flex';
-    overlay.innerHTML = `<div class="warning-message">${message}</div>`;
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(244,67,54,0.95);color:white;display:flex;justify-content:center;align-items:center;z-index:9999;';
+    overlay.innerHTML = `<div style="text-align:center;font-size:24px;">${message}</div>`;
     document.body.appendChild(overlay);
-
-    setTimeout(() => {
-        overlay.remove();
-    }, 3000);
+    setTimeout(() => overlay.remove(), 3000);
 }
 
 function startTimer() {
     let timeLeft = 180 * 60;
-
     setInterval(() => {
         if (timeLeft > 0) {
             timeLeft--;
             const hours = Math.floor(timeLeft / 3600);
             const minutes = Math.floor((timeLeft % 3600) / 60);
             const seconds = timeLeft % 60;
-
-            const timerElement = document.getElementById('timer');
-            if (timerElement) {
-                timerElement.textContent =
-                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const timer = document.getElementById('timer');
+            if (timer) {
+                timer.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
         }
     }, 1000);
 }
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Override fetch за автоматично добавяне на studentId
-window.fetchWithStudentId = function (url, options = {}) {
-    if (window.studentId && url.startsWith('/jsonstore')) {
-        const separator = url.includes('?') ? '&' : '?';
-        url = `${url}${separator}studentId=${window.studentId}`;
-    }
-    return fetch(url, options);
-};
