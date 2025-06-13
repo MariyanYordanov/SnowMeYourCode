@@ -5,10 +5,13 @@
   "type": "module",
   "main": "exam-server/server.js",
   "scripts": {
-    "start": "node --watch exam-monitor/exam-server/server.mjs",
-    "start-practice": "node --watch exam-monitor/practice-server/server.mjs",
+    "start": "node exam-monitor/exam-server/server.mjs",
+    "start-practice": "node exam-monitor/practice-server/server.mjs",
     "dev": "concurrently \"npm run start\" \"npm run start-practice\"",
-    "kill": "taskkill /F /IM node.exe"
+    "kill": "taskkill /F /IM node.exe",
+    "watch-exam": "nodemon exam-monitor/exam-server/server.mjs --exec node --ignore 'exam-monitor/exam-server/student-data/**'",
+    "watch-practice": "nodemon exam-monitor/practice-server/server.mjs --exec node --ignore 'exam-monitor/practice-server/data/**'",
+    "watch": "concurrently \"npm run watch-exam\" \"npm run watch-practice\""
   },
   "keywords": [],
   "author": "",
@@ -22,6 +25,7 @@
     "unzipper": "^0.12.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.10"
   }
 }

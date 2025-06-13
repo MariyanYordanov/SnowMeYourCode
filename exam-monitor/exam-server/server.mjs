@@ -31,7 +31,7 @@ app.use(session({
 }));
 
 // Storage за upload
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/exam-server/public/uploads/' });
 
 // Съхраняваме student ID mapping
 const socketToStudentId = new Map();
@@ -57,7 +57,8 @@ app.use('/jsonstore', (req, res, next) => {
     }
 
     next();
-}, createProxyMiddleware({
+}, 
+createProxyMiddleware({
     target: `http://localhost:${PRACTICE_SERVER_PORT}/jsonstore`,
     changeOrigin: true,
     pathRewrite: {

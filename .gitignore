@@ -8,6 +8,9 @@ uploads/
 
 # Student data (sensitive)
 # student-data/
+# public/student-data/
+# uploads/
+
 
 # Logs
 logs/
