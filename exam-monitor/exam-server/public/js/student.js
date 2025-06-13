@@ -2,7 +2,6 @@ let socket;
 let studentInfo = {};
 let currentCode = '';
 
-// Направете функциите глобални за debugging
 window.socket = null;
 window.sendCodeUpdate = sendCodeUpdate;
 
@@ -39,17 +38,6 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Anti-cheat: Block developer tools (basic)
-document.addEventListener('keydown', (e) => {
-    // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-    if (e.key === 'F12' ||
-        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key))) {
-        e.preventDefault();
-        logSuspiciousActivity('Опит за отваряне на Developer Tools');
-        return false;
-    }
-});
-
 window.joinExam = function () {
     const name = document.getElementById('student-name').value.trim();
     const classValue = document.getElementById('student-class').value.trim().toUpperCase();
@@ -63,7 +51,7 @@ window.joinExam = function () {
 
     // Connect to server
     socket = io();
-    window.socket = socket; // За debugging
+    window.socket = socket; // Debgging
 
     socket.on('connect', () => {
         console.log('Connected to server');
@@ -73,12 +61,12 @@ window.joinExam = function () {
         initWorkspace();
     });
 
-    // Слушаме за student ID от сървъра
+    // Receive student ID from server
     socket.on('student-id-assigned', (id) => {
         window.studentId = id;
         console.log('Received student ID:', id);
 
-        // Запазваме в session през API
+        // Save student ID to session
         fetch('/api/save-student-id', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -95,7 +83,7 @@ window.joinExam = function () {
 }
 
 function initWorkspace() {
-    // Създаваме workspace с правилна структура
+    // Hide login form and show workspace
     document.getElementById('workspace').innerHTML = `
         <div class="header">
             <div>Изпит - ${studentInfo.name} (${studentInfo.class})</div>
@@ -165,8 +153,8 @@ function updatePreview(code) {
     const consoleOutput = document.getElementById('console');
 
     if (!preview || !consoleOutput) return;
+    consoleOutput.innerHTML = '';
 
-    // Създаваме HTML с injected JavaScript
     const html = `
         <!DOCTYPE html>
         <html>
@@ -247,7 +235,7 @@ function showWarning(message) {
 }
 
 function startTimer() {
-    let timeLeft = 180 * 60; // 180 minutes in seconds
+    let timeLeft = 180 * 60;
 
     setInterval(() => {
         if (timeLeft > 0) {

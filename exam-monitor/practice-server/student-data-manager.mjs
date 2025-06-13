@@ -9,20 +9,20 @@ const __dirname = dirname(__filename);
 export class StudentDataManager {
     constructor(originalDataPath) {
         this.originalDataPath = originalDataPath;
-        this.studentDataBase = path.join(__dirname, '../exam-server/student-data');
+        this.studentDataBase = path.join(__dirname, '../../exam-server/student-data');
     }
 
-    // Създава копие на оригиналните данни за ученик
+    // Initialize student data for a specific student
     async initializeStudentData(studentId) {
         const examDate = new Date().toISOString().split('T')[0];
         const studentPath = path.join(this.studentDataBase, examDate, `student-${studentId}`);
         const studentDataPath = path.join(studentPath, 'data');
 
-        // Създаваме директориите ако не съществуват
+        // Create the student directory if it doesn't exist
         if (!fs.existsSync(studentDataPath)) {
             fs.mkdirSync(studentDataPath, { recursive: true });
 
-            // Копираме всички JSON файлове от оригиналната data папка
+            // Copy original data files to the student's directory
             const files = fs.readdirSync(this.originalDataPath);
 
             for (const file of files) {
@@ -39,10 +39,10 @@ export class StudentDataManager {
         return studentDataPath;
     }
 
-    // Връща пътя към данните на ученика
+    // Retrieves the path for a student's data
     getStudentDataPath(studentId) {
         if (!studentId) {
-            return this.originalDataPath; // Ако няма student ID, използваме оригиналните данни
+            return this.originalDataPath; // Return original data path if no student ID is provided
         }
 
         const examDate = new Date().toISOString().split('T')[0];
@@ -53,7 +53,7 @@ export class StudentDataManager {
             'data'
         );
 
-        // Проверяваме дали съществува
+        // Ensure the student's data directory exists
         if (!fs.existsSync(studentDataPath)) {
             this.initializeStudentData(studentId);
         }
@@ -61,7 +61,7 @@ export class StudentDataManager {
         return studentDataPath;
     }
 
-    // Чете JSON файл за конкретен ученик
+    // Reads a JSON file for a specific student
     readJsonFile(studentId, filename) {
         const dataPath = this.getStudentDataPath(studentId);
         const filePath = path.join(dataPath, filename);
@@ -73,7 +73,7 @@ export class StudentDataManager {
         return null;
     }
 
-    // Записва JSON файл за конкретен ученик
+    // Writes data to a JSON file for a specific student
     writeJsonFile(studentId, filename, data) {
         const dataPath = this.getStudentDataPath(studentId);
         const filePath = path.join(dataPath, filename);
@@ -81,7 +81,7 @@ export class StudentDataManager {
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     }
 
-    // Връща всички данни за ученик
+    // Retrieves all data for a specific student
     getAllStudentData(studentId) {
         const studentData = {};
         const dataPath = this.getStudentDataPath(studentId);
