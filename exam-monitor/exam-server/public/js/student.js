@@ -2,6 +2,12 @@ let socket;
 let studentInfo = {};
 let currentCode = '';
 
+// Clear any existing connections on page load
+if (window.socket) {
+    window.socket.disconnect();
+    window.socket = null;
+}
+
 // Join exam function
 window.joinExam = function () {
     const name = document.getElementById('student-name').value.trim();
@@ -103,19 +109,69 @@ function initWorkspace() {
 
 function updatePreview(code) {
     const preview = document.getElementById('preview');
-    if (!preview) return;
+    const consoleOutput = document.getElementById('console');
+
+    if (!preview || !consoleOutput) return;
+
+    // Clear console only, keep the header
+    const existingLines = consoleOutput.querySelectorAll('div:not(:first-child)');
+    existingLines.forEach(line => line.remove());
 
     const html = `
         <!DOCTYPE html>
         <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+            </style>
+        </head>
         <body>
+            <div id="output"></div>
             <script>
+                // Override console.log
+                const originalLog = console.log;
                 console.log = function(...args) {
+                    originalLog.apply(console, args);
+                    // Filter out empty logs
+                    if (args.length === 0) return;
+                    
+                    const message = args.map(arg => {
+                        if (arg === undefined) return 'undefined';
+                        if (arg === null) return 'null';
+                        if (typeof arg === 'object') {
+                            try {
+                                return JSON.stringify(arg);
+                            } catch (e) {
+                                return String(arg);
+                            }
+                        }
+                        return String(arg);
+                    }).join(' ');
+                    
                     window.parent.postMessage({
                         type: 'console',
-                        data: args.join(' ')
+                        data: message
                     }, '*');
                 };
+                
+                // Override console.error
+                console.error = function(...args) {
+                    const message = args.map(arg => String(arg)).join(' ');
+                    window.parent.postMessage({
+                        type: 'error',
+                        data: message
+                    }, '*');
+                };
+                
+                // Clear any previous errors
+                window.onerror = function(msg, url, line) {
+                    window.parent.postMessage({
+                        type: 'error',
+                        data: msg + ' at line ' + line
+                    }, '*');
+                    return true;
+                };
+                
                 try {
                     ${code}
                 } catch (error) {
@@ -128,6 +184,7 @@ function updatePreview(code) {
         </body>
         </html>
     `;
+
     preview.srcdoc = html;
 }
 
