@@ -1,0 +1,39 @@
+{
+    "list": [
+        {
+            "_id": "5f0ba7e595fa514608bfd7a9",
+            "date": "2021-08-02",
+            "shift": "Night Shift"
+        },
+        {
+            "_id": "5f0ba83995fa514608bfd7aa",
+            "date": "2021-08-03",
+            "shift": "Day Shift"
+        },
+        {
+            "_id": "5f0ba85395fa514608bfd7ab",
+            "date": "2021-08-04",
+            "shift": "Night Shift"
+        },
+        {
+            "_id": "5f0ba86e95fa514608bfd7ac",
+            "date": "2021-08-05",
+            "shift": "Day Shift"
+        },
+        {
+            "_id": "5f0ba88095fa514608bfd7ad",
+            "date": "2021-08-06",
+            "shift": "Day Shift"
+        },
+        {
+            "_id": "5f0ba89695fa514608bfd7ae",
+            "date": "2021-08-07",
+            "shift": "Night Shift"
+        },
+        {
+            "_id": "5f0ba8a995fa514608bfd7af",
+            "date": "2021-08-08",
+            "shift": "Day Shift"
+        }
+    ]
+}
