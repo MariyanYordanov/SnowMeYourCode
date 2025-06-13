@@ -36,11 +36,17 @@ app.use(session({
     }
 }));
 
-// Function to generate student ID
-function generateStudentId(studentInfo) {
+// Function to generate secure student ID
+function generateSecureStudentId(studentInfo) {
     const timestamp = Date.now();
-    const random = crypto.randomBytes(4).toString('hex');
-    return `student-${timestamp}-${random}`;
+    const randomBytes = crypto.randomBytes(8).toString('hex');
+    // Use student info in the hash for uniqueness
+    const hash = crypto.createHash('sha256')
+        .update(`${studentInfo.name}-${studentInfo.class}-${timestamp}`)
+        .digest('hex')
+        .substring(0, 8);
+
+    return `student-${timestamp}-${hash}-${randomBytes}`;
 }
 
 // Proxy middleware for JSONStore
@@ -109,7 +115,7 @@ app.post('/api/save-student-id', (req, res) => {
 // Check session status
 app.get('/api/session-status', (req, res) => {
     res.json({
-        valid: !!req.session?.studentId,
+        valid: Boolean(req.session?.studentId),
         studentId: req.session?.studentId,
         studentName: req.session?.studentName,
         studentClass: req.session?.studentClass
@@ -130,10 +136,13 @@ io.on('connection', (socket) => {
             }
 
             socket.studentInfo = data;
-            socket.studentId = generateStudentId(data);
+            socket.studentId = generateSecureStudentId(data);
             socket.join('students');
 
             socketToStudentId.set(socket.id, socket.studentId);
+
+            // Initialize student directory
+            await initializeStudentDirectory(socket.studentId, data);
 
             // Send ID back to student
             socket.emit('student-id-assigned', socket.studentId);
@@ -173,12 +182,21 @@ io.on('connection', (socket) => {
 
     socket.on('code-update', (data) => {
         console.log('Code update from:', socket.id);
+        console.log('Student ID:', socket.studentId);
 
+        // Emit to teachers with studentId
         io.to('teachers').emit('student-code-update', {
             socketId: socket.id,
-            studentId: socket.studentId,
+            studentId: socket.studentId || 'unknown',
+            studentInfo: socket.studentInfo,
             ...data
         });
+
+        // Save code with proper parameters
+        if (socket.studentInfo && socket.studentId) {
+            saveStudentCode(socket.studentId, socket.studentInfo, data)
+                .catch(err => console.error('Failed to save code:', err));
+        }
     });
 
     socket.on('disconnect', () => {
@@ -197,6 +215,67 @@ io.on('connection', (socket) => {
         console.error('Socket error:', error);
     });
 });
+
+// Initialize student directory structure
+async function initializeStudentDirectory(studentId, studentInfo) {
+    const examDate = new Date().toISOString().split('T')[0];
+    const studentDir = join(__dirname, 'student-data', examDate, studentId);
+
+    try {
+        // Create directories
+        await fs.mkdir(join(studentDir, 'code'), { recursive: true });
+        await fs.mkdir(join(studentDir, 'data'), { recursive: true });
+
+        // Save initial student info
+        await fs.writeFile(
+            join(studentDir, 'info.json'),
+            JSON.stringify({
+                studentId,
+                name: studentInfo.name,
+                class: studentInfo.class,
+                joinedAt: new Date().toISOString()
+            }, null, 2)
+        );
+    } catch (error) {
+        console.error('Error initializing student directory:', error);
+    }
+}
+
+// Function to save student code
+async function saveStudentCode(studentId, studentInfo, codeData) {
+    if (!studentId || !studentInfo) {
+        console.error('Missing student information for code save');
+        return;
+    }
+
+    const examDate = new Date().toISOString().split('T')[0];
+    const studentDir = join(__dirname, 'student-data', examDate, studentId, 'code');
+
+    try {
+        await fs.mkdir(studentDir, { recursive: true });
+
+        // Save code with timestamp
+        const filename = codeData.filename || 'main.js';
+        const filePath = join(studentDir, filename);
+
+        await fs.writeFile(filePath, codeData.code || '');
+        console.log(`Code saved for ${studentInfo.name} (${studentId})`);
+
+        // Save suspicious activity if present
+        if (codeData.suspicious) {
+            const activityDir = join(dirname(studentDir), 'activities');
+            await fs.mkdir(activityDir, { recursive: true });
+
+            const activityLog = join(activityDir, 'suspicious.log');
+            const logEntry = `${new Date().toISOString()} - ${codeData.suspicious}\n`;
+            await fs.appendFile(activityLog, logEntry);
+
+            console.log(`Suspicious activity logged: ${codeData.suspicious}`);
+        }
+    } catch (error) {
+        console.error('Error saving student code:', error);
+    }
+}
 
 server.listen(PORT, () => {
     console.log(`Exam monitor running on http://localhost:${PORT}`);
