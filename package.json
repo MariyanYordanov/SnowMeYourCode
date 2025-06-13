@@ -4,15 +4,15 @@
   "description": "Live coding exam monitor",
   "type": "module",
   "main": "exam-server/server.js",
-  "scripts": {
-    "start": "node exam-monitor/exam-server/server.mjs",
-    "start-practice": "node exam-monitor/practice-server/server.mjs",
-    "dev": "concurrently \"npm run start\" \"npm run start-practice\"",
-    "kill": "taskkill /F /IM node.exe",
-    "watch-exam": "nodemon exam-monitor/exam-server/server.mjs --exec node --ignore 'exam-monitor/exam-server/student-data/**' --ignore 'exam-monitor/exam-server/student-sessions.json' --ignore 'exam-monitor/exam-server/*.tmp' --ignore 'exam-monitor/exam-server/*.backup'",
-    "watch-practice": "nodemon exam-monitor/practice-server/server.mjs --exec node --ignore 'exam-monitor/practice-server/data/**'",
-    "watch": "concurrently \"npm run watch-exam\" \"npm run watch-practice\""
-  },
+      "scripts": {
+        "start": "node exam-monitor/exam-server/server.mjs",
+        "start-practice": "node exam-monitor/practice-server/server.mjs",
+        "dev": "concurrently \"npm run start\" \"npm run start-practice\"",
+        "watch-exam": "nodemon exam-monitor/exam-server/server.mjs --exec node --ignore 'exam-monitor/exam-server/student-data/**' --ignore 'exam-monitor/exam-server/student-sessions.json' --ignore 'exam-monitor/exam-server/student-sessions.json.backup' --ignore 'exam-monitor/exam-server/*.tmp' --ignore 'exam-monitor/exam-server/*.backup' --ignore 'exam-monitor/practice-server/data/**' --ignore '*.log'",
+        "watch-practice": "nodemon exam-monitor/practice-server/server.mjs --exec node --ignore 'exam-monitor/practice-server/data/**' --ignore 'exam-monitor/exam-server/student-data/**'",
+        "watch": "concurrently \"npm run watch-exam\" \"npm run watch-practice\"",
+        "kill": "pkill -f 'node exam-monitor/exam-server/server.mjs' || true && pkill -f 'node exam-monitor/practice-server/server.mjs' || true"
+      },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +26,6 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.1.10"
+    "nodemon": "^2.0.22"
   }
 }
