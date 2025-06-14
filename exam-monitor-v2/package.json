@@ -34,11 +34,12 @@
     "unzipper": "^0.12.2"
   },
   "devDependencies": {
+    "c8": "^8.0.1",
+    "chai": "^4.4.1",
     "concurrently": "^8.2.2",
     "mocha": "^10.2.0",
-    "chai": "^4.4.1",
-    "c8": "^8.0.1",
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "socket.io-client": "^4.8.1"
   },
   "engines": {
     "node": ">=18.0.0"
