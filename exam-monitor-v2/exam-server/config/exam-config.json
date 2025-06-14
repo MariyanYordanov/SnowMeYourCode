@@ -1,0 +1,140 @@
+{
+    "exam": {
+        "duration": 180,
+        "durationUnit": "minutes",
+        "title": "Програмиране - Практически изпит",
+        "instructions": "Решете задачите използвайки JavaScript. Времето за изпита е 3 часа.",
+        "allowedFileTypes": [
+            ".js",
+            ".html",
+            ".css",
+            ".json"
+        ],
+        "maxCodeLength": 50000
+    },
+    "network": {
+        "hotspotName": "ExamNet",
+        "examServerPort": 8080,
+        "practiceServerPort": 3030,
+        "allowedOrigins": [
+            "*"
+        ],
+        "rateLimiting": {
+            "enabled": true,
+            "maxRequestsPerMinute": 50,
+            "maxRequestsPerHour": 1000
+        }
+    },
+    "security": {
+        "antiCheat": {
+            "enabled": true,
+            "strictMode": true,
+            "maxSuspicionScore": 100,
+            "warningThreshold": 30,
+            "criticalThreshold": 70,
+            "autoDisconnectScore": 80,
+            "allowedViolations": {
+                "tabSwitches": 5,
+                "copyAttempts": 3,
+                "devToolsAttempts": 2
+            }
+        },
+        "sessionSecurity": {
+            "sessionTimeout": 240,
+            "sessionTimeoutUnit": "minutes",
+            "gracePeriod": 3,
+            "gracePeriodUnit": "minutes",
+            "allowSessionRecovery": true
+        },
+        "blockedEndpoints": [
+            "/admin",
+            "/system",
+            "/config",
+            "/logs"
+        ]
+    },
+    "monitoring": {
+        "heartbeatInterval": 30,
+        "heartbeatIntervalUnit": "seconds",
+        "activityReportInterval": 15,
+        "activityReportIntervalUnit": "minutes",
+        "timeWarnings": [
+            60,
+            30,
+            15,
+            5
+        ],
+        "timeWarningsUnit": "minutes",
+        "logLevel": "info",
+        "enableDetailedLogging": true
+    },
+    "storage": {
+        "dataRetentionDays": 30,
+        "backupEnabled": true,
+        "backupInterval": 60,
+        "backupIntervalUnit": "minutes",
+        "maxBackups": 24,
+        "compressionEnabled": true
+    },
+    "teacher": {
+        "dashboard": {
+            "refreshInterval": 5,
+            "refreshIntervalUnit": "seconds",
+            "showStudentCode": true,
+            "showSuspiciousActivities": true,
+            "showDetailedStats": true,
+            "allowForceDisconnect": true,
+            "allowExamTermination": true
+        },
+        "notifications": {
+            "suspiciousActivityAlerts": true,
+            "studentDisconnectionAlerts": true,
+            "timeWarningAlerts": true,
+            "soundAlerts": false
+        }
+    },
+    "student": {
+        "workspace": {
+            "autoSaveInterval": 10,
+            "autoSaveIntervalUnit": "seconds",
+            "showTimer": true,
+            "showTimeWarnings": true,
+            "allowCodeCompletion": false,
+            "theme": "dark"
+        },
+        "restrictions": {
+            "disableCopyPaste": true,
+            "disableRightClick": true,
+            "disableTextSelection": true,
+            "disableDevTools": true,
+            "disableRefresh": true,
+            "disableNavigation": true,
+            "fullScreenMode": false
+        }
+    },
+    "practice": {
+        "dataIsolation": true,
+        "allowDataModification": true,
+        "resetDataOnStart": false,
+        "allowedCollections": [
+            "collections",
+            "blog",
+            "phonebook",
+            "cookbook",
+            "advanced",
+            "bus",
+            "forecaster",
+            "messenger",
+            "shift"
+        ]
+    },
+    "environment": {
+        "nodeVersion": "18.0.0",
+        "timezone": "Europe/Sofia",
+        "locale": "bg-BG",
+        "debugMode": false,
+        "developmentMode": false
+    },
+    "version": "2.0.0",
+    "lastUpdated": "2025-06-14T10:00:00.000Z"
+}
