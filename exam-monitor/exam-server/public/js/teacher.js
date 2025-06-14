@@ -1,3 +1,14 @@
+// Prevent auto-connection on page load
+if (typeof io !== 'undefined') {
+    io.autoConnect = false;
+}
+
+// Clear any existing connections
+if (window.socket) {
+    window.socket.disconnect();
+    window.socket = null;
+}
+
 const socket = io();
 const studentsGrid = document.getElementById('students-grid');
 const students = new Map();
@@ -8,6 +19,8 @@ socket.on('connect', () => {
 });
 
 socket.on('all-students', (studentsList) => {
+    studentsGrid.innerHTML = '';
+    students.clear();
     studentsList.forEach(student => {
         addStudentCard(student);
     });
@@ -29,13 +42,22 @@ socket.on('student-disconnected', (socketId) => {
 });
 
 function addStudentCard(student) {
-    if (students.has(student.socketId)) return;
-
-    students.set(student.socketId, student);
+    // Check by studentId, not socketId
+    const existingCard = document.querySelector(`[data-student-id="${student.studentId}"]`);
+    if (existingCard) {
+        // Update existing card instead of creating new
+        existingCard.id = `student-${student.socketId}`;
+        const statusIndicator = existingCard.querySelector('.status-indicator');
+        if (statusIndicator) {
+            statusIndicator.classList.remove('inactive');
+        }
+        return;
+    }
 
     const card = document.createElement('div');
     card.className = 'student-card';
     card.id = `student-${student.socketId}`;
+    card.setAttribute('data-student-id', student.studentId); // Add this for tracking
 
     card.innerHTML = `
         <div class="student-header">
@@ -52,6 +74,8 @@ function addStudentCard(student) {
     `;
 
     studentsGrid.appendChild(card);
+
+    students.set(student.socketId, student);
 }
 
 function updateStudentCode(socketId, data) {

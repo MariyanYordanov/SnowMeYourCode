@@ -181,10 +181,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('code-update', (data) => {
-        console.log('Code update from:', socket.id);
-        console.log('Student ID:', socket.studentId);
-
-        // Emit to teachers with studentId
         io.to('teachers').emit('student-code-update', {
             socketId: socket.id,
             studentId: socket.studentId || 'unknown',
@@ -259,7 +255,6 @@ async function saveStudentCode(studentId, studentInfo, codeData) {
         const filePath = join(studentDir, filename);
 
         await fs.writeFile(filePath, codeData.code || '');
-        console.log(`Code saved for ${studentInfo.name} (${studentId})`);
 
         // Save suspicious activity if present
         if (codeData.suspicious) {

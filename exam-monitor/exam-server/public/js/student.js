@@ -1,15 +1,38 @@
-let socket;
+// Prevent auto-connection on page load
+if (typeof io !== 'undefined') {
+    io.autoConnect = false;
+}
+
+// Global variables
+let socket = null;
 let studentInfo = {};
 let currentCode = '';
+let isJoining = false; // Prevent multiple joins
 
-// Clear any existing connections on page load
-if (window.socket) {
-    window.socket.disconnect();
-    window.socket = null;
-}
+// Ensure clean state on page load
+window.addEventListener('DOMContentLoaded', () => {
+    // Reset UI to login state
+    const loginForm = document.getElementById('login-form');
+    const workspace = document.getElementById('workspace');
+
+    if (loginForm) loginForm.style.display = 'block';
+    if (workspace) workspace.style.display = 'none';
+
+    // Clear form inputs
+    const nameInput = document.getElementById('student-name');
+    const classInput = document.getElementById('student-class');
+    if (nameInput) nameInput.value = '';
+    if (classInput) classInput.value = '';
+});
 
 // Join exam function
 window.joinExam = function () {
+    // Prevent multiple joins
+    if (isJoining) {
+        console.log('Already joining...');
+        return;
+    }
+
     const name = document.getElementById('student-name').value.trim();
     const classValue = document.getElementById('student-class').value.trim().toUpperCase();
 
@@ -18,10 +41,23 @@ window.joinExam = function () {
         return;
     }
 
+    isJoining = true;
     studentInfo = { name, class: classValue };
 
-    // Connect to server
-    socket = io();
+    // Disconnect any existing socket
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+    }
+
+    // Create new connection
+    socket = io({
+        autoConnect: false,
+        reconnection: false,
+        transports: ['websocket', 'polling']
+    });
+
+    socket.connect();
 
     socket.on('connect', () => {
         console.log('Connected to server');
@@ -47,20 +83,28 @@ window.joinExam = function () {
                 studentClass: studentInfo.class
             })
         }).then(r => r.json())
-            .then(data => console.log('Session saved:', data))
-            .catch(err => console.error('Session error:', err));
+            .then(data => {
+                console.log('Session saved:', data);
+                isJoining = false; // Reset flag
+            })
+            .catch(err => {
+                console.error('Session error:', err);
+                isJoining = false;
+            });
     });
 
     socket.on('error', (error) => {
         console.error('Socket error:', error);
         alert(error.message || 'Възникна грешка');
+        isJoining = false;
     });
 
     socket.on('disconnect', () => {
         console.log('Disconnected from server');
         showWarning('Връзката със сървъра е прекъсната!');
+        isJoining = false;
     });
-}
+};
 
 function initWorkspace() {
     document.getElementById('workspace').innerHTML = `
@@ -105,6 +149,9 @@ function initWorkspace() {
     }
 
     startTimer();
+
+    // Initialize anti-cheat after workspace is ready
+    initAntiCheat();
 }
 
 function updatePreview(code) {
@@ -113,9 +160,16 @@ function updatePreview(code) {
 
     if (!preview || !consoleOutput) return;
 
-    // Clear console only, keep the header
-    const existingLines = consoleOutput.querySelectorAll('div:not(:first-child)');
-    existingLines.forEach(line => line.remove());
+    // Clear only the log entries, keep the header
+    const header = consoleOutput.querySelector('div');
+    consoleOutput.innerHTML = '';
+    if (header) consoleOutput.appendChild(header.cloneNode(true));
+
+    // Don't execute empty code
+    if (!code || code.trim() === '') {
+        preview.srcdoc = '<html><body><h3>Preview</h3><p>Започнете да пишете код...</p></body></html>';
+        return;
+    }
 
     const html = `
         <!DOCTYPE html>
@@ -126,59 +180,62 @@ function updatePreview(code) {
             </style>
         </head>
         <body>
+            <h3>Preview</h3>
             <div id="output"></div>
             <script>
-                // Override console.log
-                const originalLog = console.log;
-                console.log = function(...args) {
-                    originalLog.apply(console, args);
-                    // Filter out empty logs
-                    if (args.length === 0) return;
+                (function() {
+                    const originalLog = console.log;
+                    const originalError = console.error;
                     
-                    const message = args.map(arg => {
-                        if (arg === undefined) return 'undefined';
-                        if (arg === null) return 'null';
-                        if (typeof arg === 'object') {
-                            try {
-                                return JSON.stringify(arg);
-                            } catch (e) {
+                    console.log = function(...args) {
+                        if (args.length === 0) return;
+                        originalLog.apply(console, args);
+                        
+                        try {
+                            const message = args.map(arg => {
+                                if (arg === undefined) return 'undefined';
+                                if (arg === null) return 'null';
+                                if (typeof arg === 'object') {
+                                    return JSON.stringify(arg, null, 2);
+                                }
                                 return String(arg);
-                            }
+                            }).join(' ');
+                            
+                            parent.postMessage({
+                                type: 'console',
+                                data: message
+                            }, '*');
+                        } catch (e) {
+                            parent.postMessage({
+                                type: 'error',
+                                data: 'Error logging: ' + e.message
+                            }, '*');
                         }
-                        return String(arg);
-                    }).join(' ');
+                    };
                     
-                    window.parent.postMessage({
-                        type: 'console',
-                        data: message
-                    }, '*');
-                };
-                
-                // Override console.error
-                console.error = function(...args) {
-                    const message = args.map(arg => String(arg)).join(' ');
-                    window.parent.postMessage({
-                        type: 'error',
-                        data: message
-                    }, '*');
-                };
-                
-                // Clear any previous errors
-                window.onerror = function(msg, url, line) {
-                    window.parent.postMessage({
-                        type: 'error',
-                        data: msg + ' at line ' + line
-                    }, '*');
-                    return true;
-                };
+                    console.error = function(...args) {
+                        originalError.apply(console, args);
+                        if (args.length === 0) return;
+                        
+                        parent.postMessage({
+                            type: 'error',
+                            data: args.join(' ')
+                        }, '*');
+                    };
+                    
+                    window.onerror = function(msg, url, line, col, error) {
+                        parent.postMessage({
+                            type: 'error',
+                            data: msg + ' (line ' + line + ')'
+                        }, '*');
+                        return true;
+                    };
+                })();
                 
                 try {
                     ${code}
                 } catch (error) {
-                    window.parent.postMessage({
-                        type: 'error',
-                        data: error.toString()
-                    }, '*');
+                    console.error(error.toString());
                 }
             </script>
         </body>
@@ -196,7 +253,7 @@ window.addEventListener('message', (event) => {
     if (event.data.type === 'console') {
         line.style.color = '#4CAF50';
         line.textContent = '> ' + event.data.data;
-    } else {
+    } else if (event.data.type === 'error') {
         line.style.color = '#F44336';
         line.textContent = '❌ ' + event.data.data;
     }
@@ -226,4 +283,80 @@ function startTimer() {
             }
         }
     }, 1000);
+}
+
+// Anti-cheat functions
+function initAntiCheat() {
+    // Anti-cheat: Block copy/paste
+    document.addEventListener('copy', (e) => {
+        e.preventDefault();
+        logSuspiciousActivity('Опит за копиране');
+        return false;
+    });
+
+    document.addEventListener('paste', (e) => {
+        e.preventDefault();
+        logSuspiciousActivity('Опит за поставяне');
+        return false;
+    });
+
+    document.addEventListener('cut', (e) => {
+        e.preventDefault();
+        logSuspiciousActivity('Опит за изрязване');
+        return false;
+    });
+
+    // Anti-cheat: Block right click
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        logSuspiciousActivity('Десен бутон на мишката');
+        return false;
+    });
+
+    // Anti-cheat: Detect tab switch
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            logSuspiciousActivity('Превключване на таб');
+            showWarning('Върнете се към изпита!');
+        }
+    });
+
+    // Anti-cheat: Detect window blur (when window loses focus)
+    window.addEventListener('blur', () => {
+        logSuspiciousActivity('Напускане на прозореца');
+        showWarning('Върнете се към изпита!');
+    });
+
+    // Anti-cheat: Block developer tools
+    document.addEventListener('keydown', (e) => {
+        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+        if (e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) ||
+            (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+            logSuspiciousActivity('Опит за отваряне на Developer Tools');
+            showWarning('Developer Tools са забранени!');
+            return false;
+        }
+    });
+
+    // Disable text selection
+    document.addEventListener('selectstart', (e) => {
+        if (e.target.id !== 'code-editor') {
+            e.preventDefault();
+        }
+    });
+}
+
+// Function to log suspicious activity
+function logSuspiciousActivity(activity) {
+    console.log('Suspicious activity:', activity);
+    if (socket && socket.connected) {
+        socket.emit('code-update', {
+            code: currentCode,
+            filename: 'main.js',
+            suspicious: activity,
+            timestamp: Date.now()
+        });
+    }
 }
