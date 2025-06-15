@@ -1,6 +1,7 @@
 /**
  * Anti-Cheat Detection System - STRICT MODE
  * Shows red screen immediately on ANY tab switching attempt
+ * FIXED: Window blur loop issue with grace period
  */
 class AntiCheat {
     constructor(socket) {
@@ -11,8 +12,7 @@ class AntiCheat {
         this.isExamMode = false;
         this.isRedScreenVisible = false;
         this.continueButtonClicked = false; // Prevent double-clicking
-
-        // NO GRACE PERIOD - removed completely
+        this.windowEventGracePeriod = false; // FIX: Grace period for window events
 
         // Configuration for strict JS exam mode
         this.config = {
@@ -21,7 +21,7 @@ class AntiCheat {
             enableContextMenuBlocking: true,
             enableCopyPasteBlocking: true,
             enableDevToolsWarning: true,
-            strictTabProtection: true,  // NEW: Strict tab protection
+            strictTabProtection: true,
             logToConsole: true
         };
 
@@ -53,7 +53,7 @@ class AntiCheat {
         this.removeEventListeners();
         this.removeProtectionClasses();
         this.hideStatus();
-        this.hideWarning(); // Hide any visible warnings
+        this.hideWarning();
         this.log('Anti-cheat protection deactivated');
     }
 
@@ -253,11 +253,17 @@ class AntiCheat {
     }
 
     /**
-     * Handle window focus/blur events - IMMEDIATE RED SCREEN
+     * Handle window focus/blur events - FIXED: With grace period
      */
     handleWindowBlur() {
         if (!this.isActive) {
             this.log('Window blur ignored - anti-cheat inactive');
+            return;
+        }
+
+        // FIX: Check grace period
+        if (this.windowEventGracePeriod) {
+            this.log('Window blur ignored - grace period active');
             return;
         }
 
@@ -278,11 +284,17 @@ class AntiCheat {
     }
 
     /**
-     * Handle visibility change - IMMEDIATE RED SCREEN
+     * Handle visibility change - FIXED: With grace period
      */
     handleVisibilityChange() {
         if (!this.isActive) {
             this.log('Visibility change ignored - anti-cheat inactive');
+            return;
+        }
+
+        // FIX: Check grace period
+        if (this.windowEventGracePeriod) {
+            this.log('Visibility change ignored - grace period active');
             return;
         }
 
@@ -552,16 +564,16 @@ class AntiCheat {
         let lastLogTime = 0;
         let initDelay = true;
 
-        // Wait 3 seconds after activation before starting monitoring
+        // Wait 10 seconds after activation before starting monitoring (INCREASED from 3)
         setTimeout(() => {
             initDelay = false;
             this.log('🔧 DevTools monitoring activated after delay');
-        }, 3000);
+        }, 10000);
 
         setInterval(() => {
             if (!this.isActive || initDelay) return;
 
-            const threshold = 200; // Increased from 160
+            const threshold = 300; // Increased from 200
             const heightDiff = window.outerHeight - window.innerHeight;
             const widthDiff = window.outerWidth - window.innerWidth;
 
@@ -580,7 +592,7 @@ class AntiCheat {
                     }
                 }
             }
-        }, 2000); // Check every 2 seconds instead of 1
+        }, 3000); // Check every 3 seconds instead of 2
     }
 
     /**
@@ -674,7 +686,7 @@ class AntiCheat {
     }
 
     /**
-     * Handle continue exam button - WITH DEBOUNCING
+     * Handle continue exam button - FIXED: With grace period
      */
     continueExam() {
         // Prevent double-clicking
@@ -685,10 +697,19 @@ class AntiCheat {
 
         this.continueButtonClicked = true;
 
-        // Reset after 2 seconds
+        // FIX: Grace period for window events
+        this.windowEventGracePeriod = true;
+        this.log('🔄 Window event grace period started (5 seconds)');
+
+        // Reset after 2 seconds for button, 5 seconds for window events
         setTimeout(() => {
             this.continueButtonClicked = false;
         }, 2000);
+
+        setTimeout(() => {
+            this.windowEventGracePeriod = false;
+            this.log('✅ Window event grace period ended');
+        }, 5000);
 
         this.hideWarning();
 
