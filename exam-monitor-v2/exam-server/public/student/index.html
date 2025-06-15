@@ -1,304 +1,267 @@
 <!DOCTYPE html>
 <html lang="bg">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Workspace - Exam Monitor v2</title>
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/student.css">
-    <link rel="stylesheet" href="css/anti-cheat.css">
-    
-    <!-- Meta tags for security -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' /socket.io/">
-    <meta name="robots" content="noindex, nofollow">
-    
-    <!-- Disable cache during exam -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <title>Student Network Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .status-connecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .network-info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .debug-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+    </style>
 </head>
-<body class="exam-environment">
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <h2>Зареждане на изпита...</h2>
-            <p>Моля изчакайте...</p>
+
+<body>
+    <div class="container">
+        <h1>🎓 Student Network Test</h1>
+
+        <div class="network-info">
+            <strong>Network Info:</strong><br>
+            Server: <span id="server-url">Loading...</span><br>
+            Connection: <span id="connection-status">Not connected</span>
+        </div>
+
+        <div class="form-group">
+            <label for="student-name">Име и фамилия:</label>
+            <input type="text" id="student-name" placeholder="Например: Иван Иванов" />
+        </div>
+
+        <div class="form-group">
+            <label for="student-class">Клас:</label>
+            <input type="text" id="student-class" placeholder="Например: 11Б" />
+        </div>
+
+        <button id="login-btn" onclick="joinExam()">Влез в изпита</button>
+        <button id="test-connection-btn" onclick="testConnection()">Тествай връзката</button>
+
+        <div id="status"></div>
+
+        <div class="debug-info">
+            <strong>Debug Log:</strong>
+            <div id="debug-log">Зареждане...</div>
         </div>
     </div>
 
-    <!-- Login Form -->
-    <div id="login-container" class="login-container">
-        <div class="login-form">
-            <div class="login-header">
-                <h1>🎓 Exam Monitor v2</h1>
-                <h2>Вход за изпит</h2>
-            </div>
-            
-            <form id="login-form" class="login-form-content">
-                <div class="input-group">
-                    <label for="student-name">Име и фамилия:</label>
-                    <input 
-                        type="text" 
-                        id="student-name" 
-                        placeholder="Въведете име и фамилия"
-                        required
-                        autocomplete="off"
-                        spellcheck="false"
-                    >
-                </div>
-                
-                <div class="input-group">
-                    <label for="student-class">Клас:</label>
-                    <select id="student-class" required>
-                        <option value="">Изберете клас</option>
-                        <option value="11А">11А</option>
-                        <option value="11Б">11Б</option>
-                        <option value="12А">12А</option>
-                        <option value="12Б">12Б</option>
-                    </select>
-                </div>
-                
-                <button type="submit" id="login-btn" class="login-btn">
-                    <span class="btn-text">Влез в изпита</span>
-                    <span class="btn-spinner" style="display: none;">⏳</span>
-                </button>
-            </form>
-            
-            <div class="login-footer">
-                <p class="exam-info">
-                    📝 Времетраене: 3 часа<br>
-                    🛡️ Системата наблюдава за нарушения<br>
-                    ⚠️ Не затваряйте браузъра по време на изпита
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Exam Workspace -->
-    <div id="workspace-container" class="workspace-container hidden">
-        <!-- Header -->
-        <header class="workspace-header">
-            <div class="header-left">
-                <h1>🎓 Exam Monitor</h1>
-                <span id="student-info" class="student-info"></span>
-            </div>
-            
-            <div class="header-center">
-                <div id="exam-timer" class="exam-timer">
-                    <span class="timer-label">Оставащо време:</span>
-                    <span id="time-display" class="time-display">03:00:00</span>
-                </div>
-            </div>
-            
-            <div class="header-right">
-                <div class="connection-status">
-                    <div id="connection-indicator" class="status-indicator connected">
-                        <span class="status-dot"></span>
-                        <span class="status-text">Свързан</span>
-                    </div>
-                </div>
-                
-                <button id="complete-exam-btn" class="complete-exam-btn">
-                    ✅ Приключи изпита
-                </button>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="workspace-main">
-            <!-- File Explorer -->
-            <aside class="file-explorer">
-                <div class="explorer-header">
-                    <h3>📁 Файлове</h3>
-                </div>
-                <div class="file-tree">
-                    <div class="file-item active" data-file="main.js">
-                        <span class="file-icon">📄</span>
-                        <span class="file-name">main.js</span>
-                    </div>
-                    <!-- More files will be added dynamically -->
-                </div>
-            </aside>
-
-            <!-- Code Editor -->
-            <section class="editor-section">
-                <div class="editor-header">
-                    <div class="editor-tabs">
-                        <div class="tab active" data-file="main.js">
-                            <span class="tab-name">main.js</span>
-                            <span class="tab-modified" style="display: none;">●</span>
-                        </div>
-                    </div>
-                    
-                    <div class="editor-actions">
-                        <button id="run-code-btn" class="action-btn">
-                            ▶️ Изпълни
-                        </button>
-                        <button id="format-code-btn" class="action-btn">
-                            🎨 Форматирай
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="editor-container">
-                    <textarea 
-                        id="code-editor" 
-                        class="code-editor"
-                        placeholder="// Започнете да пишете кода тук...
-console.log('Hello, World!');"
-                        spellcheck="false"
-                        autocomplete="off"
-                    ></textarea>
-                </div>
-            </section>
-
-            <!-- Preview/Output -->
-            <aside class="preview-section">
-                <div class="preview-header">
-                    <div class="preview-tabs">
-                        <button class="preview-tab active" data-tab="console">
-                            🖥️ Конзола
-                        </button>
-                        <button class="preview-tab" data-tab="preview">
-                            👁️ Преглед
-                        </button>
-                    </div>
-                    
-                    <button id="clear-console-btn" class="action-btn">
-                        🗑️ Изчисти
-                    </button>
-                </div>
-                
-                <div class="preview-content">
-                    <div id="console-output" class="console-output active">
-                        <div class="console-line welcome">
-                            <span class="console-timestamp">[${new Date().toLocaleTimeString()}]</span>
-                            <span class="console-message">Конзолата е готова</span>
-                        </div>
-                    </div>
-                    
-                    <div id="preview-output" class="preview-output">
-                        <iframe id="preview-iframe" class="preview-iframe" sandbox="allow-scripts"></iframe>
-                    </div>
-                </div>
-            </aside>
-        </main>
-
-        <!-- Footer -->
-        <footer class="workspace-footer">
-            <div class="footer-left">
-                <span id="session-id" class="session-info"></span>
-                <span class="separator">|</span>
-                <span id="auto-save-status" class="auto-save-status">Автозапис: активен</span>
-            </div>
-            
-            <div class="footer-center">
-                <div id="progress-indicator" class="progress-indicator">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%"></div>
-                    </div>
-                    <span class="progress-text">Прогрес: 0%</span>
-                </div>
-            </div>
-            
-            <div class="footer-right">
-                <span class="version-info">v2.0.0</span>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Fatal Error Screen -->
-    <div id="error-screen" class="error-screen hidden">
-        <div class="error-content">
-            <div class="error-icon">❌</div>
-            <h2>Възникна грешка</h2>
-            <p id="error-message">Неочаквана грешка при работа с изпита.</p>
-            <div class="error-actions">
-                <button onclick="location.reload()" class="error-btn primary">
-                    🔄 Презареди страницата
-                </button>
-                <button onclick="window.close()" class="error-btn secondary">
-                    ❌ Затвори
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success/Completion Screen -->
-    <div id="completion-screen" class="completion-screen hidden">
-        <div class="completion-content">
-            <div class="completion-icon">✅</div>
-            <h2>Изпитът е завършен успешно!</h2>
-            <p>Вашата работа е запазена автоматично.</p>
-            <div class="completion-stats">
-                <div class="stat">
-                    <span class="stat-label">Време за работа:</span>
-                    <span id="work-duration" class="stat-value">--:--:--</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Session ID:</span>
-                    <span id="final-session-id" class="stat-value">---</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-    
-    <!-- Module Scripts (ES6 Modules) -->
-    <script type="module" src="js/main.js"></script>
-    
-    <!-- Fallback for older browsers -->
-    <script nomodule>
-        alert('Този браузър не поддържа модерни JavaScript функции. Моля използвайте по-нов браузър (Chrome 61+, Firefox 60+, Safari 10.1+)');
-    </script>
-
-    <!-- Anti-cheat protection script -->
     <script>
-        // Immediate anti-cheat measures before modules load
-        
-        // Disable right-click immediately
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        
-        // Disable F12 and other dev tools shortcuts
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
-                (e.ctrlKey && e.key === 'U')) {
-                e.preventDefault();
-                console.warn('🚨 Developer tools access blocked');
-            }
-        });
-        
-        // Detect developer tools (basic detection)
-        let devtools = {open: false, orientation: null};
-        setInterval(() => {
-            if (window.outerHeight - window.innerHeight > 200 || 
-                window.outerWidth - window.innerWidth > 200) {
-                if (!devtools.open) {
-                    devtools.open = true;
-                    console.warn('🚨 Developer tools detected');
-                    // Will be handled by AntiCheat module when loaded
-                }
-            } else {
-                devtools.open = false;
-            }
-        }, 500);
-        
-        // Hide loading screen when DOM is ready
+        // Debug logging
+        function debugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('debug-log');
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loading-screen');
-                if (loadingScreen) {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.remove(), 500);
-                }
-            }, 1000);
+            document.getElementById('server-url').textContent = window.location.origin;
+            debugLog('Page loaded, initializing...');
         });
+
+        // Socket connection
+        debugLog('Attempting to connect to server...');
+        const socket = io();
+
+        socket.on('connect', () => {
+            debugLog('✅ WebSocket connected successfully');
+            document.getElementById('connection-status').textContent = 'Connected ✅';
+            document.getElementById('connection-status').style.color = '#155724';
+        });
+
+        socket.on('disconnect', (reason) => {
+            debugLog(`❌ WebSocket disconnected: ${reason}`);
+            document.getElementById('connection-status').textContent = 'Disconnected ❌';
+            document.getElementById('connection-status').style.color = '#721c24';
+        });
+
+        socket.on('connect_error', (error) => {
+            debugLog(`🚨 Connection error: ${error.message}`);
+            showStatus('Connection Error: ' + error.message, 'error');
+        });
+
+        // Test connection function
+        function testConnection() {
+            debugLog('Testing connection...');
+            showStatus('Testing connection...', 'connecting');
+
+            // Test socket connection
+            if (socket.connected) {
+                showStatus('✅ Connection test successful!', 'success');
+                debugLog('Connection test passed - socket is connected');
+            } else {
+                showStatus('❌ Connection test failed - not connected to server', 'error');
+                debugLog('Connection test failed - socket not connected');
+            }
+        }
+
+        // Join exam function
+        function joinExam() {
+            const studentName = document.getElementById('student-name').value.trim();
+            const studentClass = document.getElementById('student-class').value.trim();
+
+            if (!studentName || !studentClass) {
+                showStatus('❌ Моля въведете име и клас!', 'error');
+                debugLog('Login failed: Empty name or class');
+                return;
+            }
+
+            if (!socket.connected) {
+                showStatus('❌ Няма връзка със сървъра!', 'error');
+                debugLog('Login failed: No socket connection');
+                return;
+            }
+
+            debugLog(`Attempting login: "${studentName}" from class "${studentClass}"`);
+            showStatus('Влизане в изпита...', 'connecting');
+
+            // Disable button during login
+            document.getElementById('login-btn').disabled = true;
+
+            socket.emit('student-join', {
+                studentName: studentName,
+                studentClass: studentClass
+            });
+        }
+
+        // Socket event handlers
+        socket.on('student-id-assigned', (data) => {
+            debugLog(`✅ Login successful! Session ID: ${data.sessionId}`);
+            showStatus(`✅ Успешен вход! Session ID: ${data.sessionId}`, 'success');
+            document.getElementById('login-btn').disabled = false;
+        });
+
+        socket.on('session-restored', (data) => {
+            debugLog(`🔄 Session restored! Session ID: ${data.sessionId}`);
+            showStatus(`🔄 Добре дошли обратно! ${data.message}`, 'success');
+            document.getElementById('login-btn').disabled = false;
+        });
+
+        socket.on('login-error', (data) => {
+            debugLog(`❌ Login error: ${data.message}`);
+            showStatus(`❌ Грешка: ${data.message}`, 'error');
+            document.getElementById('login-btn').disabled = false;
+        });
+
+        // Status display helper
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status-${type}`;
+        }
+
+        // Initialize status
+        showStatus('Готов за тестване на връзката', 'connecting');
+        debugLog('Initialization complete');
     </script>
 </body>
+
 </html>
