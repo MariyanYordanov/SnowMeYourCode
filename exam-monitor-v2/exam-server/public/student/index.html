@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Workspace - Exam Monitor</title>
-    <link rel="stylesheet" href="/css/student.css">
+    <link rel="stylesheet" href="css/student.css">
 </head>
 
 <body>
@@ -17,11 +17,13 @@
     </div>
 
     <div id="workspace" class="workspace" style="display: none;">
-        <!-- Тук ще добавим editor след това -->
+        <h3>Exam Workspace (Coming Soon)</h3>
+        <div id="timer"></div>
+        <textarea id="code-editor" placeholder="Въведете кода тук..."></textarea>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/student.js"></script>
+    <script src="js/student.js"></script>
 </body>
 
 </html>

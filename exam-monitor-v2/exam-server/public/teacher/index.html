@@ -5,16 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard - Exam Monitor</title>
-    <link rel="stylesheet" href="/css/teacher.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .student-card {
+            border: 1px solid #ddd;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .online {
+            border-left: 5px solid green;
+        }
+
+        .disconnected {
+            border-left: 5px solid orange;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>Exam Monitor - Teacher Dashboard</h1>
-        <div id="students-grid" class="students-grid"></div>
-    </div>
+    <h1>Teacher Dashboard - Exam Monitor</h1>
+    <div id="students-list"></div>
+
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/teacher.js"></script>
+    <script>
+        const socket = io();
+
+        socket.emit('teacher-join');
+
+        socket.on('all-students', (students) => {
+            const container = document.getElementById('students-list');
+            container.innerHTML = '';
+
+            students.forEach(student => {
+                const div = document.createElement('div');
+                div.className = `student-card ${student.status}`;
+                div.innerHTML = `
+                    <h3>${student.studentName} (${student.studentClass})</h3>
+                    <p>Status: ${student.status}</p>
+                    <p>Time left: ${student.formattedTimeLeft}</p>
+                    <p>Last activity: ${new Date(student.lastActivity).toLocaleTimeString()}</p>
+                `;
+                container.appendChild(div);
+            });
+        });
+
+        socket.on('student-connected', (data) => {
+            console.log('Student connected:', data);
+        });
+    </script>
 </body>
 
 </html>
