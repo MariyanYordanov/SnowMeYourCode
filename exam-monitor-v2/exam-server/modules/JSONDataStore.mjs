@@ -42,17 +42,19 @@ export class JSONDataStore {
     }
 
     /**
-     * Save session to file
+     * Save session to file with human-readable name
      */
     async saveSession(session) {
         try {
             const sessionDir = this.getTodaysSessionDir();
             await fs.mkdir(sessionDir, { recursive: true });
 
+            // Use human-readable session ID as filename
             const filename = `${session.sessionId}.json`;
             const filePath = path.join(sessionDir, filename);
 
             await fs.writeFile(filePath, JSON.stringify(session, null, 2));
+            console.log(`💾 Session saved: ${filename}`);
 
         } catch (error) {
             console.error('Error saving session:', error);
@@ -118,11 +120,12 @@ export class JSONDataStore {
     }
 
     /**
-     * Initialize student directory structure
+     * Initialize student directory structure with human-readable names
      */
     async initializeStudentDirectory(sessionId, studentInfo) {
         try {
-            const studentDirName = `${studentInfo.name.replace(/\s+/g, '_')}_${studentInfo.class}`;
+            // Create directory name from session ID (already human-readable)
+            const studentDirName = sessionId; // e.g., "11а-ivan-ivanov"
             const studentDir = path.join(this.classesDir, studentInfo.class, studentDirName);
 
             // Create directories
@@ -145,7 +148,7 @@ export class JSONDataStore {
             // Copy practice server data for this student
             await this.copyPracticeData(studentDir);
 
-            console.log(`📁 Initialized directory for ${studentInfo.name} (${studentInfo.class})`);
+            console.log(`📁 Initialized directory: ${studentInfo.class}/${studentDirName}`);
 
         } catch (error) {
             console.error('Error initializing student directory:', error);
@@ -240,39 +243,39 @@ export class JSONDataStore {
     }
 
     /**
-     * Find student directory by session ID
+     * Find student directory by session ID (now human-readable)
      */
     async findStudentDirectoryBySession(sessionId) {
         try {
-            // Search through all class directories
-            const classDirs = await fs.readdir(this.classesDir);
+            // Extract class from session ID format: "11а-ivan-ivanov" or "11а-ivan-ivanov-1"
+            const parts = sessionId.split('-');
+            const studentClass = parts[0].toUpperCase(); // "11А"
 
-            for (const classDir of classDirs) {
-                const classPath = path.join(this.classesDir, classDir);
+            // Look in the specific class directory
+            const classPath = path.join(this.classesDir, studentClass);
 
-                try {
-                    const students = await fs.readdir(classPath);
+            try {
+                const students = await fs.readdir(classPath);
 
-                    for (const studentDir of students) {
-                        const studentPath = path.join(classPath, studentDir);
-                        const sessionInfoPath = path.join(studentPath, 'session-info.json');
+                for (const studentDir of students) {
+                    const studentPath = path.join(classPath, studentDir);
+                    const sessionInfoPath = path.join(studentPath, 'session-info.json');
 
-                        try {
-                            const data = await fs.readFile(sessionInfoPath, 'utf8');
-                            const sessionInfo = JSON.parse(data);
+                    try {
+                        const data = await fs.readFile(sessionInfoPath, 'utf8');
+                        const sessionInfo = JSON.parse(data);
 
-                            if (sessionInfo.sessionId === sessionId) {
-                                return studentPath;
-                            }
-                        } catch {
-                            // Skip if session-info.json doesn't exist or is invalid
-                            continue;
+                        if (sessionInfo.sessionId === sessionId) {
+                            return studentPath;
                         }
+                    } catch {
+                        // Skip if session-info.json doesn't exist or is invalid
+                        continue;
                     }
-                } catch {
-                    // Skip if class directory can't be read
-                    continue;
                 }
+            } catch {
+                // Class directory doesn't exist
+                return null;
             }
 
             return null;

@@ -1,6 +1,5 @@
 import { JSONDataStore } from './JSONDataStore.mjs';
 import { StudentValidator } from './StudentValidator.mjs';
-import crypto from 'crypto';
 
 // Session states
 export const SESSION_STATES = {
@@ -122,10 +121,46 @@ export class SessionManager {
     }
 
     /**
+     * Generate human-readable session ID with collision handling
+     */
+    async generateSessionId(studentName, studentClass) {
+        // Clean name for file system
+        const cleanName = this.cleanStudentName(studentName)
+            .toLowerCase()
+            .replace(/\s+/g, '-');
+
+        // Format: 11а-ivan-ivanov
+        const baseSessionId = `${studentClass.toLowerCase()}-${cleanName}`;
+
+        // Check for existing sessions to handle collisions
+        let sessionId = baseSessionId;
+        let counter = 0;
+
+        while (await this.sessionExists(sessionId)) {
+            counter++;
+            sessionId = `${baseSessionId}-${counter}`;
+        }
+
+        return sessionId;
+    }
+
+    /**
+     * Check if session ID already exists
+     */
+    async sessionExists(sessionId) {
+        try {
+            const session = await this.dataStore.loadSession(sessionId);
+            return session !== null;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
      * Create new session
      */
     async createNewSession(studentName, studentClass) {
-        const sessionId = this.generateSessionId(studentName, studentClass);
+        const sessionId = await this.generateSessionId(studentName, studentClass);
         const now = new Date();
         const examEndTime = new Date(now.getTime() + this.EXAM_DURATION);
 
@@ -151,6 +186,8 @@ export class SessionManager {
             name: studentName,
             class: studentClass
         });
+
+        console.log(`✅ Created session: ${sessionId} for ${studentName} (${studentClass})`);
 
         return {
             success: true,
@@ -330,20 +367,6 @@ export class SessionManager {
             .split(' ')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
-    }
-
-    /**
-     * Generate unique session ID
-     */
-    generateSessionId(studentName, studentClass) {
-        const timestamp = Date.now();
-        const hash = crypto
-            .createHash('sha256')
-            .update(`${studentName}-${studentClass}-${timestamp}`)
-            .digest('hex')
-            .substring(0, 8);
-
-        return `session-${timestamp}-${hash}`;
     }
 
     /**
