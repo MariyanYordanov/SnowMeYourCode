@@ -129,7 +129,8 @@ export class SessionManager {
             .toLowerCase()
             .replace(/\s+/g, '-');
 
-        // Format: 11а-ivan-ivanov
+        // Use normalized class (already uppercase) and convert to lowercase for session ID
+        // Format: 11а-ivan-ivanov (lowercase for consistency in session ID)
         const baseSessionId = `${studentClass.toLowerCase()}-${cleanName}`;
 
         // Check for existing sessions to handle collisions
@@ -222,7 +223,8 @@ export class SessionManager {
         if (data.suspicious) {
             session.suspiciousActivities.push({
                 type: data.suspicious,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                severity: data.severity || 'medium'
             });
         }
 
@@ -234,6 +236,16 @@ export class SessionManager {
             await this.dataStore.saveStudentCode(sessionId, {
                 filename: data.filename || 'main.js',
                 code: data.code
+            });
+        }
+
+        // Log suspicious activity if provided
+        if (data.suspicious) {
+            await this.dataStore.logSuspiciousActivity(sessionId, {
+                type: data.suspicious,
+                description: data.description || '',
+                severity: data.severity || 'medium',
+                timestamp: new Date().toISOString()
             });
         }
 
@@ -251,6 +263,7 @@ export class SessionManager {
         session.lastActivity = new Date().toISOString();
 
         await this.dataStore.saveSession(session);
+        console.log(`📴 Session marked as disconnected: ${sessionId}`);
     }
 
     /**
@@ -265,6 +278,7 @@ export class SessionManager {
         session.endTime = new Date().toISOString();
 
         await this.dataStore.saveSession(session);
+        console.log(`✅ Session completed: ${sessionId} (${terminationType})`);
         return true;
     }
 
@@ -280,6 +294,7 @@ export class SessionManager {
         session.terminationType = 'timeout';
 
         await this.dataStore.saveSession(session);
+        console.log(`⏰ Session expired: ${sessionId}`);
     }
 
     /**
@@ -404,5 +419,7 @@ export class SessionManager {
                 }
             }
         }, 60000); // Check every minute
+
+        console.log('🔄 Session cleanup timer started');
     }
 }

@@ -120,16 +120,20 @@ export class JSONDataStore {
     }
 
     /**
-     * Initialize student directory structure with human-readable names
+     * Initialize student directory structure with normalized class names
      */
     async initializeStudentDirectory(sessionId, studentInfo) {
         try {
+            // Normalize class name to uppercase for directory structure
+            const normalizedClass = studentInfo.class.toUpperCase();
+
             // Create directory name from session ID (already human-readable)
             const studentDirName = sessionId; // e.g., "11а-ivan-ivanov"
-            const studentDir = path.join(this.classesDir, studentInfo.class, studentDirName);
+            const studentDir = path.join(this.classesDir, normalizedClass, studentDirName);
 
             // Create directories
             await fs.mkdir(path.join(studentDir, 'code'), { recursive: true });
+            await fs.mkdir(path.join(studentDir, 'code', 'backups'), { recursive: true });
             await fs.mkdir(path.join(studentDir, 'data'), { recursive: true });
             await fs.mkdir(path.join(studentDir, 'activities'), { recursive: true });
 
@@ -138,7 +142,8 @@ export class JSONDataStore {
             const sessionInfo = {
                 sessionId,
                 studentName: studentInfo.name,
-                studentClass: studentInfo.class,
+                studentClass: normalizedClass, // Store normalized class
+                originalClass: studentInfo.class, // Keep original for reference
                 createdAt: new Date().toISOString(),
                 directoryPath: studentDir
             };
@@ -148,7 +153,8 @@ export class JSONDataStore {
             // Copy practice server data for this student
             await this.copyPracticeData(studentDir);
 
-            console.log(`📁 Initialized directory: ${studentInfo.class}/${studentDirName}`);
+            console.log(`📁 Initialized directory: ${normalizedClass}/${studentDirName}`);
+            return studentDir;
 
         } catch (error) {
             console.error('Error initializing student directory:', error);
@@ -184,6 +190,8 @@ export class JSONDataStore {
                 }
             }
 
+            console.log(`📄 Copied practice data to student directory`);
+
         } catch (error) {
             console.error('Error copying practice data:', error);
         }
@@ -210,10 +218,11 @@ export class JSONDataStore {
             // Save timestamped backup
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const backupFilename = `${filename}.${timestamp}.backup`;
-            const backupPath = path.join(codeDir, 'backups');
+            const backupPath = path.join(codeDir, 'backups', backupFilename);
 
-            await fs.mkdir(backupPath, { recursive: true });
-            await fs.writeFile(path.join(backupPath, backupFilename), codeData.code || '');
+            await fs.writeFile(backupPath, codeData.code || '');
+
+            console.log(`💾 Code saved: ${filename} for session ${sessionId}`);
 
         } catch (error) {
             console.error('Error saving student code:', error);
@@ -232,7 +241,7 @@ export class JSONDataStore {
             const activitiesDir = path.join(studentDir, 'activities');
             const logFile = path.join(activitiesDir, 'suspicious.log');
 
-            const logEntry = `${new Date().toISOString()} - ${activity.type}\n`;
+            const logEntry = `${new Date().toISOString()} - ${activity.type} - ${activity.description || ''}\n`;
 
             // Append to log file
             await fs.appendFile(logFile, logEntry);
@@ -243,16 +252,22 @@ export class JSONDataStore {
     }
 
     /**
-     * Find student directory by session ID (now human-readable)
+     * Find student directory by session ID with proper case handling
      */
     async findStudentDirectoryBySession(sessionId) {
         try {
             // Extract class from session ID format: "11а-ivan-ivanov" or "11а-ivan-ivanov-1"
             const parts = sessionId.split('-');
-            const studentClass = parts[0].toUpperCase(); // "11А"
+            if (parts.length < 3) {
+                console.error(`Invalid session ID format: ${sessionId}`);
+                return null;
+            }
+
+            // First part is class, normalize to uppercase for directory lookup
+            const sessionClass = parts[0].toUpperCase(); // "11А"
 
             // Look in the specific class directory
-            const classPath = path.join(this.classesDir, studentClass);
+            const classPath = path.join(this.classesDir, sessionClass);
 
             try {
                 const students = await fs.readdir(classPath);
@@ -266,6 +281,7 @@ export class JSONDataStore {
                         const sessionInfo = JSON.parse(data);
 
                         if (sessionInfo.sessionId === sessionId) {
+                            console.log(`📁 Found student directory: ${studentPath}`);
                             return studentPath;
                         }
                     } catch {
@@ -273,12 +289,18 @@ export class JSONDataStore {
                         continue;
                     }
                 }
-            } catch {
-                // Class directory doesn't exist
+
+                console.warn(`Student directory not found for session ${sessionId} in class ${sessionClass}`);
+                return null;
+
+            } catch (error) {
+                if (error.code === 'ENOENT') {
+                    console.warn(`Class directory doesn't exist: ${classPath}`);
+                } else {
+                    console.error(`Error reading class directory ${classPath}:`, error);
+                }
                 return null;
             }
-
-            return null;
 
         } catch (error) {
             console.error('Error finding student directory:', error);
