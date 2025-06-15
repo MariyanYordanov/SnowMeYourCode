@@ -142,16 +142,16 @@ console.log("Здравей, свят!");
         let antiCheat = null;
 
         function continueExam() {
-            if (antiCheat) {
-                antiCheat.continueExam();
+                if (window.examSystem && window.examSystem.antiCheat) {
+                    window.examSystem.antiCheat.continueExam();
+                }
             }
-        }
 
-        function exitExam() {
-            if (antiCheat) {
-                antiCheat.exitExam();
+            function exitExam() {
+                if (window.examSystem && window.examSystem.antiCheat) {
+                    window.examSystem.antiCheat.exitExam();
+                }
             }
-        }
 
         // Global exam functions
         function joinExam() {

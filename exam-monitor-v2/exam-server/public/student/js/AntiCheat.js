@@ -1,6 +1,6 @@
 /**
- * Anti-Cheat Detection System
- * Monitors and prevents suspicious activities during exam
+ * Anti-Cheat Detection System - STRICT MODE
+ * Shows red screen immediately on ANY tab switching attempt
  */
 class AntiCheat {
     constructor(socket) {
@@ -9,26 +9,23 @@ class AntiCheat {
         this.suspiciousCount = 0;
         this.warningCount = 0;
         this.isExamMode = false;
+        this.isRedScreenVisible = false;
+        this.continueButtonClicked = false; // Prevent double-clicking
 
-        // Grace period management
-        this.gracePeriodActive = false;
-        this.gracePeriodDuration = 5000; // 5 seconds
-        this.gracePeriodTimer = null;
+        // NO GRACE PERIOD - removed completely
 
-        // Configuration for JS exam
+        // Configuration for strict JS exam mode
         this.config = {
             enableKeyboardDetection: true,
             enableWindowDetection: true,
             enableContextMenuBlocking: true,
             enableCopyPasteBlocking: true,
-            enableDevToolsBlocking: false, // No red screen for DevTools
-            enableDevToolsWarning: true,   // Show warning + notify teacher
-            maxWarnings: 5,
+            enableDevToolsWarning: true,
+            strictTabProtection: true,  // NEW: Strict tab protection
             logToConsole: true
         };
 
-        // Initialize but don't activate yet
-        this.log('Anti-cheat system initialized (inactive) - JS exam mode with grace period');
+        this.log('Anti-cheat system initialized (inactive) - STRICT tab protection mode');
     }
 
     /**
@@ -42,7 +39,7 @@ class AntiCheat {
         this.initializeEventListeners();
         this.addProtectionClasses();
         this.showStatus('active');
-        this.log('🛡️ Anti-cheat protection activated - DevTools warnings enabled');
+        this.log('🛡️ Anti-cheat protection activated - STRICT tab protection enabled');
     }
 
     /**
@@ -56,42 +53,8 @@ class AntiCheat {
         this.removeEventListeners();
         this.removeProtectionClasses();
         this.hideStatus();
-        this.clearGracePeriod();
+        this.hideWarning(); // Hide any visible warnings
         this.log('Anti-cheat protection deactivated');
-    }
-
-    /**
-     * Start grace period - temporarily disable detection
-     */
-    startGracePeriod() {
-        this.gracePeriodActive = true;
-        this.clearGracePeriod(); // Clear any existing timer
-
-        this.log(`🕐 Grace period started (${this.gracePeriodDuration / 1000} seconds)`);
-        this.updateStatus('grace');
-
-        this.gracePeriodTimer = setTimeout(() => {
-            this.gracePeriodActive = false;
-            this.updateStatus('active');
-            this.log('🕐 Grace period ended - detection reactivated');
-        }, this.gracePeriodDuration);
-    }
-
-    /**
-     * Clear grace period timer
-     */
-    clearGracePeriod() {
-        if (this.gracePeriodTimer) {
-            clearTimeout(this.gracePeriodTimer);
-            this.gracePeriodTimer = null;
-        }
-    }
-
-    /**
-     * Check if currently in grace period
-     */
-    isInGracePeriod() {
-        return this.gracePeriodActive;
     }
 
     /**
@@ -100,220 +63,271 @@ class AntiCheat {
     initializeEventListeners() {
         // Keyboard event detection
         if (this.config.enableKeyboardDetection) {
-            document.addEventListener('keydown', this.handleKeyDown.bind(this));
-            document.addEventListener('keyup', this.handleKeyUp.bind(this));
+            document.addEventListener('keydown', this.handleKeyDown.bind(this), true);
         }
 
-        // Window focus/blur detection - STRICT with grace period
+        // STRICT Window focus/blur detection - NO EXCEPTIONS
         if (this.config.enableWindowDetection) {
-            window.addEventListener('blur', this.handleWindowBlur.bind(this));
-            window.addEventListener('focus', this.handleWindowFocus.bind(this));
-            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+            window.addEventListener('blur', this.handleWindowBlur.bind(this), true);
+            window.addEventListener('focus', this.handleWindowFocus.bind(this), true);
+            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this), true);
         }
 
         // Context menu blocking
         if (this.config.enableContextMenuBlocking) {
-            document.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+            document.addEventListener('contextmenu', this.handleContextMenu.bind(this), true);
         }
 
         // Copy/paste detection
         if (this.config.enableCopyPasteBlocking) {
-            document.addEventListener('copy', this.handleCopyAttempt.bind(this));
-            document.addEventListener('paste', this.handlePasteAttempt.bind(this));
-            document.addEventListener('cut', this.handleCutAttempt.bind(this));
+            document.addEventListener('copy', this.handleCopyAttempt.bind(this), true);
+            document.addEventListener('paste', this.handlePasteAttempt.bind(this), true);
+            document.addEventListener('cut', this.handleCutAttempt.bind(this), true);
         }
 
         // Mouse events
-        document.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        document.addEventListener('selectstart', this.handleSelectStart.bind(this));
+        document.addEventListener('mousedown', this.handleMouseDown.bind(this), true);
+        document.addEventListener('selectstart', this.handleSelectStart.bind(this), true);
 
-        // Developer tools monitoring with warnings
+        // Developer tools monitoring with warnings only
         if (this.config.enableDevToolsWarning) {
             this.startDevToolsMonitoring();
         }
 
-        this.log('Event listeners registered - Grace period support enabled');
+        // PREVENT window/tab management at document level
+        document.addEventListener('beforeunload', this.handleBeforeUnload.bind(this), true);
+
+        this.log('Event listeners registered - STRICT protection mode');
     }
 
     /**
      * Remove all event listeners
      */
     removeEventListeners() {
-        document.removeEventListener('keydown', this.handleKeyDown.bind(this));
-        document.removeEventListener('keyup', this.handleKeyUp.bind(this));
-        window.removeEventListener('blur', this.handleWindowBlur.bind(this));
-        window.removeEventListener('focus', this.handleWindowFocus.bind(this));
-        document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-        document.removeEventListener('contextmenu', this.handleContextMenu.bind(this));
-        document.removeEventListener('copy', this.handleCopyAttempt.bind(this));
-        document.removeEventListener('paste', this.handlePasteAttempt.bind(this));
-        document.removeEventListener('cut', this.handleCutAttempt.bind(this));
-        document.removeEventListener('mousedown', this.handleMouseDown.bind(this));
-        document.removeEventListener('selectstart', this.handleSelectStart.bind(this));
+        document.removeEventListener('keydown', this.handleKeyDown.bind(this), true);
+        window.removeEventListener('blur', this.handleWindowBlur.bind(this), true);
+        window.removeEventListener('focus', this.handleWindowFocus.bind(this), true);
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this), true);
+        document.removeEventListener('contextmenu', this.handleContextMenu.bind(this), true);
+        document.removeEventListener('copy', this.handleCopyAttempt.bind(this), true);
+        document.removeEventListener('paste', this.handlePasteAttempt.bind(this), true);
+        document.removeEventListener('cut', this.handleCutAttempt.bind(this), true);
+        document.removeEventListener('mousedown', this.handleMouseDown.bind(this), true);
+        document.removeEventListener('selectstart', this.handleSelectStart.bind(this), true);
+        document.removeEventListener('beforeunload', this.handleBeforeUnload.bind(this), true);
     }
 
     /**
-     * Handle keyboard events for suspicious key combinations
+     * Handle keyboard events - BLOCK ALL TAB NAVIGATION
      */
     handleKeyDown(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // RED SCREEN TRIGGERS - Tab switching
+        // If red screen is visible, block ALL keyboard input except specific keys
+        if (this.isRedScreenVisible) {
+            // Allow only Enter and Space for warning dialog buttons
+            if (e.code !== 'Enter' && e.code !== 'Space' && e.code !== 'Tab') {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }
+
+        // STRICT TAB NAVIGATION BLOCKING - RED SCREEN TRIGGERS
+
+        // Alt+Tab (switch applications)
         if (e.altKey && e.code === 'Tab') {
             e.preventDefault();
-            this.showRedScreen('tab_switch', 'Превключване между приложения (Alt+Tab)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('alt_tab', 'Опит за превключване между приложения (Alt+Tab)', 'critical');
+            return false;
         }
 
+        // Ctrl+Tab (next tab)
         if (e.ctrlKey && e.code === 'Tab') {
             e.preventDefault();
-            this.showRedScreen('tab_switch', 'Превключване между табове (Ctrl+Tab)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('ctrl_tab', 'Опит за превключване към следващ таб (Ctrl+Tab)', 'critical');
+            return false;
         }
 
-        // Block window/tab management - RED SCREEN
+        // Ctrl+Shift+Tab (previous tab)
+        if (e.ctrlKey && e.shiftKey && e.code === 'Tab') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showRedScreen('ctrl_shift_tab', 'Опит за превключване към предишен таб (Ctrl+Shift+Tab)', 'critical');
+            return false;
+        }
+
+        // Block window/tab management
         if (e.altKey && e.code === 'F4') {
             e.preventDefault();
-            this.showRedScreen('window_close_attempt', 'Опит за затваряне на прозореца (Alt+F4)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('alt_f4', 'Опит за затваряне на прозореца (Alt+F4)', 'critical');
+            return false;
         }
 
         if (e.ctrlKey && e.code === 'KeyW') {
             e.preventDefault();
-            this.showRedScreen('tab_close_attempt', 'Опит за затваряне на таба (Ctrl+W)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('ctrl_w', 'Опит за затваряне на таба (Ctrl+W)', 'critical');
+            return false;
         }
 
         if (e.ctrlKey && e.code === 'KeyT') {
             e.preventDefault();
-            this.showRedScreen('new_tab_attempt', 'Опит за отваряне на нов таб (Ctrl+T)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('ctrl_t', 'Опит за отваряне на нов таб (Ctrl+T)', 'critical');
+            return false;
         }
 
         if (e.ctrlKey && e.code === 'KeyN') {
             e.preventDefault();
-            this.showRedScreen('new_window_attempt', 'Опит за отваряне на нов прозорец (Ctrl+N)', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('ctrl_n', 'Опит за отваряне на нов прозорец (Ctrl+N)', 'critical');
+            return false;
         }
 
-        // Block page refresh - RED SCREEN
+        // Block page refresh
         if (e.code === 'F5' || (e.ctrlKey && e.code === 'KeyR')) {
             e.preventDefault();
-            this.showRedScreen('refresh_attempt', 'Опит за презареждане на страницата', 'critical');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('refresh', 'Опит за презареждане на страницата', 'critical');
+            return false;
         }
 
-        // Block copy/paste operations - RED SCREEN
+        // Block copy/paste operations
         if (e.ctrlKey && e.code === 'KeyC') {
             e.preventDefault();
-            this.showRedScreen('copy_attempt', 'Опит за копиране (Ctrl+C)', 'high');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('copy', 'Опит за копиране (Ctrl+C)', 'high');
+            return false;
         }
 
         if (e.ctrlKey && e.code === 'KeyV') {
             e.preventDefault();
-            this.showRedScreen('paste_attempt', 'Опит за поставяне (Ctrl+V)', 'high');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('paste', 'Опит за поставяне (Ctrl+V)', 'high');
+            return false;
         }
 
         if (e.ctrlKey && e.code === 'KeyX') {
             e.preventDefault();
-            this.showRedScreen('cut_attempt', 'Опит за изрязване (Ctrl+X)', 'high');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('cut', 'Опит за изрязване (Ctrl+X)', 'high');
+            return false;
         }
 
-        // Block select all (outside code editor) - RED SCREEN
-        if (e.ctrlKey && e.code === 'KeyA') {
-            const activeElement = document.activeElement;
-            if (!activeElement ||
-                (activeElement.tagName !== 'TEXTAREA' && activeElement.id !== 'code-editor')) {
-                e.preventDefault();
-                this.showRedScreen('select_all_attempt', 'Опит за селектиране извън редактора', 'medium');
-                return;
-            }
-        }
-
-        // Block view source - RED SCREEN
+        // Block view source
         if (e.ctrlKey && e.code === 'KeyU') {
             e.preventDefault();
-            this.showRedScreen('view_source_attempt', 'Опит за преглед на изходния код (Ctrl+U)', 'high');
-            return;
+            e.stopPropagation();
+            this.showRedScreen('view_source', 'Опит за преглед на изходния код (Ctrl+U)', 'high');
+            return false;
         }
 
-        // DevTools - WARNING ONLY (no red screen)
+        // DevTools - WARNING ONLY (no red screen, but prevent default)
         if (e.code === 'F12') {
-            this.showDevToolsWarning('F12 pressed - DevTools opened');
-            // DON'T prevent default - allow DevTools
-            return;
+            e.preventDefault(); // Prevent DevTools opening
+            this.showDevToolsWarning('F12 pressed - DevTools blocked');
+            return false;
         }
 
         if (e.ctrlKey && e.shiftKey && e.code === 'KeyI') {
-            this.showDevToolsWarning('Ctrl+Shift+I pressed - DevTools opened');
-            // DON'T prevent default - allow DevTools
-            return;
+            e.preventDefault(); // Prevent DevTools opening
+            this.showDevToolsWarning('Ctrl+Shift+I pressed - DevTools blocked');
+            return false;
         }
 
         if (e.ctrlKey && e.shiftKey && e.code === 'KeyJ') {
-            this.showDevToolsWarning('Ctrl+Shift+J pressed - Console opened');
-            // DON'T prevent default - allow Console
-            return;
+            e.preventDefault(); // Prevent Console opening
+            this.showDevToolsWarning('Ctrl+Shift+J pressed - Console blocked');
+            return false;
         }
 
         if (e.ctrlKey && e.shiftKey && e.code === 'KeyC') {
-            this.showDevToolsWarning('Ctrl+Shift+C pressed - Element inspector');
-            // DON'T prevent default - allow inspector
-            return;
+            e.preventDefault(); // Prevent Element inspector
+            this.showDevToolsWarning('Ctrl+Shift+C pressed - Element inspector blocked');
+            return false;
         }
-    }
-
-    handleKeyUp(e) {
-        // Track key release events if needed
     }
 
     /**
-     * Handle window focus/blur events - RED SCREEN with grace period
+     * Handle window focus/blur events - IMMEDIATE RED SCREEN
      */
     handleWindowBlur() {
-        if (!this.isActive || this.isInGracePeriod()) {
-            this.log('Window blur ignored (grace period or inactive)');
+        if (!this.isActive) {
+            this.log('Window blur ignored - anti-cheat inactive');
             return;
         }
 
-        this.showRedScreen('window_blur', 'Напускане на прозореца на изпита', 'critical');
+        // If red screen is already visible, don't show another one
+        if (this.isRedScreenVisible) {
+            this.log('Window blur ignored - red screen already visible');
+            return;
+        }
+
+        // IMMEDIATE RED SCREEN - NO EXCEPTIONS
+        this.showRedScreen('window_blur', 'Излизане от прозореца на изпита', 'critical');
     }
 
     handleWindowFocus() {
         if (!this.isActive) return;
         this.log('Window regained focus');
-        if (!this.isInGracePeriod()) {
-            this.updateStatus('active');
-        }
+        // Don't automatically hide red screen - only via button
     }
 
     /**
-     * Handle visibility change - RED SCREEN with grace period
+     * Handle visibility change - IMMEDIATE RED SCREEN
      */
     handleVisibilityChange() {
-        if (!this.isActive || this.isInGracePeriod()) {
-            this.log('Visibility change ignored (grace period or inactive)');
+        if (!this.isActive) {
+            this.log('Visibility change ignored - anti-cheat inactive');
             return;
         }
 
         if (document.hidden) {
+            // If red screen is already visible, don't show another one
+            if (this.isRedScreenVisible) {
+                this.log('Visibility change ignored - red screen already visible');
+                return;
+            }
+
+            // IMMEDIATE RED SCREEN - NO EXCEPTIONS
             this.showRedScreen('visibility_change', 'Скриване на таба на изпита', 'critical');
         } else {
             this.log('Tab/window visible again');
-            if (!this.isInGracePeriod()) {
-                this.updateStatus('active');
-            }
+            // Don't automatically hide red screen - only via button
         }
     }
 
     /**
-     * Show RED SCREEN for critical violations
+     * Handle beforeunload to prevent navigation - STRICT BLOCKING
+     */
+    handleBeforeUnload(e) {
+        if (!this.isActive) return;
+
+        // BLOCK ALL NAVIGATION ATTEMPTS - no confirmation dialog
+        e.preventDefault();
+        e.returnValue = '';
+        e.stopImmediatePropagation();
+
+        // Show red screen instead of browser dialog
+        setTimeout(() => {
+            if (this.isActive && !this.isRedScreenVisible) {
+                this.showRedScreen('navigation_attempt', 'Опит за навигация/refresh на страницата', 'critical');
+            }
+        }, 100);
+
+        return '';
+    }
+
+    /**
+     * Show RED SCREEN for critical violations - BLOCKS EVERYTHING
      */
     showRedScreen(type, description, severity) {
         this.suspiciousCount++;
+        this.isRedScreenVisible = true;
         this.log(`🚨 RED SCREEN: ${description} (Count: ${this.suspiciousCount})`);
 
         // Update status
@@ -322,11 +336,47 @@ class AntiCheat {
         // Show red screen overlay
         this.showWarning(description);
 
-        // Report to server with teacher notification
-        this.reportToTeacher(type, description, severity, true); // isRedScreen = true
+        // Report to teacher
+        this.reportToTeacher(type, description, severity, true);
 
         // Flash warning visual effect
         this.flashWarning();
+
+        // Block all user interaction except warning dialog
+        this.blockAllInteraction();
+    }
+
+    /**
+     * Block all user interaction while red screen is visible
+     */
+    blockAllInteraction() {
+        // Add class to body to block interaction
+        document.body.classList.add('red-screen-active');
+
+        // Add CSS to block interaction
+        const blockingStyle = document.createElement('style');
+        blockingStyle.id = 'red-screen-blocking';
+        blockingStyle.textContent = `
+            body.red-screen-active * {
+                pointer-events: none !important;
+            }
+            body.red-screen-active .anti-cheat-overlay,
+            body.red-screen-active .anti-cheat-overlay * {
+                pointer-events: auto !important;
+            }
+        `;
+        document.head.appendChild(blockingStyle);
+    }
+
+    /**
+     * Unblock user interaction
+     */
+    unblockAllInteraction() {
+        document.body.classList.remove('red-screen-active');
+        const blockingStyle = document.getElementById('red-screen-blocking');
+        if (blockingStyle) {
+            blockingStyle.remove();
+        }
     }
 
     /**
@@ -334,25 +384,19 @@ class AntiCheat {
      */
     showDevToolsWarning(activity) {
         this.log(`🔧 DevTools Warning: ${activity}`);
-
-        // Show brief warning notification (not red screen)
         this.showDevToolsNotification(activity);
-
-        // Report to teacher
-        this.reportToTeacher('dev_tools_usage', activity, 'info', false); // Not red screen
+        this.reportToTeacher('dev_tools_blocked', activity, 'info', false);
     }
 
     /**
      * Show brief DevTools notification
      */
     showDevToolsNotification(activity) {
-        // Remove any existing notification
         const existingNotif = document.getElementById('devToolsNotification');
         if (existingNotif) {
             existingNotif.remove();
         }
 
-        // Create notification
         const notification = document.createElement('div');
         notification.id = 'devToolsNotification';
         notification.style.cssText = `
@@ -367,19 +411,18 @@ class AntiCheat {
             font-weight: bold;
             z-index: 1001;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            transition: opacity 0.3s;
+            pointer-events: none;
         `;
         notification.innerHTML = `
             <div>⚠️ DevTools Detection</div>
             <div style="font-size: 12px; margin-top: 4px;">
                 ${activity}<br>
-                <small>Разрешено за debugging, но е регистрирано</small>
+                <small>Блокирано и регистрирано</small>
             </div>
         `;
 
         document.body.appendChild(notification);
 
-        // Auto-hide after 4 seconds
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.opacity = '0';
@@ -389,7 +432,7 @@ class AntiCheat {
                     }
                 }, 300);
             }
-        }, 4000);
+        }, 3000);
     }
 
     /**
@@ -415,76 +458,81 @@ class AntiCheat {
      * Handle context menu, copy, paste, etc.
      */
     handleContextMenu(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow right-click in code editor
+        // Allow right-click in code editor only
         if (e.target && (e.target.id === 'code-editor' || e.target.tagName === 'TEXTAREA')) {
             return true;
         }
 
         e.preventDefault();
-        this.showRedScreen('right_click', 'Опит за десен клик извън редактора', 'low');
+        e.stopPropagation();
+        this.showRedScreen('right_click', 'Опит за десен клик извън редактора', 'medium');
         return false;
     }
 
     handleCopyAttempt(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow copy from code editor
+        // Allow copy from code editor only
         if (e.target && (e.target.id === 'code-editor' || e.target.tagName === 'TEXTAREA')) {
             return true;
         }
 
         e.preventDefault();
+        e.stopPropagation();
         this.showRedScreen('copy_attempt', 'Опит за копиране извън редактора', 'high');
         return false;
     }
 
     handlePasteAttempt(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow paste into code editor
+        // Allow paste into code editor only
         if (e.target && (e.target.id === 'code-editor' || e.target.tagName === 'TEXTAREA')) {
             return true;
         }
 
         e.preventDefault();
+        e.stopPropagation();
         this.showRedScreen('paste_attempt', 'Опит за поставяне извън редактора', 'high');
         return false;
     }
 
     handleCutAttempt(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow cut from code editor
+        // Allow cut from code editor only
         if (e.target && (e.target.id === 'code-editor' || e.target.tagName === 'TEXTAREA')) {
             return true;
         }
 
         e.preventDefault();
+        e.stopPropagation();
         this.showRedScreen('cut_attempt', 'Опит за изрязване извън редактора', 'high');
         return false;
     }
 
     handleMouseDown(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow right mouse button in code editor
+        // Allow right mouse button in code editor only
         if (e.button === 2) {
             if (e.target && (e.target.id === 'code-editor' || e.target.tagName === 'TEXTAREA')) {
                 return true;
             }
 
             e.preventDefault();
-            this.showRedScreen('right_click', 'Десен клик извън редактора', 'low');
+            e.stopPropagation();
+            this.showRedScreen('right_click_mouse', 'Десен клик с мишката извън редактора', 'medium');
             return false;
         }
     }
 
     handleSelectStart(e) {
-        if (!this.isActive || this.isInGracePeriod()) return;
+        if (!this.isActive) return;
 
-        // Allow selection in code areas
+        // Allow selection in code areas only
         if (e.target.tagName === 'INPUT' ||
             e.target.tagName === 'TEXTAREA' ||
             e.target.id === 'code-editor' ||
@@ -497,25 +545,31 @@ class AntiCheat {
     }
 
     /**
-     * DevTools monitoring (size-based detection)
+     * DevTools monitoring with delay and higher threshold
      */
     startDevToolsMonitoring() {
         let devToolsOpen = false;
         let lastLogTime = 0;
+        let initDelay = true;
+
+        // Wait 3 seconds after activation before starting monitoring
+        setTimeout(() => {
+            initDelay = false;
+            this.log('🔧 DevTools monitoring activated after delay');
+        }, 3000);
 
         setInterval(() => {
-            if (!this.isActive) return;
+            if (!this.isActive || initDelay) return;
 
-            const threshold = 160;
+            const threshold = 200; // Increased from 160
             const heightDiff = window.outerHeight - window.innerHeight;
             const widthDiff = window.outerWidth - window.innerWidth;
 
             const currentlyOpen = heightDiff > threshold || widthDiff > threshold;
 
-            // Only log state changes, not continuous monitoring
             if (currentlyOpen !== devToolsOpen) {
                 const now = Date.now();
-                if (now - lastLogTime > 5000) { // Throttle to once per 5 seconds
+                if (now - lastLogTime > 5000) {
                     devToolsOpen = currentlyOpen;
                     lastLogTime = now;
 
@@ -523,11 +577,10 @@ class AntiCheat {
                         this.showDevToolsWarning('DevTools opened (size detection)');
                     } else {
                         this.log('🔧 DevTools closed (size detection)');
-                        // Don't show warning for closing DevTools
                     }
                 }
             }
-        }, 1000); // Check every second
+        }, 2000); // Check every 2 seconds instead of 1
     }
 
     /**
@@ -546,8 +599,8 @@ class AntiCheat {
             Засечено е напускане на изпита!<br>
             <strong>Действие:</strong> ${description}<br>
             <br>
-            <small>За JavaScript изпити Developer Tools са разрешени за debugging.</small><br>
-            <small>Забранени са: копиране/поставяне, превключване между приложения, навигация.</small>
+            <small>Трябва да натиснете "Продължи изпита" за да се върнете.</small><br>
+            <small>Всички опити за навигация са блокирани.</small>
         `;
 
         overlay.style.display = 'block';
@@ -562,12 +615,14 @@ class AntiCheat {
         const overlay = document.getElementById('antiCheatOverlay');
         if (overlay) {
             overlay.style.display = 'none';
+            this.isRedScreenVisible = false;
+            this.unblockAllInteraction();
             this.log('🟢 Red screen hidden');
         }
     }
 
     /**
-     * Create warning overlay if it doesn't exist
+     * Create warning overlay with proper event listeners (no onclick in HTML)
      */
     createWarningOverlay() {
         if (document.getElementById('antiCheatOverlay')) return;
@@ -583,10 +638,10 @@ class AntiCheat {
                     Това действие е регистрирано.
                 </div>
                 <div class="warning-buttons">
-                    <button class="warning-button continue-button" onclick="window.antiCheat?.continueExam()">
+                    <button class="warning-button continue-button" id="continue-exam-btn">
                         Продължи изпита
                     </button>
-                    <button class="warning-button exit-button" onclick="window.antiCheat?.exitExam()">
+                    <button class="warning-button exit-button" id="exit-exam-btn">
                         Напусни изпита
                     </button>
                 </div>
@@ -594,17 +649,48 @@ class AntiCheat {
         `;
 
         document.body.appendChild(overlay);
-        this.log('Red screen overlay created');
+
+        // Add event listeners instead of onclick
+        const continueBtn = overlay.querySelector('#continue-exam-btn');
+        const exitBtn = overlay.querySelector('#exit-exam-btn');
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.continueExam();
+            });
+        }
+
+        if (exitBtn) {
+            exitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.exitExam();
+            });
+        }
+
+        this.log('Red screen overlay created with event listeners');
     }
 
     /**
-     * Handle continue exam button - WITH GRACE PERIOD
+     * Handle continue exam button - WITH DEBOUNCING
      */
     continueExam() {
-        this.hideWarning();
+        // Prevent double-clicking
+        if (this.continueButtonClicked) {
+            this.log('Continue button already clicked, ignoring');
+            return;
+        }
 
-        // START GRACE PERIOD - key part!
-        this.startGracePeriod();
+        this.continueButtonClicked = true;
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+            this.continueButtonClicked = false;
+        }, 2000);
+
+        this.hideWarning();
 
         // Ensure exam interface is visible and functional
         const workspace = document.getElementById('workspace');
@@ -622,7 +708,7 @@ class AntiCheat {
         // Remove any blocking overlays
         document.body.classList.remove('warning-flash');
 
-        // Auto-focus to code editor (as requested)
+        // Focus code editor
         setTimeout(() => {
             const codeEditor = document.getElementById('code-editor');
             if (codeEditor) {
@@ -631,7 +717,7 @@ class AntiCheat {
             }
         }, 100);
 
-        this.log('🟢 Student chose to continue exam - Grace period active');
+        this.log('🟢 Student chose to continue exam');
     }
 
     /**
@@ -653,8 +739,8 @@ class AntiCheat {
             this.hideWarning();
             alert('Изпитът е прекратен. Благодарим за участието!');
 
-            // Redirect
-            window.location.href = '/';
+            // Close window or redirect
+            window.close();
         }
     }
 
@@ -692,6 +778,7 @@ class AntiCheat {
                 font-weight: bold;
                 z-index: 1000;
                 color: white;
+                pointer-events: none;
             `;
             document.body.appendChild(statusEl);
         }
@@ -705,7 +792,6 @@ class AntiCheat {
 
         const statusConfig = {
             'active': { text: '🛡️ Защитен', color: '#28a745' },
-            'grace': { text: '⏰ Grace Period', color: '#17a2b8' },
             'warning': { text: '⚠️ Внимание', color: '#ffc107' },
             'violation': { text: '🚨 Нарушение', color: '#dc3545' }
         };
@@ -754,8 +840,8 @@ class AntiCheat {
             suspiciousCount: this.suspiciousCount,
             warningCount: this.warningCount,
             isExamMode: this.isExamMode,
-            gracePeriodActive: this.gracePeriodActive,
-            devToolsAllowed: !this.config.enableDevToolsBlocking
+            isRedScreenVisible: this.isRedScreenVisible,
+            strictMode: true
         };
     }
 
