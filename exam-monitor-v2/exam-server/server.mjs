@@ -17,8 +17,8 @@ const app = express();
 const server = createServer(app);
 
 const io = new Server(server, {
-    pingTimeout: 60000,    // 60 seconds instead of 20
-    pingInterval: 25000,   // 25 seconds instead of 10
+    pingTimeout: 60000,    
+    pingInterval: 25000,   
     transports: ['websocket', 'polling']
 });
 
