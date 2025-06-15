@@ -15,7 +15,12 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+
+const io = new Server(server, {
+    pingTimeout: 60000,    // 60 seconds instead of 20
+    pingInterval: 25000,   // 25 seconds instead of 10
+    transports: ['websocket', 'polling']
+});
 
 const PORT = 8080;
 const PRACTICE_SERVER_PORT = 3030;

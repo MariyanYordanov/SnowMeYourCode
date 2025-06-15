@@ -35,7 +35,7 @@ export class WebSocketHandler {
         this.sessionManager = sessionManager;
         this.studentSockets = new Map(); // sessionId -> socket
         this.teacherSockets = new Set();
-        this.heartbeatInterval = 30000; // 30 seconds
+        this.heartbeatInterval = 15000; // 15 seconds
         this.timeWarnings = [60, 30, 15, 5]; // Minutes before exam end to warn
 
         this.setupHeartbeat();
