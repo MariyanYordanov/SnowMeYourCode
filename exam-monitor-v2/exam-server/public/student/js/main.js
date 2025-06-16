@@ -1,15 +1,13 @@
 /**
- * Main Student Workspace Controller - Updated for Modal AntiCheat
+ * Main Student Workspace Controller - Modal Exam System
  */
 class ExamSystem {
     constructor() {
         this.socket = null;
-        this.antiCheat = null;
+        this.examModal = null;
         this.sessionId = null;
         this.studentInfo = null;
-        this.examTimer = null;
         this.isExamActive = false;
-        this.lastSaved = null;
 
         // Initialize on DOM ready
         if (document.readyState === 'loading') {
@@ -23,21 +21,18 @@ class ExamSystem {
      * Initialize the exam system
      */
     initialize() {
-        console.log('🚀 Initializing Exam System...');
+        console.log('🚀 Initializing Modal Exam System...');
 
         // Initialize Socket.IO connection
         this.initializeSocket();
 
-        // Initialize Modal AntiCheat (inactive until exam starts)
-        this.initializeAntiCheat();
+        // Initialize Modal Exam System
+        this.initializeModalExam();
 
         // Setup UI event listeners
         this.setupUIListeners();
 
-        // Setup auto-save
-        this.setupAutoSave();
-
-        console.log('✅ Exam System initialized');
+        console.log('✅ Modal Exam System initialized');
     }
 
     /**
@@ -81,20 +76,20 @@ class ExamSystem {
     }
 
     /**
-     * Initialize Modal AntiCheat system (inactive until exam starts)
+     * Initialize Modal Exam System
      */
-    initializeAntiCheat() {
-        if (window.ModalAntiCheat) {
-            this.antiCheat = new window.ModalAntiCheat(this.socket);
-            window.antiCheat = this.antiCheat; // Global access
-            console.log('🛡️ Modal AntiCheat system ready (inactive)');
+    initializeModalExam() {
+        if (window.ExamModalSystem) {
+            this.examModal = new window.ExamModalSystem(this.socket);
+            window.examModal = this.examModal; // Global access
+            console.log('🏢 Modal Exam System ready');
         } else {
-            console.error('❌ ModalAntiCheat class not found');
+            console.error('❌ ExamModalSystem class not found');
         }
     }
 
     /**
-     * Setup UI event listeners
+     * Setup UI event listeners for login form
      */
     setupUIListeners() {
         // Login form
@@ -116,36 +111,6 @@ class ExamSystem {
                 });
             }
         });
-
-        // Code editor events
-        const codeEditor = document.getElementById('code-editor');
-        if (codeEditor) {
-            codeEditor.addEventListener('input', () => {
-                this.handleCodeChange();
-            });
-        }
-
-        // Exam control buttons
-        const saveBtn = document.getElementById('save-code');
-        const runBtn = document.getElementById('run-code');
-        const finishBtn = document.getElementById('finish-exam');
-        const clearBtn = document.getElementById('clear-output');
-
-        if (saveBtn) saveBtn.addEventListener('click', () => this.saveCode());
-        if (runBtn) runBtn.addEventListener('click', () => this.runCode());
-        if (finishBtn) finishBtn.addEventListener('click', () => this.finishExam());
-        if (clearBtn) clearBtn.addEventListener('click', () => this.clearOutput());
-    }
-
-    /**
-     * Setup auto-save functionality
-     */
-    setupAutoSave() {
-        setInterval(() => {
-            if (this.isExamActive) {
-                this.autoSaveCode();
-            }
-        }, 10000); // Auto-save every 10 seconds
     }
 
     /**
@@ -198,12 +163,12 @@ class ExamSystem {
         // Show success message
         const message = type === 'restored' ?
             `${data.message}` :
-            `Изпитът започна! Session ID: ${data.sessionId}`;
+            `Изпитът започва! Session ID: ${data.sessionId}`;
         this.showLoginStatus(message, 'success');
 
-        // Start exam after short delay
+        // Start exam in modal after short delay
         setTimeout(() => {
-            this.startExam(data);
+            this.startExamInModal(data);
         }, 2000);
     }
 
@@ -224,245 +189,34 @@ class ExamSystem {
     }
 
     /**
-     * Start the exam
+     * Start the exam in modal window
      */
-    startExam(data) {
-        console.log('🎯 Starting exam...');
+    startExamInModal(data) {
+        console.log('🏢 Starting exam in modal window...');
 
-        // Hide login form and show workspace
-        this.showWorkspace();
-
-        // Update student info display
-        this.updateStudentInfo();
-
-        // Start timer
-        this.startExamTimer(data.timeLeft);
-
-        // ACTIVATE MODAL ANTI-CHEAT PROTECTION
-        if (this.antiCheat) {
-            this.antiCheat.activate();
-            console.log('🛡️ Modal AntiCheat protection ACTIVATED');
-        }
-
-        // Load previous code if available
-        if (data.lastCode) {
-            const codeEditor = document.getElementById('code-editor');
-            if (codeEditor) {
-                codeEditor.value = data.lastCode;
-            }
-        }
-
-        // Mark exam as active
-        this.isExamActive = true;
-
-        // Update session display
-        this.updateSessionDisplay();
-
-        console.log('🎓 Exam started successfully with modal protection');
-    }
-
-    /**
-     * Show workspace and hide login form
-     */
-    showWorkspace() {
-        const loginForm = document.getElementById('login-form');
-        const workspace = document.getElementById('workspace');
-
-        if (loginForm) loginForm.style.display = 'none';
-        if (workspace) workspace.style.display = 'block';
-
-        // Adjust body layout for workspace
-        document.body.style.display = 'block';
-        document.body.style.justifyContent = 'initial';
-        document.body.style.alignItems = 'initial';
-        document.body.style.height = 'auto';
-    }
-
-    /**
-     * Update student info display
-     */
-    updateStudentInfo() {
-        const studentInfoEl = document.getElementById('student-info');
-        if (studentInfoEl && this.studentInfo) {
-            studentInfoEl.textContent = `${this.studentInfo.name} (${this.studentInfo.class})`;
-        }
-    }
-
-    /**
-     * Start exam timer
-     */
-    startExamTimer(timeLeft) {
-        const timerEl = document.getElementById('timer');
-        if (!timerEl) return;
-
-        this.examTimer = setInterval(() => {
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-            timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-            // Change color when time is running low
-            if (timeLeft < 15 * 60 * 1000) { // Last 15 minutes
-                timerEl.style.color = '#dc3545';
-                timerEl.style.fontWeight = 'bold';
-            } else if (timeLeft < 30 * 60 * 1000) { // Last 30 minutes
-                timerEl.style.color = '#ffc107';
-            }
-
-            timeLeft -= 1000;
-
-            if (timeLeft <= 0) {
-                this.handleExamExpired({ message: 'Времето за изпита изтече!' });
-            }
-        }, 1000);
-    }
-
-    /**
-     * Handle code changes
-     */
-    handleCodeChange() {
-        if (!this.isExamActive) return;
-
-        // Mark as unsaved
-        this.updateLastSaved('Незапазено');
-    }
-
-    /**
-     * Save code manually
-     */
-    saveCode() {
-        if (!this.isExamActive) return;
-
-        const codeEditor = document.getElementById('code-editor');
-        if (!codeEditor) return;
-
-        const code = codeEditor.value;
-
-        // Send to server
-        this.socket.emit('code-update', {
-            code: code,
-            filename: 'main.js',
-            timestamp: Date.now()
-        });
-
-        this.updateLastSaved('Сега');
-        console.log('💾 Code saved manually');
-    }
-
-    /**
-     * Auto-save code
-     */
-    autoSaveCode() {
-        const codeEditor = document.getElementById('code-editor');
-        if (!codeEditor) return;
-
-        const code = codeEditor.value;
-
-        // Send to server
-        this.socket.emit('code-update', {
-            code: code,
-            filename: 'main.js',
-            timestamp: Date.now(),
-            auto: true
-        });
-
-        this.updateLastSaved('Автоматично');
-    }
-
-    /**
-     * Run code (basic implementation)
-     */
-    runCode() {
-        const codeEditor = document.getElementById('code-editor');
-        const outputEl = document.getElementById('code-output');
-
-        if (!codeEditor || !outputEl) return;
-
-        const code = codeEditor.value;
-
-        // Clear previous output
-        outputEl.innerHTML = '';
-
-        // Capture console.log output
-        const originalLog = console.log;
-        const outputs = [];
-
-        console.log = (...args) => {
-            outputs.push(args.join(' '));
-            originalLog.apply(console, args);
+        // Prepare exam data for modal
+        const examData = {
+            sessionId: data.sessionId,
+            studentName: this.studentInfo.name,
+            studentClass: this.studentInfo.class,
+            timeLeft: data.timeLeft,
+            lastCode: data.lastCode || ''
         };
 
-        try {
-            // Execute code
-            eval(code);
+        // Start exam in modal
+        if (this.examModal) {
+            this.examModal.startExamInModal(examData);
 
-            // Display output
-            if (outputs.length > 0) {
-                outputs.forEach(output => {
-                    const outputLine = document.createElement('div');
-                    outputLine.className = 'output-line';
-                    outputLine.textContent = output;
-                    outputEl.appendChild(outputLine);
-                });
-            } else {
-                outputEl.innerHTML = '<div class="output-placeholder">Кодът се изпълни без изход</div>';
-            }
-        } catch (error) {
-            const errorEl = document.createElement('div');
-            errorEl.className = 'output-error';
-            errorEl.textContent = `Грешка: ${error.message}`;
-            outputEl.appendChild(errorEl);
-        }
+            // Start timer
+            this.examModal.startTimer(data.timeLeft);
 
-        // Restore console.log
-        console.log = originalLog;
-    }
+            // Mark exam as active
+            this.isExamActive = true;
 
-    /**
-     * Clear output area
-     */
-    clearOutput() {
-        const outputEl = document.getElementById('code-output');
-        if (outputEl) {
-            outputEl.innerHTML = '<div class="output-placeholder">Изходът от вашия код ще се покаже тук...</div>';
-        }
-    }
-
-    /**
-     * Finish exam
-     */
-    finishExam() {
-        if (!this.isExamActive) return;
-
-        if (confirm('Сигурни ли сте че искате да приключите изпита?')) {
-            // Save final code
-            this.saveCode();
-
-            // Deactivate anti-cheat
-            if (this.antiCheat) {
-                this.antiCheat.deactivate();
-            }
-
-            // Send completion to server
-            this.socket.emit('exam-complete', {
-                sessionId: this.sessionId,
-                completedAt: Date.now(),
-                reason: 'student_finish'
-            });
-
-            // Stop timer
-            if (this.examTimer) {
-                clearInterval(this.examTimer);
-            }
-
-            // Mark as inactive
-            this.isExamActive = false;
-
-            // Show completion screen
-            this.showCompletionScreen();
-
-            console.log('✅ Exam completed by student');
+            console.log('🎯 Exam started in modal with COMPLETE protection');
+        } else {
+            console.error('❌ Modal exam system not available');
+            this.showLoginStatus('Грешка при стартиране на изпита', 'error');
         }
     }
 
@@ -472,24 +226,11 @@ class ExamSystem {
     handleExamExpired(data) {
         console.log('⏰ Exam time expired:', data);
 
-        // Stop timer
-        if (this.examTimer) {
-            clearInterval(this.examTimer);
+        if (this.examModal) {
+            this.examModal.handleTimeExpired();
         }
 
-        // Deactivate anti-cheat
-        if (this.antiCheat) {
-            this.antiCheat.deactivate();
-        }
-
-        // Mark as inactive
         this.isExamActive = false;
-
-        // Show expiration message
-        alert(data.message || 'Времето за изпита изтече!');
-
-        // Show completion screen
-        this.showCompletionScreen('Времето изтече');
     }
 
     /**
@@ -498,59 +239,14 @@ class ExamSystem {
     handleForceDisconnect(data) {
         console.log('🚫 Force disconnect:', data);
 
-        // Deactivate anti-cheat
-        if (this.antiCheat) {
-            this.antiCheat.deactivate();
+        if (this.examModal) {
+            this.examModal.endExam();
         }
 
-        // Show error screen
-        this.showErrorScreen(data.message || 'Изпитът беше прекратен от преподавателя');
-    }
+        this.isExamActive = false;
 
-    /**
-     * Show completion screen
-     */
-    showCompletionScreen(reason = '') {
-        const completionScreen = document.getElementById('completion-screen');
-        const completionTime = document.getElementById('completion-time');
-        const completionSession = document.getElementById('completion-session');
-
-        if (completionScreen) {
-            if (completionTime) {
-                completionTime.textContent = new Date().toLocaleString();
-            }
-            if (completionSession) {
-                completionSession.textContent = this.sessionId || 'N/A';
-            }
-
-            // Hide workspace and show completion
-            const workspace = document.getElementById('workspace');
-            if (workspace) workspace.style.display = 'none';
-
-            completionScreen.style.display = 'block';
-        }
-    }
-
-    /**
-     * Show error screen
-     */
-    showErrorScreen(message) {
-        const errorScreen = document.getElementById('error-screen');
-        const errorMessage = document.getElementById('error-message');
-
-        if (errorScreen) {
-            if (errorMessage) {
-                errorMessage.textContent = message;
-            }
-
-            // Hide all other screens
-            ['login-form', 'workspace', 'completion-screen'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'none';
-            });
-
-            errorScreen.style.display = 'block';
-        }
+        // Show error message
+        alert(data.message || 'Изпитът беше прекратен от преподавателя');
     }
 
     /**
@@ -564,6 +260,25 @@ class ExamSystem {
         statusEl.className = `login-status ${type}`;
         statusEl.style.display = 'block';
 
+        // Apply styles based on type
+        switch (type) {
+            case 'success':
+                statusEl.style.background = '#d4edda';
+                statusEl.style.color = '#155724';
+                statusEl.style.border = '1px solid #c3e6cb';
+                break;
+            case 'error':
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.style.border = '1px solid #f5c6cb';
+                break;
+            case 'loading':
+                statusEl.style.background = '#d1ecf1';
+                statusEl.style.color = '#0c5460';
+                statusEl.style.border = '1px solid #bee5eb';
+                break;
+        }
+
         // Hide after 5 seconds for success messages
         if (type === 'success') {
             setTimeout(() => {
@@ -573,36 +288,60 @@ class ExamSystem {
     }
 
     /**
-     * Update last saved display
-     */
-    updateLastSaved(status) {
-        const lastSavedEl = document.getElementById('last-saved');
-        if (lastSavedEl) {
-            const time = status === 'Сега' ? new Date().toLocaleTimeString() : status;
-            lastSavedEl.textContent = `Последно запазено: ${time}`;
-        }
-    }
-
-    /**
-     * Update session display
-     */
-    updateSessionDisplay() {
-        const sessionEl = document.getElementById('session-id');
-        if (sessionEl && this.sessionId) {
-            sessionEl.textContent = `Session: ${this.sessionId}`;
-        }
-    }
-
-    /**
      * Update connection status
      */
     updateConnectionStatus(connected) {
-        console.log(connected ? '🟢 Online' : '🔴 Offline');
+        const status = connected ? '🟢 Online' : '🔴 Offline';
+        console.log(status);
+
+        // Could add visual indicator to login form
+        const loginForm = document.getElementById('login-form');
+        if (loginForm && !this.isExamActive) {
+            let statusIndicator = document.getElementById('connection-status');
+            if (!statusIndicator) {
+                statusIndicator = document.createElement('div');
+                statusIndicator.id = 'connection-status';
+                statusIndicator.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(statusIndicator);
+            }
+
+            statusIndicator.textContent = status;
+            statusIndicator.style.background = connected ? '#28a745' : '#dc3545';
+            statusIndicator.style.color = 'white';
+        }
+    }
+
+    /**
+     * Get system stats
+     */
+    getStats() {
+        return {
+            isExamActive: this.isExamActive,
+            sessionId: this.sessionId,
+            studentInfo: this.studentInfo,
+            modalStats: this.examModal ? this.examModal.getStats() : null
+        };
     }
 }
 
 // Initialize exam system when page loads
 const examSystem = new ExamSystem();
 
-// Make it globally available for HTML onclick handlers
+// Make it globally available
 window.examSystem = examSystem;
+
+// Global function for HTML onclick handlers
+function joinExam() {
+    if (window.examSystem) {
+        window.examSystem.handleLogin();
+    }
+}

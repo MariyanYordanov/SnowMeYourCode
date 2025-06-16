@@ -4,132 +4,886 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Workspace - Exam Monitor</title>
+    <title>Student Workspace - Exam Monitor Modal</title>
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/student.css">
     <link rel="stylesheet" href="css/editor.css">
+
+    <style>
+        /* Additional styles for modal system */
+        .login-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+
+        .login-status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .login-status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .login-status.loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .login-form {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .login-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        .login-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Connection status indicator */
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Modal preparation styles */
+        body.modal-exam-active {
+            overflow: hidden !important;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .login-form {
+                width: 95%;
+                padding: 30px 20px;
+            }
+
+            .login-form h2 {
+                font-size: 24px;
+            }
+
+            .login-form input,
+            .login-form button {
+                font-size: 16px;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <!-- Login Form -->
     <div id="login-form" class="login-form">
-        <h2>Вход за изпит</h2>
-        <input type="text" id="student-name" placeholder="Име и фамилия" autocomplete="off">
-        <input type="text" id="student-class" placeholder="Клас (напр. 11А)" autocomplete="off">
-        <button onclick="joinExam()" id="login-btn">Влез в изпита</button>
+        <h2>🎓 Вход за изпит</h2>
+        <p style="color: #666; margin-bottom: 25px; text-align: center;">
+            Изпитът ще се проведе в защитен модален прозорец
+        </p>
 
-        <div id="login-status" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;">
-            <!-- Login status messages -->
+        <input type="text" id="student-name" placeholder="Име и фамилия (напр. Иван Иванов)" autocomplete="off"
+            maxlength="50">
+
+        <input type="text" id="student-class" placeholder="Клас (напр. 11А)" autocomplete="off" maxlength="10">
+
+        <button onclick="joinExam()" id="login-btn">
+            🚀 Влез в изпита
+        </button>
+
+        <div id="login-status" class="login-status">
+            <!-- Login status messages will appear here -->
+        </div>
+
+        <div
+            style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px; color: #495057;">
+            <strong>📋 Инструкции:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Изпитът ще се отвори в защитен модален прозорец</li>
+                <li>Всички опити за напускане ще бъдат блокирани</li>
+                <li>При нарушение ще видите червен предупредителен екран</li>
+                <li>Можете да работите само в кодовия редактор</li>
+            </ul>
         </div>
     </div>
 
-    <!-- Exam Workspace (Hidden initially) -->
-    <div id="workspace" class="workspace" style="display: none;">
-        <!-- Exam Header -->
-        <div class="exam-header">
-            <div class="exam-title">
-                <h2>Практически изпит по програмиране</h2>
-                <span id="student-info"></span>
-            </div>
-            <div id="timer" class="exam-timer">
-                Зареждане...
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="exam-content">
-            <!-- Code Editor Section -->
-            <div class="editor-section">
-                <div class="editor-header">
-                    <h3>Код редактор</h3>
-                    <div class="editor-controls">
-                        <button id="save-code" class="btn-primary">Запази</button>
-                        <button id="run-code" class="btn-secondary">Изпълни</button>
-                    </div>
-                </div>
-
-                <textarea id="code-editor" placeholder="Напишете вашия код тук...">
-// Добре дошли в изпита!
-// Напишете вашия JavaScript код тук
-
-console.log("Здравей, свят!");
-                </textarea>
-            </div>
-
-            <!-- Output/Console Section -->
-            <div class="output-section">
-                <div class="output-header">
-                    <h3>Изход</h3>
-                    <button id="clear-output" class="btn-secondary">Изчисти</button>
-                </div>
-                <div id="code-output" class="code-output">
-                    <div class="output-placeholder">
-                        Изходът от вашия код ще се покаже тук...
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Exam Controls -->
-        <div class="exam-controls">
-            <button id="finish-exam" class="btn-danger">Приключи изпита</button>
-            <div class="exam-info">
-                <span id="session-id"></span>
-                <span id="last-saved">Последно запазено: Никога</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen" style="display: none;">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <h3>Зареждане на изпита...</h3>
-            <p>Моля изчакайте...</p>
-        </div>
-    </div>
-
-    <!-- Error Screen -->
-    <div id="error-screen" class="error-screen" style="display: none;">
-        <div class="error-content">
-            <h2>Възникна грешка!</h2>
-            <p id="error-message">Неочаквана грешка при зареждане на изпита.</p>
-            <button onclick="location.reload()" class="btn-primary">Опитайте отново</button>
-        </div>
-    </div>
-
-    <!-- Completion Screen -->
-    <div id="completion-screen" class="completion-screen" style="display: none;">
-        <div class="completion-content">
-            <h2>🎉 Изпитът е завършен успешно!</h2>
-            <p>Благодарим за участието!</p>
-            <div class="completion-info">
-                <p><strong>Време на приключване:</strong> <span id="completion-time"></span></p>
-                <p><strong>Session ID:</strong> <span id="completion-session"></span></p>
-            </div>
-            <button onclick="window.close()" class="btn-primary">Затвори</button>
-        </div>
+    <!-- Hidden workspace template (will be moved to modal) -->
+    <div id="workspace" style="display: none;">
+        <!-- This will be cloned into the modal -->
     </div>
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/ModalAntiCheat.js"></script>
+
+    <!-- Inline ExamModalSystem to avoid loading issues -->
+    <script>
+        /**
+         * Exam Modal System - Entire Exam runs in Modal Window
+         * Any attempt to leave shows RED SCREEN immediately
+         */
+        class ExamModalSystem {
+            constructor(socket) {
+                this.socket = socket;
+                this.isExamModalActive = false;
+                this.isRedScreenVisible = false;
+                this.violations = 0;
+                this.examModal = null;
+                this.redScreenModal = null;
+                this.eventListeners = [];
+                this.focusMonitor = null;
+                this.examTimer = null;
+
+                console.log('🏢 Exam Modal System initialized');
+            }
+
+            /**
+             * Start exam in modal window
+             */
+            startExamInModal(examData) {
+                if (this.isExamModalActive) return;
+
+                console.log('🚀 Starting exam in modal window...');
+
+                // Hide original page content
+                this.hideOriginalContent();
+
+                // Create exam modal
+                this.createExamModal(examData);
+
+                // Setup complete protection
+                this.setupModalProtection();
+
+                this.isExamModalActive = true;
+
+                console.log('✅ Exam modal active with full protection');
+            }
+
+            /**
+             * Hide original page content
+             */
+            hideOriginalContent() {
+                // Hide login form
+                const loginForm = document.getElementById('login-form');
+                if (loginForm) {
+                    loginForm.style.display = 'none';
+                }
+
+                // Hide any other content
+                const body = document.body;
+                Array.from(body.children).forEach(child => {
+                    if (child.id !== 'examModal' && child.id !== 'redScreenModal') {
+                        child.style.display = 'none';
+                    }
+                });
+            }
+
+            /**
+             * Create exam modal with workspace
+             */
+            createExamModal(examData) {
+                // Create modal container
+                this.examModal = document.createElement('div');
+                this.examModal.id = 'examModal';
+                this.examModal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: white !important;
+            z-index: 999998 !important;
+            overflow: auto !important;
+            font-family: Arial, sans-serif !important;
+        `;
+
+                // Create exam workspace HTML
+                this.examModal.innerHTML = `
+            <div class="exam-modal-content" style="padding: 20px; height: 100%; display: flex; flex-direction: column;">
+                <!-- Exam Header -->
+                <div class="exam-header" style="display: flex; justify-content: space-between; align-items: center; 
+                     margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #007bff;">
+                    <div class="exam-title">
+                        <h2 style="margin: 0; color: #007bff;">🎓 Практически изпит по програмиране</h2>
+                        <span id="modal-student-info" style="color: #666; font-size: 14px;">
+                            ${examData.studentName} (${examData.studentClass})
+                        </span>
+                    </div>
+                    <div class="exam-timer" style="background: #dc3545; color: white; padding: 10px 20px; 
+                         border-radius: 5px; font-size: 18px; font-weight: bold;">
+                        <div id="modal-timer">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="exam-content" style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0;">
+                    <!-- Code Editor Section -->
+                    <div class="editor-section" style="display: flex; flex-direction: column; border: 1px solid #ddd; border-radius: 8px;">
+                        <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; 
+                             padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
+                            <h3 style="margin: 0; color: #333;">📝 Код редактор</h3>
+                            <div class="editor-controls">
+                                <button id="modal-save-code" style="background: #28a745; color: white; border: none; 
+                                        padding: 8px 16px; border-radius: 4px; margin-right: 8px; cursor: pointer;">
+                                    💾 Запази
+                                </button>
+                                <button id="modal-run-code" style="background: #007bff; color: white; border: none; 
+                                        padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                    ▶️ Изпълни
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="modal-code-editor" style="flex: 1; border: none; padding: 15px; font-family: 'Courier New', monospace; 
+                                 font-size: 14px; resize: none; outline: none; background: #f8f8f8;" 
+                                 placeholder="Напишете вашия JavaScript код тук...">${examData.lastCode || '// Добре дошли в изпита!\n// Напишете вашия JavaScript код тук\n\nconsole.log("Здравей, свят!");'}</textarea>
+                    </div>
+
+                    <!-- Output/Console Section -->
+                    <div class="output-section" style="display: flex; flex-direction: column; border: 1px solid #ddd; border-radius: 8px;">
+                        <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; 
+                             padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
+                            <h3 style="margin: 0; color: #333;">📤 Изход</h3>
+                            <button id="modal-clear-output" style="background: #6c757d; color: white; border: none; 
+                                    padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                🗑️ Изчисти
+                            </button>
+                        </div>
+                        <div id="modal-code-output" style="flex: 1; padding: 15px; background: #fff; font-family: 'Courier New', monospace; 
+                             font-size: 13px; overflow-y: auto; border: none;">
+                            <div style="color: #666; font-style: italic;">
+                                Изходът от вашия код ще се покаже тук...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exam Controls -->
+                <div class="exam-controls" style="display: flex; justify-content: space-between; align-items: center; 
+                     margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <button id="modal-finish-exam" style="background: #dc3545; color: white; border: none; 
+                            padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                        🏁 Приключи изпита
+                    </button>
+                    <div class="exam-info" style="color: #666; font-size: 14px;">
+                        <div>Session: ${examData.sessionId}</div>
+                        <div id="modal-last-saved">Последно запазено: Никога</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                // Add modal to page
+                document.body.appendChild(this.examModal);
+
+                // Setup modal event listeners
+                this.setupModalEventListeners();
+            }
+
+            /**
+             * Setup event listeners for modal workspace
+             */
+            setupModalEventListeners() {
+                // Save code button
+                const saveBtn = this.examModal.querySelector('#modal-save-code');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => this.saveCode());
+                }
+
+                // Run code button
+                const runBtn = this.examModal.querySelector('#modal-run-code');
+                if (runBtn) {
+                    runBtn.addEventListener('click', () => this.runCode());
+                }
+
+                // Clear output button
+                const clearBtn = this.examModal.querySelector('#modal-clear-output');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => this.clearOutput());
+                }
+
+                // Finish exam button
+                const finishBtn = this.examModal.querySelector('#modal-finish-exam');
+                if (finishBtn) {
+                    finishBtn.addEventListener('click', () => this.finishExam());
+                }
+
+                // Code editor change tracking
+                const codeEditor = this.examModal.querySelector('#modal-code-editor');
+                if (codeEditor) {
+                    codeEditor.addEventListener('input', () => this.handleCodeChange());
+                }
+            }
+
+            /**
+             * Setup complete modal protection - TRAP EVERYTHING
+             */
+            setupModalProtection() {
+                console.log('🛡️ Setting up COMPLETE modal protection...');
+
+                // Monitor for focus loss - IMMEDIATE RED SCREEN
+                this.addListener(window, 'blur', () => {
+                    if (this.isExamModalActive && !this.isRedScreenVisible) {
+                        console.log('🚨 Window blur detected - showing red screen');
+                        this.showRedScreen('Излизане от прозореца на изпита');
+                    }
+                });
+
+                // Monitor for visibility changes - IMMEDIATE RED SCREEN
+                this.addListener(document, 'visibilitychange', () => {
+                    if (document.hidden && this.isExamModalActive && !this.isRedScreenVisible) {
+                        console.log('🚨 Page hidden detected - showing red screen');
+                        this.showRedScreen('Скриване на таба на изпита');
+                    }
+                });
+
+                // Block keyboard shortcuts
+                this.addListener(document, 'keydown', (e) => {
+                    const blocked = this.checkBlockedShortcut(e);
+                    if (blocked) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        this.showRedScreen(`Опит за използване на ${blocked}`);
+                        return false;
+                    }
+                }, true);
+
+                // Block navigation attempts
+                this.addListener(window, 'beforeunload', (e) => {
+                    if (this.isExamModalActive) {
+                        e.preventDefault();
+                        e.returnValue = 'ИЗПИТ В ХОД - НАПУСКАНЕТО Е ЗАБРАНЕНО!';
+
+                        setTimeout(() => {
+                            if (!this.isRedScreenVisible) {
+                                this.showRedScreen('Опит за напускане на страницата');
+                            }
+                        }, 1);
+
+                        return 'ИЗПИТ В ХОД - НАПУСКАНЕТО Е ЗАБРАНЕНО!';
+                    }
+                });
+
+                // Continuous focus monitoring
+                this.focusMonitor = setInterval(() => {
+                    if (this.isExamModalActive && !document.hasFocus() && !this.isRedScreenVisible) {
+                        console.log('🚨 Focus lost in interval check');
+                        this.showRedScreen('Загуба на фокус от изпита');
+                    }
+                }, 100);
+            }
+
+            /**
+             * Check if keyboard shortcut should be blocked
+             */
+            checkBlockedShortcut(e) {
+                const shortcuts = {
+                    'F5': () => e.code === 'F5',
+                    'Ctrl+R': () => e.ctrlKey && e.code === 'KeyR',
+                    'F12': () => e.code === 'F12',
+                    'Ctrl+Shift+I': () => e.ctrlKey && e.shiftKey && e.code === 'KeyI',
+                    'Ctrl+T': () => e.ctrlKey && e.code === 'KeyT',
+                    'Ctrl+N': () => e.ctrlKey && e.code === 'KeyN',
+                    'Ctrl+W': () => e.ctrlKey && e.code === 'KeyW',
+                    'Alt+Tab': () => e.altKey && e.code === 'Tab',
+                    'Ctrl+Tab': () => e.ctrlKey && e.code === 'Tab',
+                    'Alt+F4': () => e.altKey && e.code === 'F4'
+                };
+
+                for (const [name, check] of Object.entries(shortcuts)) {
+                    if (check()) {
+                        return name;
+                    }
+                }
+                return null;
+            }
+
+            /**
+             * Show RED SCREEN modal over exam modal
+             */
+            showRedScreen(violation) {
+                if (this.isRedScreenVisible) return;
+
+                this.violations++;
+                this.isRedScreenVisible = true;
+
+                console.log(`🚨 RED SCREEN: ${violation}`);
+
+                // Report to server
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('suspicious-activity', {
+                        activity: violation,
+                        type: 'modal_violation',
+                        severity: 'critical',
+                        timestamp: Date.now(),
+                        violationCount: this.violations
+                    });
+                }
+
+                // Create red screen modal
+                this.createRedScreenModal(violation);
+            }
+
+            /**
+             * Create red screen modal
+             */
+            createRedScreenModal(violation) {
+                this.redScreenModal = document.createElement('div');
+                this.redScreenModal.id = 'redScreenModal';
+                this.redScreenModal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(220, 53, 69, 0.98) !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-family: Arial, sans-serif !important;
+            color: white !important;
+        `;
+
+                this.redScreenModal.innerHTML = `
+            <div style="background-color: #dc3545; padding: 50px; border-radius: 15px; text-align: center;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 600px; width: 90%;">
+                <div style="font-size: 36px; font-weight: bold; margin-bottom: 30px;">
+                    🚨 ИЗПИТЪТ Е БЛОКИРАН 🚨
+                </div>
+                <div style="font-size: 20px; margin-bottom: 40px; line-height: 1.6;">
+                    <strong>Засечено нарушение:</strong><br>
+                    ${violation}<br><br>
+                    <div style="font-size: 16px; color: #ffcccc;">
+                        Нарушения: ${this.violations}<br>
+                        Всички действия са блокирани.
+                    </div>
+                </div>
+                <div style="display: flex; gap: 30px; justify-content: center;">
+                    <button id="continueExamFromRed" style="padding: 20px 40px; font-size: 18px; font-weight: bold;
+                            border: none; border-radius: 8px; cursor: pointer; background-color: #28a745; color: white;">
+                        ✅ Продължи изпита
+                    </button>
+                    <button id="exitExamFromRed" style="padding: 20px 40px; font-size: 18px; font-weight: bold;
+                            border: none; border-radius: 8px; cursor: pointer; background-color: #6c757d; color: white;">
+                        ❌ Напусни изпита
+                    </button>
+                </div>
+            </div>
+        `;
+
+                document.body.appendChild(this.redScreenModal);
+                this.setupRedScreenButtons();
+            }
+
+            /**
+             * Setup red screen button handlers
+             */
+            setupRedScreenButtons() {
+                const continueBtn = this.redScreenModal.querySelector('#continueExamFromRed');
+                const exitBtn = this.redScreenModal.querySelector('#exitExamFromRed');
+
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => this.continueExam());
+                }
+
+                if (exitBtn) {
+                    exitBtn.addEventListener('click', () => this.exitExam());
+                }
+            }
+
+            /**
+             * Continue exam - hide red screen
+             */
+            continueExam() {
+                this.hideRedScreen();
+
+                setTimeout(() => {
+                    const codeEditor = this.examModal.querySelector('#modal-code-editor');
+                    if (codeEditor) {
+                        codeEditor.focus();
+                    }
+                }, 100);
+
+                console.log('🟢 Continued exam from red screen');
+            }
+
+            /**
+             * Exit exam
+             */
+            exitExam() {
+                if (confirm('Сигурни ли сте че искате да напуснете изпита?')) {
+                    if (this.socket && this.socket.connected) {
+                        this.socket.emit('exam-complete', {
+                            reason: 'student_exit_violations',
+                            violationCount: this.violations,
+                            timestamp: Date.now()
+                        });
+                    }
+
+                    this.endExam();
+                    alert('Изпитът е прекратен.');
+                    window.close();
+                }
+            }
+
+            /**
+             * Hide red screen
+             */
+            hideRedScreen() {
+                this.isRedScreenVisible = false;
+
+                if (this.redScreenModal) {
+                    this.redScreenModal.remove();
+                    this.redScreenModal = null;
+                }
+
+                console.log('🟢 Red screen hidden');
+            }
+
+            /**
+             * Workspace functions
+             */
+            saveCode() {
+                const codeEditor = this.examModal.querySelector('#modal-code-editor');
+                if (!codeEditor) return;
+
+                const code = codeEditor.value;
+
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('code-update', {
+                        code: code,
+                        filename: 'main.js',
+                        timestamp: Date.now()
+                    });
+                }
+
+                this.updateLastSaved('Сега');
+                console.log('💾 Code saved');
+            }
+
+            runCode() {
+                const codeEditor = this.examModal.querySelector('#modal-code-editor');
+                const outputEl = this.examModal.querySelector('#modal-code-output');
+
+                if (!codeEditor || !outputEl) return;
+
+                const code = codeEditor.value;
+                outputEl.innerHTML = '';
+
+                const originalLog = console.log;
+                const outputs = [];
+
+                console.log = (...args) => {
+                    outputs.push(args.join(' '));
+                    originalLog.apply(console, args);
+                };
+
+                try {
+                    eval(code);
+
+                    if (outputs.length > 0) {
+                        outputs.forEach(output => {
+                            const outputLine = document.createElement('div');
+                            outputLine.style.cssText = 'margin-bottom: 5px; color: #333;';
+                            outputLine.textContent = output;
+                            outputEl.appendChild(outputLine);
+                        });
+                    } else {
+                        outputEl.innerHTML = '<div style="color: #666; font-style: italic;">Кодът се изпълни без изход</div>';
+                    }
+                } catch (error) {
+                    const errorEl = document.createElement('div');
+                    errorEl.style.cssText = 'color: #dc3545; font-weight: bold;';
+                    errorEl.textContent = `Грешка: ${error.message}`;
+                    outputEl.appendChild(errorEl);
+                }
+
+                console.log = originalLog;
+            }
+
+            clearOutput() {
+                const outputEl = this.examModal.querySelector('#modal-code-output');
+                if (outputEl) {
+                    outputEl.innerHTML = '<div style="color: #666; font-style: italic;">Изходът от вашия код ще се покаже тук...</div>';
+                }
+            }
+
+            finishExam() {
+                if (confirm('Сигурни ли сте че искате да приключите изпита?')) {
+                    this.saveCode();
+
+                    if (this.socket && this.socket.connected) {
+                        this.socket.emit('exam-complete', {
+                            reason: 'student_finish',
+                            timestamp: Date.now()
+                        });
+                    }
+
+                    this.endExam();
+                    alert('🎉 Изпитът е завършен успешно!');
+                }
+            }
+
+            handleCodeChange() {
+                this.updateLastSaved('Незапазено');
+            }
+
+            updateLastSaved(status) {
+                const lastSavedEl = this.examModal.querySelector('#modal-last-saved');
+                if (lastSavedEl) {
+                    const time = status === 'Сега' ? new Date().toLocaleTimeString() : status;
+                    lastSavedEl.textContent = `Последно запазено: ${time}`;
+                }
+            }
+
+            /**
+             * Start exam timer
+             */
+            startTimer(timeLeft) {
+                const timerEl = this.examModal.querySelector('#modal-timer');
+                if (!timerEl) return;
+
+                this.examTimer = setInterval(() => {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                    if (timeLeft < 15 * 60 * 1000) {
+                        timerEl.style.background = '#dc3545';
+                    } else if (timeLeft < 30 * 60 * 1000) {
+                        timerEl.style.background = '#ffc107';
+                        timerEl.style.color = '#000';
+                    }
+
+                    timeLeft -= 1000;
+
+                    if (timeLeft <= 0) {
+                        this.handleTimeExpired();
+                    }
+                }, 1000);
+            }
+
+            handleTimeExpired() {
+                if (this.examTimer) {
+                    clearInterval(this.examTimer);
+                }
+                this.endExam();
+                alert('⏰ Времето за изпита изтече!');
+            }
+
+            endExam() {
+                this.isExamModalActive = false;
+
+                if (this.examTimer) {
+                    clearInterval(this.examTimer);
+                }
+
+                if (this.focusMonitor) {
+                    clearInterval(this.focusMonitor);
+                }
+
+                this.eventListeners.forEach(({ element, type, handler, capture }) => {
+                    element.removeEventListener(type, handler, capture);
+                });
+                this.eventListeners = [];
+
+                if (this.examModal) {
+                    this.examModal.remove();
+                }
+                if (this.redScreenModal) {
+                    this.redScreenModal.remove();
+                }
+
+                this.showCompletionScreen();
+                console.log('🏁 Exam ended');
+            }
+
+            showCompletionScreen() {
+                document.body.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100vh; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif;">
+                <div style="background: white; padding: 50px; border-radius: 15px; text-align: center; 
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 500px;">
+                    <h1 style="color: #28a745; margin-bottom: 20px;">🎉 Изпитът е завършен!</h1>
+                    <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
+                        Благодарим за участието в изпита!
+                    </p>
+                    <div style="color: #999; margin-bottom: 30px;">
+                        <div>Приключено в: ${new Date().toLocaleString()}</div>
+                        <div>Общо нарушения: ${this.violations}</div>
+                    </div>
+                    <button onclick="window.close()" style="background: #007bff; color: white; border: none; 
+                            padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                        Затвори прозореца
+                    </button>
+                </div>
+            </div>
+        `;
+            }
+
+            addListener(element, type, handler, capture = false) {
+                element.addEventListener(type, handler, capture);
+                this.eventListeners.push({ element, type, handler, capture });
+            }
+
+            getStats() {
+                return {
+                    isExamModalActive: this.isExamModalActive,
+                    isRedScreenVisible: this.isRedScreenVisible,
+                    violations: this.violations,
+                    eventListeners: this.eventListeners.length
+                };
+            }
+        }
+
+        // Export for global use
+        window.ExamModalSystem = ExamModalSystem;
+    </script>
+
     <script src="js/main.js"></script>
 
+    <!-- Debug script loading -->
     <script>
-        // Global exam functions for HTML onclick handlers
-        function joinExam() {
-            if (window.examSystem) {
-                window.examSystem.handleLogin();
+        // Check if classes are loaded
+        setTimeout(() => {
+            console.log('🔍 ExamModalSystem loaded:', !!window.ExamModalSystem);
+            console.log('🔍 ExamSystem loaded:', !!window.examSystem);
+        }, 100);
+    </script>
+
+    <script>
+        // Additional client-side validation
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameInput = document.getElementById('student-name');
+            const classInput = document.getElementById('student-class');
+            const loginBtn = document.getElementById('login-btn');
+
+            // Real-time input validation
+            function validateInputs() {
+                const name = nameInput.value.trim();
+                const className = classInput.value.trim();
+
+                const isValidName = name.length >= 2 && /^[А-Яа-я\s]+$/.test(name);
+                const isValidClass = className.length >= 2;
+
+                loginBtn.disabled = !(isValidName && isValidClass);
+
+                // Visual feedback
+                nameInput.style.borderColor = name && !isValidName ? '#dc3545' : '';
+                classInput.style.borderColor = className && !isValidClass ? '#dc3545' : '';
+            }
+
+            nameInput.addEventListener('input', validateInputs);
+            classInput.addEventListener('input', validateInputs);
+
+            // Initial validation
+            validateInputs();
+
+            // Auto-uppercase class input
+            classInput.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+            });
+
+            // Prevent form submission on Enter if invalid
+            [nameInput, classInput].forEach(input => {
+                input.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!loginBtn.disabled) {
+                            joinExam();
+                        }
+                    }
+                });
+            });
+        });
+
+        // Show loading animation
+        function showLoading() {
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.innerHTML = '⏳ Влизане...';
+                loginBtn.disabled = true;
             }
         }
 
-        function finishExam() {
-            if (window.examSystem) {
-                window.examSystem.finishExam();
+        // Hide loading animation
+        function hideLoading() {
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.innerHTML = '🚀 Влез в изпита';
+                loginBtn.disabled = false;
             }
         }
+
+        // Global function for HTML onclick handlers
+        function joinExam() {
+            if (window.examSystem) {
+                showLoading();
+                window.examSystem.handleLogin();
+
+                // Hide loading after 5 seconds if no response
+                setTimeout(() => {
+                    if (document.getElementById('login-btn').disabled) {
+                        hideLoading();
+                    }
+                }, 5000);
+            } else {
+                alert('Системата за изпити не е заредена. Моля презаредете страницата.');
+            }
+        }
+
+        // Prevent accidental page leave during login
+        window.addEventListener('beforeunload', function (e) {
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn && loginBtn.disabled) {
+                e.preventDefault();
+                e.returnValue = 'Влизането в изпита е в ход...';
+                return 'Влизането в изпита е в ход...';
+            }
+        });
+
+        // Debug info (remove in production)
+        console.log('🎓 Exam Monitor v2 - Modal System');
+        console.log('📅 Build date:', new Date().toISOString());
+        console.log('🌐 User agent:', navigator.userAgent);
     </script>
 </body>
 
