@@ -5,7 +5,8 @@
 import { LoginForm } from './LoginForm.js';
 import { ExamTimer } from './ExamTimer.js';
 import { CodeEditor } from './CodeEditor.js';
-import { ExamExitManager } from './ExamExitManager.js';
+import { ConsoleOutput } from './ConsoleOutput.js';
+import { ExamExitManager } from '../ExamExitManager.js';
 
 export class ExamWorkspace {
     constructor(websocketService, examService, antiCheatCore) {
@@ -24,7 +25,7 @@ export class ExamWorkspace {
             loginForm: null,
             examTimer: null,
             codeEditor: null,
-            consoleOutput: null
+            consoleOutput: null  // Now using the new component
         };
 
         // Cache DOM containers
@@ -82,6 +83,12 @@ export class ExamWorkspace {
             this.updateLastSavedIndicator();
         });
 
+        // Initialize console output component
+        this.components.consoleOutput = new ConsoleOutput(this.containers.output, {
+            maxOutputLines: 100,
+            clearOnRun: true
+        });
+
         console.log('🧩 Components initialized');
     }
 
@@ -119,6 +126,31 @@ export class ExamWorkspace {
             this.handleExamTimeExpired();
         });
 
+        // UI buttons
+        this.setupUIButtons();
+    }
+
+    /**
+     * Setup UI button handlers
+     */
+    setupUIButtons() {
+        // Run code button
+        const runBtn = document.getElementById('run-code-btn');
+        if (runBtn) {
+            runBtn.addEventListener('click', () => {
+                const code = this.components.codeEditor.getCode();
+                this.handleRunCode({ code });
+            });
+        }
+
+        // Clear output button
+        const clearBtn = document.getElementById('clear-output-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.components.consoleOutput.clear();
+            });
+        }
+
         // Finish exam button
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
@@ -132,66 +164,93 @@ export class ExamWorkspace {
      * Setup fullscreen handling
      */
     setupFullscreenHandling() {
-        // Monitor fullscreen changes
+        // Fullscreen change events
         document.addEventListener('fullscreenchange', () => {
             this.handleFullscreenChange();
         });
 
-        // Setup fullscreen violation tracking
-        document.addEventListener('visibilitychange', () => {
-            if (this.state.isExamActive && document.hidden) {
-                this.reportSuspiciousActivity('window_blur', { duration: 'unknown' });
+        document.addEventListener('fullscreenerror', (event) => {
+            console.error('Fullscreen error:', event);
+            this.handleFullscreenError(event);
+        });
+
+        // Exit fullscreen prevention
+        document.addEventListener('keydown', (e) => {
+            if (this.state.isFullscreenActive && e.key === 'Escape') {
+                e.preventDefault();
+                console.warn('🔒 ESC blocked during exam');
             }
         });
     }
 
     /**
-     * Handle new session creation
+     * Handle login success
      */
-    async handleNewSession(data) {
-        console.log('🆕 New session created:', data.sessionId);
+    async handleLoginSuccess(data) {
+        const { studentName, studentClass } = data;
 
-        // Start exam
-        this.examService.startExam({
-            sessionId: data.sessionId,
-            timeLeft: data.timeLeft,
-            lastCode: ''
-        });
+        // Initialize exam session
+        await this.examService.startSession(studentName, studentClass);
 
-        await this.enterFullscreenMode();
+        // Enter fullscreen
+        await this.enterFullscreen();
+
+        // Switch to exam view
         this.switchToExamView();
     }
 
     /**
-     * Handle session restoration
+     * Handle new session creation
      */
-    async handleSessionRestore(data) {
-        console.log('🔄 Session restored:', data.sessionId);
+    handleNewSession(data) {
+        const { sessionId, timeLeft } = data;
 
-        // Update exam service
-        this.examService.updateSession({
-            sessionId: data.sessionId,
-            timeLeft: data.timeLeft,
-            lastCode: data.lastCode || ''
+        this.examService.setSessionData({
+            sessionId,
+            timeLeft,
+            isActive: true
         });
 
-        await this.enterFullscreenMode();
-        this.switchToExamView(data.lastCode);
+        console.log(`📝 New session created: ${sessionId}`);
     }
 
     /**
-     * Handle successful login (delegates to specific handlers)
+     * Handle session restore
      */
-    handleLoginSuccess(data) {
-        this.components.loginForm.handleLoginSuccess(data.data, data.type);
+    handleSessionRestore(data) {
+        const { sessionId, lastCode, timeLeft } = data;
+
+        console.log(`♻️ Session restored: ${sessionId}`);
+
+        // Restore exam state
+        this.examService.setSessionData({
+            sessionId,
+            timeLeft,
+            isActive: true
+        });
+
+        // Enter fullscreen
+        this.enterFullscreen();
+
+        // Switch to exam view with restored code
+        this.switchToExamView(lastCode);
     }
 
     /**
      * Enter fullscreen mode
      */
-    async enterFullscreenMode() {
+    async enterFullscreen() {
         try {
-            await document.documentElement.requestFullscreen();
+            const elem = document.documentElement;
+
+            if (elem.requestFullscreen) {
+                await elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                await elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                await elem.msRequestFullscreen();
+            }
+
             this.state.isFullscreenActive = true;
 
             // Activate anti-cheat
@@ -249,74 +308,18 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle code execution
+     * Handle code execution - NOW USING ConsoleOutput component
      */
     handleRunCode(data) {
         const { code } = data;
 
-        try {
-            // Clear previous output
-            this.clearConsoleOutput();
+        // Save code before running
+        this.examService.saveCode(code);
 
-            // Capture console.log
-            const originalLog = console.log;
-            const outputs = [];
+        // Execute using ConsoleOutput component
+        this.components.consoleOutput.execute(code);
 
-            console.log = (...args) => {
-                outputs.push({ type: 'log', content: args.join(' ') });
-                originalLog.apply(console, args);
-            };
-
-            // Execute code
-            eval(code);
-
-            // Restore console.log
-            console.log = originalLog;
-
-            // Display output
-            this.displayConsoleOutput(outputs);
-
-        } catch (error) {
-            console.log = console.log; // Restore if error
-            this.displayConsoleOutput([{
-                type: 'error',
-                content: `Error: ${error.message}`
-            }]);
-        }
-    }
-
-    /**
-     * Display console output
-     */
-    displayConsoleOutput(outputs) {
-        if (outputs.length === 0) {
-            this.containers.output.innerHTML = '<div class="output-placeholder">Code executed without output</div>';
-            return;
-        }
-
-        const outputHtml = outputs.map(output => {
-            const className = `output-line output-${output.type}`;
-            return `<div class="${className}">${this.escapeHtml(output.content)}</div>`;
-        }).join('');
-
-        this.containers.output.innerHTML = outputHtml;
-        this.containers.output.scrollTop = this.containers.output.scrollHeight;
-    }
-
-    /**
-     * Clear console output
-     */
-    clearConsoleOutput() {
-        this.containers.output.innerHTML = '<div class="output-placeholder">Your code output will appear here...</div>';
-    }
-
-    /**
-     * Escape HTML for safe display
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        console.log('▶️ Code executed');
     }
 
     /**
@@ -348,34 +351,32 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle forced disconnection
+     * Handle time warning
      */
-    handleForceDisconnect(data) {
-        this.state.isExamActive = false;
+    handleTimeWarning(data) {
+        const { minutesLeft, message } = data;
 
-        ExamExitManager.handleExamExit(
-            ExamExitManager.getExitReasons().INSTRUCTOR_TERMINATED,
-            { message: data.message || 'Exam terminated by instructor' }
-        );
+        // Show notification
+        if (this.antiCheatCore) {
+            this.antiCheatCore.uiManager.showNotification(message, 'warning');
+        }
+
+        console.log(`⏰ Time warning: ${minutesLeft} minutes left`);
     }
 
     /**
-     * Handle exam expiration from server
-     */
-    handleExamExpired(data) {
-        this.handleExamTimeExpired();
-    }
-
-    /**
-     * Handle fullscreen changes
+     * Handle fullscreen change
      */
     handleFullscreenChange() {
         const isFullscreen = !!document.fullscreenElement;
 
-        if (!isFullscreen && this.state.isExamActive) {
-            this.reportSuspiciousActivity('fullscreen_exit', {
-                timestamp: Date.now()
-            });
+        if (this.state.isExamActive && !isFullscreen) {
+            console.warn('⚠️ Exited fullscreen during exam!');
+
+            // Notify anti-cheat
+            if (this.antiCheatCore) {
+                this.antiCheatCore.handleViolation('fullscreenExit');
+            }
         }
 
         this.state.isFullscreenActive = isFullscreen;
@@ -385,29 +386,36 @@ export class ExamWorkspace {
      * Handle fullscreen error
      */
     handleFullscreenError(error) {
-        console.error('❌ Fullscreen error:', error);
-        this.components.loginForm.showStatus(
-            'Failed to enter fullscreen mode. Please allow fullscreen and try again.',
-            'error'
+        console.error('Fullscreen error:', error);
+
+        // Show error to user
+        if (this.antiCheatCore) {
+            this.antiCheatCore.uiManager.showNotification(
+                'Fullscreen mode is required for the exam!',
+                'error'
+            );
+        }
+    }
+
+    /**
+     * Handle exam expired
+     */
+    handleExamExpired(data) {
+        this.state.isExamActive = false;
+        ExamExitManager.handleExamExit(
+            ExamExitManager.getExitReasons().TIME_EXPIRED,
+            data
         );
     }
 
     /**
-     * Handle time warnings
+     * Handle force disconnect
      */
-    handleTimeWarning(data) {
-        // Could show notification here if needed
-        console.log('⏰ Time warning:', data.message);
-    }
-
-    /**
-     * Report suspicious activity
-     */
-    reportSuspiciousActivity(type, data) {
-        this.websocketService.reportSuspiciousActivity(
-            this.examService.getState().sessionId,
-            type,
-            'medium'
+    handleForceDisconnect(data) {
+        this.state.isExamActive = false;
+        ExamExitManager.handleExamExit(
+            ExamExitManager.getExitReasons().TEACHER_FORCE,
+            data
         );
     }
 
@@ -417,33 +425,27 @@ export class ExamWorkspace {
     updateLastSavedIndicator() {
         const indicator = document.getElementById('last-saved-display');
         if (indicator) {
-            const time = new Date().toLocaleTimeString();
-            indicator.textContent = `Last saved: ${time}`;
+            const now = new Date().toLocaleTimeString();
+            indicator.textContent = `Last saved: ${now}`;
         }
     }
 
     /**
-     * Get workspace state
-     */
-    getState() {
-        return {
-            ...this.state,
-            examState: this.examService.getState(),
-            hasUnsavedChanges: this.components.codeEditor?.hasUnsaved() || false
-        };
-    }
-
-    /**
-     * Destroy workspace and all components
+     * Cleanup on destroy
      */
     destroy() {
+        // Cleanup components
         Object.values(this.components).forEach(component => {
-            if (component && component.destroy) {
+            if (component && typeof component.destroy === 'function') {
                 component.destroy();
             }
         });
 
-        this.state.isExamActive = false;
+        // Exit fullscreen
+        if (document.exitFullscreen && this.state.isFullscreenActive) {
+            document.exitFullscreen();
+        }
+
         console.log('🧹 ExamWorkspace destroyed');
     }
 }
