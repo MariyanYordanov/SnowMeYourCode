@@ -1,0 +1,35 @@
+<div class="exit-overlay">
+    <div class="exit-dialog {{type}}">
+        <div class="exit-header">
+            <div class="exit-icon">{{icon}}</div>
+            <h2 class="exit-title">{{title}}</h2>
+        </div>
+
+        <div class="exit-body">
+            <p class="exit-message">{{message}}</p>
+
+            {{#details}}
+            <div class="exit-details">
+                <p class="detail-item"><strong>Причина:</strong> {{violation}}</p>
+                <p class="detail-item"><strong>Време:</strong> {{timestamp}}</p>
+            </div>
+            {{/details}}
+        </div>
+
+        <div class="exit-footer">
+            <div class="exit-info">
+                Време на приключване: {{formattedTime}}
+            </div>
+
+            {{#showCloseButton}}
+            <button class="btn btn-close-exit">Затвори прозореца</button>
+            {{/showCloseButton}}
+
+            {{#autoClose}}
+            <div class="auto-close-info">
+                Прозорецът ще се затвори автоматично след <span class="countdown">{{autoCloseDelay}}</span> секунди
+            </div>
+            {{/autoClose}}
+        </div>
+    </div>
+</div>
