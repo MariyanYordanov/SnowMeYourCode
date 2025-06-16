@@ -373,28 +373,32 @@ describe('WebSocketHandler', () => {
                 clientSocket.emit(SOCKET_EVENTS.HEARTBEAT);
             });
         });
-
+        
         it('should handle time warnings', (done) => {
             clientSocket = ioClient(`http://localhost:${port}`);
 
             clientSocket.on(SOCKET_EVENTS.TIME_WARNING, (data) => {
-                // Success! Test passes
+                console.log('✅ TIME WARNING RECEIVED:', data);
                 expect(data.minutesLeft).to.be.a('number');
+                expect(data.minutesLeft).to.equal(5); // Очакваме точно 5 минути
                 expect(data.message).to.contain('Внимание');
                 done();
             });
 
             clientSocket.on(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, async (data) => {
                 try {
-                    // Get session and modify it to trigger warning
+                    // Get session and modify it
                     const session = sessionManager.sessions.get(data.sessionId);
+                    if (!session) {
+                        return done(new Error('Session not found'));
+                    }
 
-                    // Set to expire in EXACTLY 5 minutes (matches timeWarnings array)
-                    session.examEndTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+                    // Set to expire in 5 minutes and 30 seconds to account for timing delays
+                    // This ensures we get exactly 5 minutes when checkTimeWarnings() runs
+                    session.examEndTime = new Date(Date.now() + 5 * 60 * 1000 + 30 * 1000).toISOString();
 
-                    // Give time for socket registration
+                    // Wait for socket registration then trigger check
                     setTimeout(() => {
-                        // Manually call checkTimeWarnings - this WILL trigger the event
                         webSocketHandler.checkTimeWarnings();
                     }, 500);
 

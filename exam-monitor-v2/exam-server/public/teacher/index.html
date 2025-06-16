@@ -17,7 +17,7 @@
             color: white;
             padding: 20px;
             border-radius: 8px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .header h1 {
@@ -29,6 +29,129 @@
             margin-top: 5px;
             opacity: 0.9;
             font-size: 14px;
+        }
+
+        /* NEW: Connection status and session controls */
+        .dashboard-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .connection-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            transition: background-color 0.3s;
+        }
+
+        .connection-indicator.connected {
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-indicator.reconnecting {
+            background-color: #ffc107;
+            animation: flash 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .session-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: #1e7e34;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c82333;
         }
 
         .stats-container {
@@ -141,20 +264,6 @@
         .status-indicator.completed {
             background-color: #6c757d;
             animation: none;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
-            }
         }
 
         .student-info {
@@ -298,13 +407,102 @@
         .no-students h3 {
             margin-bottom: 10px;
         }
+
+        /* NEW: Notification system */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #28a745;
+        }
+
+        .notification.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .notification.error {
+            background-color: #dc3545;
+        }
+
+        .notification.info {
+            background-color: #17a2b8;
+        }
+
+        /* NEW: Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ccc;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
         <h1>Teacher Dashboard - Exam Monitor v2</h1>
-        <div class="subtitle">🔒 Fullscreen Mode • Real-time monitoring with enhanced security</div>
+        <div class="subtitle">🔒 Fullscreen Mode • Smart reconnection & session management</div>
+    </div>
+
+    <!-- NEW: Dashboard Controls -->
+    <div class="dashboard-controls">
+        <div class="connection-status">
+            <div class="connection-indicator" id="connection-indicator"></div>
+            <span id="connection-text">Connecting...</span>
+            <span id="last-update"></span>
+        </div>
+
+        <div class="session-controls">
+            <button class="control-btn btn-success" id="new-session-btn" title="Start new exam session">
+                🆕 New Session
+            </button>
+            <button class="control-btn btn-primary" id="refresh-btn" title="Refresh data">
+                🔄 Refresh
+            </button>
+            <button class="control-btn btn-warning" id="export-btn" title="Export exam data">
+                📊 Export
+            </button>
+            <button class="control-btn btn-danger" id="emergency-stop-btn" title="Emergency stop all exams">
+                🛑 Emergency Stop
+            </button>
+        </div>
     </div>
 
     <div class="stats-container">
@@ -335,10 +533,19 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        class TeacherDashboard {
+        class SmartTeacherDashboard {
             constructor() {
-                this.socket = io();
+                this.socket = null;
                 this.students = new Map();
+                this.connectionState = 'disconnected';
+                this.lastDataUpdate = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000;
+                this.dataRefreshInterval = null;
+                this.heartbeatInterval = null;
+                this.isInitialized = false;
+
                 this.stats = {
                     active: 0,
                     disconnected: 0,
@@ -346,14 +553,73 @@
                     completed: 0
                 };
 
-                this.initializeSocket();
-                this.startAutoRefresh();
+                this.initializeUI();
+                this.connectToServer();
             }
 
-            initializeSocket() {
-                this.socket.emit('teacher-join');
+            /**
+             * Initialize UI event handlers
+             */
+            initializeUI() {
+                // Control buttons
+                document.getElementById('new-session-btn').addEventListener('click', () => {
+                    this.startNewSession();
+                });
 
-                // Basic student events
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.manualRefresh();
+                });
+
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    this.exportData();
+                });
+
+                document.getElementById('emergency-stop-btn').addEventListener('click', () => {
+                    this.emergencyStop();
+                });
+
+                console.log('✅ Smart Teacher Dashboard UI initialized');
+            }
+
+            /**
+             * Connect to server with smart reconnection
+             */
+            connectToServer() {
+                this.updateConnectionStatus('connecting');
+
+                // Disconnect existing socket if any
+                if (this.socket) {
+                    this.socket.removeAllListeners();
+                    this.socket.disconnect();
+                }
+
+                this.socket = io({
+                    transports: ['websocket', 'polling'],
+                    timeout: 10000,
+                    forceNew: true
+                });
+
+                this.setupSocketHandlers();
+            }
+
+            /**
+             * Setup socket event handlers
+             */
+            setupSocketHandlers() {
+                // Connection events
+                this.socket.on('connect', () => {
+                    this.handleConnection();
+                });
+
+                this.socket.on('disconnect', (reason) => {
+                    this.handleDisconnection(reason);
+                });
+
+                this.socket.on('connect_error', (error) => {
+                    this.handleConnectionError(error);
+                });
+
+                // Teacher-specific events
                 this.socket.on('all-students', (students) => {
                     this.updateAllStudents(students);
                 });
@@ -374,7 +640,6 @@
                     this.addSuspiciousActivity(data);
                 });
 
-                // NEW: Fullscreen-specific events
                 this.socket.on('student-fullscreen-status', (data) => {
                     this.updateFullscreenStatus(data);
                 });
@@ -387,15 +652,224 @@
                     this.handleStudentTermination(data);
                 });
 
-                this.socket.on('connect', () => {
-                    console.log('🔗 Teacher dashboard connected');
-                });
+                console.log('🔗 Socket handlers configured');
+            }
 
-                this.socket.on('disconnect', () => {
-                    console.log('🔌 Teacher dashboard disconnected');
+            /**
+             * Handle successful connection
+             */
+            handleConnection() {
+                console.log('✅ Connected to server');
+                this.updateConnectionStatus('connected');
+                this.reconnectAttempts = 0;
+
+                // Send teacher join only once on connect
+                if (!this.isInitialized) {
+                    this.socket.emit('teacher-join');
+                    this.isInitialized = true;
+                    this.showNotification('Connected to exam server', 'success');
+                }
+
+                // Setup smart data refresh (only when needed)
+                this.setupSmartRefresh();
+                this.setupHeartbeat();
+            }
+
+            /**
+             * Handle disconnection
+             */
+            handleDisconnection(reason) {
+                console.warn('🔌 Disconnected:', reason);
+                this.updateConnectionStatus('disconnected');
+                this.clearIntervals();
+
+                // Don't auto-reconnect for intentional disconnects
+                if (reason === 'io server disconnect' || reason === 'client namespace disconnect') {
+                    this.showNotification('Disconnected from server', 'warning');
+                    return;
+                }
+
+                // Auto-reconnect for network issues
+                this.attemptReconnection();
+            }
+
+            /**
+             * Handle connection errors
+             */
+            handleConnectionError(error) {
+                console.error('❌ Connection error:', error);
+                this.updateConnectionStatus('error');
+                this.attemptReconnection();
+            }
+
+            /**
+             * Attempt smart reconnection
+             */
+            attemptReconnection() {
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    this.showNotification('Failed to reconnect. Please refresh the page.', 'error');
+                    return;
+                }
+
+                this.reconnectAttempts++;
+                this.updateConnectionStatus('reconnecting');
+
+                const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
+
+                console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+                setTimeout(() => {
+                    this.connectToServer();
+                }, delay);
+            }
+
+            /**
+             * Setup smart data refresh (only when tab is visible and data is stale)
+             */
+            setupSmartRefresh() {
+                // Clear existing interval
+                if (this.dataRefreshInterval) {
+                    clearInterval(this.dataRefreshInterval);
+                }
+
+                // Only refresh when page is visible and data is older than 10 seconds
+                this.dataRefreshInterval = setInterval(() => {
+                    if (document.hidden) return; // Don't refresh when tab is not visible
+
+                    const now = Date.now();
+                    if (!this.lastDataUpdate || (now - this.lastDataUpdate) > 10000) {
+                        this.requestDataUpdate();
+                    }
+                }, 15000); // Check every 15 seconds
+            }
+
+            /**
+             * Setup heartbeat to detect connection issues
+             */
+            setupHeartbeat() {
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                }
+
+                this.heartbeatInterval = setInterval(() => {
+                    if (this.socket?.connected) {
+                        this.socket.emit('heartbeat');
+                    }
+                }, 30000); // Every 30 seconds
+            }
+
+            /**
+             * Request data update (smart refresh)
+             */
+            requestDataUpdate() {
+                if (this.socket?.connected) {
+                    console.log('🔄 Requesting data update');
+                    this.socket.emit('teacher-join'); // This will trigger 'all-students' response
+                }
+            }
+
+            /**
+             * Manual refresh triggered by user
+             */
+            manualRefresh() {
+                if (!this.socket?.connected) {
+                    this.showNotification('Not connected to server', 'warning');
+                    return;
+                }
+
+                this.showNotification('Refreshing data...', 'info');
+                this.socket.emit('teacher-join');
+
+                // Add loading state
+                document.body.classList.add('loading');
+                setTimeout(() => {
+                    document.body.classList.remove('loading');
+                }, 1000);
+            }
+
+            /**
+             * Start new exam session
+             */
+            startNewSession() {
+                if (confirm('Start a new exam session? This will clear current session data.')) {
+                    // Implementation for starting new session
+                    this.showNotification('New session started', 'success');
+                    this.socket.emit('new-exam-session');
+                }
+            }
+
+            /**
+             * Export exam data
+             */
+            exportData() {
+                // Implementation for exporting data
+                this.showNotification('Exporting data...', 'info');
+                // Create and download export file
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    students: Array.from(this.students.values()),
+                    stats: this.stats
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `exam-data-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            /**
+             * Emergency stop all exams
+             */
+            emergencyStop() {
+                if (confirm('EMERGENCY STOP: This will terminate all active exams. Are you sure?')) {
+                    this.socket.emit('emergency-stop-all');
+                    this.showNotification('Emergency stop initiated', 'warning');
+                }
+            }
+
+            /**
+             * Update connection status UI
+             */
+            updateConnectionStatus(status) {
+                this.connectionState = status;
+                const indicator = document.getElementById('connection-indicator');
+                const text = document.getElementById('connection-text');
+
+                indicator.className = 'connection-indicator';
+
+                switch (status) {
+                    case 'connected':
+                        indicator.classList.add('connected');
+                        text.textContent = 'Connected';
+                        break;
+                    case 'connecting':
+                        text.textContent = 'Connecting...';
+                        break;
+                    case 'reconnecting':
+                        indicator.classList.add('reconnecting');
+                        text.textContent = `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`;
+                        break;
+                    case 'disconnected':
+                        text.textContent = 'Disconnected';
+                        break;
+                    case 'error':
+                        text.textContent = 'Connection Error';
+                        break;
+                }
+
+                // Update control buttons state
+                const buttons = document.querySelectorAll('.control-btn');
+                buttons.forEach(btn => {
+                    btn.disabled = status !== 'connected';
                 });
             }
 
+            /**
+             * Update all students data
+             */
             updateAllStudents(students) {
                 this.students.clear();
                 students.forEach(student => {
@@ -408,8 +882,13 @@
                 });
                 this.renderStudents();
                 this.updateStats();
+                this.lastDataUpdate = Date.now();
+                this.updateLastUpdateTime();
             }
 
+            /**
+             * Add new student
+             */
             addStudent(data) {
                 this.students.set(data.sessionId, {
                     ...data,
@@ -422,8 +901,12 @@
                 });
                 this.renderStudents();
                 this.updateStats();
+                this.showNotification(`Student joined: ${data.studentName}`, 'info');
             }
 
+            /**
+             * Update student status
+             */
             updateStudentStatus(sessionId, status, data = {}) {
                 const student = this.students.get(sessionId);
                 if (student) {
@@ -437,6 +920,9 @@
                 }
             }
 
+            /**
+             * Update student code
+             */
             updateStudentCode(data) {
                 const student = this.students.get(data.sessionId);
                 if (student) {
@@ -446,6 +932,9 @@
                 }
             }
 
+            /**
+             * Add suspicious activity
+             */
             addSuspiciousActivity(data) {
                 const student = this.students.get(data.sessionId);
                 if (student) {
@@ -464,10 +953,16 @@
 
                     this.renderStudent(student);
                     this.updateStats();
+
+                    if (data.severity === 'high' || data.severity === 'critical') {
+                        this.showNotification(`⚠️ ${data.activity}: ${student.studentName}`, 'warning');
+                    }
                 }
             }
 
-            // NEW: Fullscreen-specific methods
+            /**
+             * Update fullscreen status
+             */
             updateFullscreenStatus(data) {
                 const student = this.students.get(data.sessionId);
                 if (student) {
@@ -482,10 +977,12 @@
                     });
 
                     this.renderStudent(student);
-                    console.log(`🔒 Fullscreen ${data.status}: ${student.studentName}`);
                 }
             }
 
+            /**
+             * Handle fullscreen violation
+             */
             handleFullscreenViolation(data) {
                 const student = this.students.get(data.sessionId);
                 if (student) {
@@ -503,39 +1000,28 @@
 
                     this.renderStudent(student);
                     this.updateStats();
-
-                    console.warn(`⚠️ Fullscreen violation: ${student.studentName} - Attempt #${data.attempt}`);
-
-                    // Show browser notification for critical violations
-                    if (data.attempt >= 2) {
-                        this.showNotification(`Security Alert: ${student.studentName} has ${data.attempt} fullscreen violations`);
-                    }
+                    this.showNotification(`🚨 Fullscreen violation: ${student.studentName}`, 'error');
                 }
             }
 
+            /**
+             * Handle student termination
+             */
             handleStudentTermination(data) {
                 const student = this.students.get(data.sessionId);
                 if (student) {
                     student.status = 'terminated';
                     student.terminationReason = data.reason;
-                    student.terminationDetails = data.details;
-
-                    if (!student.activities) student.activities = [];
-                    student.activities.unshift({
-                        type: 'termination',
-                        activity: `Exam terminated: ${data.reason}`,
-                        severity: 'critical',
-                        timestamp: data.timestamp
-                    });
 
                     this.renderStudent(student);
                     this.updateStats();
-
-                    console.error(`🚫 Student terminated: ${student.studentName} - ${data.reason}`);
-                    this.showNotification(`Exam Terminated: ${student.studentName} - ${data.reason}`);
+                    this.showNotification(`🚫 Exam terminated: ${student.studentName}`, 'error');
                 }
             }
 
+            /**
+             * Render all students
+             */
             renderStudents() {
                 const container = document.getElementById('students-container');
 
@@ -559,6 +1045,9 @@
                 `;
             }
 
+            /**
+             * Render individual student
+             */
             renderStudent(student) {
                 const studentCard = document.querySelector(`[data-session-id="${student.sessionId}"]`);
                 if (studentCard) {
@@ -566,6 +1055,9 @@
                 }
             }
 
+            /**
+             * Render student card HTML
+             */
             renderStudentCard(student) {
                 const timeAgo = this.formatTimeAgo(student.lastActivity);
                 const codePreview = student.code ? student.code.substring(0, 200) + (student.code.length > 200 ? '...' : '') : 'No code yet';
@@ -609,6 +1101,9 @@
                 `;
             }
 
+            /**
+             * Render violation alert
+             */
             renderViolationAlert(student) {
                 if (student.violationCount > 0 && student.status !== 'terminated') {
                     return `
@@ -621,6 +1116,9 @@
                 return '';
             }
 
+            /**
+             * Render fullscreen status
+             */
             renderFullscreenStatus(student) {
                 const statusConfig = {
                     'entered': { class: 'active', icon: '🔒', text: 'Fullscreen Active' },
@@ -641,6 +1139,9 @@
                 `;
             }
 
+            /**
+             * Render activity log
+             */
             renderActivityLog(student) {
                 if (!student.activities || student.activities.length === 0) {
                     return '<div class="activity-log">No recent activity</div>';
@@ -663,6 +1164,9 @@
                 `;
             }
 
+            /**
+             * Render student controls
+             */
             renderControls(student) {
                 if (student.status === 'terminated' || student.status === 'completed') {
                     return '';
@@ -680,6 +1184,9 @@
                 `;
             }
 
+            /**
+             * Update statistics
+             */
             updateStats() {
                 const stats = { active: 0, disconnected: 0, violations: 0, completed: 0 };
 
@@ -702,12 +1209,66 @@
                     }
                 }
 
+                this.stats = stats;
+
                 document.getElementById('active-count').textContent = stats.active;
                 document.getElementById('disconnected-count').textContent = stats.disconnected;
                 document.getElementById('violations-count').textContent = stats.violations;
                 document.getElementById('completed-count').textContent = stats.completed;
             }
 
+            /**
+             * Update last update time display
+             */
+            updateLastUpdateTime() {
+                const lastUpdateEl = document.getElementById('last-update');
+                if (this.lastDataUpdate) {
+                    lastUpdateEl.textContent = `• Updated ${this.formatTimeAgo(this.lastDataUpdate)}`;
+                }
+            }
+
+            /**
+             * Show notification
+             */
+            showNotification(message, type = 'info') {
+                // Remove existing notifications
+                const existingNotifications = document.querySelectorAll('.notification');
+                existingNotifications.forEach(notif => notif.remove());
+
+                // Create new notification
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                // Show notification
+                setTimeout(() => notification.classList.add('show'), 100);
+
+                // Hide notification after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+
+            /**
+             * Clear all intervals
+             */
+            clearIntervals() {
+                if (this.dataRefreshInterval) {
+                    clearInterval(this.dataRefreshInterval);
+                    this.dataRefreshInterval = null;
+                }
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = null;
+                }
+            }
+
+            /**
+             * Utility methods
+             */
             getStatusText(status) {
                 const statusMap = {
                     'active': 'Active',
@@ -735,16 +1296,14 @@
                 return new Date(timestamp).toLocaleTimeString();
             }
 
-            startAutoRefresh() {
-                setInterval(() => {
-                    this.socket.emit('teacher-join'); // Refresh data
-                }, 5000);
-            }
-
+            /**
+             * Student action methods
+             */
             warnStudent(sessionId) {
                 const student = this.students.get(sessionId);
                 if (student && confirm(`Send warning to ${student.studentName}?`)) {
                     this.socket.emit('send-warning', { sessionId, message: 'Please follow exam rules' });
+                    this.showNotification(`Warning sent to ${student.studentName}`, 'warning');
                 }
             }
 
@@ -752,29 +1311,25 @@
                 const student = this.students.get(sessionId);
                 if (student && confirm(`Terminate exam for ${student.studentName}?`)) {
                     this.socket.emit('terminate-student', { sessionId, reason: 'instructor_action' });
-                }
-            }
-
-            showNotification(message) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('Exam Monitor Alert', { body: message });
-                } else if ('Notification' in window && Notification.permission !== 'denied') {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            new Notification('Exam Monitor Alert', { body: message });
-                        }
-                    });
+                    this.showNotification(`Terminating exam for ${student.studentName}`, 'error');
                 }
             }
         }
 
-        // Initialize dashboard
-        const teacherDashboard = new TeacherDashboard();
+        // Initialize smart dashboard
+        const teacherDashboard = new SmartTeacherDashboard();
+
+        // Update last update time every minute
+        setInterval(() => {
+            teacherDashboard.updateLastUpdateTime();
+        }, 60000);
 
         // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
+
+        console.log('🚀 Smart Teacher Dashboard loaded and ready');
     </script>
 </body>
 
