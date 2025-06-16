@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { SessionManager, SESSION_STATES, LOGIN_RESULTS } from '../modules/SessionManager.mjs';
+import { VALIDATION_RESULTS } from '../modules/StudentValidator.mjs';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -62,7 +63,7 @@ describe('SessionManager', () => {
             const result = await sessionManager.handleStudentLogin('Invalid Name', '11А');
 
             expect(result.success).to.be.false;
-            expect(result.type).to.equal('student_not_in_class');
+            expect(result.type).to.equal(VALIDATION_RESULTS.STUDENT_NOT_IN_CLASS);
             expect(result.message).to.contain('не е записан в клас');
         });
 
@@ -70,7 +71,7 @@ describe('SessionManager', () => {
             const result = await sessionManager.handleStudentLogin('Иван Иванов', '13А');
 
             expect(result.success).to.be.false;
-            expect(result.type).to.equal('invalid_class');
+            expect(result.type).to.equal(VALIDATION_RESULTS.INVALID_CLASS);
             expect(result.message).to.contain('не е валиден');
         });
 
@@ -86,7 +87,7 @@ describe('SessionManager', () => {
             const result = await sessionManager.handleStudentLogin('Иван Иванов', '11Б');
 
             expect(result.success).to.be.false;
-            expect(result.type).to.equal('student_not_in_class');
+            expect(result.type).to.equal(VALIDATION_RESULTS.STUDENT_NOT_IN_CLASS);
         });
     });
 
