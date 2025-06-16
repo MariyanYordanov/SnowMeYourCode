@@ -59,8 +59,16 @@ describe('SessionManager', () => {
             expect(result.message).to.contain('Изпитът започна');
         });
 
-        it('should reject invalid student name', async () => {
+        it('should reject invalid student name format', async () => {
             const result = await sessionManager.handleStudentLogin('Invalid Name', '11А');
+
+            expect(result.success).to.be.false;
+            expect(result.type).to.equal(VALIDATION_RESULTS.INVALID_STUDENT);
+            expect(result.message).to.contain('само български букви');
+        });
+
+        it('should reject valid name not in class list', async () => {
+            const result = await sessionManager.handleStudentLogin('Васил Петров', '11А');
 
             expect(result.success).to.be.false;
             expect(result.type).to.equal(VALIDATION_RESULTS.STUDENT_NOT_IN_CLASS);

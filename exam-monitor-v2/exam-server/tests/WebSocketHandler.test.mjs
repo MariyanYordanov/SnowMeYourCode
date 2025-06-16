@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-import { io as ioClient } from 'socket.io-client';
+import { io as ioClient } from 'socket.io-client'; // ← FIXED: Правилен import
 import { WebSocketHandler, SOCKET_EVENTS } from '../modules/WebSocketHandler.mjs';
 import { SessionManager } from '../modules/SessionManager.mjs';
 import fs from 'fs/promises';
@@ -377,22 +377,30 @@ describe('WebSocketHandler', () => {
         it('should handle time warnings', (done) => {
             clientSocket = ioClient(`http://localhost:${port}`);
 
-            clientSocket.on(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, async (data) => {
-                // Manually trigger time warning by modifying session
-                const session = sessionManager.sessions.get(data.sessionId);
-                if (session) {
-                    // Set exam to end in 5 minutes (warning threshold)
-                    session.examEndTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-                    // Manually trigger time check
-                    webSocketHandler.checkTimeWarnings();
-                }
-            });
-
             clientSocket.on(SOCKET_EVENTS.TIME_WARNING, (data) => {
+                // Success! Test passes
                 expect(data.minutesLeft).to.be.a('number');
                 expect(data.message).to.contain('Внимание');
                 done();
+            });
+
+            clientSocket.on(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, async (data) => {
+                try {
+                    // Get session and modify it to trigger warning
+                    const session = sessionManager.sessions.get(data.sessionId);
+
+                    // Set to expire in EXACTLY 5 minutes (matches timeWarnings array)
+                    session.examEndTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+                    // Give time for socket registration
+                    setTimeout(() => {
+                        // Manually call checkTimeWarnings - this WILL trigger the event
+                        webSocketHandler.checkTimeWarnings();
+                    }, 500);
+
+                } catch (error) {
+                    done(error);
+                }
             });
 
             clientSocket.on('connect', () => {

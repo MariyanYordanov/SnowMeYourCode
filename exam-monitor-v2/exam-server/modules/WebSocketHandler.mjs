@@ -476,19 +476,28 @@ export class WebSocketHandler {
     }
 
     /**
-     * Check and send time warnings
+     * Check and send time warnings - IMPROVED VERSION
      */
     checkTimeWarnings() {
+        console.log(`🕐 Checking time warnings for ${this.studentSockets.size} students`);
+
         for (const [sessionId, socket] of this.studentSockets.entries()) {
             try {
                 const session = this.sessionManager.sessions.get(sessionId);
-                if (!session) continue;
+                if (!session) {
+                    console.warn(`⚠️ Session not found for time warning check: ${sessionId}`);
+                    continue;
+                }
 
                 const timeLeft = this.sessionManager.calculateRemainingTime(session);
                 const minutesLeft = Math.floor(timeLeft / (1000 * 60));
 
+                console.log(`⏰ Time check for ${sessionId}: ${minutesLeft} minutes left (${timeLeft}ms)`);
+
                 // Check if we should send a warning
                 if (this.timeWarnings.includes(minutesLeft)) {
+                    console.log(`📢 Sending time warning to ${sessionId}: ${minutesLeft} minutes`);
+
                     socket.emit(SOCKET_EVENTS.TIME_WARNING, {
                         minutesLeft,
                         message: `Внимание! Остават ${minutesLeft} минути до края на изпита`,
@@ -506,7 +515,7 @@ export class WebSocketHandler {
                 }
 
             } catch (error) {
-                console.error(`Error checking time warnings for ${sessionId}:`, error);
+                console.error(`❌ Error checking time warnings for ${sessionId}:`, error);
             }
         }
     }
