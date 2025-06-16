@@ -57,17 +57,17 @@ app.use((req, res, next) => {
 // Routes
 app.get('/', (req, res) => {
     res.send(`
-        <h1>Exam Monitor System v2 - Popup Mode</h1>
+        <h1>Exam Monitor System v2 - Fullscreen Mode</h1>
         <p><a href="/teacher">Teacher Dashboard</a></p>
-        <p><a href="/student">Student Login & Launcher</a></p>
-        <p><a href="/test-popup">Test Popup (Debug)</a></p>
+        <p><a href="/student">Student Login & Fullscreen Exam</a></p>
+        <p><a href="/test-fullscreen">Test Fullscreen (Debug)</a></p>
         <hr>
-        <h3>🚀 New Popup Architecture:</h3>
+        <h3>🔒 New Fullscreen Architecture:</h3>
         <ul>
-            <li><strong>/student</strong> - Login form + popup launcher</li>
-            <li><strong>/student-exam-window</strong> - Isolated exam environment</li>
-            <li><strong>Cross-window communication</strong> - Enhanced security</li>
-            <li><strong>Anti-cheat isolation</strong> - Maximum protection</li>
+            <li><strong>/student</strong> - Single page with fullscreen protection</li>
+            <li><strong>Fullscreen API</strong> - Mandatory fullscreen exam mode</li>
+            <li><strong>Focus Lock</strong> - Aggressive window focus control</li>
+            <li><strong>Enhanced Security</strong> - Maximum anti-cheat protection</li>
         </ul>
     `);
 });
@@ -81,94 +81,25 @@ app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/index.html'));
 });
 
-// NEW: Student exam window - popup mode
+// Legacy popup endpoint - redirect to main student page
 app.get('/student-exam-window', (req, res) => {
-    // Validate required URL parameters for security
-    const { sessionId, studentName, studentClass } = req.query;
-
-    if (!sessionId || !studentName || !studentClass) {
-        return res.status(400).send(`
-            <html>
-                <head><title>Exam Error</title></head>
-                <body style="font-family: Arial; padding: 40px; text-align: center;">
-                    <h2>❌ Invalid Exam Parameters</h2>
-                    <p>Missing required session information.</p>
-                    <p><strong>Required:</strong> sessionId, studentName, studentClass</p>
-                    <button onclick="window.close()">Close Window</button>
-                </body>
-            </html>
-        `);
-    }
-
-    // Optional: Validate session exists in SessionManager
-    const session = sessionManager.sessions.get(sessionId);
-    if (!session) {
-        console.warn(`⚠️ Exam window opened with invalid sessionId: ${sessionId}`);
-        return res.status(404).send(`
-            <html>
-                <head><title>Session Not Found</title></head>
-                <body style="font-family: Arial; padding: 40px; text-align: center;">
-                    <h2>❌ Session Not Found</h2>
-                    <p>The exam session <code>${sessionId}</code> could not be found.</p>
-                    <p>The session may have expired or been terminated.</p>
-                    <button onclick="window.close()">Close Window</button>
-                </body>
-            </html>
-        `);
-    }
-
-    // Validate session belongs to the student
-    if (session.studentName !== studentName || session.studentClass !== studentClass) {
-        console.warn(`⚠️ Session mismatch: ${sessionId} - Expected: ${session.studentName} (${session.studentClass}), Got: ${studentName} (${studentClass})`);
-        return res.status(403).send(`
-            <html>
-                <head><title>Access Denied</title></head>
-                <body style="font-family: Arial; padding: 40px; text-align: center;">
-                    <h2>❌ Access Denied</h2>
-                    <p>This exam session does not belong to the specified student.</p>
-                    <button onclick="window.close()">Close Window</button>
-                </body>
-            </html>
-        `);
-    }
-
-    // Check if session is still active
-    const timeLeft = sessionManager.calculateRemainingTime(session);
-    if (timeLeft <= 0) {
-        console.warn(`⏰ Expired session accessed: ${sessionId}`);
-        return res.status(410).send(`
-            <html>
-                <head><title>Exam Expired</title></head>
-                <body style="font-family: Arial; padding: 40px; text-align: center;">
-                    <h2>⏰ Exam Time Expired</h2>
-                    <p>The exam time has ended for session <code>${sessionId}</code>.</p>
-                    <p>Exam ended at: <strong>${session.examEndTime}</strong></p>
-                    <button onclick="window.close()">Close Window</button>
-                </body>
-            </html>
-        `);
-    }
-
-    // Log exam window access
-    console.log(`🪟 Exam window opened: ${studentName} (${studentClass}) - Session: ${sessionId}`);
-    console.log(`⏱️ Time remaining: ${sessionManager.formatTimeLeft(timeLeft)}`);
-
-    // Serve the exam window
-    res.sendFile(join(__dirname, 'public/student-exam-window.html'));
+    console.log('⚠️ Legacy popup endpoint accessed - redirecting to fullscreen mode');
+    res.redirect('/student?legacy=popup');
 });
 
-// Debug route for testing popup functionality
-app.get('/test-popup', (req, res) => {
+// Debug route for testing fullscreen functionality
+app.get('/test-fullscreen', (req, res) => {
     res.send(`
         <html>
-            <head><title>Popup Test</title></head>
+            <head><title>Fullscreen Test</title></head>
             <body style="font-family: Arial; padding: 40px;">
-                <h2>🧪 Popup Window Test</h2>
-                <p>Test the popup window functionality:</p>
+                <h2>🔒 Fullscreen API Test</h2>
+                <p>Test the fullscreen functionality:</p>
                 
-                <button onclick="testBasicPopup()">Test Basic Popup</button>
-                <button onclick="testExamPopup()">Test Exam Window</button>
-                <button onclick="testPopupBlocking()">Test Popup Blocking</button>
+                <button onclick="testFullscreen()">Test Enter Fullscreen</button>
+                <button onclick="testExitFullscreen()">Test Exit Fullscreen</button>
+                <button onclick="testFullscreenSupport()">Test API Support</button>
+                <button onclick="testFocusLock()">Test Focus Lock</button>
                 
                 <div id="results" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;"></div>
                 
@@ -177,38 +108,69 @@ app.get('/test-popup', (req, res) => {
                         document.getElementById('results').innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
                     }
                     
-                    function testBasicPopup() {
-                        log('Testing basic popup...');
-                        const popup = window.open('about:blank', 'test', 'width=800,height=600');
-                        if (popup) {
-                            popup.document.write('<h1>Popup Test Successful!</h1><button onclick="window.close()">Close</button>');
-                            log('✅ Basic popup opened successfully');
+                    function testFullscreen() {
+                        log('Testing fullscreen entry...');
+                        const element = document.documentElement;
+                        
+                        if (element.requestFullscreen) {
+                            element.requestFullscreen().then(() => {
+                                log('✅ Fullscreen entered successfully');
+                            }).catch(err => {
+                                log('❌ Fullscreen failed: ' + err.message);
+                            });
                         } else {
-                            log('❌ Popup blocked by browser');
+                            log('❌ Fullscreen API not supported');
                         }
                     }
                     
-                    function testExamPopup() {
-                        log('Testing exam window popup...');
-                        const examUrl = '/student-exam-window?sessionId=test-session&studentName=Test Student&studentClass=11А&timeLeft=10800000';
-                        const popup = window.open(examUrl, 'examTest', 'width=1400,height=900,resizable=no');
-                        if (popup) {
-                            log('✅ Exam popup opened (may show error due to invalid session)');
+                    function testExitFullscreen() {
+                        log('Testing fullscreen exit...');
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen().then(() => {
+                                log('✅ Exited fullscreen successfully');
+                            }).catch(err => {
+                                log('❌ Exit fullscreen failed: ' + err.message);
+                            });
                         } else {
-                            log('❌ Exam popup blocked by browser');
+                            log('❌ Exit fullscreen not supported');
                         }
                     }
                     
-                    function testPopupBlocking() {
-                        log('Testing popup blocker detection...');
-                        const popup = window.open('', 'blockTest', 'width=1,height=1');
-                        if (popup) {
-                            popup.close();
-                            log('✅ Popups are allowed');
+                    function testFullscreenSupport() {
+                        log('Testing API support...');
+                        const supported = !!(document.fullscreenEnabled || 
+                                           document.webkitFullscreenEnabled || 
+                                           document.mozFullScreenEnabled ||
+                                           document.msFullscreenEnabled);
+                        
+                        if (supported) {
+                            log('✅ Fullscreen API is supported');
                         } else {
-                            log('❌ Popups are blocked - please allow popups for this site');
+                            log('❌ Fullscreen API is not supported');
                         }
                     }
+                    
+                    function testFocusLock() {
+                        log('Testing focus lock...');
+                        let focusCount = 0;
+                        const focusInterval = setInterval(() => {
+                            window.focus();
+                            focusCount++;
+                            
+                            if (focusCount >= 10) {
+                                clearInterval(focusInterval);
+                                log('✅ Focus lock test completed (10 focus attempts)');
+                            }
+                        }, 100);
+                        
+                        log('🎯 Focus lock running for 1 second...');
+                    }
+                    
+                    // Monitor fullscreen changes
+                    document.addEventListener('fullscreenchange', () => {
+                        const isFullscreen = !!document.fullscreenElement;
+                        log(isFullscreen ? '🔒 Entered fullscreen' : '🔓 Exited fullscreen');
+                    });
                 </script>
             </body>
         </html>
@@ -226,12 +188,7 @@ app.post('/api/student-login', async (req, res) => {
             req.session.studentName = studentName;
             req.session.studentClass = studentClass;
 
-            // Add popup-specific data to response
-            result.popupUrl = `/student-exam-window?sessionId=${result.sessionId}&studentName=${encodeURIComponent(studentName)}&studentClass=${encodeURIComponent(studentClass)}&timeLeft=${result.timeLeft}`;
-
-            if (result.lastCode) {
-                result.popupUrl += `&lastCode=${encodeURIComponent(result.lastCode)}`;
-            }
+            console.log(`✅ Student login successful: ${studentName} (${studentClass}) - Session: ${result.sessionId}`);
         }
 
         res.json(result);
@@ -384,42 +341,63 @@ app.use((req, res) => {
 // WebSocket handling
 webSocketHandler.initialize();
 
-// Enhanced WebSocket events for popup support
+// Enhanced WebSocket events for fullscreen support
 io.on('connection', (socket) => {
-    // Track if connection is from popup window
-    socket.on('popup-connection', (data) => {
-        socket.isPopupConnection = true;
+    // Track fullscreen connections
+    socket.on('fullscreen-connection', (data) => {
+        socket.isFullscreenConnection = true;
         socket.sessionId = data.sessionId;
-        console.log(`🪟 Popup WebSocket connected: ${data.sessionId}`);
+        console.log(`🔒 Fullscreen WebSocket connected: ${data.sessionId}`);
     });
 
-    // Handle popup-specific events
-    socket.on('popup-ready', (data) => {
-        console.log(`✅ Popup ready: ${data.sessionId}`);
-        // Could notify parent window or teacher dashboard
+    // Handle fullscreen-specific events
+    socket.on('fullscreen-entered', (data) => {
+        console.log(`✅ Fullscreen entered: ${data.sessionId}`);
+        // Notify teacher dashboard of fullscreen status
+        io.to('teachers').emit('student-fullscreen-status', {
+            sessionId: data.sessionId,
+            status: 'entered',
+            timestamp: Date.now()
+        });
     });
 
-    socket.on('popup-closing', (data) => {
-        console.log(`🚫 Popup closing: ${data.sessionId}`);
-        // Could trigger exam completion or cleanup
+    socket.on('fullscreen-exited', (data) => {
+        console.log(`⚠️ Fullscreen exited: ${data.sessionId} - Attempt #${data.attempt}`);
+        // Notify teacher dashboard of security violation
+        io.to('teachers').emit('student-fullscreen-violation', {
+            sessionId: data.sessionId,
+            attempt: data.attempt,
+            reason: data.reason,
+            timestamp: Date.now()
+        });
+    });
+
+    socket.on('fullscreen-terminated', (data) => {
+        console.log(`🚫 Exam terminated for fullscreen violations: ${data.sessionId}`);
+        // Notify teacher dashboard of termination
+        io.to('teachers').emit('student-terminated', {
+            sessionId: data.sessionId,
+            reason: 'fullscreen_violations',
+            details: data.details,
+            timestamp: Date.now()
+        });
     });
 });
 
 // Start server
 server.listen(PORT, async () => {
-    console.log(`🚀 Exam Monitor v2 - Popup Mode running on http://localhost:${PORT}`);
+    console.log(`🚀 Exam Monitor v2 - Fullscreen Mode running on http://localhost:${PORT}`);
     console.log(`📊 Teacher dashboard: http://localhost:${PORT}/teacher`);
-    console.log(`👨‍🎓 Student login: http://localhost:${PORT}/student`);
-    console.log(`🪟 Exam window: http://localhost:${PORT}/student-exam-window`);
-    console.log(`🧪 Test popup: http://localhost:${PORT}/test-popup`);
+    console.log(`👨‍🎓 Student fullscreen exam: http://localhost:${PORT}/student`);
+    console.log(`🔒 Test fullscreen: http://localhost:${PORT}/test-fullscreen`);
     console.log(`🌐 Network: ExamNet hotspot on port ${PORT}`);
 
-    console.log('\n🔧 New Popup Architecture Features:');
-    console.log('  ✅ Isolated exam environment in popup window');
-    console.log('  ✅ Enhanced anti-cheat protection');
-    console.log('  ✅ Cross-window communication');
-    console.log('  ✅ Session validation and security');
-    console.log('  ✅ Popup blocker detection');
+    console.log('\n🔒 New Fullscreen Architecture Features:');
+    console.log('  ✅ Mandatory fullscreen exam environment');
+    console.log('  ✅ Aggressive focus lock protection');
+    console.log('  ✅ Fullscreen violation detection');
+    console.log('  ✅ Automatic exam termination for violations');
+    console.log('  ✅ Single-page architecture for maximum security');
 
     // Start cleanup timer for expired sessions
     sessionManager.startCleanupTimer();

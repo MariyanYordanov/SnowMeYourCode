@@ -4,60 +4,794 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Exam Monitor</title>
+    <title>Teacher Dashboard - Exam Monitor v2</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header .subtitle {
+            margin-top: 5px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-card.active .number {
+            color: #28a745;
+        }
+
+        .stat-card.disconnected .number {
+            color: #ffc107;
+        }
+
+        .stat-card.violations .number {
+            color: #dc3545;
+        }
+
+        .stat-card.completed .number {
+            color: #6c757d;
+        }
+
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
         }
 
         .student-card {
-            border: 1px solid #ddd;
-            margin: 10px;
-            padding: 15px;
-            border-radius: 5px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .online {
-            border-left: 5px solid green;
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .disconnected {
-            border-left: 5px solid orange;
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .student-class {
+            color: #666;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .student-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.disconnected {
+            background-color: #ffc107;
+        }
+
+        .status-indicator.suspicious {
+            background-color: #dc3545;
+        }
+
+        .status-indicator.completed {
+            background-color: #6c757d;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .student-info {
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .fullscreen-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .fullscreen-status.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .fullscreen-status.violation {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .fullscreen-status.inactive {
+            background-color: #e2e3e5;
+            color: #6c757d;
+        }
+
+        .code-preview {
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+
+        .activity-log {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 11px;
+        }
+
+        .warning {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .violation-alert {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-students h3 {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Teacher Dashboard - Exam Monitor</h1>
-    <div id="students-list"></div>
+    <div class="refresh-indicator" id="refresh-indicator">
+        🔄 Live Monitoring
+    </div>
+
+    <div class="header">
+        <h1>Teacher Dashboard - Exam Monitor v2</h1>
+        <div class="subtitle">🔒 Fullscreen Mode • Real-time monitoring with enhanced security</div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-card active">
+            <h3>Active Students</h3>
+            <div class="number" id="active-count">0</div>
+        </div>
+        <div class="stat-card disconnected">
+            <h3>Disconnected</h3>
+            <div class="number" id="disconnected-count">0</div>
+        </div>
+        <div class="stat-card violations">
+            <h3>Security Violations</h3>
+            <div class="number" id="violations-count">0</div>
+        </div>
+        <div class="stat-card completed">
+            <h3>Completed</h3>
+            <div class="number" id="completed-count">0</div>
+        </div>
+    </div>
+
+    <div id="students-container">
+        <div class="no-students">
+            <h3>No Active Students</h3>
+            <p>Students will appear here when they join the exam</p>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        class TeacherDashboard {
+            constructor() {
+                this.socket = io();
+                this.students = new Map();
+                this.stats = {
+                    active: 0,
+                    disconnected: 0,
+                    violations: 0,
+                    completed: 0
+                };
 
-        socket.emit('teacher-join');
+                this.initializeSocket();
+                this.startAutoRefresh();
+            }
 
-        socket.on('all-students', (students) => {
-            const container = document.getElementById('students-list');
-            container.innerHTML = '';
+            initializeSocket() {
+                this.socket.emit('teacher-join');
 
-            students.forEach(student => {
-                const div = document.createElement('div');
-                div.className = `student-card ${student.status}`;
-                div.innerHTML = `
-                    <h3>${student.studentName} (${student.studentClass})</h3>
-                    <p>Status: ${student.status}</p>
-                    <p>Time left: ${student.formattedTimeLeft}</p>
-                    <p>Last activity: ${new Date(student.lastActivity).toLocaleTimeString()}</p>
+                // Basic student events
+                this.socket.on('all-students', (students) => {
+                    this.updateAllStudents(students);
+                });
+
+                this.socket.on('student-connected', (data) => {
+                    this.addStudent(data);
+                });
+
+                this.socket.on('student-disconnected', (data) => {
+                    this.updateStudentStatus(data.sessionId, 'disconnected', data);
+                });
+
+                this.socket.on('student-code-update', (data) => {
+                    this.updateStudentCode(data);
+                });
+
+                this.socket.on('student-suspicious', (data) => {
+                    this.addSuspiciousActivity(data);
+                });
+
+                // NEW: Fullscreen-specific events
+                this.socket.on('student-fullscreen-status', (data) => {
+                    this.updateFullscreenStatus(data);
+                });
+
+                this.socket.on('student-fullscreen-violation', (data) => {
+                    this.handleFullscreenViolation(data);
+                });
+
+                this.socket.on('student-terminated', (data) => {
+                    this.handleStudentTermination(data);
+                });
+
+                this.socket.on('connect', () => {
+                    console.log('🔗 Teacher dashboard connected');
+                    document.getElementById('refresh-indicator').style.backgroundColor = '#28a745';
+                });
+
+                this.socket.on('disconnect', () => {
+                    console.log('🔌 Teacher dashboard disconnected');
+                    document.getElementById('refresh-indicator').style.backgroundColor = '#dc3545';
+                });
+            }
+
+            updateAllStudents(students) {
+                this.students.clear();
+                students.forEach(student => {
+                    this.students.set(student.sessionId, {
+                        ...student,
+                        fullscreenStatus: 'unknown',
+                        violationCount: 0,
+                        activities: []
+                    });
+                });
+                this.renderStudents();
+                this.updateStats();
+            }
+
+            addStudent(data) {
+                this.students.set(data.sessionId, {
+                    ...data,
+                    status: 'active',
+                    fullscreenStatus: 'entering',
+                    violationCount: 0,
+                    activities: [],
+                    code: '',
+                    lastActivity: Date.now()
+                });
+                this.renderStudents();
+                this.updateStats();
+            }
+
+            updateStudentStatus(sessionId, status, data = {}) {
+                const student = this.students.get(sessionId);
+                if (student) {
+                    student.status = status;
+                    student.lastActivity = Date.now();
+                    if (data.reason) {
+                        student.disconnectReason = data.reason;
+                    }
+                    this.renderStudents();
+                    this.updateStats();
+                }
+            }
+
+            updateStudentCode(data) {
+                const student = this.students.get(data.sessionId);
+                if (student) {
+                    student.code = data.code;
+                    student.lastActivity = Date.now();
+                    this.renderStudent(student);
+                }
+            }
+
+            addSuspiciousActivity(data) {
+                const student = this.students.get(data.sessionId);
+                if (student) {
+                    if (!student.activities) student.activities = [];
+                    student.activities.unshift({
+                        type: 'suspicious',
+                        activity: data.activity,
+                        severity: data.severity,
+                        timestamp: Date.now()
+                    });
+
+                    // Keep only last 10 activities
+                    if (student.activities.length > 10) {
+                        student.activities = student.activities.slice(0, 10);
+                    }
+
+                    this.renderStudent(student);
+                    this.updateStats();
+                }
+            }
+
+            // NEW: Fullscreen-specific methods
+            updateFullscreenStatus(data) {
+                const student = this.students.get(data.sessionId);
+                if (student) {
+                    student.fullscreenStatus = data.status;
+                    student.lastActivity = Date.now();
+
+                    if (!student.activities) student.activities = [];
+                    student.activities.unshift({
+                        type: 'fullscreen',
+                        activity: data.status === 'entered' ? 'Entered fullscreen' : 'Exited fullscreen',
+                        timestamp: data.timestamp
+                    });
+
+                    this.renderStudent(student);
+                    console.log(`🔒 Fullscreen ${data.status}: ${student.studentName}`);
+                }
+            }
+
+            handleFullscreenViolation(data) {
+                const student = this.students.get(data.sessionId);
+                if (student) {
+                    student.violationCount = data.attempt;
+                    student.fullscreenStatus = 'violation';
+                    student.lastViolation = data.reason;
+
+                    if (!student.activities) student.activities = [];
+                    student.activities.unshift({
+                        type: 'violation',
+                        activity: `Fullscreen violation #${data.attempt}: ${data.reason}`,
+                        severity: 'critical',
+                        timestamp: data.timestamp
+                    });
+
+                    this.renderStudent(student);
+                    this.updateStats();
+
+                    console.warn(`⚠️ Fullscreen violation: ${student.studentName} - Attempt #${data.attempt}`);
+
+                    // Show browser notification for critical violations
+                    if (data.attempt >= 2) {
+                        this.showNotification(`Security Alert: ${student.studentName} has ${data.attempt} fullscreen violations`);
+                    }
+                }
+            }
+
+            handleStudentTermination(data) {
+                const student = this.students.get(data.sessionId);
+                if (student) {
+                    student.status = 'terminated';
+                    student.terminationReason = data.reason;
+                    student.terminationDetails = data.details;
+
+                    if (!student.activities) student.activities = [];
+                    student.activities.unshift({
+                        type: 'termination',
+                        activity: `Exam terminated: ${data.reason}`,
+                        severity: 'critical',
+                        timestamp: data.timestamp
+                    });
+
+                    this.renderStudent(student);
+                    this.updateStats();
+
+                    console.error(`🚫 Student terminated: ${student.studentName} - ${data.reason}`);
+                    this.showNotification(`Exam Terminated: ${student.studentName} - ${data.reason}`);
+                }
+            }
+
+            renderStudents() {
+                const container = document.getElementById('students-container');
+
+                if (this.students.size === 0) {
+                    container.innerHTML = `
+                        <div class="no-students">
+                            <h3>No Active Students</h3>
+                            <p>Students will appear here when they join the exam</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const studentsArray = Array.from(this.students.values());
+                studentsArray.sort((a, b) => b.lastActivity - a.lastActivity);
+
+                container.innerHTML = `
+                    <div class="students-grid">
+                        ${studentsArray.map(student => this.renderStudentCard(student)).join('')}
+                    </div>
                 `;
-                container.appendChild(div);
-            });
-        });
+            }
 
-        socket.on('student-connected', (data) => {
-            console.log('Student connected:', data);
-        });
+            renderStudent(student) {
+                const studentCard = document.querySelector(`[data-session-id="${student.sessionId}"]`);
+                if (studentCard) {
+                    studentCard.outerHTML = this.renderStudentCard(student);
+                }
+            }
+
+            renderStudentCard(student) {
+                const timeAgo = this.formatTimeAgo(student.lastActivity);
+                const codePreview = student.code ? student.code.substring(0, 200) + (student.code.length > 200 ? '...' : '') : 'No code yet';
+
+                return `
+                    <div class="student-card" data-session-id="${student.sessionId}">
+                        <div class="student-header">
+                            <div>
+                                <div class="student-name">${student.studentName}</div>
+                                <div class="student-class">${student.studentClass} • ${student.sessionId}</div>
+                            </div>
+                            <div class="student-status">
+                                <div class="status-indicator ${student.status}"></div>
+                                <span>${this.getStatusText(student.status)}</span>
+                            </div>
+                        </div>
+
+                        ${this.renderViolationAlert(student)}
+                        ${this.renderFullscreenStatus(student)}
+
+                        <div class="student-info">
+                            <div class="info-row">
+                                <span class="info-label">Time Left:</span>
+                                <span class="info-value">${student.formattedTimeLeft || 'Unknown'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Last Activity:</span>
+                                <span class="info-value">${timeAgo}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Violations:</span>
+                                <span class="info-value ${student.violationCount > 0 ? 'warning' : ''}">${student.violationCount || 0}</span>
+                            </div>
+                        </div>
+
+                        <div class="code-preview">${codePreview}</div>
+
+                        ${this.renderActivityLog(student)}
+                        ${this.renderControls(student)}
+                    </div>
+                `;
+            }
+
+            renderViolationAlert(student) {
+                if (student.violationCount > 0 && student.status !== 'terminated') {
+                    return `
+                        <div class="violation-alert">
+                            ⚠️ ${student.violationCount} security violation${student.violationCount > 1 ? 's' : ''} detected
+                            ${student.lastViolation ? `• ${student.lastViolation}` : ''}
+                        </div>
+                    `;
+                }
+                return '';
+            }
+
+            renderFullscreenStatus(student) {
+                const statusConfig = {
+                    'entered': { class: 'active', icon: '🔒', text: 'Fullscreen Active' },
+                    'violation': { class: 'violation', icon: '⚠️', text: 'Fullscreen Violation' },
+                    'entering': { class: 'inactive', icon: '⏳', text: 'Entering Fullscreen' },
+                    'unknown': { class: 'inactive', icon: '❓', text: 'Fullscreen Unknown' }
+                };
+
+                const config = statusConfig[student.fullscreenStatus] || statusConfig.unknown;
+
+                return `
+                    <div class="info-row">
+                        <span class="info-label">Fullscreen:</span>
+                        <span class="fullscreen-status ${config.class}">
+                            ${config.icon} ${config.text}
+                        </span>
+                    </div>
+                `;
+            }
+
+            renderActivityLog(student) {
+                if (!student.activities || student.activities.length === 0) {
+                    return '<div class="activity-log">No recent activity</div>';
+                }
+
+                const activities = student.activities.slice(0, 5).map(activity => `
+                    <div class="activity-item">
+                        <div class="${activity.type === 'violation' || activity.type === 'termination' ? 'warning' : ''}">
+                            ${activity.activity}
+                        </div>
+                        <div class="activity-time">${this.formatTime(activity.timestamp)}</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="activity-log">
+                        <strong>Recent Activity:</strong>
+                        ${activities}
+                    </div>
+                `;
+            }
+
+            renderControls(student) {
+                if (student.status === 'terminated' || student.status === 'completed') {
+                    return '';
+                }
+
+                return `
+                    <div class="controls">
+                        <button class="btn btn-warning" onclick="teacherDashboard.warnStudent('${student.sessionId}')">
+                            Send Warning
+                        </button>
+                        <button class="btn btn-danger" onclick="teacherDashboard.terminateStudent('${student.sessionId}')">
+                            Terminate Exam
+                        </button>
+                    </div>
+                `;
+            }
+
+            updateStats() {
+                const stats = { active: 0, disconnected: 0, violations: 0, completed: 0 };
+
+                for (const student of this.students.values()) {
+                    switch (student.status) {
+                        case 'active':
+                            stats.active++;
+                            break;
+                        case 'disconnected':
+                            stats.disconnected++;
+                            break;
+                        case 'completed':
+                        case 'terminated':
+                            stats.completed++;
+                            break;
+                    }
+
+                    if (student.violationCount > 0) {
+                        stats.violations += student.violationCount;
+                    }
+                }
+
+                document.getElementById('active-count').textContent = stats.active;
+                document.getElementById('disconnected-count').textContent = stats.disconnected;
+                document.getElementById('violations-count').textContent = stats.violations;
+                document.getElementById('completed-count').textContent = stats.completed;
+            }
+
+            getStatusText(status) {
+                const statusMap = {
+                    'active': 'Active',
+                    'disconnected': 'Disconnected',
+                    'completed': 'Completed',
+                    'terminated': 'Terminated',
+                    'suspicious': 'Suspicious'
+                };
+                return statusMap[status] || status;
+            }
+
+            formatTimeAgo(timestamp) {
+                const now = Date.now();
+                const diff = now - timestamp;
+                const seconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+
+                if (hours > 0) return `${hours}h ago`;
+                if (minutes > 0) return `${minutes}m ago`;
+                return `${seconds}s ago`;
+            }
+
+            formatTime(timestamp) {
+                return new Date(timestamp).toLocaleTimeString();
+            }
+
+            startAutoRefresh() {
+                setInterval(() => {
+                    this.socket.emit('teacher-join'); // Refresh data
+                }, 5000);
+            }
+
+            warnStudent(sessionId) {
+                const student = this.students.get(sessionId);
+                if (student && confirm(`Send warning to ${student.studentName}?`)) {
+                    this.socket.emit('send-warning', { sessionId, message: 'Please follow exam rules' });
+                }
+            }
+
+            terminateStudent(sessionId) {
+                const student = this.students.get(sessionId);
+                if (student && confirm(`Terminate exam for ${student.studentName}?`)) {
+                    this.socket.emit('terminate-student', { sessionId, reason: 'instructor_action' });
+                }
+            }
+
+            showNotification(message) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Exam Monitor Alert', { body: message });
+                } else if ('Notification' in window && Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification('Exam Monitor Alert', { body: message });
+                        }
+                    });
+                }
+            }
+        }
+
+        // Initialize dashboard
+        const teacherDashboard = new TeacherDashboard();
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
     </script>
 </body>
 

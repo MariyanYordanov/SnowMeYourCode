@@ -944,13 +944,26 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
             }
 
             /**
-             * Initialize Anti-Cheat system
+             * Initialize Anti-Cheat system with fullscreen configuration
              */
             initializeAntiCheat() {
                 if (window.AntiCheat) {
                     this.antiCheat = new window.AntiCheat(this.socket);
+
+                    // Configure for fullscreen mode
+                    this.antiCheat.updateConfig({
+                        enableKeyboardDetection: true,
+                        enableWindowDetection: true,
+                        enableContextMenuBlocking: true,
+                        enableCopyPasteBlocking: true,
+                        enableDevToolsWarning: true,
+                        strictTabProtection: true,
+                        fullscreenMode: true, // NEW: Enable fullscreen-specific protections
+                        logToConsole: true
+                    });
+
                     window.antiCheat = this.antiCheat; // Global access for warning buttons
-                    console.log('🛡️ Anti-cheat system ready (inactive)');
+                    console.log('🛡️ Anti-cheat system ready for fullscreen mode');
                 } else {
                     console.error('❌ AntiCheat class not found');
                 }
@@ -1151,13 +1164,25 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 // Start timer
                 this.startExamTimer(sessionData.timeLeft);
 
-                // Activate anti-cheat protection
+                // Activate anti-cheat protection with fullscreen integration
                 if (this.antiCheat) {
                     this.antiCheat.activate();
+
+                    // Set fullscreen context for anti-cheat
+                    this.antiCheat.setFullscreenMode(true);
+                    this.antiCheat.setSessionId(this.sessionId);
                 }
 
                 // Start fullscreen protection
                 this.startFullscreenProtection();
+
+                // Notify server of fullscreen entry
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('fullscreen-entered', {
+                        sessionId: this.sessionId,
+                        timestamp: Date.now()
+                    });
+                }
 
                 // Setup auto-save
                 this.setupAutoSave();
@@ -1246,12 +1271,26 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
 
                 console.warn(`⚠️ Fullscreen exit attempt #${this.fullscreenExitAttempts}`);
 
-                // Report to anti-cheat
+                // Report to server immediately
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('fullscreen-exited', {
+                        sessionId: this.sessionId,
+                        attempt: this.fullscreenExitAttempts,
+                        reason: 'user_action',
+                        timestamp: Date.now()
+                    });
+                }
+
+                // Report to anti-cheat system
                 if (this.antiCheat) {
-                    this.antiCheat.reportSuspiciousActivity(
+                    this.antiCheat.trackActivity(
+                        this.sessionId,
                         'fullscreen_exit',
-                        `Attempted to exit fullscreen (attempt ${this.fullscreenExitAttempts})`,
-                        'critical'
+                        {
+                            attempt: this.fullscreenExitAttempts,
+                            severity: 'critical',
+                            description: `Fullscreen exit attempt #${this.fullscreenExitAttempts}`
+                        }
                     );
                 }
 
@@ -1261,7 +1300,7 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
 
                 // Terminate exam if too many attempts
                 if (this.fullscreenExitAttempts >= this.fullscreenConfig.maxFullscreenExitAttempts) {
-                    this.terminateExamForViolation('Too many fullscreen exit attempts');
+                    this.terminateExamForViolation(`Too many fullscreen exit attempts (${this.fullscreenExitAttempts})`);
                 }
             }
 
@@ -1334,8 +1373,20 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 // Mark as inactive
                 this.isExamActive = false;
 
-                // Send termination to server
+                // Send termination to server with detailed info
                 if (this.socket && this.socket.connected) {
+                    this.socket.emit('fullscreen-terminated', {
+                        sessionId: this.sessionId,
+                        reason: 'security_violation',
+                        violation: reason,
+                        exitAttempts: this.fullscreenExitAttempts,
+                        details: {
+                            fullscreenExitAttempts: this.fullscreenExitAttempts,
+                            maxAllowed: this.fullscreenConfig.maxFullscreenExitAttempts,
+                            timestamp: Date.now()
+                        }
+                    });
+
                     this.socket.emit('exam-complete', {
                         sessionId: this.sessionId,
                         reason: 'security_violation',
@@ -1345,12 +1396,23 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 }
 
                 // Show termination message
-                alert(`Exam terminated: ${reason}`);
+                alert(`Exam terminated due to security violation:\n\n${reason}\n\nThe page will reload automatically.`);
 
-                // Reload page or redirect
+                // Exit fullscreen first
+                if (this.isDocumentInFullscreen()) {
+                    try {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        }
+                    } catch (error) {
+                        console.warn('Could not exit fullscreen:', error);
+                    }
+                }
+
+                // Reload page after delay
                 setTimeout(() => {
                     window.location.reload();
-                }, 2000);
+                }, 3000);
             }
 
             /**
