@@ -1,6 +1,5 @@
 /**
- * Main Student Workspace Controller
- * Coordinates all exam components including anti-cheat
+ * Main Student Workspace Controller - Updated for Modal AntiCheat
  */
 class ExamSystem {
     constructor() {
@@ -29,7 +28,7 @@ class ExamSystem {
         // Initialize Socket.IO connection
         this.initializeSocket();
 
-        // Initialize Anti-Cheat (inactive until exam starts)
+        // Initialize Modal AntiCheat (inactive until exam starts)
         this.initializeAntiCheat();
 
         // Setup UI event listeners
@@ -79,23 +78,18 @@ class ExamSystem {
         this.socket.on('force-disconnect', (data) => {
             this.handleForceDisconnect(data);
         });
-
-        // Anti-cheat response (optional)
-        this.socket.on('anti-cheat-warning', (data) => {
-            this.handleServerAntiCheatWarning(data);
-        });
     }
 
     /**
-     * Initialize Anti-Cheat system (inactive until exam starts)
+     * Initialize Modal AntiCheat system (inactive until exam starts)
      */
     initializeAntiCheat() {
-        if (window.AntiCheat) {
-            this.antiCheat = new window.AntiCheat(this.socket);
-            window.antiCheat = this.antiCheat; // Global access for warning buttons
-            console.log('🛡️ Anti-cheat system ready (inactive)');
+        if (window.ModalAntiCheat) {
+            this.antiCheat = new window.ModalAntiCheat(this.socket);
+            window.antiCheat = this.antiCheat; // Global access
+            console.log('🛡️ Modal AntiCheat system ready (inactive)');
         } else {
-            console.error('❌ AntiCheat class not found');
+            console.error('❌ ModalAntiCheat class not found');
         }
     }
 
@@ -244,9 +238,10 @@ class ExamSystem {
         // Start timer
         this.startExamTimer(data.timeLeft);
 
-        // Activate anti-cheat protection
+        // ACTIVATE MODAL ANTI-CHEAT PROTECTION
         if (this.antiCheat) {
             this.antiCheat.activate();
+            console.log('🛡️ Modal AntiCheat protection ACTIVATED');
         }
 
         // Load previous code if available
@@ -263,7 +258,7 @@ class ExamSystem {
         // Update session display
         this.updateSessionDisplay();
 
-        console.log('🎓 Exam started successfully');
+        console.log('🎓 Exam started successfully with modal protection');
     }
 
     /**
@@ -331,8 +326,6 @@ class ExamSystem {
 
         // Mark as unsaved
         this.updateLastSaved('Незапазено');
-
-        // Could add more sophisticated change tracking here
     }
 
     /**
@@ -515,14 +508,6 @@ class ExamSystem {
     }
 
     /**
-     * Handle server anti-cheat warning
-     */
-    handleServerAntiCheatWarning(data) {
-        console.log('⚠️ Server anti-cheat warning:', data);
-        // Could implement additional server-side warning logic here
-    }
-
-    /**
      * Show completion screen
      */
     showCompletionScreen(reason = '') {
@@ -612,7 +597,6 @@ class ExamSystem {
      * Update connection status
      */
     updateConnectionStatus(connected) {
-        // Could add connection indicator in UI
         console.log(connected ? '🟢 Online' : '🔴 Offline');
     }
 }

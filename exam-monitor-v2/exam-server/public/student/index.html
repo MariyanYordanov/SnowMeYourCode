@@ -8,7 +8,6 @@
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/student.css">
-    <link rel="stylesheet" href="css/anti-cheat.css">
     <link rel="stylesheet" href="css/editor.css">
 </head>
 
@@ -113,47 +112,13 @@ console.log("Здравей, свят!");
         </div>
     </div>
 
-    <!-- Anti-Cheat Warning Overlay -->
-    <div id="antiCheatOverlay" class="anti-cheat-overlay">
-        <div class="warning-dialog">
-            <div class="warning-title">⚠️ ПРЕДУПРЕЖДЕНИЕ ⚠️</div>
-            <div class="warning-message" id="warningMessage">
-                Засечено е напускане на изпита!<br>
-                Това действие е регистрирано.
-            </div>
-            <div class="warning-buttons">
-                <button class="warning-button continue-button" onclick="continueExam()">
-                    Продължи изпита
-                </button>
-                <button class="warning-button exit-button" onclick="exitExam()">
-                    Напусни изпита
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/AntiCheat.js"></script>
+    <script src="js/ModalAntiCheat.js"></script>
     <script src="js/main.js"></script>
 
     <script>
-        // Global anti-cheat instance for warning dialog buttons
-        let antiCheat = null;
-
-        function continueExam() {
-                if (window.examSystem && window.examSystem.antiCheat) {
-                    window.examSystem.antiCheat.continueExam();
-                }
-            }
-
-            function exitExam() {
-                if (window.examSystem && window.examSystem.antiCheat) {
-                    window.examSystem.antiCheat.exitExam();
-                }
-            }
-
-        // Global exam functions
+        // Global exam functions for HTML onclick handlers
         function joinExam() {
             if (window.examSystem) {
                 window.examSystem.handleLogin();
