@@ -1,0 +1,122 @@
+/* Notification Styles */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.notification {
+    background: #333;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    max-width: 300px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    animation: notificationSlideIn 0.3s ease-out;
+    pointer-events: auto;
+    border-left: 4px solid transparent;
+}
+
+@keyframes notificationSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Notification Types */
+.notification.warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+    border-left-color: #856404;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border-left-color: #721c24;
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #17a2b8, #117a8b);
+    color: white;
+    border-left-color: #0c5460;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    border-left-color: #155724;
+}
+
+/* Notification Content */
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.notification-message {
+    flex: 1;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* Auto-hide animation */
+.notification.hiding {
+    animation: notificationSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes notificationSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Hover effects */
+.notification:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+/* Multiple notifications stacking */
+.notification-container .notification:nth-child(n+4) {
+    opacity: 0.8;
+    transform: scale(0.95);
+}
+
+.notification-container .notification:nth-child(n+6) {
+    display: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .notification {
+        max-width: none;
+        margin-bottom: 8px;
+    }
+}

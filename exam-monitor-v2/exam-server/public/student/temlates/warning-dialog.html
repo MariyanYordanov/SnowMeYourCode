@@ -1,0 +1,19 @@
+<div class="warning-overlay">
+    <div class="warning-dialog {{severity}}">
+        <div class="warning-header">
+            <div class="warning-icon">⚠️</div>
+            <h2 class="warning-title">{{title}}</h2>
+        </div>
+
+        <div class="warning-body">
+            <p class="warning-message">{{message}}</p>
+        </div>
+
+        <div class="warning-actions">
+            <button class="btn btn-continue">Продължи изпита</button>
+            {{#showExit}}
+            <button class="btn btn-exit">Напусни изпита</button>
+            {{/showExit}}
+        </div>
+    </div>
+</div>
