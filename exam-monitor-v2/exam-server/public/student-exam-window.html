@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Window - Programming Exam</title>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="student/css/student.css">
+    <link rel="stylesheet" href="student/css/editor.css">
+    <link rel="stylesheet" href="student/css/anti-cheat.css">
+
+    <style>
+        /* Popup window specific styles */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .exam-window-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .exam-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .exam-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .exam-title h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .exam-title .student-info {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .exam-timer {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .timer-icon {
+            margin-right: 8px;
+        }
+
+        .exam-content {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .editor-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger,
+        .btn-success {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        #code-editor {
+            flex: 1;
+            border: none;
+            resize: none;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 15px;
+            outline: none;
+            background-color: #fafafa;
+            color: #333;
+            tab-size: 4;
+        }
+
+        #code-editor:focus {
+            background-color: white;
+        }
+
+        .output-section {
+            width: 400px;
+            border-left: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .output-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        #code-output {
+            flex: 1;
+            padding: 15px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            min-height: 0;
+        }
+
+        .output-line {
+            margin-bottom: 4px;
+            color: #495057;
+        }
+
+        .output-error {
+            color: #dc3545;
+            font-weight: bold;
+            background-color: #f8d7da;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+
+        .output-placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .exam-footer {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .exam-info {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #28a745;
+        }
+
+        .connection-dot.offline {
+            background-color: #dc3545;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Anti-cheat status indicator */
+        .anti-cheat-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .anti-cheat-indicator.active {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .anti-cheat-indicator.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .anti-cheat-indicator.violation {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Exam protected mode styles */
+        .exam-protected {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Allow selection in code areas */
+        #code-editor,
+        #code-output {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        /* Timer warning states */
+        .timer-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+            animation: pulse 1s infinite;
+        }
+
+        .timer-critical {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive design for smaller popup windows */
+        @media (max-width: 1200px) {
+            .output-section {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .exam-content {
+                flex-direction: column;
+            }
+
+            .output-section {
+                width: 100%;
+                height: 250px;
+                border-left: none;
+                border-top: 1px solid #dee2e6;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Зареждане на изпита...</h3>
+            <p>Моля изчакайте...</p>
+        </div>
+    </div>
+
+    <!-- Anti-cheat Status Indicator -->
+    <div id="anti-cheat-indicator" class="anti-cheat-indicator active" style="display: none;">
+        🛡️ Защитен
+    </div>
+
+    <!-- Main Exam Window -->
+    <div id="exam-window" class="exam-window-container" style="display: none;">
+        <!-- Exam Header -->
+        <div class="exam-header">
+            <div class="exam-title">
+                <h2>Практически изпит по програмиране</h2>
+                <div class="student-info">
+                    <span id="student-name-display"></span> • <span id="student-class-display"></span>
+                </div>
+            </div>
+            <div id="exam-timer" class="exam-timer">
+                <span class="timer-icon">⏱️</span>
+                <span id="timer-display">Зареждане...</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="exam-content">
+            <!-- Code Editor Section -->
+            <div class="editor-section">
+                <div class="editor-header">
+                    <h3>📝 JavaScript Редактор</h3>
+                    <div class="editor-controls">
+                        <button id="save-code-btn" class="btn-success" title="Ctrl+S">
+                            💾 Запази
+                        </button>
+                        <button id="run-code-btn" class="btn-primary" title="Ctrl+Enter">
+                            ▶️ Изпълни
+                        </button>
+                        <button id="format-code-btn" class="btn-secondary" title="Alt+F">
+                            🎨 Форматирай
+                        </button>
+                    </div>
+                </div>
+
+                <textarea id="code-editor" placeholder="// Напишете вашия JavaScript код тук
+console.log('Добре дошли в изпита!');
+
+// Пример:
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log('Fibonacci(10):', fibonacci(10));"></textarea>
+            </div>
+
+            <!-- Output/Console Section -->
+            <div class="output-section">
+                <div class="output-header">
+                    <h3>🖥️ Конзола</h3>
+                    <div class="editor-controls">
+                        <button id="clear-output-btn" class="btn-secondary">
+                            🗑️ Изчисти
+                        </button>
+                    </div>
+                </div>
+                <div id="code-output">
+                    <div class="output-placeholder">
+                        Резултатът от вашия код ще се покаже тук...
+
+                        Използвайте console.log() за да виждате изхода.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Footer -->
+        <div class="exam-footer">
+            <div class="exam-info">
+                <span id="session-id-display">Session: Зареждане...</span>
+                <span id="last-saved-display">Последно запазено: Никога</span>
+                <div class="connection-indicator">
+                    <div id="connection-dot" class="connection-dot offline"></div>
+                    <span id="connection-status">Свързване...</span>
+                </div>
+            </div>
+            <div class="exam-controls">
+                <button id="finish-exam-btn" class="btn-danger">
+                    🏁 Приключи изпита
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anti-Cheat Warning Overlay (inherited from anti-cheat.css) -->
+    <div id="antiCheatOverlay" class="anti-cheat-overlay">
+        <div class="warning-dialog">
+            <div class="warning-title">⚠️ ПРЕДУПРЕЖДЕНИЕ ⚠️</div>
+            <div class="warning-message" id="warningMessage">
+                Засечено е напускане на изпита!<br>
+                Това действие е регистрирано.
+            </div>
+            <div class="warning-buttons">
+                <button class="warning-button continue-button" id="continue-exam-btn">
+                    Продължи изпита
+                </button>
+                <button class="warning-button exit-button" id="exit-exam-btn">
+                    Напусни изпита
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="student/js/AntiCheat.js"></script>
+    <script>
+        /**
+         * Exam Window Controller - Popup Mode
+         * Handles the exam environment in isolated popup window
+         */
+        class ExamWindow {
+            constructor() {
+                this.socket = null;
+                this.antiCheat = null;
+                this.sessionData = null;
+                this.examTimer = null;
+                this.isExamActive = false;
+                this.lastSaved = null;
+                this.autoSaveInterval = null;
+
+                // Parse URL parameters
+                this.urlParams = new URLSearchParams(window.location.search);
+
+                this.initialize();
+            }
+
+            /**
+             * Initialize the exam window
+             */
+            async initialize() {
+                console.log('🚀 Initializing Exam Window...');
+
+                try {
+                    // Parse session data from URL
+                    this.parseSessionData();
+
+                    // Initialize Socket.IO connection
+                    this.initializeSocket();
+
+                    // Setup UI event listeners
+                    this.setupEventListeners();
+
+                    // Initialize Anti-Cheat (inactive until exam starts)
+                    this.initializeAntiCheat();
+
+                    // Setup keyboard shortcuts
+                    this.setupKeyboardShortcuts();
+
+                    // Wait for socket connection
+                    await this.waitForConnection();
+
+                    // Start the exam
+                    this.startExam();
+
+                } catch (error) {
+                    console.error('❌ Error initializing exam window:', error);
+                    this.showError('Грешка при зареждане на изпита: ' + error.message);
+                }
+            }
+
+            /**
+             * Parse session data from URL parameters
+             */
+            parseSessionData() {
+                this.sessionData = {
+                    sessionId: this.urlParams.get('sessionId'),
+                    studentName: this.urlParams.get('studentName'),
+                    studentClass: this.urlParams.get('studentClass'),
+                    timeLeft: parseInt(this.urlParams.get('timeLeft')) || 0,
+                    lastCode: this.urlParams.get('lastCode') ? decodeURIComponent(this.urlParams.get('lastCode')) : ''
+                };
+
+                // Validate required parameters
+                if (!this.sessionData.sessionId || !this.sessionData.studentName || !this.sessionData.studentClass) {
+                    throw new Error('Missing required session parameters');
+                }
+
+                console.log('📋 Session data parsed:', this.sessionData);
+            }
+
+            /**
+             * Initialize Socket.IO connection
+             */
+            initializeSocket() {
+                // Use parent window's origin for socket connection
+                this.socket = io(window.location.origin);
+
+                // Connection events
+                this.socket.on('connect', () => {
+                    console.log('🔗 Connected to server');
+                    this.updateConnectionStatus(true);
+                });
+
+                this.socket.on('disconnect', () => {
+                    console.log('🔌 Disconnected from server');
+                    this.updateConnectionStatus(false);
+                });
+
+                // Exam events
+                this.socket.on('exam-expired', (data) => {
+                    this.handleExamExpired(data);
+                });
+
+                this.socket.on('force-disconnect', (data) => {
+                    this.handleForceDisconnect(data);
+                });
+
+                this.socket.on('time-warning', (data) => {
+                    this.handleTimeWarning(data);
+                });
+
+                // Anti-cheat response
+                this.socket.on('anti-cheat-warning', (data) => {
+                    this.handleServerAntiCheatWarning(data);
+                });
+
+                console.log('🌐 Socket initialized');
+            }
+
+            /**
+             * Setup UI event listeners
+             */
+            setupEventListeners() {
+                // Code editor events
+                const codeEditor = document.getElementById('code-editor');
+                if (codeEditor) {
+                    codeEditor.addEventListener('input', () => {
+                        this.handleCodeChange();
+                    });
+                }
+
+                // Control buttons
+                const buttons = {
+                    'save-code-btn': () => this.saveCode(),
+                    'run-code-btn': () => this.runCode(),
+                    'format-code-btn': () => this.formatCode(),
+                    'clear-output-btn': () => this.clearOutput(),
+                    'finish-exam-btn': () => this.finishExam()
+                };
+
+                Object.entries(buttons).forEach(([id, handler]) => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.addEventListener('click', handler);
+                    }
+                });
+
+                // Anti-cheat warning buttons
+                const continueBtn = document.getElementById('continue-exam-btn');
+                const exitBtn = document.getElementById('exit-exam-btn');
+
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => this.continueExam());
+                }
+
+                if (exitBtn) {
+                    exitBtn.addEventListener('click', () => this.exitExam());
+                }
+
+                // Window events
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.isExamActive) {
+                        e.preventDefault();
+                        e.returnValue = 'Изпитът е в ход! Сигурни ли сте че искате да затворите прозореца?';
+                        return e.returnValue;
+                    }
+                });
+
+                // Focus events for anti-cheat
+                window.addEventListener('focus', () => {
+                    if (this.isExamActive) {
+                        console.log('🎯 Window focused');
+                    }
+                });
+
+                window.addEventListener('blur', () => {
+                    if (this.isExamActive) {
+                        console.log('👁️ Window blurred');
+                    }
+                });
+
+                console.log('👂 Event listeners setup');
+            }
+
+            /**
+             * Setup keyboard shortcuts
+             */
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Allow shortcuts only when not in anti-cheat red screen
+                    if (this.antiCheat && this.antiCheat.isRedScreenVisible) {
+                        return;
+                    }
+
+                    // Ctrl+S - Save
+                    if (e.ctrlKey && e.code === 'KeyS') {
+                        e.preventDefault();
+                        this.saveCode();
+                    }
+
+                    // Ctrl+Enter - Run
+                    if (e.ctrlKey && e.code === 'Enter') {
+                        e.preventDefault();
+                        this.runCode();
+                    }
+
+                    // Alt+F - Format (if implemented)
+                    if (e.altKey && e.code === 'KeyF') {
+                        e.preventDefault();
+                        this.formatCode();
+                    }
+                });
+
+                console.log('⌨️ Keyboard shortcuts setup');
+            }
+
+            /**
+             * Initialize Anti-Cheat system
+             */
+            initializeAntiCheat() {
+                if (window.AntiCheat) {
+                    this.antiCheat = new window.AntiCheat(this.socket);
+                    window.antiCheat = this.antiCheat; // Global access for warning buttons
+                    console.log('🛡️ Anti-cheat system ready (inactive)');
+                } else {
+                    console.error('❌ AntiCheat class not found');
+                }
+            }
+
+            /**
+             * Wait for socket connection
+             */
+            waitForConnection() {
+                return new Promise((resolve, reject) => {
+                    if (this.socket.connected) {
+                        resolve();
+                        return;
+                    }
+
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Connection timeout'));
+                    }, 10000);
+
+                    this.socket.on('connect', () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    });
+                });
+            }
+
+            /**
+             * Start the exam
+             */
+            startExam() {
+                console.log('🎯 Starting exam...');
+
+                // Hide loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                // Show exam window
+                const examWindow = document.getElementById('exam-window');
+                if (examWindow) {
+                    examWindow.style.display = 'block';
+                }
+
+                // Update UI with session data
+                this.updateStudentInfo();
+                this.updateSessionDisplay();
+
+                // Load previous code if available
+                if (this.sessionData.lastCode) {
+                    const codeEditor = document.getElementById('code-editor');
+                    if (codeEditor) {
+                        codeEditor.value = this.sessionData.lastCode;
+                    }
+                }
+
+                // Start timer
+                this.startExamTimer(this.sessionData.timeLeft);
+
+                // Activate anti-cheat protection
+                if (this.antiCheat) {
+                    this.antiCheat.activate();
+                    this.showAntiCheatStatus('active');
+                }
+
+                // Setup auto-save
+                this.setupAutoSave();
+
+                // Mark exam as active
+                this.isExamActive = true;
+
+                // Focus code editor
+                setTimeout(() => {
+                    const codeEditor = document.getElementById('code-editor');
+                    if (codeEditor) {
+                        codeEditor.focus();
+                    }
+                }, 100);
+
+                // Communicate with parent window
+                this.notifyParentWindow('exam-started', this.sessionData);
+
+                console.log('🎓 Exam started successfully');
+            }
+
+            /**
+             * Update student info display
+             */
+            updateStudentInfo() {
+                const nameEl = document.getElementById('student-name-display');
+                const classEl = document.getElementById('student-class-display');
+
+                if (nameEl) nameEl.textContent = this.sessionData.studentName;
+                if (classEl) classEl.textContent = this.sessionData.studentClass;
+            }
+
+            /**
+             * Update session display
+             */
+            updateSessionDisplay() {
+                const sessionEl = document.getElementById('session-id-display');
+                if (sessionEl) {
+                    sessionEl.textContent = `Session: ${this.sessionData.sessionId}`;
+                }
+            }
+
+            /**
+             * Start exam timer
+             */
+            startExamTimer(timeLeft) {
+                const timerDisplay = document.getElementById('timer-display');
+                const timerContainer = document.getElementById('exam-timer');
+
+                if (!timerDisplay) return;
+
+                this.examTimer = setInterval(() => {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                    // Timer warnings
+                    if (timeLeft < 5 * 60 * 1000) { // Last 5 minutes
+                        timerContainer.classList.add('timer-critical');
+                    } else if (timeLeft < 15 * 60 * 1000) { // Last 15 minutes
+                        timerContainer.classList.add('timer-warning');
+                    }
+
+                    timeLeft -= 1000;
+
+                    if (timeLeft <= 0) {
+                        this.handleExamExpired({ message: 'Времето за изпита изтече!' });
+                    }
+                }, 1000);
+            }
+
+            /**
+             * Setup auto-save functionality
+             */
+            setupAutoSave() {
+                this.autoSaveInterval = setInterval(() => {
+                    if (this.isExamActive) {
+                        this.autoSaveCode();
+                    }
+                }, 10000); // Auto-save every 10 seconds
+            }
+
+            /**
+             * Handle code changes
+             */
+            handleCodeChange() {
+                if (!this.isExamActive) return;
+
+                // Mark as unsaved
+                this.updateLastSaved('Незапазено');
+            }
+
+            /**
+             * Save code manually
+             */
+            saveCode() {
+                if (!this.isExamActive) return;
+
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
+
+                const code = codeEditor.value;
+
+                // Send to server
+                this.socket.emit('code-update', {
+                    sessionId: this.sessionData.sessionId,
+                    code: code,
+                    filename: 'main.js',
+                    timestamp: Date.now()
+                });
+
+                this.updateLastSaved('Сега');
+                console.log('💾 Code saved manually');
+            }
+
+            /**
+             * Auto-save code
+             */
+            autoSaveCode() {
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
+
+                const code = codeEditor.value;
+
+                // Send to server
+                this.socket.emit('code-update', {
+                    sessionId: this.sessionData.sessionId,
+                    code: code,
+                    filename: 'main.js',
+                    timestamp: Date.now(),
+                    auto: true
+                });
+
+                this.updateLastSaved('Автоматично');
+            }
+
+            /**
+             * Run code
+             */
+            runCode() {
+                const codeEditor = document.getElementById('code-editor');
+                const outputEl = document.getElementById('code-output');
+
+                if (!codeEditor || !outputEl) return;
+
+                const code = codeEditor.value;
+
+                // Clear previous output
+                outputEl.innerHTML = '';
+
+                // Capture console.log output
+                const originalLog = console.log;
+                const originalError = console.error;
+                const originalWarn = console.warn;
+                const outputs = [];
+
+                console.log = (...args) => {
+                    outputs.push({ type: 'log', content: args.join(' ') });
+                    originalLog.apply(console, args);
+                };
+
+                console.error = (...args) => {
+                    outputs.push({ type: 'error', content: args.join(' ') });
+                    originalError.apply(console, args);
+                };
+
+                console.warn = (...args) => {
+                    outputs.push({ type: 'warn', content: args.join(' ') });
+                    originalWarn.apply(console, args);
+                };
+
+                try {
+                    // Execute code
+                    eval(code);
+
+                    // Display output
+                    if (outputs.length > 0) {
+                        outputs.forEach(output => {
+                            const outputLine = document.createElement('div');
+                            outputLine.className = `output-line output-${output.type}`;
+                            outputLine.textContent = output.content;
+
+                            if (output.type === 'error') {
+                                outputLine.classList.add('output-error');
+                            }
+
+                            outputEl.appendChild(outputLine);
+                        });
+                    } else {
+                        outputEl.innerHTML = '<div class="output-placeholder">Кодът се изпълни без изход</div>';
+                    }
+                } catch (error) {
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'output-error';
+                    errorEl.textContent = `Грешка: ${error.message}`;
+                    outputEl.appendChild(errorEl);
+                }
+
+                // Restore console functions
+                console.log = originalLog;
+                console.error = originalError;
+                console.warn = originalWarn;
+
+                // Auto-scroll to bottom
+                outputEl.scrollTop = outputEl.scrollHeight;
+
+                console.log('▶️ Code executed');
+            }
+
+            /**
+             * Format code (basic implementation)
+             */
+            formatCode() {
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
+
+                // Basic formatting - add proper indentation
+                let code = codeEditor.value;
+                const lines = code.split('\n');
+                let indentLevel = 0;
+                const formattedLines = [];
+
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+
+                    if (trimmed.includes('}')) {
+                        indentLevel = Math.max(0, indentLevel - 1);
+                    }
+
+                    formattedLines.push('    '.repeat(indentLevel) + trimmed);
+
+                    if (trimmed.includes('{')) {
+                        indentLevel++;
+                    }
+                });
+
+                codeEditor.value = formattedLines.join('\n');
+                console.log('🎨 Code formatted');
+            }
+
+            /**
+             * Clear output area
+             */
+            clearOutput() {
+                const outputEl = document.getElementById('code-output');
+                if (outputEl) {
+                    outputEl.innerHTML = '<div class="output-placeholder">Резултатът от вашия код ще се покаже тук...\n\nИзползвайте console.log() за да виждате изхода.</div>';
+                }
+            }
+
+            /**
+             * Finish exam
+             */
+            finishExam() {
+                if (!this.isExamActive) return;
+
+                if (confirm('Сигурни ли сте че искате да приключите изпита?')) {
+                    // Save final code
+                    this.saveCode();
+
+                    // Deactivate anti-cheat
+                    if (this.antiCheat) {
+                        this.antiCheat.deactivate();
+                    }
+
+                    // Send completion to server
+                    this.socket.emit('exam-complete', {
+                        sessionId: this.sessionData.sessionId,
+                        completedAt: Date.now(),
+                        reason: 'student_finish'
+                    });
+
+                    // Stop timer and auto-save
+                    if (this.examTimer) {
+                        clearInterval(this.examTimer);
+                    }
+                    if (this.autoSaveInterval) {
+                        clearInterval(this.autoSaveInterval);
+                    }
+
+                    // Mark as inactive
+                    this.isExamActive = false;
+
+                    // Notify parent window
+                    this.notifyParentWindow('exam-completed', {
+                        sessionId: this.sessionData.sessionId,
+                        reason: 'student_finish'
+                    });
+
+                    // Show completion message and close
+                    alert('Изпитът е приключен успешно! Прозорецът ще се затвори.');
+
+                    setTimeout(() => {
+                        window.close();
+                    }, 1000);
+
+                    console.log('✅ Exam completed by student');
+                }
+            }
+
+            /**
+             * Handle exam expiration
+             */
+            handleExamExpired(data) {
+                console.log('⏰ Exam time expired:', data);
+
+                // Stop timer and auto-save
+                if (this.examTimer) {
+                    clearInterval(this.examTimer);
+                }
+                if (this.autoSaveInterval) {
+                    clearInterval(this.autoSaveInterval);
+                }
+
+                // Deactivate anti-cheat
+                if (this.antiCheat) {
+                    this.antiCheat.deactivate();
+                }
+
+                // Mark as inactive
+                this.isExamActive = false;
+
+                // Notify parent window
+                this.notifyParentWindow('exam-expired', data);
+
+                // Show expiration message
+                alert(data.message || 'Времето за изпита изтече!');
+
+                // Close window
+                setTimeout(() => {
+                    window.close();
+                }, 2000);
+            }
+
+            /**
+             * Handle force disconnect
+             */
+            handleForceDisconnect(data) {
+                console.log('🚫 Force disconnect:', data);
+
+                // Deactivate anti-cheat
+                if (this.antiCheat) {
+                    this.antiCheat.deactivate();
+                }
+
+                // Mark as inactive
+                this.isExamActive = false;
+
+                // Notify parent window
+                this.notifyParentWindow('force-disconnect', data);
+
+                // Show message and close
+                alert(data.message || 'Изпитът беше прекратен от преподавателя');
+
+                setTimeout(() => {
+                    window.close();
+                }, 1000);
+            }
+
+            /**
+             * Handle time warning
+             */
+            handleTimeWarning(data) {
+                console.log('⏰ Time warning:', data);
+
+                // Show brief notification
+                this.showTimeWarningNotification(data.message);
+            }
+
+            /**
+             * Handle server anti-cheat warning
+             */
+            handleServerAntiCheatWarning(data) {
+                console.log('⚠️ Server anti-cheat warning:', data);
+                // Additional server-side warning handling could go here
+            }
+
+            /**
+             * Continue exam (after anti-cheat warning)
+             */
+            continueExam() {
+                if (this.antiCheat) {
+                    this.antiCheat.continueExam();
+                }
+            }
+
+            /**
+             * Exit exam (from anti-cheat warning)
+             */
+            exitExam() {
+                if (this.antiCheat) {
+                    this.antiCheat.exitExam();
+                }
+            }
+
+            /**
+             * Show time warning notification
+             */
+            showTimeWarningNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 60px;
+                    right: 20px;
+                    background-color: #ffc107;
+                    color: #212529;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    z-index: 1001;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.innerHTML = `⏰ ${message}`;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }, 5000);
+            }
+
+            /**
+             * Update last saved display
+             */
+            updateLastSaved(status) {
+                const lastSavedEl = document.getElementById('last-saved-display');
+                if (lastSavedEl) {
+                    const time = status === 'Сега' ? new Date().toLocaleTimeString() : status;
+                    lastSavedEl.textContent = `Последно запазено: ${time}`;
+                }
+            }
+
+            /**
+             * Update connection status
+             */
+            updateConnectionStatus(connected) {
+                const statusEl = document.getElementById('connection-status');
+                const dotEl = document.getElementById('connection-dot');
+
+                if (statusEl) {
+                    statusEl.textContent = connected ? 'Свързан' : 'Изключен';
+                }
+
+                if (dotEl) {
+                    dotEl.className = `connection-dot ${connected ? '' : 'offline'}`;
+                }
+            }
+
+            /**
+             * Show anti-cheat status
+             */
+            showAntiCheatStatus(status) {
+                const indicator = document.getElementById('anti-cheat-indicator');
+                if (indicator) {
+                    indicator.className = `anti-cheat-indicator ${status}`;
+                    indicator.style.display = 'block';
+
+                    const statusText = {
+                        'active': '🛡️ Защитен',
+                        'warning': '⚠️ Внимание',
+                        'violation': '🚨 Нарушение'
+                    };
+
+                    indicator.textContent = statusText[status] || statusText.active;
+                }
+            }
+
+            /**
+             * Notify parent window
+             */
+            notifyParentWindow(event, data) {
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'exam-window-event',
+                            event: event,
+                            data: data
+                        }, window.location.origin);
+                    }
+                } catch (error) {
+                    console.warn('Could not notify parent window:', error);
+                }
+            }
+
+            /**
+             * Show error message
+             */
+            showError(message) {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.innerHTML = `
+                        <div class="loading-content">
+                            <h3 style="color: #dc3545;">❌ Грешка</h3>
+                            <p>${message}</p>
+                            <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Затвори
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Initialize exam window when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.examWindow = new ExamWindow();
+        });
+
+        // Add some CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

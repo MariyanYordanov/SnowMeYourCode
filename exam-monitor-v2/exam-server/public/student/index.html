@@ -4,20 +4,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Workspace - Exam Monitor Modal</title>
+    <title>Programming Exam - Fullscreen Mode</title>
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/student.css">
     <link rel="stylesheet" href="css/editor.css">
+    <link rel="stylesheet" href="css/anti-cheat.css">
 
     <style>
-        /* Additional styles for modal system */
-        .login-status {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-weight: bold;
+        /* Fullscreen optimized styles */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Login Form - Center aligned */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-form {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 400px;
             text-align: center;
+        }
+
+        .login-form h2 {
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            background: #ccc;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .login-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
             display: none;
         }
 
@@ -39,484 +113,764 @@
             border: 1px solid #bee5eb;
         }
 
-        .login-form {
-            animation: fadeIn 0.5s ease-in;
+        .fullscreen-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Exam Workspace - Fullscreen optimized */
+        .exam-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: column;
+            background: white;
         }
 
-        .login-form input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        .exam-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            z-index: 1000;
         }
 
-        .login-form button:hover {
+        .exam-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .exam-title h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .exam-title .student-info {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .exam-timer {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .timer-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .exam-content {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            height: calc(100vh - 70px - 50px);
+            /* Header + Footer */
+        }
+
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .editor-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .editor-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
         }
 
-        .login-form button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-success {
+            background-color: #28a745;
+            color: white;
         }
 
-        /* Connection status indicator */
-        #connection-status {
+        .btn-success:hover {
+            background-color: #1e7e34;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        #code-editor {
+            flex: 1;
+            border: none;
+            resize: none;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 20px;
+            outline: none;
+            background-color: #fafafa;
+            color: #333;
+            tab-size: 4;
+        }
+
+        #code-editor:focus {
+            background-color: white;
+        }
+
+        .output-section {
+            width: 450px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .output-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        #code-output {
+            flex: 1;
+            padding: 20px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            min-height: 0;
+        }
+
+        .output-line {
+            margin-bottom: 6px;
+            color: #495057;
+        }
+
+        .output-error {
+            color: #dc3545;
+            font-weight: bold;
+            background-color: #f8d7da;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .output-placeholder {
+            color: #6c757d;
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .exam-footer {
+            background: #f8f9fa;
+            padding: 12px 25px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .exam-info {
+            display: flex;
+            gap: 30px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #28a745;
+        }
+
+        .connection-dot.offline {
+            background-color: #dc3545;
+        }
+
+        /* Fullscreen status indicators */
+        .fullscreen-indicator {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            border-radius: 15px;
+            top: 15px;
+            right: 15px;
+            padding: 8px 12px;
+            border-radius: 20px;
             font-size: 12px;
             font-weight: bold;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
+            z-index: 2000;
+            pointer-events: none;
         }
 
-        /* Modal preparation styles */
-        body.modal-exam-active {
-            overflow: hidden !important;
+        .fullscreen-indicator.active {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .fullscreen-indicator.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .fullscreen-indicator.violation {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Timer warning states */
+        .timer-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+            animation: pulse 1s infinite;
+        }
+
+        .timer-critical {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Exam protected mode styles */
+        .exam-protected {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Allow selection in code areas */
+        #code-editor,
+        #code-output {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        /* Fullscreen exit prevention overlay */
+        .fullscreen-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(220, 53, 69, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 15000;
+            color: white;
+            text-align: center;
+        }
+
+        .fullscreen-warning-content {
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .fullscreen-warning h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .fullscreen-warning p {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .fullscreen-warning button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: white;
+            color: #dc3545;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         /* Responsive design */
-        @media (max-width: 768px) {
-            .login-form {
-                width: 95%;
-                padding: 30px 20px;
+        @media (max-width: 1200px) {
+            .output-section {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .exam-content {
+                flex-direction: column;
             }
 
-            .login-form h2 {
-                font-size: 24px;
+            .output-section {
+                width: 100%;
+                height: 300px;
+                border-right: none;
+                border-top: 1px solid #dee2e6;
             }
 
-            .login-form input,
-            .login-form button {
-                font-size: 16px;
-                padding: 15px;
+            .editor-section {
+                border-right: none;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- Login Form -->
-    <div id="login-form" class="login-form">
-        <h2>🎓 Вход за изпит</h2>
-        <p style="color: #666; margin-bottom: 25px; text-align: center;">
-            Изпитът ще се проведе в защитен модален прозорец
-        </p>
+    <!-- Fullscreen Status Indicator -->
+    <div id="fullscreen-indicator" class="fullscreen-indicator active" style="display: none;">
+        🔒 Fullscreen Protected
+    </div>
 
-        <input type="text" id="student-name" placeholder="Име и фамилия (напр. Иван Иванов)" autocomplete="off"
-            maxlength="50">
-
-        <input type="text" id="student-class" placeholder="Клас (напр. 11А)" autocomplete="off" maxlength="10">
-
-        <button onclick="joinExam()" id="login-btn">
-            🚀 Влез в изпита
-        </button>
-
-        <div id="login-status" class="login-status">
-            <!-- Login status messages will appear here -->
-        </div>
-
-        <div
-            style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px; color: #495057;">
-            <strong>📋 Инструкции:</strong>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Изпитът ще се отвори в защитен модален прозорец</li>
-                <li>Всички опити за напускане ще бъдат блокирани</li>
-                <li>При нарушение ще видите червен предупредителен екран</li>
-                <li>Можете да работите само в кодовия редактор</li>
-            </ul>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Entering Exam Mode...</h3>
+            <p>Switching to fullscreen protection...</p>
         </div>
     </div>
 
-    <!-- Hidden workspace template (will be moved to modal) -->
-    <div id="workspace" style="display: none;">
-        <!-- This will be cloned into the modal -->
+    <!-- Fullscreen Exit Warning -->
+    <div id="fullscreen-warning" class="fullscreen-warning">
+        <div class="fullscreen-warning-content">
+            <h2>⚠️ FULLSCREEN REQUIRED</h2>
+            <p>
+                The exam must be taken in fullscreen mode for security reasons.<br>
+                Attempting to exit fullscreen will terminate the exam.
+            </p>
+            <button id="return-fullscreen-btn">Return to Fullscreen</button>
+        </div>
+    </div>
+
+    <!-- Login Container -->
+    <div id="login-container" class="login-container">
+        <div class="login-form">
+            <h2>Programming Exam Login</h2>
+            <p style="color: #666; margin-bottom: 25px;">Enter your details to begin the exam</p>
+
+            <input type="text" id="student-name" placeholder="Full Name (e.g., Ivan Ivanov)" autocomplete="off">
+            <input type="text" id="student-class" placeholder="Class (e.g., 11А)" autocomplete="off">
+
+            <button id="login-btn" class="login-btn">
+                Enter Exam
+            </button>
+
+            <div id="login-status" class="login-status">
+                <!-- Login status messages -->
+            </div>
+
+            <div class="fullscreen-notice">
+                <strong>🔒 Security Notice:</strong> The exam will switch to fullscreen mode for security.
+                Attempting to exit fullscreen or switch applications will trigger security warnings.
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Workspace -->
+    <div id="exam-container" class="exam-container">
+        <!-- Exam Header -->
+        <div class="exam-header">
+            <div class="exam-title">
+                <h2>Programming Practical Exam</h2>
+                <div class="student-info">
+                    <span id="student-name-display"></span> • <span id="student-class-display"></span> • <span
+                        id="session-id-display"></span>
+                </div>
+            </div>
+            <div id="exam-timer" class="exam-timer">
+                <span class="timer-icon">⏱️</span>
+                <span id="timer-display">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="exam-content">
+            <!-- Code Editor Section -->
+            <div class="editor-section">
+                <div class="editor-header">
+                    <h3>📝 JavaScript Editor</h3>
+                    <div class="editor-controls">
+                        <button id="save-code-btn" class="btn btn-success" title="Ctrl+S">
+                            💾 Save
+                        </button>
+                        <button id="run-code-btn" class="btn btn-primary" title="Ctrl+Enter">
+                            ▶️ Run
+                        </button>
+                        <button id="format-code-btn" class="btn btn-secondary" title="Alt+F">
+                            🎨 Format
+                        </button>
+                    </div>
+                </div>
+
+                <textarea id="code-editor" placeholder="// Write your JavaScript code here
+console.log('Welcome to the programming exam!');
+
+// Example:
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log('Fibonacci(10):', fibonacci(10));"></textarea>
+            </div>
+
+            <!-- Output/Console Section -->
+            <div class="output-section">
+                <div class="output-header">
+                    <h3>🖥️ Console</h3>
+                    <div class="editor-controls">
+                        <button id="clear-output-btn" class="btn btn-secondary">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+                <div id="code-output">
+                    <div class="output-placeholder">
+                        Your code output will appear here...
+
+                        Use console.log() to display results.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Footer -->
+        <div class="exam-footer">
+            <div class="exam-info">
+                <span id="last-saved-display">Last saved: Never</span>
+                <div class="connection-indicator">
+                    <div id="connection-dot" class="connection-dot offline"></div>
+                    <span id="connection-status">Connecting...</span>
+                </div>
+            </div>
+            <div class="exam-controls">
+                <button id="finish-exam-btn" class="btn btn-danger">
+                    🏁 Finish Exam
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anti-Cheat Warning Overlay -->
+    <div id="antiCheatOverlay" class="anti-cheat-overlay">
+        <div class="warning-dialog">
+            <div class="warning-title">⚠️ SECURITY WARNING ⚠️</div>
+            <div class="warning-message" id="warningMessage">
+                Suspicious activity detected!<br>
+                This action has been logged.
+            </div>
+            <div class="warning-buttons">
+                <button class="warning-button continue-button" id="continue-exam-btn">
+                    Continue Exam
+                </button>
+                <button class="warning-button exit-button" id="exit-exam-btn">
+                    Exit Exam
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- Inline ExamModalSystem to avoid loading issues -->
+    <script src="js/AntiCheat.js"></script>
     <script>
         /**
-         * Exam Modal System - Entire Exam runs in Modal Window
-         * Any attempt to leave shows RED SCREEN immediately
+         * Fullscreen Exam System
+         * Single page with fullscreen protection and focus lock
          */
-        class ExamModalSystem {
-            constructor(socket) {
-                this.socket = socket;
-                this.isExamModalActive = false;
-                this.isRedScreenVisible = false;
-                this.violations = 0;
-                this.examModal = null;
-                this.redScreenModal = null;
-                this.eventListeners = [];
-                this.focusMonitor = null;
+        class FullscreenExamSystem {
+            constructor() {
+                this.socket = null;
+                this.antiCheat = null;
+                this.sessionId = null;
+                this.studentInfo = null;
                 this.examTimer = null;
+                this.isExamActive = false;
+                this.isFullscreenActive = false;
+                this.lastSaved = null;
+                this.autoSaveInterval = null;
+                this.focusLockInterval = null;
+                this.fullscreenCheckInterval = null;
 
-                console.log('🏢 Exam Modal System initialized');
-            }
-
-            /**
-             * Start exam in modal window
-             */
-            startExamInModal(examData) {
-                if (this.isExamModalActive) return;
-
-                console.log('🚀 Starting exam in modal window...');
-
-                // Hide original page content
-                this.hideOriginalContent();
-
-                // Create exam modal
-                this.createExamModal(examData);
-
-                // Setup complete protection
-                this.setupModalProtection();
-
-                this.isExamModalActive = true;
-
-                console.log('✅ Exam modal active with full protection');
-            }
-
-            /**
-             * Hide original page content
-             */
-            hideOriginalContent() {
-                // Hide login form
-                const loginForm = document.getElementById('login-form');
-                if (loginForm) {
-                    loginForm.style.display = 'none';
-                }
-
-                // Hide any other content
-                const body = document.body;
-                Array.from(body.children).forEach(child => {
-                    if (child.id !== 'examModal' && child.id !== 'redScreenModal') {
-                        child.style.display = 'none';
-                    }
-                });
-            }
-
-            /**
-             * Create exam modal with workspace
-             */
-            createExamModal(examData) {
-                // Create modal container
-                this.examModal = document.createElement('div');
-                this.examModal.id = 'examModal';
-                this.examModal.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: white !important;
-            z-index: 999998 !important;
-            overflow: auto !important;
-            font-family: Arial, sans-serif !important;
-        `;
-
-                // Create exam workspace HTML
-                this.examModal.innerHTML = `
-            <div class="exam-modal-content" style="padding: 20px; height: 100%; display: flex; flex-direction: column;">
-                <!-- Exam Header -->
-                <div class="exam-header" style="display: flex; justify-content: space-between; align-items: center; 
-                     margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #007bff;">
-                    <div class="exam-title">
-                        <h2 style="margin: 0; color: #007bff;">🎓 Практически изпит по програмиране</h2>
-                        <span id="modal-student-info" style="color: #666; font-size: 14px;">
-                            ${examData.studentName} (${examData.studentClass})
-                        </span>
-                    </div>
-                    <div class="exam-timer" style="background: #dc3545; color: white; padding: 10px 20px; 
-                         border-radius: 5px; font-size: 18px; font-weight: bold;">
-                        <div id="modal-timer">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Main Content Area -->
-                <div class="exam-content" style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0;">
-                    <!-- Code Editor Section -->
-                    <div class="editor-section" style="display: flex; flex-direction: column; border: 1px solid #ddd; border-radius: 8px;">
-                        <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; 
-                             padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
-                            <h3 style="margin: 0; color: #333;">📝 Код редактор</h3>
-                            <div class="editor-controls">
-                                <button id="modal-save-code" style="background: #28a745; color: white; border: none; 
-                                        padding: 8px 16px; border-radius: 4px; margin-right: 8px; cursor: pointer;">
-                                    💾 Запази
-                                </button>
-                                <button id="modal-run-code" style="background: #007bff; color: white; border: none; 
-                                        padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                                    ▶️ Изпълни
-                                </button>
-                            </div>
-                        </div>
-
-                        <textarea id="modal-code-editor" style="flex: 1; border: none; padding: 15px; font-family: 'Courier New', monospace; 
-                                 font-size: 14px; resize: none; outline: none; background: #f8f8f8;" 
-                                 placeholder="Напишете вашия JavaScript код тук...">${examData.lastCode || '// Добре дошли в изпита!\n// Напишете вашия JavaScript код тук\n\nconsole.log("Здравей, свят!");'}</textarea>
-                    </div>
-
-                    <!-- Output/Console Section -->
-                    <div class="output-section" style="display: flex; flex-direction: column; border: 1px solid #ddd; border-radius: 8px;">
-                        <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; 
-                             padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd;">
-                            <h3 style="margin: 0; color: #333;">📤 Изход</h3>
-                            <button id="modal-clear-output" style="background: #6c757d; color: white; border: none; 
-                                    padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                                🗑️ Изчисти
-                            </button>
-                        </div>
-                        <div id="modal-code-output" style="flex: 1; padding: 15px; background: #fff; font-family: 'Courier New', monospace; 
-                             font-size: 13px; overflow-y: auto; border: none;">
-                            <div style="color: #666; font-style: italic;">
-                                Изходът от вашия код ще се покаже тук...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Exam Controls -->
-                <div class="exam-controls" style="display: flex; justify-content: space-between; align-items: center; 
-                     margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <button id="modal-finish-exam" style="background: #dc3545; color: white; border: none; 
-                            padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">
-                        🏁 Приключи изпита
-                    </button>
-                    <div class="exam-info" style="color: #666; font-size: 14px;">
-                        <div>Session: ${examData.sessionId}</div>
-                        <div id="modal-last-saved">Последно запазено: Никога</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-                // Add modal to page
-                document.body.appendChild(this.examModal);
-
-                // Setup modal event listeners
-                this.setupModalEventListeners();
-            }
-
-            /**
-             * Setup event listeners for modal workspace
-             */
-            setupModalEventListeners() {
-                // Save code button
-                const saveBtn = this.examModal.querySelector('#modal-save-code');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => this.saveCode());
-                }
-
-                // Run code button
-                const runBtn = this.examModal.querySelector('#modal-run-code');
-                if (runBtn) {
-                    runBtn.addEventListener('click', () => this.runCode());
-                }
-
-                // Clear output button
-                const clearBtn = this.examModal.querySelector('#modal-clear-output');
-                if (clearBtn) {
-                    clearBtn.addEventListener('click', () => this.clearOutput());
-                }
-
-                // Finish exam button
-                const finishBtn = this.examModal.querySelector('#modal-finish-exam');
-                if (finishBtn) {
-                    finishBtn.addEventListener('click', () => this.finishExam());
-                }
-
-                // Code editor change tracking
-                const codeEditor = this.examModal.querySelector('#modal-code-editor');
-                if (codeEditor) {
-                    codeEditor.addEventListener('input', () => this.handleCodeChange());
-                }
-            }
-
-            /**
-             * Setup complete modal protection - TRAP EVERYTHING
-             */
-            setupModalProtection() {
-                console.log('🛡️ Setting up COMPLETE modal protection...');
-
-                // Monitor for focus loss - IMMEDIATE RED SCREEN
-                this.addListener(window, 'blur', () => {
-                    if (this.isExamModalActive && !this.isRedScreenVisible) {
-                        console.log('🚨 Window blur detected - showing red screen');
-                        this.showRedScreen('Излизане от прозореца на изпита');
-                    }
-                });
-
-                // Monitor for visibility changes - IMMEDIATE RED SCREEN
-                this.addListener(document, 'visibilitychange', () => {
-                    if (document.hidden && this.isExamModalActive && !this.isRedScreenVisible) {
-                        console.log('🚨 Page hidden detected - showing red screen');
-                        this.showRedScreen('Скриване на таба на изпита');
-                    }
-                });
-
-                // Block keyboard shortcuts
-                this.addListener(document, 'keydown', (e) => {
-                    const blocked = this.checkBlockedShortcut(e);
-                    if (blocked) {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                        this.showRedScreen(`Опит за използване на ${blocked}`);
-                        return false;
-                    }
-                }, true);
-
-                // Block navigation attempts
-                this.addListener(window, 'beforeunload', (e) => {
-                    if (this.isExamModalActive) {
-                        e.preventDefault();
-                        e.returnValue = 'ИЗПИТ В ХОД - НАПУСКАНЕТО Е ЗАБРАНЕНО!';
-
-                        setTimeout(() => {
-                            if (!this.isRedScreenVisible) {
-                                this.showRedScreen('Опит за напускане на страницата');
-                            }
-                        }, 1);
-
-                        return 'ИЗПИТ В ХОД - НАПУСКАНЕТО Е ЗАБРАНЕНО!';
-                    }
-                });
-
-                // Continuous focus monitoring
-                this.focusMonitor = setInterval(() => {
-                    if (this.isExamModalActive && !document.hasFocus() && !this.isRedScreenVisible) {
-                        console.log('🚨 Focus lost in interval check');
-                        this.showRedScreen('Загуба на фокус от изпита');
-                    }
-                }, 100);
-            }
-
-            /**
-             * Check if keyboard shortcut should be blocked
-             */
-            checkBlockedShortcut(e) {
-                const shortcuts = {
-                    'F5': () => e.code === 'F5',
-                    'Ctrl+R': () => e.ctrlKey && e.code === 'KeyR',
-                    'F12': () => e.code === 'F12',
-                    'Ctrl+Shift+I': () => e.ctrlKey && e.shiftKey && e.code === 'KeyI',
-                    'Ctrl+T': () => e.ctrlKey && e.code === 'KeyT',
-                    'Ctrl+N': () => e.ctrlKey && e.code === 'KeyN',
-                    'Ctrl+W': () => e.ctrlKey && e.code === 'KeyW',
-                    'Alt+Tab': () => e.altKey && e.code === 'Tab',
-                    'Ctrl+Tab': () => e.ctrlKey && e.code === 'Tab',
-                    'Alt+F4': () => e.altKey && e.code === 'F4'
+                // Fullscreen configuration
+                this.fullscreenConfig = {
+                    enableFocusLock: true,
+                    focusLockInterval: 100, // ms
+                    enableFullscreenMonitoring: true,
+                    monitoringInterval: 500, // ms
+                    enableExitPrevention: true,
+                    maxFullscreenExitAttempts: 3
                 };
 
-                for (const [name, check] of Object.entries(shortcuts)) {
-                    if (check()) {
-                        return name;
-                    }
-                }
-                return null;
+                this.fullscreenExitAttempts = 0;
+
+                this.initialize();
             }
 
             /**
-             * Show RED SCREEN modal over exam modal
+             * Initialize the exam system
              */
-            showRedScreen(violation) {
-                if (this.isRedScreenVisible) return;
+            initialize() {
+                console.log('🚀 Initializing Fullscreen Exam System...');
 
-                this.violations++;
-                this.isRedScreenVisible = true;
+                // Initialize Socket.IO connection
+                this.initializeSocket();
 
-                console.log(`🚨 RED SCREEN: ${violation}`);
+                // Setup UI event listeners
+                this.setupUIListeners();
 
-                // Report to server
-                if (this.socket && this.socket.connected) {
-                    this.socket.emit('suspicious-activity', {
-                        activity: violation,
-                        type: 'modal_violation',
-                        severity: 'critical',
-                        timestamp: Date.now(),
-                        violationCount: this.violations
+                // Initialize Anti-Cheat (inactive until exam starts)
+                this.initializeAntiCheat();
+
+                // Setup keyboard shortcuts
+                this.setupKeyboardShortcuts();
+
+                // Setup fullscreen event listeners
+                this.setupFullscreenListeners();
+
+                console.log('✅ Fullscreen Exam System initialized');
+            }
+
+            /**
+             * Initialize Socket.IO connection
+             */
+            initializeSocket() {
+                this.socket = io();
+
+                // Connection events
+                this.socket.on('connect', () => {
+                    console.log('🔗 Connected to server');
+                    this.updateConnectionStatus(true);
+                });
+
+                this.socket.on('disconnect', () => {
+                    console.log('🔌 Disconnected from server');
+                    this.updateConnectionStatus(false);
+                });
+
+                // Login response events
+                this.socket.on('student-id-assigned', (data) => {
+                    this.handleLoginSuccess(data, 'new');
+                });
+
+                this.socket.on('session-restored', (data) => {
+                    this.handleLoginSuccess(data, 'restored');
+                });
+
+                this.socket.on('login-error', (data) => {
+                    this.handleLoginError(data);
+                });
+
+                // Exam events
+                this.socket.on('exam-expired', (data) => {
+                    this.handleExamExpired(data);
+                });
+
+                this.socket.on('force-disconnect', (data) => {
+                    this.handleForceDisconnect(data);
+                });
+
+                this.socket.on('time-warning', (data) => {
+                    this.handleTimeWarning(data);
+                });
+
+                // Anti-cheat response
+                this.socket.on('anti-cheat-warning', (data) => {
+                    this.handleServerAntiCheatWarning(data);
+                });
+
+                console.log('🌐 Socket initialized');
+            }
+
+            /**
+             * Setup UI event listeners
+             */
+            setupUIListeners() {
+                // Login form
+                const loginBtn = document.getElementById('login-btn');
+                const nameInput = document.getElementById('student-name');
+                const classInput = document.getElementById('student-class');
+
+                if (loginBtn) {
+                    loginBtn.addEventListener('click', () => this.handleLogin());
+                }
+
+                // Enter key in login form
+                [nameInput, classInput].forEach(input => {
+                    if (input) {
+                        input.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                this.handleLogin();
+                            }
+                        });
+                    }
+                });
+
+                // Code editor events
+                const codeEditor = document.getElementById('code-editor');
+                if (codeEditor) {
+                    codeEditor.addEventListener('input', () => {
+                        this.handleCodeChange();
                     });
                 }
 
-                // Create red screen modal
-                this.createRedScreenModal(violation);
-            }
+                // Control buttons
+                const buttons = {
+                    'save-code-btn': () => this.saveCode(),
+                    'run-code-btn': () => this.runCode(),
+                    'format-code-btn': () => this.formatCode(),
+                    'clear-output-btn': () => this.clearOutput(),
+                    'finish-exam-btn': () => this.finishExam(),
+                    'return-fullscreen-btn': () => this.returnToFullscreen()
+                };
 
-            /**
-             * Create red screen modal
-             */
-            createRedScreenModal(violation) {
-                this.redScreenModal = document.createElement('div');
-                this.redScreenModal.id = 'redScreenModal';
-                this.redScreenModal.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background-color: rgba(220, 53, 69, 0.98) !important;
-            z-index: 999999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-family: Arial, sans-serif !important;
-            color: white !important;
-        `;
+                Object.entries(buttons).forEach(([id, handler]) => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.addEventListener('click', handler);
+                    }
+                });
 
-                this.redScreenModal.innerHTML = `
-            <div style="background-color: #dc3545; padding: 50px; border-radius: 15px; text-align: center;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 600px; width: 90%;">
-                <div style="font-size: 36px; font-weight: bold; margin-bottom: 30px;">
-                    🚨 ИЗПИТЪТ Е БЛОКИРАН 🚨
-                </div>
-                <div style="font-size: 20px; margin-bottom: 40px; line-height: 1.6;">
-                    <strong>Засечено нарушение:</strong><br>
-                    ${violation}<br><br>
-                    <div style="font-size: 16px; color: #ffcccc;">
-                        Нарушения: ${this.violations}<br>
-                        Всички действия са блокирани.
-                    </div>
-                </div>
-                <div style="display: flex; gap: 30px; justify-content: center;">
-                    <button id="continueExamFromRed" style="padding: 20px 40px; font-size: 18px; font-weight: bold;
-                            border: none; border-radius: 8px; cursor: pointer; background-color: #28a745; color: white;">
-                        ✅ Продължи изпита
-                    </button>
-                    <button id="exitExamFromRed" style="padding: 20px 40px; font-size: 18px; font-weight: bold;
-                            border: none; border-radius: 8px; cursor: pointer; background-color: #6c757d; color: white;">
-                        ❌ Напусни изпита
-                    </button>
-                </div>
-            </div>
-        `;
-
-                document.body.appendChild(this.redScreenModal);
-                this.setupRedScreenButtons();
-            }
-
-            /**
-             * Setup red screen button handlers
-             */
-            setupRedScreenButtons() {
-                const continueBtn = this.redScreenModal.querySelector('#continueExamFromRed');
-                const exitBtn = this.redScreenModal.querySelector('#exitExamFromRed');
+                // Anti-cheat warning buttons
+                const continueBtn = document.getElementById('continue-exam-btn');
+                const exitBtn = document.getElementById('exit-exam-btn');
 
                 if (continueBtn) {
                     continueBtn.addEventListener('click', () => this.continueExam());
@@ -525,81 +879,642 @@
                 if (exitBtn) {
                     exitBtn.addEventListener('click', () => this.exitExam());
                 }
+
+                // Window events
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.isExamActive) {
+                        e.preventDefault();
+                        e.returnValue = 'The exam is in progress! Are you sure you want to leave?';
+                        return e.returnValue;
+                    }
+                });
+
+                console.log('👂 UI Event listeners setup');
             }
 
             /**
-             * Continue exam - hide red screen
+             * Setup keyboard shortcuts
              */
-            continueExam() {
-                this.hideRedScreen();
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Allow shortcuts only when not in anti-cheat red screen
+                    if (this.antiCheat && this.antiCheat.isRedScreenVisible) {
+                        return;
+                    }
 
+                    // Ctrl+S - Save
+                    if (e.ctrlKey && e.code === 'KeyS') {
+                        e.preventDefault();
+                        this.saveCode();
+                    }
+
+                    // Ctrl+Enter - Run
+                    if (e.ctrlKey && e.code === 'Enter') {
+                        e.preventDefault();
+                        this.runCode();
+                    }
+
+                    // Alt+F - Format
+                    if (e.altKey && e.code === 'KeyF') {
+                        e.preventDefault();
+                        this.formatCode();
+                    }
+                });
+
+                console.log('⌨️ Keyboard shortcuts setup');
+            }
+
+            /**
+             * Setup fullscreen event listeners
+             */
+            setupFullscreenListeners() {
+                // Fullscreen change event
+                document.addEventListener('fullscreenchange', () => {
+                    this.handleFullscreenChange();
+                });
+
+                // Also listen for vendor-specific events
+                ['webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
+                    document.addEventListener(event, () => {
+                        this.handleFullscreenChange();
+                    });
+                });
+
+                console.log('🖥️ Fullscreen event listeners setup');
+            }
+
+            /**
+             * Initialize Anti-Cheat system
+             */
+            initializeAntiCheat() {
+                if (window.AntiCheat) {
+                    this.antiCheat = new window.AntiCheat(this.socket);
+                    window.antiCheat = this.antiCheat; // Global access for warning buttons
+                    console.log('🛡️ Anti-cheat system ready (inactive)');
+                } else {
+                    console.error('❌ AntiCheat class not found');
+                }
+            }
+
+            /**
+             * Handle login attempt
+             */
+            handleLogin() {
+                const nameInput = document.getElementById('student-name');
+                const classInput = document.getElementById('student-class');
+                const loginBtn = document.getElementById('login-btn');
+
+                if (!nameInput || !classInput) return;
+
+                const studentName = nameInput.value.trim();
+                const studentClass = classInput.value.trim();
+
+                if (!studentName || !studentClass) {
+                    this.showLoginStatus('Please enter name and class!', 'error');
+                    return;
+                }
+
+                // Disable login button and show loading
+                if (loginBtn) {
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px; margin-right: 10px; display: inline-block;"></div>Logging in...';
+                }
+
+                this.showLoginStatus('Logging into exam...', 'loading');
+
+                // Store student info
+                this.studentInfo = {
+                    name: studentName,
+                    class: studentClass
+                };
+
+                // Send login request
+                this.socket.emit('student-join', {
+                    studentName: studentName,
+                    studentClass: studentClass
+                });
+
+                console.log(`🎓 Login attempt: "${studentName}" from "${studentClass}"`);
+            }
+
+            /**
+             * Handle successful login
+             */
+            handleLoginSuccess(data, type) {
+                console.log(`✅ Login successful (${type}):`, data);
+
+                this.sessionId = data.sessionId;
+
+                const message = type === 'restored' ?
+                    `${data.message}` :
+                    `Login successful! Entering fullscreen exam mode...`;
+
+                this.showLoginStatus(message, 'success');
+
+                // Start fullscreen transition after short delay
                 setTimeout(() => {
-                    const codeEditor = this.examModal.querySelector('#modal-code-editor');
+                    this.enterFullscreenMode(data);
+                }, 1500);
+            }
+
+            /**
+             * Handle login error
+             */
+            handleLoginError(data) {
+                console.error('❌ Login error:', data);
+
+                this.showLoginStatus(data.message, 'error');
+
+                // Re-enable login button
+                const loginBtn = document.getElementById('login-btn');
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'Enter Exam';
+                }
+            }
+
+            /**
+             * Enter fullscreen mode and start exam
+             */
+            async enterFullscreenMode(sessionData) {
+                console.log('🔒 Entering fullscreen mode...');
+
+                try {
+                    // Show loading overlay
+                    const loadingOverlay = document.getElementById('loading-overlay');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'flex';
+                    }
+
+                    // Request fullscreen
+                    await this.requestFullscreen();
+
+                    // Wait for fullscreen to be active
+                    await this.waitForFullscreen();
+
+                    // Start the exam
+                    this.startExam(sessionData);
+
+                } catch (error) {
+                    console.error('❌ Failed to enter fullscreen:', error);
+                    this.handleFullscreenError(error);
+                }
+            }
+
+            /**
+             * Request fullscreen mode
+             */
+            async requestFullscreen() {
+                const element = document.documentElement;
+
+                if (element.requestFullscreen) {
+                    await element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    await element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    await element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {
+                    await element.msRequestFullscreen();
+                } else {
+                    throw new Error('Fullscreen API not supported');
+                }
+            }
+
+            /**
+             * Wait for fullscreen to be active
+             */
+            waitForFullscreen() {
+                return new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Fullscreen timeout'));
+                    }, 5000);
+
+                    const checkFullscreen = () => {
+                        if (this.isDocumentInFullscreen()) {
+                            clearTimeout(timeout);
+                            resolve();
+                        } else {
+                            setTimeout(checkFullscreen, 100);
+                        }
+                    };
+
+                    checkFullscreen();
+                });
+            }
+
+            /**
+             * Check if document is in fullscreen
+             */
+            isDocumentInFullscreen() {
+                return !!(document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement);
+            }
+
+            /**
+             * Start the exam
+             */
+            startExam(sessionData) {
+                console.log('🎯 Starting exam in fullscreen...');
+
+                // Hide loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                // Hide login container
+                const loginContainer = document.getElementById('login-container');
+                if (loginContainer) {
+                    loginContainer.style.display = 'none';
+                }
+
+                // Show exam container
+                const examContainer = document.getElementById('exam-container');
+                if (examContainer) {
+                    examContainer.style.display = 'flex';
+                }
+
+                // Update UI with session data
+                this.updateStudentInfo();
+                this.updateSessionDisplay();
+
+                // Load previous code if available
+                if (sessionData.lastCode) {
+                    const codeEditor = document.getElementById('code-editor');
+                    if (codeEditor) {
+                        codeEditor.value = sessionData.lastCode;
+                    }
+                }
+
+                // Start timer
+                this.startExamTimer(sessionData.timeLeft);
+
+                // Activate anti-cheat protection
+                if (this.antiCheat) {
+                    this.antiCheat.activate();
+                }
+
+                // Start fullscreen protection
+                this.startFullscreenProtection();
+
+                // Setup auto-save
+                this.setupAutoSave();
+
+                // Mark exam as active
+                this.isExamActive = true;
+                this.isFullscreenActive = true;
+
+                // Show fullscreen indicator
+                this.showFullscreenIndicator('active');
+
+                // Focus code editor
+                setTimeout(() => {
+                    const codeEditor = document.getElementById('code-editor');
                     if (codeEditor) {
                         codeEditor.focus();
                     }
                 }, 100);
 
-                console.log('🟢 Continued exam from red screen');
+                console.log('🎓 Exam started successfully in fullscreen mode');
             }
 
             /**
-             * Exit exam
+             * Start fullscreen protection mechanisms
              */
-            exitExam() {
-                if (confirm('Сигурни ли сте че искате да напуснете изпита?')) {
-                    if (this.socket && this.socket.connected) {
-                        this.socket.emit('exam-complete', {
-                            reason: 'student_exit_violations',
-                            violationCount: this.violations,
-                            timestamp: Date.now()
-                        });
+            startFullscreenProtection() {
+                // Focus lock - keep window focused
+                if (this.fullscreenConfig.enableFocusLock) {
+                    this.focusLockInterval = setInterval(() => {
+                        if (this.isExamActive && this.isFullscreenActive) {
+                            window.focus();
+                        }
+                    }, this.fullscreenConfig.focusLockInterval);
+                }
+
+                // Fullscreen monitoring
+                if (this.fullscreenConfig.enableFullscreenMonitoring) {
+                    this.fullscreenCheckInterval = setInterval(() => {
+                        this.checkFullscreenStatus();
+                    }, this.fullscreenConfig.monitoringInterval);
+                }
+
+                console.log('🔒 Fullscreen protection activated');
+            }
+
+            /**
+             * Check fullscreen status periodically
+             */
+            checkFullscreenStatus() {
+                if (!this.isExamActive) return;
+
+                const isFullscreen = this.isDocumentInFullscreen();
+
+                if (!isFullscreen && this.isFullscreenActive) {
+                    console.warn('⚠️ Fullscreen exited during exam');
+                    this.handleFullscreenExit();
+                }
+            }
+
+            /**
+             * Handle fullscreen change events
+             */
+            handleFullscreenChange() {
+                const isFullscreen = this.isDocumentInFullscreen();
+
+                if (isFullscreen) {
+                    console.log('🔒 Entered fullscreen');
+                    this.isFullscreenActive = true;
+                    this.showFullscreenIndicator('active');
+                    this.hideFullscreenWarning();
+                } else {
+                    console.warn('⚠️ Exited fullscreen');
+                    this.isFullscreenActive = false;
+
+                    if (this.isExamActive) {
+                        this.handleFullscreenExit();
                     }
-
-                    this.endExam();
-                    alert('Изпитът е прекратен.');
-                    window.close();
                 }
             }
 
             /**
-             * Hide red screen
+             * Handle fullscreen exit during exam
              */
-            hideRedScreen() {
-                this.isRedScreenVisible = false;
+            handleFullscreenExit() {
+                this.fullscreenExitAttempts++;
 
-                if (this.redScreenModal) {
-                    this.redScreenModal.remove();
-                    this.redScreenModal = null;
+                console.warn(`⚠️ Fullscreen exit attempt #${this.fullscreenExitAttempts}`);
+
+                // Report to anti-cheat
+                if (this.antiCheat) {
+                    this.antiCheat.reportSuspiciousActivity(
+                        'fullscreen_exit',
+                        `Attempted to exit fullscreen (attempt ${this.fullscreenExitAttempts})`,
+                        'critical'
+                    );
                 }
 
-                console.log('🟢 Red screen hidden');
+                // Show warning
+                this.showFullscreenIndicator('violation');
+                this.showFullscreenWarning();
+
+                // Terminate exam if too many attempts
+                if (this.fullscreenExitAttempts >= this.fullscreenConfig.maxFullscreenExitAttempts) {
+                    this.terminateExamForViolation('Too many fullscreen exit attempts');
+                }
             }
 
             /**
-             * Workspace functions
+             * Show fullscreen warning overlay
              */
-            saveCode() {
-                const codeEditor = this.examModal.querySelector('#modal-code-editor');
-                if (!codeEditor) return;
+            showFullscreenWarning() {
+                const warning = document.getElementById('fullscreen-warning');
+                if (warning) {
+                    warning.style.display = 'flex';
+                }
+            }
 
-                const code = codeEditor.value;
+            /**
+             * Hide fullscreen warning overlay
+             */
+            hideFullscreenWarning() {
+                const warning = document.getElementById('fullscreen-warning');
+                if (warning) {
+                    warning.style.display = 'none';
+                }
+            }
 
+            /**
+             * Return to fullscreen from warning
+             */
+            async returnToFullscreen() {
+                try {
+                    await this.requestFullscreen();
+                    console.log('🔒 Returned to fullscreen');
+                } catch (error) {
+                    console.error('❌ Failed to return to fullscreen:', error);
+                    this.terminateExamForViolation('Unable to maintain fullscreen mode');
+                }
+            }
+
+            /**
+             * Show fullscreen indicator
+             */
+            showFullscreenIndicator(status) {
+                const indicator = document.getElementById('fullscreen-indicator');
+                if (indicator) {
+                    indicator.className = `fullscreen-indicator ${status}`;
+                    indicator.style.display = 'block';
+
+                    const statusText = {
+                        'active': '🔒 Fullscreen Protected',
+                        'warning': '⚠️ Fullscreen Warning',
+                        'violation': '🚨 Security Violation'
+                    };
+
+                    indicator.textContent = statusText[status] || statusText.active;
+                }
+            }
+
+            /**
+             * Terminate exam for security violation
+             */
+            terminateExamForViolation(reason) {
+                console.error(`🚫 Terminating exam: ${reason}`);
+
+                // Stop all protection mechanisms
+                this.stopFullscreenProtection();
+
+                // Deactivate anti-cheat
+                if (this.antiCheat) {
+                    this.antiCheat.deactivate();
+                }
+
+                // Mark as inactive
+                this.isExamActive = false;
+
+                // Send termination to server
                 if (this.socket && this.socket.connected) {
-                    this.socket.emit('code-update', {
-                        code: code,
-                        filename: 'main.js',
+                    this.socket.emit('exam-complete', {
+                        sessionId: this.sessionId,
+                        reason: 'security_violation',
+                        violation: reason,
                         timestamp: Date.now()
                     });
                 }
 
-                this.updateLastSaved('Сега');
-                console.log('💾 Code saved');
+                // Show termination message
+                alert(`Exam terminated: ${reason}`);
+
+                // Reload page or redirect
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             }
 
+            /**
+             * Stop fullscreen protection mechanisms
+             */
+            stopFullscreenProtection() {
+                if (this.focusLockInterval) {
+                    clearInterval(this.focusLockInterval);
+                    this.focusLockInterval = null;
+                }
+
+                if (this.fullscreenCheckInterval) {
+                    clearInterval(this.fullscreenCheckInterval);
+                    this.fullscreenCheckInterval = null;
+                }
+
+                console.log('🔓 Fullscreen protection stopped');
+            }
+
+            /**
+             * Handle fullscreen error
+             */
+            handleFullscreenError(error) {
+                console.error('❌ Fullscreen error:', error);
+
+                // Hide loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                // Show error message
+                this.showLoginStatus('Failed to enter fullscreen mode. Please allow fullscreen and try again.', 'error');
+
+                // Re-enable login button
+                const loginBtn = document.getElementById('login-btn');
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'Enter Exam';
+                }
+            }
+
+            // ... (Rest of the methods from previous implementation)
+            // I'll continue with the remaining methods in the next part
+
+            /**
+             * Update student info display
+             */
+            updateStudentInfo() {
+                const nameEl = document.getElementById('student-name-display');
+                const classEl = document.getElementById('student-class-display');
+
+                if (nameEl) nameEl.textContent = this.studentInfo.name;
+                if (classEl) classEl.textContent = this.studentInfo.class;
+            }
+
+            /**
+             * Update session display
+             */
+            updateSessionDisplay() {
+                const sessionEl = document.getElementById('session-id-display');
+                if (sessionEl) {
+                    sessionEl.textContent = this.sessionId;
+                }
+            }
+
+            /**
+             * Start exam timer
+             */
+            startExamTimer(timeLeft) {
+                const timerDisplay = document.getElementById('timer-display');
+                const timerContainer = document.getElementById('exam-timer');
+
+                if (!timerDisplay) return;
+
+                this.examTimer = setInterval(() => {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                    // Timer warnings
+                    if (timeLeft < 5 * 60 * 1000) { // Last 5 minutes
+                        timerContainer.classList.add('timer-critical');
+                    } else if (timeLeft < 15 * 60 * 1000) { // Last 15 minutes
+                        timerContainer.classList.add('timer-warning');
+                    }
+
+                    timeLeft -= 1000;
+
+                    if (timeLeft <= 0) {
+                        this.handleExamExpired({ message: 'Exam time expired!' });
+                    }
+                }, 1000);
+            }
+
+            /**
+             * Setup auto-save functionality
+             */
+            setupAutoSave() {
+                this.autoSaveInterval = setInterval(() => {
+                    if (this.isExamActive) {
+                        this.autoSaveCode();
+                    }
+                }, 10000); // Auto-save every 10 seconds
+            }
+
+            /**
+             * Handle code changes
+             */
+            handleCodeChange() {
+                if (!this.isExamActive) return;
+                this.updateLastSaved('Unsaved');
+            }
+
+            /**
+             * Save code manually
+             */
+            saveCode() {
+                if (!this.isExamActive) return;
+
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
+
+                const code = codeEditor.value;
+
+                this.socket.emit('code-update', {
+                    sessionId: this.sessionId,
+                    code: code,
+                    filename: 'main.js',
+                    timestamp: Date.now()
+                });
+
+                this.updateLastSaved('Now');
+                console.log('💾 Code saved manually');
+            }
+
+            /**
+             * Auto-save code
+             */
+            autoSaveCode() {
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
+
+                const code = codeEditor.value;
+
+                this.socket.emit('code-update', {
+                    sessionId: this.sessionId,
+                    code: code,
+                    filename: 'main.js',
+                    timestamp: Date.now(),
+                    auto: true
+                });
+
+                this.updateLastSaved('Auto');
+            }
+
+            /**
+             * Run code
+             */
             runCode() {
-                const codeEditor = this.examModal.querySelector('#modal-code-editor');
-                const outputEl = this.examModal.querySelector('#modal-code-output');
+                const codeEditor = document.getElementById('code-editor');
+                const outputEl = document.getElementById('code-output');
 
                 if (!codeEditor || !outputEl) return;
 
@@ -607,11 +1522,17 @@
                 outputEl.innerHTML = '';
 
                 const originalLog = console.log;
+                const originalError = console.error;
                 const outputs = [];
 
                 console.log = (...args) => {
-                    outputs.push(args.join(' '));
+                    outputs.push({ type: 'log', content: args.join(' ') });
                     originalLog.apply(console, args);
+                };
+
+                console.error = (...args) => {
+                    outputs.push({ type: 'error', content: args.join(' ') });
+                    originalError.apply(console, args);
                 };
 
                 try {
@@ -620,270 +1541,293 @@
                     if (outputs.length > 0) {
                         outputs.forEach(output => {
                             const outputLine = document.createElement('div');
-                            outputLine.style.cssText = 'margin-bottom: 5px; color: #333;';
-                            outputLine.textContent = output;
+                            outputLine.className = `output-line output-${output.type}`;
+                            outputLine.textContent = output.content;
+
+                            if (output.type === 'error') {
+                                outputLine.classList.add('output-error');
+                            }
+
                             outputEl.appendChild(outputLine);
                         });
                     } else {
-                        outputEl.innerHTML = '<div style="color: #666; font-style: italic;">Кодът се изпълни без изход</div>';
+                        outputEl.innerHTML = '<div class="output-placeholder">Code executed without output</div>';
                     }
                 } catch (error) {
                     const errorEl = document.createElement('div');
-                    errorEl.style.cssText = 'color: #dc3545; font-weight: bold;';
-                    errorEl.textContent = `Грешка: ${error.message}`;
+                    errorEl.className = 'output-error';
+                    errorEl.textContent = `Error: ${error.message}`;
                     outputEl.appendChild(errorEl);
                 }
 
                 console.log = originalLog;
+                console.error = originalError;
+                outputEl.scrollTop = outputEl.scrollHeight;
             }
 
-            clearOutput() {
-                const outputEl = this.examModal.querySelector('#modal-code-output');
-                if (outputEl) {
-                    outputEl.innerHTML = '<div style="color: #666; font-style: italic;">Изходът от вашия код ще се покаже тук...</div>';
-                }
-            }
+            /**
+             * Format code
+             */
+            formatCode() {
+                const codeEditor = document.getElementById('code-editor');
+                if (!codeEditor) return;
 
-            finishExam() {
-                if (confirm('Сигурни ли сте че искате да приключите изпита?')) {
-                    this.saveCode();
+                let code = codeEditor.value;
+                const lines = code.split('\n');
+                let indentLevel = 0;
+                const formattedLines = [];
 
-                    if (this.socket && this.socket.connected) {
-                        this.socket.emit('exam-complete', {
-                            reason: 'student_finish',
-                            timestamp: Date.now()
-                        });
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+
+                    if (trimmed.includes('}')) {
+                        indentLevel = Math.max(0, indentLevel - 1);
                     }
 
-                    this.endExam();
-                    alert('🎉 Изпитът е завършен успешно!');
-                }
+                    formattedLines.push('    '.repeat(indentLevel) + trimmed);
+
+                    if (trimmed.includes('{')) {
+                        indentLevel++;
+                    }
+                });
+
+                codeEditor.value = formattedLines.join('\n');
+                console.log('🎨 Code formatted');
             }
 
-            handleCodeChange() {
-                this.updateLastSaved('Незапазено');
-            }
-
-            updateLastSaved(status) {
-                const lastSavedEl = this.examModal.querySelector('#modal-last-saved');
-                if (lastSavedEl) {
-                    const time = status === 'Сега' ? new Date().toLocaleTimeString() : status;
-                    lastSavedEl.textContent = `Последно запазено: ${time}`;
+            /**
+             * Clear output area
+             */
+            clearOutput() {
+                const outputEl = document.getElementById('code-output');
+                if (outputEl) {
+                    outputEl.innerHTML = '<div class="output-placeholder">Your code output will appear here...\n\nUse console.log() to display results.</div>';
                 }
             }
 
             /**
-             * Start exam timer
+             * Finish exam
              */
-            startTimer(timeLeft) {
-                const timerEl = this.examModal.querySelector('#modal-timer');
-                if (!timerEl) return;
+            finishExam() {
+                if (!this.isExamActive) return;
 
-                this.examTimer = setInterval(() => {
-                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                if (confirm('Are you sure you want to finish the exam?')) {
+                    this.saveCode();
 
-                    timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                    if (timeLeft < 15 * 60 * 1000) {
-                        timerEl.style.background = '#dc3545';
-                    } else if (timeLeft < 30 * 60 * 1000) {
-                        timerEl.style.background = '#ffc107';
-                        timerEl.style.color = '#000';
+                    if (this.antiCheat) {
+                        this.antiCheat.deactivate();
                     }
 
-                    timeLeft -= 1000;
+                    this.stopFullscreenProtection();
 
-                    if (timeLeft <= 0) {
-                        this.handleTimeExpired();
+                    this.socket.emit('exam-complete', {
+                        sessionId: this.sessionId,
+                        completedAt: Date.now(),
+                        reason: 'student_finish'
+                    });
+
+                    if (this.examTimer) {
+                        clearInterval(this.examTimer);
                     }
+                    if (this.autoSaveInterval) {
+                        clearInterval(this.autoSaveInterval);
+                    }
+
+                    this.isExamActive = false;
+                    this.isFullscreenActive = false;
+
+                    alert('Exam completed successfully!');
+
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+
+                    // Reload page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+
+                    console.log('✅ Exam completed by student');
+                }
+            }
+
+            /**
+             * Handle exam expiration
+             */
+            handleExamExpired(data) {
+                console.log('⏰ Exam time expired:', data);
+
+                this.stopFullscreenProtection();
+
+                if (this.antiCheat) {
+                    this.antiCheat.deactivate();
+                }
+
+                this.isExamActive = false;
+                this.isFullscreenActive = false;
+
+                alert(data.message || 'Exam time expired!');
+
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+
+            /**
+             * Handle force disconnect
+             */
+            handleForceDisconnect(data) {
+                console.log('🚫 Force disconnect:', data);
+
+                this.stopFullscreenProtection();
+
+                if (this.antiCheat) {
+                    this.antiCheat.deactivate();
+                }
+
+                this.isExamActive = false;
+                this.isFullscreenActive = false;
+
+                alert(data.message || 'Exam terminated by instructor');
+
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+
+                setTimeout(() => {
+                    window.location.reload();
                 }, 1000);
             }
 
-            handleTimeExpired() {
-                if (this.examTimer) {
-                    clearInterval(this.examTimer);
+            /**
+             * Handle time warning
+             */
+            handleTimeWarning(data) {
+                console.log('⏰ Time warning:', data);
+                this.showTimeWarningNotification(data.message);
+            }
+
+            /**
+             * Handle server anti-cheat warning
+             */
+            handleServerAntiCheatWarning(data) {
+                console.log('⚠️ Server anti-cheat warning:', data);
+            }
+
+            /**
+             * Continue exam (after anti-cheat warning)
+             */
+            continueExam() {
+                if (this.antiCheat) {
+                    this.antiCheat.continueExam();
                 }
-                this.endExam();
-                alert('⏰ Времето за изпита изтече!');
             }
 
-            endExam() {
-                this.isExamModalActive = false;
-
-                if (this.examTimer) {
-                    clearInterval(this.examTimer);
+            /**
+             * Exit exam (from anti-cheat warning)
+             */
+            exitExam() {
+                if (this.antiCheat) {
+                    this.antiCheat.exitExam();
                 }
-
-                if (this.focusMonitor) {
-                    clearInterval(this.focusMonitor);
-                }
-
-                this.eventListeners.forEach(({ element, type, handler, capture }) => {
-                    element.removeEventListener(type, handler, capture);
-                });
-                this.eventListeners = [];
-
-                if (this.examModal) {
-                    this.examModal.remove();
-                }
-                if (this.redScreenModal) {
-                    this.redScreenModal.remove();
-                }
-
-                this.showCompletionScreen();
-                console.log('🏁 Exam ended');
             }
 
-            showCompletionScreen() {
-                document.body.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; height: 100vh; 
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif;">
-                <div style="background: white; padding: 50px; border-radius: 15px; text-align: center; 
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 500px;">
-                    <h1 style="color: #28a745; margin-bottom: 20px;">🎉 Изпитът е завършен!</h1>
-                    <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
-                        Благодарим за участието в изпита!
-                    </p>
-                    <div style="color: #999; margin-bottom: 30px;">
-                        <div>Приключено в: ${new Date().toLocaleString()}</div>
-                        <div>Общо нарушения: ${this.violations}</div>
-                    </div>
-                    <button onclick="window.close()" style="background: #007bff; color: white; border: none; 
-                            padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer;">
-                        Затвори прозореца
-                    </button>
-                </div>
-            </div>
-        `;
-            }
+            /**
+             * Show time warning notification
+             */
+            showTimeWarningNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background-color: #ffc107;
+                    color: #212529;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    z-index: 1001;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                `;
+                notification.innerHTML = `⏰ ${message}`;
 
-            addListener(element, type, handler, capture = false) {
-                element.addEventListener(type, handler, capture);
-                this.eventListeners.push({ element, type, handler, capture });
-            }
+                document.body.appendChild(notification);
 
-            getStats() {
-                return {
-                    isExamModalActive: this.isExamModalActive,
-                    isRedScreenVisible: this.isRedScreenVisible,
-                    violations: this.violations,
-                    eventListeners: this.eventListeners.length
-                };
-            }
-        }
-
-        // Export for global use
-        window.ExamModalSystem = ExamModalSystem;
-    </script>
-
-    <script src="js/main.js"></script>
-
-    <!-- Debug script loading -->
-    <script>
-        // Check if classes are loaded
-        setTimeout(() => {
-            console.log('🔍 ExamModalSystem loaded:', !!window.ExamModalSystem);
-            console.log('🔍 ExamSystem loaded:', !!window.examSystem);
-        }, 100);
-    </script>
-
-    <script>
-        // Additional client-side validation
-        document.addEventListener('DOMContentLoaded', function () {
-            const nameInput = document.getElementById('student-name');
-            const classInput = document.getElementById('student-class');
-            const loginBtn = document.getElementById('login-btn');
-
-            // Real-time input validation
-            function validateInputs() {
-                const name = nameInput.value.trim();
-                const className = classInput.value.trim();
-
-                const isValidName = name.length >= 2 && /^[А-Яа-я\s]+$/.test(name);
-                const isValidClass = className.length >= 2;
-
-                loginBtn.disabled = !(isValidName && isValidClass);
-
-                // Visual feedback
-                nameInput.style.borderColor = name && !isValidName ? '#dc3545' : '';
-                classInput.style.borderColor = className && !isValidClass ? '#dc3545' : '';
-            }
-
-            nameInput.addEventListener('input', validateInputs);
-            classInput.addEventListener('input', validateInputs);
-
-            // Initial validation
-            validateInputs();
-
-            // Auto-uppercase class input
-            classInput.addEventListener('input', function () {
-                this.value = this.value.toUpperCase();
-            });
-
-            // Prevent form submission on Enter if invalid
-            [nameInput, classInput].forEach(input => {
-                input.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (!loginBtn.disabled) {
-                            joinExam();
-                        }
-                    }
-                });
-            });
-        });
-
-        // Show loading animation
-        function showLoading() {
-            const loginBtn = document.getElementById('login-btn');
-            if (loginBtn) {
-                loginBtn.innerHTML = '⏳ Влизане...';
-                loginBtn.disabled = true;
-            }
-        }
-
-        // Hide loading animation
-        function hideLoading() {
-            const loginBtn = document.getElementById('login-btn');
-            if (loginBtn) {
-                loginBtn.innerHTML = '🚀 Влез в изпита';
-                loginBtn.disabled = false;
-            }
-        }
-
-        // Global function for HTML onclick handlers
-        function joinExam() {
-            if (window.examSystem) {
-                showLoading();
-                window.examSystem.handleLogin();
-
-                // Hide loading after 5 seconds if no response
                 setTimeout(() => {
-                    if (document.getElementById('login-btn').disabled) {
-                        hideLoading();
+                    if (notification.parentNode) {
+                        notification.remove();
                     }
                 }, 5000);
-            } else {
-                alert('Системата за изпити не е заредена. Моля презаредете страницата.');
+            }
+
+            /**
+             * Update last saved display
+             */
+            updateLastSaved(status) {
+                const lastSavedEl = document.getElementById('last-saved-display');
+                if (lastSavedEl) {
+                    const time = status === 'Now' ? new Date().toLocaleTimeString() : status;
+                    lastSavedEl.textContent = `Last saved: ${time}`;
+                }
+            }
+
+            /**
+             * Update connection status
+             */
+            updateConnectionStatus(connected) {
+                const statusEl = document.getElementById('connection-status');
+                const dotEl = document.getElementById('connection-dot');
+
+                if (statusEl) {
+                    statusEl.textContent = connected ? 'Connected' : 'Disconnected';
+                }
+
+                if (dotEl) {
+                    dotEl.className = `connection-dot ${connected ? '' : 'offline'}`;
+                }
+            }
+
+            /**
+             * Show login status message
+             */
+            showLoginStatus(message, type) {
+                const statusEl = document.getElementById('login-status');
+                if (!statusEl) return;
+
+                statusEl.textContent = message;
+                statusEl.className = `login-status ${type}`;
+                statusEl.style.display = 'block';
+
+                if (type === 'success') {
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 5000);
+                }
             }
         }
 
-        // Prevent accidental page leave during login
-        window.addEventListener('beforeunload', function (e) {
-            const loginBtn = document.getElementById('login-btn');
-            if (loginBtn && loginBtn.disabled) {
-                e.preventDefault();
-                e.returnValue = 'Влизането в изпита е в ход...';
-                return 'Влизането в изпита е в ход...';
-            }
+        // Initialize fullscreen exam system when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.fullscreenExamSystem = new FullscreenExamSystem();
         });
 
-        // Debug info (remove in production)
-        console.log('🎓 Exam Monitor v2 - Modal System');
-        console.log('📅 Build date:', new Date().toISOString());
-        console.log('🌐 User agent:', navigator.userAgent);
+        // Global functions for HTML onclick handlers
+        function continueExam() {
+            if (window.fullscreenExamSystem) {
+                window.fullscreenExamSystem.continueExam();
+            }
+        }
+
+        function exitExam() {
+            if (window.fullscreenExamSystem) {
+                window.fullscreenExamSystem.exitExam();
+            }
+        }
     </script>
 </body>
 
