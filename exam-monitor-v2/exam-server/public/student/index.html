@@ -372,34 +372,6 @@
             background-color: #dc3545;
         }
 
-        /* Fullscreen status indicators */
-        .fullscreen-indicator {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 2000;
-            pointer-events: none;
-        }
-
-        .fullscreen-indicator.active {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .fullscreen-indicator.warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .fullscreen-indicator.violation {
-            background-color: #dc3545;
-            color: white;
-        }
-
         /* Loading overlay */
         .loading-overlay {
             position: fixed;
@@ -553,11 +525,6 @@
 </head>
 
 <body>
-    <!-- Fullscreen Status Indicator -->
-    <div id="fullscreen-indicator" class="fullscreen-indicator active" style="display: none;">
-        🔒 Fullscreen Protected
-    </div>
-
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="loading-content">
@@ -709,6 +676,7 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/ExamExitManager.js"></script>
     <script src="js/AntiCheat.js"></script>
     <script>
         /**
@@ -798,13 +766,19 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                     this.handleLoginError(data);
                 });
 
-                // Exam events
+                // Exam events - FIXED: Using ExamExitManager
                 this.socket.on('exam-expired', (data) => {
-                    this.handleExamExpired(data);
+                    ExamExitManager.handleExamExit(
+                        ExamExitManager.exitReasons.TIME_EXPIRED,
+                        { message: data.message }
+                    );
                 });
 
                 this.socket.on('force-disconnect', (data) => {
-                    this.handleForceDisconnect(data);
+                    ExamExitManager.handleExamExit(
+                        ExamExitManager.exitReasons.INSTRUCTOR_TERMINATED,
+                        { message: data.message }
+                    );
                 });
 
                 this.socket.on('time-warning', (data) => {
@@ -1191,8 +1165,10 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 this.isExamActive = true;
                 this.isFullscreenActive = true;
 
-                // Show fullscreen indicator
-                this.showFullscreenIndicator('active');
+                // Register cleanup callback with ExamExitManager
+                ExamExitManager.registerCleanupCallback((reason, details) => {
+                    return this.performExamCleanup(reason, details);
+                });
 
                 // Focus code editor
                 setTimeout(() => {
@@ -1203,6 +1179,45 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 }, 100);
 
                 console.log('🎓 Exam started successfully in fullscreen mode');
+            }
+
+            /**
+             * FIXED: Finish exam using ExamExitManager
+             */
+            finishExam() {
+                if (!this.isExamActive) return;
+
+                if (confirm('Are you sure you want to finish the exam?')) {
+                    // Save code before exiting
+                    this.saveCode();
+
+                    // Use ExamExitManager for proper exit
+                    ExamExitManager.handleExamExit(
+                        ExamExitManager.exitReasons.STUDENT_FINISH
+                    );
+                }
+            }
+
+            /**
+             * Custom cleanup callback for ExamExitManager
+             */
+            async performExamCleanup(reason, details) {
+                console.log('🧹 Performing exam-specific cleanup...');
+
+                // Send final exam completion to server
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('exam-complete', {
+                        sessionId: this.sessionId,
+                        completedAt: Date.now(),
+                        reason: reason,
+                        details: details
+                    });
+                }
+
+                // Stop fullscreen protection
+                this.stopFullscreenProtection();
+
+                console.log('✅ Exam cleanup completed');
             }
 
             /**
@@ -1251,7 +1266,6 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 if (isFullscreen) {
                     console.log('🔒 Entered fullscreen');
                     this.isFullscreenActive = true;
-                    this.showFullscreenIndicator('active');
                     this.hideFullscreenWarning();
                 } else {
                     console.warn('⚠️ Exited fullscreen');
@@ -1264,7 +1278,7 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
             }
 
             /**
-             * Handle fullscreen exit during exam
+             * FIXED: Handle fullscreen exit using ExamExitManager
              */
             handleFullscreenExit() {
                 this.fullscreenExitAttempts++;
@@ -1281,26 +1295,18 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                     });
                 }
 
-                // Report to anti-cheat system
-                if (this.antiCheat) {
-                    this.antiCheat.trackActivity(
-                        this.sessionId,
-                        'fullscreen_exit',
-                        {
-                            attempt: this.fullscreenExitAttempts,
-                            severity: 'critical',
-                            description: `Fullscreen exit attempt #${this.fullscreenExitAttempts}`
-                        }
-                    );
-                }
-
                 // Show warning
-                this.showFullscreenIndicator('violation');
                 this.showFullscreenWarning();
 
                 // Terminate exam if too many attempts
                 if (this.fullscreenExitAttempts >= this.fullscreenConfig.maxFullscreenExitAttempts) {
-                    this.terminateExamForViolation(`Too many fullscreen exit attempts (${this.fullscreenExitAttempts})`);
+                    ExamExitManager.handleExamExit(
+                        ExamExitManager.exitReasons.FULLSCREEN_VIOLATION,
+                        {
+                            violation: `Too many fullscreen exit attempts (${this.fullscreenExitAttempts})`,
+                            attempts: this.fullscreenExitAttempts
+                        }
+                    );
                 }
             }
 
@@ -1333,86 +1339,14 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                     console.log('🔒 Returned to fullscreen');
                 } catch (error) {
                     console.error('❌ Failed to return to fullscreen:', error);
-                    this.terminateExamForViolation('Unable to maintain fullscreen mode');
-                }
-            }
-
-            /**
-             * Show fullscreen indicator
-             */
-            showFullscreenIndicator(status) {
-                const indicator = document.getElementById('fullscreen-indicator');
-                if (indicator) {
-                    indicator.className = `fullscreen-indicator ${status}`;
-                    indicator.style.display = 'block';
-
-                    const statusText = {
-                        'active': '🔒 Fullscreen Protected',
-                        'warning': '⚠️ Fullscreen Warning',
-                        'violation': '🚨 Security Violation'
-                    };
-
-                    indicator.textContent = statusText[status] || statusText.active;
-                }
-            }
-
-            /**
-             * Terminate exam for security violation
-             */
-            terminateExamForViolation(reason) {
-                console.error(`🚫 Terminating exam: ${reason}`);
-
-                // Stop all protection mechanisms
-                this.stopFullscreenProtection();
-
-                // Deactivate anti-cheat
-                if (this.antiCheat) {
-                    this.antiCheat.deactivate();
-                }
-
-                // Mark as inactive
-                this.isExamActive = false;
-
-                // Send termination to server with detailed info
-                if (this.socket && this.socket.connected) {
-                    this.socket.emit('fullscreen-terminated', {
-                        sessionId: this.sessionId,
-                        reason: 'security_violation',
-                        violation: reason,
-                        exitAttempts: this.fullscreenExitAttempts,
-                        details: {
-                            fullscreenExitAttempts: this.fullscreenExitAttempts,
-                            maxAllowed: this.fullscreenConfig.maxFullscreenExitAttempts,
-                            timestamp: Date.now()
+                    ExamExitManager.handleExamExit(
+                        ExamExitManager.exitReasons.FULLSCREEN_VIOLATION,
+                        {
+                            violation: 'Unable to maintain fullscreen mode',
+                            error: error.message
                         }
-                    });
-
-                    this.socket.emit('exam-complete', {
-                        sessionId: this.sessionId,
-                        reason: 'security_violation',
-                        violation: reason,
-                        timestamp: Date.now()
-                    });
+                    );
                 }
-
-                // Show termination message
-                alert(`Exam terminated due to security violation:\n\n${reason}\n\nThe page will reload automatically.`);
-
-                // Exit fullscreen first
-                if (this.isDocumentInFullscreen()) {
-                    try {
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen();
-                        }
-                    } catch (error) {
-                        console.warn('Could not exit fullscreen:', error);
-                    }
-                }
-
-                // Reload page after delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
             }
 
             /**
@@ -1454,9 +1388,6 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                     loginBtn.innerHTML = 'Enter Exam';
                 }
             }
-
-            // ... (Rest of the methods from previous implementation)
-            // I'll continue with the remaining methods in the next part
 
             /**
              * Update student info display
@@ -1505,7 +1436,10 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                     timeLeft -= 1000;
 
                     if (timeLeft <= 0) {
-                        this.handleExamExpired({ message: 'Exam time expired!' });
+                        ExamExitManager.handleExamExit(
+                            ExamExitManager.exitReasons.TIME_EXPIRED,
+                            { message: 'Exam time expired!' }
+                        );
                     }
                 }, 1000);
             }
@@ -1665,105 +1599,6 @@ console.log('Fibonacci(10):', fibonacci(10));"></textarea>
                 if (outputEl) {
                     outputEl.innerHTML = '<div class="output-placeholder">Your code output will appear here...\n\nUse console.log() to display results.</div>';
                 }
-            }
-
-            /**
-             * Finish exam
-             */
-            finishExam() {
-                if (!this.isExamActive) return;
-
-                if (confirm('Are you sure you want to finish the exam?')) {
-                    this.saveCode();
-
-                    if (this.antiCheat) {
-                        this.antiCheat.deactivate();
-                    }
-
-                    this.stopFullscreenProtection();
-
-                    this.socket.emit('exam-complete', {
-                        sessionId: this.sessionId,
-                        completedAt: Date.now(),
-                        reason: 'student_finish'
-                    });
-
-                    if (this.examTimer) {
-                        clearInterval(this.examTimer);
-                    }
-                    if (this.autoSaveInterval) {
-                        clearInterval(this.autoSaveInterval);
-                    }
-
-                    this.isExamActive = false;
-                    this.isFullscreenActive = false;
-
-                    alert('Exam completed successfully!');
-
-                    // Exit fullscreen
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
-
-                    // Reload page
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-
-                    console.log('✅ Exam completed by student');
-                }
-            }
-
-            /**
-             * Handle exam expiration
-             */
-            handleExamExpired(data) {
-                console.log('⏰ Exam time expired:', data);
-
-                this.stopFullscreenProtection();
-
-                if (this.antiCheat) {
-                    this.antiCheat.deactivate();
-                }
-
-                this.isExamActive = false;
-                this.isFullscreenActive = false;
-
-                alert(data.message || 'Exam time expired!');
-
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            }
-
-            /**
-             * Handle force disconnect
-             */
-            handleForceDisconnect(data) {
-                console.log('🚫 Force disconnect:', data);
-
-                this.stopFullscreenProtection();
-
-                if (this.antiCheat) {
-                    this.antiCheat.deactivate();
-                }
-
-                this.isExamActive = false;
-                this.isFullscreenActive = false;
-
-                alert(data.message || 'Exam terminated by instructor');
-
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
             }
 
             /**

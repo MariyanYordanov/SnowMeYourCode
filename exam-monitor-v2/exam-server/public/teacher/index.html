@@ -289,17 +289,6 @@
             background-color: #e0a800;
         }
 
-        .refresh-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #007bff;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
         .no-students {
             text-align: center;
             padding: 60px 20px;
@@ -313,10 +302,6 @@
 </head>
 
 <body>
-    <div class="refresh-indicator" id="refresh-indicator">
-        🔄 Live Monitoring
-    </div>
-
     <div class="header">
         <h1>Teacher Dashboard - Exam Monitor v2</h1>
         <div class="subtitle">🔒 Fullscreen Mode • Real-time monitoring with enhanced security</div>
@@ -404,12 +389,10 @@
 
                 this.socket.on('connect', () => {
                     console.log('🔗 Teacher dashboard connected');
-                    document.getElementById('refresh-indicator').style.backgroundColor = '#28a745';
                 });
 
                 this.socket.on('disconnect', () => {
                     console.log('🔌 Teacher dashboard disconnected');
-                    document.getElementById('refresh-indicator').style.backgroundColor = '#dc3545';
                 });
             }
 
