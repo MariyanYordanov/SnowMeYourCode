@@ -410,16 +410,22 @@ class AntiCheat {
 
         console.error(`🚫 CRITICAL VIOLATION: ${type}`, data);
 
-        // For Windows key - immediate termination with warning
+        // For Windows key - show critical warning with option to continue
         if (type === 'windows_key') {
-            this.terminateExamWithWarning('Windows клавишът е строго забранен!', type, data);
+            // If it's the second Windows key press, terminate immediately
+            if (this.detectionState.windowsKeyCount >= 2) {
+                this.terminateExamWithWarning('Повторно натискане на Windows клавиша!', type, data);
+            } else {
+                // First time - show warning
+                this.showWindowsKeyWarning();
+            }
         } else {
             // For other critical violations - show warning first
             this.showCriticalWarning(type, data);
         }
 
         // Report to server
-        this.reportToServer('critical_violation', { type, data, immediate: type === 'windows_key' });
+        this.reportToServer('critical_violation', { type, data, immediate: false });
     }
 
     /**
@@ -460,6 +466,130 @@ class AntiCheat {
 
         // Report to server as suspicious activity
         this.reportToServer('minor_violation', { type, description });
+    }
+
+    /**
+     * Show Windows key specific warning with continue option
+     */
+    showWindowsKeyWarning() {
+        if (this.isWarningVisible) return;
+
+        this.isWarningVisible = true;
+        this.detectionState.warningLevel = 3; // Red alert
+
+        // Remove existing overlay
+        const existingOverlay = document.getElementById('antiCheatOverlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
+        // Create warning overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'antiCheatOverlay';
+        overlay.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(220, 53, 69, 0.95) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 999999 !important;
+            font-family: Arial, sans-serif !important;
+            color: white !important;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: #dc3545 !important;
+                padding: 40px !important;
+                border-radius: 12px !important;
+                text-align: center !important;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+                max-width: 500px !important;
+                width: 90% !important;
+            ">
+                <div style="font-size: 48px !important; margin-bottom: 20px !important;">⚠️</div>
+                
+                <h1 style="
+                    font-size: 28px !important;
+                    margin-bottom: 20px !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                ">КРИТИЧНО ПРЕДУПРЕЖДЕНИЕ</h1>
+                
+                <p style="
+                    font-size: 18px !important;
+                    margin-bottom: 30px !important;
+                    line-height: 1.5 !important;
+                    color: white !important;
+                ">Засечено е натискане на Windows клавиша!<br>
+                Това е строго забранено по време на изпита.<br><br>
+                <strong>Повторно нарушение ще доведе до прекратяване на изпита!</strong></p>
+                
+                <div style="
+                    display: flex !important;
+                    gap: 20px !important;
+                    justify-content: center !important;
+                ">
+                    <button onclick="window.antiCheat.continueAfterWindowsKey()" style="
+                        background: #28a745 !important;
+                        color: white !important;
+                        border: none !important;
+                        padding: 15px 30px !important;
+                        border-radius: 6px !important;
+                        font-size: 16px !important;
+                        font-weight: bold !important;
+                        cursor: pointer !important;
+                    ">Продължи изпита</button>
+                    
+                    <button onclick="window.antiCheat.exitExam('windows_key_violation')" style="
+                        background: rgba(255,255,255,0.2) !important;
+                        color: white !important;
+                        border: 2px solid white !important;
+                        padding: 15px 30px !important;
+                        border-radius: 6px !important;
+                        font-size: 16px !important;
+                        font-weight: bold !important;
+                        cursor: pointer !important;
+                    ">Напусни изпита</button>
+                </div>
+            </div>
+        `;
+
+        // Force inject into body
+        document.body.appendChild(overlay);
+
+        // Make antiCheat globally accessible
+        window.antiCheat = this;
+
+        console.log('🔴 Windows key warning dialog shown');
+    }
+
+    /**
+     * Continue after Windows key warning
+     */
+    continueAfterWindowsKey() {
+        console.log('✅ Student chose to continue after Windows key warning');
+
+        // Hide warning
+        this.hideWarningDialog();
+
+        // Update violation count and warn about consequences
+        if (this.detectionState.windowsKeyCount >= 2) {
+            // Next Windows key will terminate
+            this.showMinorNotification('ПОСЛЕДНО ПРЕДУПРЕЖДЕНИЕ: Следващо натискане на Windows клавиша ще прекрати изпита!');
+        }
+
+        // Focus back on exam
+        setTimeout(() => {
+            const codeEditor = document.getElementById('code-editor');
+            if (codeEditor) {
+                codeEditor.focus();
+            }
+        }, 100);
     }
 
     /**
@@ -652,6 +782,75 @@ class AntiCheat {
                 terminatedAt: Date.now(),
                 immediate: true
             });
+        }
+    }
+
+    /**
+     * Force close exam (called from onclick)
+     */
+    forceCloseExam() {
+        console.log('🔴 Manual close button clicked');
+
+        // Clear countdown timer
+        if (this.terminationTimer) {
+            clearInterval(this.terminationTimer);
+            this.terminationTimer = null;
+        }
+
+        // Force termination immediately
+        this.forceExamTermination('manual_close', { timestamp: Date.now() });
+    }
+
+    /**
+     * Force exam termination
+     */
+    forceExamTermination(violationType, violationData) {
+        console.error(`🚫 FORCING EXAM TERMINATION: ${violationType}`);
+
+        // Remove the termination overlay first
+        const overlay = document.getElementById('criticalViolationOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+
+        // Use ExamExitManager if available
+        if (window.ExamExitManager) {
+            window.ExamExitManager.handleExamExit(
+                window.ExamExitManager.exitReasons.SECURITY_VIOLATION,
+                {
+                    violationType: violationType,
+                    violation: violationData,
+                    immediate: true,
+                    additionalInfo: 'IMMEDIATE TERMINATION - CRITICAL SECURITY VIOLATION'
+                }
+            );
+        } else {
+            // Fallback - force close
+            try {
+                window.close();
+            } catch (e) {
+                // If window.close() fails, show permanent block screen
+                document.body.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 0; left: 0;
+                        width: 100vw; height: 100vh;
+                        background: #000;
+                        color: #fff;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        z-index: 999999;
+                    ">
+                        <div>
+                            <h1 style="color: #ff4444; font-size: 48px;">🚫 ИЗПИТ ПРЕКРАТЕН 🚫</h1>
+                            <p style="font-size: 18px;">Затворете този прозорец ръчно</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
     }
 
@@ -864,6 +1063,14 @@ class AntiCheat {
     }
 
     /**
+     * Update configuration (was missing)
+     */
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        console.log('⚙️ Anti-cheat configuration updated:', this.config);
+    }
+
+    /**
      * Set session ID
      */
     setSessionId(sessionId) {
@@ -893,17 +1100,58 @@ class AntiCheat {
     exitExam(reason = 'student_choice') {
         console.log(`🚪 Student chose to exit exam: ${reason}`);
 
+        // Hide any visible warnings first
+        this.hideWarningDialog();
+
+        // Use ExamExitManager for proper exit handling
         if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION,
-                { reason: reason }
-            );
+            let exitReason;
+
+            // Map specific reasons to ExamExitManager reasons
+            switch (reason) {
+                case 'windows_key_violation':
+                    exitReason = window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION;
+                    break;
+                case 'critical_violation_exit':
+                    exitReason = window.ExamExitManager.exitReasons.SECURITY_VIOLATION;
+                    break;
+                default:
+                    exitReason = window.ExamExitManager.exitReasons.STUDENT_FINISH;
+            }
+
+            window.ExamExitManager.handleExamExit(exitReason, {
+                reason: reason,
+                antiCheatViolations: this.detectionState.totalViolations,
+                windowsKeyCount: this.detectionState.windowsKeyCount,
+                voluntary: reason === 'student_choice'
+            });
         } else {
             // Fallback
             if (confirm('Сигурни ли сте че искате да напуснете изпита?')) {
-                window.close();
+                // Send completion to server to mark session as completed
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('exam-complete', {
+                        sessionId: this.sessionId,
+                        reason: reason,
+                        completed: true,
+                        timestamp: Date.now()
+                    });
+                }
+
+                // Close window
+                setTimeout(() => {
+                    window.close();
+                }, 500);
             }
         }
+    }
+
+    /**
+     * Update configuration
+     */
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        console.log('⚙️ Anti-cheat configuration updated:', this.config);
     }
 
     /**
