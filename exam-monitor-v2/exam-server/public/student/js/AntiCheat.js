@@ -1,242 +1,199 @@
 /**
- * AGGRESSIVE Anti-Cheat System v2
- * Zero tolerance policy for Windows key and system access attempts
+ * Balanced Anti-Cheat System v3
+ * Progressive enforcement with smart detection and warnings
  */
 class AntiCheat {
     constructor(socket) {
         this.socket = socket;
         this.isActive = false;
-        this.isRedScreenVisible = false;
+        this.isWarningVisible = false;
         this.violations = 0;
         this.sessionId = null;
         this.fullscreenMode = false;
 
-        // SMART AGGRESSIVE CONFIGURATION
+        // BALANCED CONFIGURATION
         this.config = {
-            // Smart tolerance - reduce false positives
-            zeroTolerance: false,
+            // Progressive enforcement
+            enableWarnings: true,
+            enableProgressivePenalties: true,
 
             // Detection intervals (reasonable)
-            focusCheckInterval: 500, // Check every 500ms (less aggressive)
-            fullscreenCheckInterval: 200, // Check every 200ms
-            heartbeatInterval: 1000, // Heartbeat every 1 second
+            focusCheckInterval: 1000, // Check every 1 second
+            fullscreenCheckInterval: 500, // Check every 500ms
+            heartbeatInterval: 2000, // Heartbeat every 2 seconds
 
-            // Violation limits (smart thresholds)
-            maxWindowsKeyAttempts: 1, // Still 1 attempt = termination
-            maxFocusLossAttempts: 3, // Allow 3 brief focus losses
-            maxFullscreenExitAttempts: 2, // Allow 1 accidental exit
+            // Violation limits (balanced thresholds)
+            maxWindowsKeyAttempts: 2, // Allow 1 warning before termination
+            maxFocusLossAttempts: 5, // Allow 4 warnings before termination
+            maxFullscreenExitAttempts: 3, // Allow 2 warnings before termination
+            maxTotalViolations: 8, // Total violations before termination
 
-            // Focus loss tolerance
-            focusLossGracePeriod: 2000, // 2 seconds grace period
-            focusLossMinDuration: 1000, // Must be lost for 1+ seconds
+            // Focus loss tolerance (more lenient)
+            focusLossGracePeriod: 3000, // 3 seconds grace period
+            focusLossMinDuration: 2000, // Must be lost for 2+ seconds to count
+            shortFocusLossIgnore: 1000, // Ignore losses under 1 second
 
-            // Response settings
-            immediateTermination: false, // Smart evaluation first
-            showWarningsFirst: true, // Show warning before termination
-            aggressiveFocusSteal: true,
-            preventRecovery: false,
+            // Response settings (balanced)
+            immediateTermination: false, // Always warn first
+            showWarningsFirst: true,
+            warningDuration: 8000, // 8 seconds to respond to warning
+
+            // System protection (moderate)
+            enableFocusSteal: false, // Don't steal focus aggressively
+            blockDevTools: true,
+            blockSystemShortcuts: true,
+            allowCodeEditorInteraction: true,
 
             // Logging
             logAllActivity: true,
-            detailedLogging: true
+            detailedLogging: false // Less verbose
         };
 
         // Detection state
         this.detectionState = {
             lastFocusTime: Date.now(),
-            lastFullscreenTime: Date.now(),
             focusLossCount: 0,
             windowsKeyCount: 0,
             fullscreenExitCount: 0,
             systemKeyAttempts: 0,
-            isMonitoring: false,
+            totalViolations: 0,
 
             // Smart tracking
             focusLossStartTime: null,
-            focusLossDuration: 0,
             recentFocusLosses: [],
-            lastWindowsKeyTime: 0
+            lastWarningTime: 0,
+            warningCooldown: 5000, // 5 seconds between warnings
+
+            // Progressive state
+            warningLevel: 0, // 0=none, 1=yellow, 2=orange, 3=red
+            lastViolationType: null
         };
 
         // Monitoring intervals
         this.intervals = {
             focusMonitor: null,
             fullscreenMonitor: null,
-            heartbeat: null,
-            focusSteal: null
+            heartbeat: null
         };
 
         // Event listeners for cleanup
         this.eventListeners = [];
 
-        console.log('🛡️ SMART AGGRESSIVE Anti-Cheat System v2 initialized - BALANCED MODE');
+        console.log('🛡️ Balanced Anti-Cheat System v3 initialized');
     }
 
     /**
-     * Activate aggressive anti-cheat protection
+     * Activate anti-cheat protection with graceful startup
      */
     activate() {
         if (this.isActive) return;
 
-        this.isActive = true;
-        console.log('🚫 ACTIVATING SMART AGGRESSIVE ANTI-CHEAT - BALANCED MODE');
+        console.log('🚫 Activating Balanced Anti-Cheat Protection...');
 
-        // Setup all detection systems
+        // Graceful activation with delay to avoid startup conflicts
+        setTimeout(() => {
+            this.isActive = true;
+            this.setupDetectionSystems();
+            this.startMonitoring();
+            console.log('✅ Balanced Anti-cheat activated successfully');
+        }, 2000); // 2 second delay for fullscreen to stabilize
+    }
+
+    /**
+     * Setup all detection systems
+     */
+    setupDetectionSystems() {
         this.setupKeyboardDetection();
         this.setupFocusDetection();
         this.setupFullscreenDetection();
         this.setupSystemDetection();
-        this.setupAggressiveMonitoring();
-        this.setupPreventionMeasures();
 
-        console.log('✅ SMART AGGRESSIVE Anti-cheat activated - BALANCED PROTECTION ONLINE');
+        console.log('🔍 Detection systems initialized');
     }
 
     /**
-     * Setup aggressive keyboard detection
+     * Setup balanced keyboard detection
      */
     setupKeyboardDetection() {
         const keydownHandler = (e) => {
-            if (!this.isActive) return;
+            if (!this.isActive || this.isWarningVisible) return;
 
-            // Detect Windows key combinations
+            // Critical violations (still immediate but with warning)
             if (this.isWindowsKeyEvent(e)) {
-                this.handleWindowsKeyViolation(e);
+                this.handleCriticalViolation('windows_key', e);
                 return;
             }
 
-            // Detect system shortcuts
+            // System shortcuts (progressive)
             if (this.isSystemShortcut(e)) {
-                this.handleSystemShortcutViolation(e);
+                this.handleSystemShortcut(e);
                 return;
             }
 
-            // Block all suspicious combinations
+            // Suspicious combinations (block but don't penalize heavily)
             if (this.isSuspiciousKeyCombo(e)) {
                 e.preventDefault();
-                e.stopImmediatePropagation();
-                this.reportViolation('blocked_shortcut', `Blocked: ${this.getKeyComboName(e)}`);
+                this.handleMinorViolation('blocked_shortcut', `Blocked: ${this.getKeyComboName(e)}`);
                 return false;
             }
         };
 
-        // Add to both document and window with high priority
         document.addEventListener('keydown', keydownHandler, { capture: true, passive: false });
-        window.addEventListener('keydown', keydownHandler, { capture: true, passive: false });
-
-        // Also listen for keyup to detect Windows key release
-        const keyupHandler = (e) => {
-            if (!this.isActive) return;
-
-            if (e.code === 'MetaLeft' || e.code === 'MetaRight' ||
-                e.code === 'OSLeft' || e.code === 'OSRight' ||
-                e.key === 'Meta' || e.key === 'OS') {
-                this.handleWindowsKeyViolation(e, 'keyup');
-            }
-        };
-
-        document.addEventListener('keyup', keyupHandler, { capture: true, passive: false });
-        window.addEventListener('keyup', keyupHandler, { capture: true, passive: false });
-
         this.trackEventListener(document, 'keydown', keydownHandler);
-        this.trackEventListener(window, 'keydown', keydownHandler);
-        this.trackEventListener(document, 'keyup', keyupHandler);
-        this.trackEventListener(window, 'keyup', keyupHandler);
 
-        console.log('⌨️ AGGRESSIVE keyboard detection activated');
+        console.log('⌨️ Balanced keyboard detection active');
     }
 
     /**
      * Check if event is Windows key related
      */
     isWindowsKeyEvent(e) {
-        // Direct Windows key detection
-        if (e.code === 'MetaLeft' || e.code === 'MetaRight' ||
+        return (e.code === 'MetaLeft' || e.code === 'MetaRight' ||
             e.code === 'OSLeft' || e.code === 'OSRight' ||
-            e.key === 'Meta' || e.key === 'OS') {
-            return true;
-        }
-
-        // Windows key combinations
-        if (e.metaKey || e.getModifierState?.('Meta') || e.getModifierState?.('OS')) {
-            return true;
-        }
-
-        // Alt+Tab (system switching)
-        if (e.altKey && e.code === 'Tab') {
-            return true;
-        }
-
-        // Ctrl+Alt+Del combination
-        if (e.ctrlKey && e.altKey && e.code === 'Delete') {
-            return true;
-        }
-
-        return false;
+            e.key === 'Meta' || e.key === 'OS' ||
+            e.metaKey || e.getModifierState?.('Meta') ||
+            (e.altKey && e.code === 'Tab')); // Alt+Tab included
     }
 
     /**
      * Check if event is system shortcut
      */
     isSystemShortcut(e) {
-        const systemShortcuts = [
-            // Task Manager
-            { ctrl: true, shift: true, code: 'Escape' },
-
-            // Alt+F4 (close window)
-            { alt: true, code: 'F4' },
-
-            // Windows + L (lock screen)
-            { meta: true, code: 'KeyL' },
-
-            // Ctrl+Shift+Esc (task manager)
-            { ctrl: true, shift: true, code: 'Escape' },
-
-            // F11 (toggle fullscreen)
-            { code: 'F11' },
-
-            // Ctrl+W (close tab)
-            { ctrl: true, code: 'KeyW' },
-
-            // Ctrl+T (new tab)
-            { ctrl: true, code: 'KeyT' },
-
-            // Ctrl+N (new window)
-            { ctrl: true, code: 'KeyN' }
+        const criticalShortcuts = [
+            { ctrl: true, shift: true, code: 'Escape' }, // Task Manager
+            { alt: true, code: 'F4' }, // Close window
+            { code: 'F11' }, // Toggle fullscreen
+            { ctrl: true, code: 'KeyW' }, // Close tab
+            { ctrl: true, code: 'KeyT' }, // New tab
+            { ctrl: true, code: 'KeyN' } // New window
         ];
 
-        return systemShortcuts.some(shortcut => {
+        return criticalShortcuts.some(shortcut => {
             return Object.keys(shortcut).every(key => {
                 if (key === 'code') return e.code === shortcut[key];
                 if (key === 'ctrl') return e.ctrlKey === shortcut[key];
                 if (key === 'alt') return e.altKey === shortcut[key];
                 if (key === 'shift') return e.shiftKey === shortcut[key];
-                if (key === 'meta') return e.metaKey === shortcut[key];
                 return true;
             });
         });
     }
 
     /**
-     * Check if suspicious key combination
+     * Check if suspicious but not critical
      */
     isSuspiciousKeyCombo(e) {
-        // Any F-key except allowed ones
+        // F-keys (except allowed ones)
         if (e.code.startsWith('F') && !['F1', 'F2', 'F3'].includes(e.code)) {
             return true;
         }
 
-        // Print Screen
-        if (e.code === 'PrintScreen') {
+        // Print Screen, Context Menu
+        if (['PrintScreen', 'ContextMenu'].includes(e.code)) {
             return true;
         }
 
-        // Context menu key
-        if (e.code === 'ContextMenu') {
-            return true;
-        }
-
-        // Refresh combinations
+        // Refresh (but not critical)
         if ((e.ctrlKey && e.code === 'KeyR') || e.code === 'F5') {
             return true;
         }
@@ -245,75 +202,404 @@ class AntiCheat {
     }
 
     /**
-     * SMART EVALUATION for Windows key - still immediate but with logging
+     * Setup balanced focus detection
      */
-    handleWindowsKeyViolation(e, eventType = 'keydown') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
+    setupFocusDetection() {
+        const blurHandler = () => {
+            if (!this.isActive || this.isWarningVisible) return;
 
-        this.detectionState.windowsKeyCount++;
-        this.detectionState.lastWindowsKeyTime = Date.now();
-
-        const violationData = {
-            type: 'windows_key_detected',
-            eventType: eventType,
-            keyCode: e.code,
-            keyName: e.key,
-            metaKey: e.metaKey,
-            timestamp: Date.now(),
-            attempt: this.detectionState.windowsKeyCount
+            this.detectionState.focusLossStartTime = Date.now();
+            console.log('👁️ Focus lost - monitoring...');
         };
 
-        console.error('🚫 CRITICAL VIOLATION: Windows key detected!', violationData);
+        const focusHandler = () => {
+            if (!this.isActive) return;
 
-        // Windows key = STILL immediate termination (most critical)
-        this.terminateExamImmediate('WINDOWS_KEY_VIOLATION', violationData);
+            if (this.detectionState.focusLossStartTime) {
+                const duration = Date.now() - this.detectionState.focusLossStartTime;
+                this.evaluateFocusLoss(duration);
+                this.detectionState.focusLossStartTime = null;
+            }
 
-        return false;
+            this.detectionState.lastFocusTime = Date.now();
+        };
+
+        const visibilityHandler = () => {
+            if (!this.isActive || this.isWarningVisible) return;
+
+            if (document.hidden) {
+                // Start monitoring but don't immediately penalize
+                setTimeout(() => {
+                    if (document.hidden && this.isActive) {
+                        this.handleModeratViolation('prolonged_hidden', 'Document hidden for extended period');
+                    }
+                }, this.config.focusLossGracePeriod);
+            }
+        };
+
+        window.addEventListener('blur', blurHandler, { passive: false });
+        window.addEventListener('focus', focusHandler, { passive: false });
+        document.addEventListener('visibilitychange', visibilityHandler, { passive: false });
+
+        this.trackEventListener(window, 'blur', blurHandler);
+        this.trackEventListener(window, 'focus', focusHandler);
+        this.trackEventListener(document, 'visibilitychange', visibilityHandler);
+
+        console.log('👁️ Balanced focus detection active');
     }
 
     /**
-     * Handle system shortcut violations
+     * Evaluate focus loss with balanced approach
      */
-    handleSystemShortcutViolation(e) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        this.detectionState.systemKeyAttempts++;
-
-        const violationData = {
-            type: 'system_shortcut_violation',
-            shortcut: this.getKeyComboName(e),
-            attempt: this.detectionState.systemKeyAttempts,
-            timestamp: Date.now()
-        };
-
-        console.error('🚫 SYSTEM SHORTCUT VIOLATION:', violationData);
-
-        // IMMEDIATE TERMINATION for critical shortcuts
-        if (this.isCriticalSystemShortcut(e)) {
-            this.terminateExamImmediate('SYSTEM_SHORTCUT_VIOLATION', violationData);
-        } else {
-            this.reportViolation('system_shortcut', violationData);
+    evaluateFocusLoss(duration) {
+        // Ignore very short focus losses (likely innocent)
+        if (duration < this.config.shortFocusLossIgnore) {
+            console.log(`👁️ Ignoring short focus loss: ${duration}ms`);
+            return;
         }
 
-        return false;
+        // Significant focus loss
+        if (duration > this.config.focusLossMinDuration) {
+            this.detectionState.focusLossCount++;
+
+            console.warn(`⚠️ Significant focus loss #${this.detectionState.focusLossCount}: ${duration}ms`);
+
+            // Progressive response
+            if (this.detectionState.focusLossCount >= this.config.maxFocusLossAttempts) {
+                this.handleCriticalViolation('repeated_focus_loss', {
+                    count: this.detectionState.focusLossCount,
+                    duration: duration
+                });
+            } else {
+                this.handleModeratViolation('focus_loss', {
+                    duration: duration,
+                    count: this.detectionState.focusLossCount
+                });
+            }
+        }
+    }
+
+    /**
+     * Setup balanced fullscreen detection
+     */
+    setupFullscreenDetection() {
+        const fullscreenHandler = () => {
+            if (!this.isActive || this.isWarningVisible) return;
+
+            const isFullscreen = this.isDocumentInFullscreen();
+
+            if (!isFullscreen && this.fullscreenMode) {
+                this.detectionState.fullscreenExitCount++;
+
+                console.warn(`⚠️ Fullscreen exit #${this.detectionState.fullscreenExitCount}`);
+
+                if (this.detectionState.fullscreenExitCount >= this.config.maxFullscreenExitAttempts) {
+                    this.handleCriticalViolation('repeated_fullscreen_exit', {
+                        attempt: this.detectionState.fullscreenExitCount
+                    });
+                } else {
+                    this.handleModeratViolation('fullscreen_exit', {
+                        attempt: this.detectionState.fullscreenExitCount,
+                        maxAttempts: this.config.maxFullscreenExitAttempts
+                    });
+                }
+            }
+        };
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
+            .forEach(eventName => {
+                document.addEventListener(eventName, fullscreenHandler, { passive: false });
+                this.trackEventListener(document, eventName, fullscreenHandler);
+            });
+
+        console.log('🖥️ Balanced fullscreen detection active');
+    }
+
+    /**
+     * Setup system detection
+     */
+    setupSystemDetection() {
+        // Context menu with balanced approach
+        const contextMenuHandler = (e) => {
+            if (!this.isActive || this.isWarningVisible) return;
+
+            if (!this.isCodeEditorArea(e.target)) {
+                e.preventDefault();
+                this.handleMinorViolation('right_click', 'Right-click outside editor');
+                return false;
+            }
+        };
+
+        // Clipboard with balanced approach
+        const clipboardHandler = (e) => {
+            if (!this.isActive || this.isWarningVisible) return;
+
+            if (!this.isCodeEditorArea(e.target)) {
+                e.preventDefault();
+                this.handleMinorViolation('clipboard_attempt', `${e.type} outside editor`);
+                return false;
+            }
+        };
+
+        document.addEventListener('contextmenu', contextMenuHandler, { capture: true, passive: false });
+        ['copy', 'cut', 'paste'].forEach(eventType => {
+            document.addEventListener(eventType, clipboardHandler, { capture: true, passive: false });
+            this.trackEventListener(document, eventType, clipboardHandler);
+        });
+        this.trackEventListener(document, 'contextmenu', contextMenuHandler);
+
+        console.log('🖱️ Balanced system detection active');
+    }
+
+    /**
+     * Check if document is in fullscreen
+     */
+    isDocumentInFullscreen() {
+        return !!(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
+    }
+
+    /**
+     * Handle critical violations (Windows key, repeated violations)
+     */
+    handleCriticalViolation(type, data) {
+        this.detectionState.totalViolations++;
+        this.detectionState.windowsKeyCount++;
+        this.detectionState.lastViolationType = type;
+
+        console.error(`🚫 CRITICAL VIOLATION: ${type}`, data);
+
+        // Always show warning first, even for critical violations
+        this.showCriticalWarning(type, data);
+
+        // Report to server
+        this.reportToServer('critical_violation', { type, data, immediate: false });
+    }
+
+    /**
+     * Handle moderate violations (focus loss, fullscreen exit)
+     */
+    handleModeratViolation(type, data) {
+        this.detectionState.totalViolations++;
+        this.detectionState.lastViolationType = type;
+
+        console.warn(`⚠️ MODERATE VIOLATION: ${type}`, data);
+
+        // Check if total violations exceeded
+        if (this.detectionState.totalViolations >= this.config.maxTotalViolations) {
+            this.handleCriticalViolation('total_violations_exceeded', {
+                total: this.detectionState.totalViolations,
+                lastType: type
+            });
+            return;
+        }
+
+        // Show progressive warning
+        this.showProgressiveWarning(type, data);
+
+        // Report to server
+        this.reportToServer('moderate_violation', { type, data });
+    }
+
+    /**
+     * Handle minor violations (blocked shortcuts, right-click)
+     */
+    handleMinorViolation(type, description) {
+        this.violations++;
+
+        console.log(`ℹ️ Minor violation: ${type} - ${description}`);
+
+        // Just show notification, no major penalty
+        this.showMinorNotification(description);
+
+        // Report to server as suspicious activity
+        this.reportToServer('minor_violation', { type, description });
+    }
+
+    /**
+     * Show critical warning dialog
+     */
+    showCriticalWarning(type, data) {
+        if (this.isWarningVisible) return;
+
+        this.isWarningVisible = true;
+        this.detectionState.warningLevel = 3; // Red alert
+
+        const messages = {
+            'windows_key': 'Засечено е натискане на Windows клавиша!\nТова е строго забранено по време на изпита.',
+            'repeated_focus_loss': 'Твърде много опити за излизане от изпита!\nИзпитът ще бъде прекратен при следващо нарушение.',
+            'repeated_fullscreen_exit': 'Твърде много опити за излизане от fullscreen режим!\nИзпитът ще бъде прекратен при следващо нарушение.',
+            'total_violations_exceeded': 'Превишен е лимитът от нарушения!\nИзпитът ще бъде прекратен.'
+        };
+
+        const message = messages[type] || 'Засечено е критично нарушение на правилата за изпита!';
+
+        this.showWarningDialog(message, 'critical', () => {
+            // On continue - final warning
+            this.hideWarningDialog();
+            console.log('🔔 Final warning given for critical violation');
+        }, () => {
+            // On exit
+            this.exitExam('critical_violation_exit');
+        });
+    }
+
+    /**
+     * Show progressive warning based on violation count
+     */
+    showProgressiveWarning(type, data) {
+        const now = Date.now();
+
+        // Cooldown between warnings
+        if (now - this.detectionState.lastWarningTime < this.detectionState.warningCooldown) {
+            return;
+        }
+
+        this.detectionState.lastWarningTime = now;
+
+        // Determine warning level
+        const warningLevel = Math.min(this.detectionState.totalViolations, 3);
+        this.detectionState.warningLevel = warningLevel;
+
+        const messages = {
+            'focus_loss': `Засечено е излизане от прозореца на изпита!\nПредупреждение ${this.detectionState.focusLossCount}/${this.config.maxFocusLossAttempts}`,
+            'fullscreen_exit': `Опит за излизане от fullscreen режим!\nПредупреждение ${this.detectionState.fullscreenExitCount}/${this.config.maxFullscreenExitAttempts}`,
+            'prolonged_hidden': 'Прозорецът на изпита е скрит твърде дълго!\nВърнете се към изпита незабавно.'
+        };
+
+        const message = messages[type] || 'Засечена е подозрителна активност!';
+
+        if (warningLevel >= 2) {
+            // Show dialog for serious warnings
+            this.showWarningDialog(message, 'moderate', () => {
+                this.hideWarningDialog();
+            });
+        } else {
+            // Show notification for lighter warnings
+            this.showWarningNotification(message, 5000);
+        }
+    }
+
+    /**
+     * Show warning dialog
+     */
+    showWarningDialog(message, severity, onContinue, onExit = null) {
+        // Remove existing overlay
+        const existingOverlay = document.getElementById('antiCheatOverlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
+        // Create warning overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'antiCheatOverlay';
+        overlay.className = 'anti-cheat-overlay';
+
+        const severityConfig = {
+            'critical': {
+                title: '🚫 КРИТИЧНО ПРЕДУПРЕЖДЕНИЕ',
+                bgColor: '#dc3545',
+                titleColor: '#fff'
+            },
+            'moderate': {
+                title: '⚠️ ПРЕДУПРЕЖДЕНИЕ',
+                bgColor: '#fd7e14',
+                titleColor: '#fff'
+            }
+        };
+
+        const config = severityConfig[severity] || severityConfig.moderate;
+
+        overlay.innerHTML = `
+            <div class="warning-dialog" style="background-color: ${config.bgColor};">
+                <div class="warning-title" style="color: ${config.titleColor};">${config.title}</div>
+                <div class="warning-message">${message}</div>
+                <div class="warning-buttons">
+                    <button class="warning-button continue-button" id="continue-exam-btn">
+                        Продължи изпита
+                    </button>
+                    ${onExit ? '<button class="warning-button exit-button" id="exit-exam-btn">Напусни изпита</button>' : ''}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Event listeners
+        const continueBtn = overlay.querySelector('#continue-exam-btn');
+        const exitBtn = overlay.querySelector('#exit-exam-btn');
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => {
+                if (onContinue) onContinue();
+            });
+        }
+
+        if (exitBtn && onExit) {
+            exitBtn.addEventListener('click', () => {
+                if (onExit) onExit();
+            });
+        }
+
+        // Auto-hide after timeout for non-critical warnings
+        if (severity !== 'critical') {
+            setTimeout(() => {
+                if (document.getElementById('antiCheatOverlay')) {
+                    this.hideWarningDialog();
+                }
+            }, this.config.warningDuration);
+        }
+    }
+
+    /**
+     * Hide warning dialog
+     */
+    hideWarningDialog() {
+        const overlay = document.getElementById('antiCheatOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        this.isWarningVisible = false;
+    }
+
+    /**
+     * Show minor notification
+     */
+    showMinorNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ffc107;
+            color: #212529;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 9999;
+            max-width: 250px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
     }
 
     /**
      * Show warning notification
      */
     showWarningNotification(message, duration = 5000) {
-        // Remove existing warning
-        const existingWarning = document.getElementById('anticheat-warning-notification');
-        if (existingWarning) {
-            existingWarning.remove();
-        }
-
-        // Create warning notification
-        const warning = document.createElement('div');
-        warning.id = 'anticheat-warning-notification';
-        warning.style.cssText = `
+        const notification = document.createElement('div');
+        notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
@@ -326,545 +612,52 @@ class AntiCheat {
             font-weight: bold;
             z-index: 10000;
             box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
-            border-left: 4px solid #fff;
             max-width: 300px;
             white-space: pre-line;
-            animation: slideInRight 0.3s ease-out;
         `;
+        notification.innerHTML = message;
 
-        warning.innerHTML = message;
+        document.body.appendChild(notification);
 
-        // Add slide animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.body.appendChild(warning);
-
-        // Auto-remove after duration
         setTimeout(() => {
-            if (warning.parentNode) {
-                warning.style.animation = 'slideOutRight 0.3s ease-in';
-                setTimeout(() => {
-                    if (warning.parentNode) {
-                        warning.remove();
-                    }
-                }, 300);
+            if (notification.parentNode) {
+                notification.remove();
             }
         }, duration);
-
-        console.log(`⚠️ Warning notification shown: ${message}`);
     }
 
     /**
-     * Setup SMART focus detection
+     * Start monitoring intervals
      */
-    setupFocusDetection() {
-        // Window focus/blur events with smart evaluation
-        const blurHandler = () => {
-            if (!this.isActive) return;
-
-            this.detectionState.focusLossStartTime = Date.now();
-            console.warn('⚠️ Window focus lost - starting evaluation...');
-        };
-
-        const focusHandler = () => {
-            if (!this.isActive) return;
-
-            if (this.detectionState.focusLossStartTime) {
-                const focusLossDuration = Date.now() - this.detectionState.focusLossStartTime;
-                this.detectionState.focusLossDuration = focusLossDuration;
-
-                console.log(`🎯 Focus regained after ${focusLossDuration}ms`);
-
-                // Evaluate if focus loss was significant
-                if (focusLossDuration > this.config.focusLossMinDuration) {
-                    this.handleSignificantFocusLoss(focusLossDuration);
-                }
-
-                this.detectionState.focusLossStartTime = null;
-            }
-
-            this.detectionState.lastFocusTime = Date.now();
-        };
-
-        window.addEventListener('blur', blurHandler, { passive: false });
-        window.addEventListener('focus', focusHandler, { passive: false });
-
-        // Document visibility change with smart evaluation
-        const visibilityHandler = () => {
-            if (!this.isActive) return;
-
-            if (document.hidden) {
-                console.warn('⚠️ Document hidden - evaluating...');
-
-                // Give grace period before considering it a violation
-                setTimeout(() => {
-                    if (document.hidden && this.isActive) {
-                        console.error('🚫 Document still hidden after grace period');
-                        this.handleSignificantVisibilityLoss();
-                    }
-                }, this.config.focusLossGracePeriod);
-            } else {
-                console.log('🎯 Document visible again');
-            }
-        };
-
-        document.addEventListener('visibilitychange', visibilityHandler, { passive: false });
-
-        this.trackEventListener(window, 'blur', blurHandler);
-        this.trackEventListener(window, 'focus', focusHandler);
-        this.trackEventListener(document, 'visibilitychange', visibilityHandler);
-
-        console.log('👁️ SMART focus detection activated');
-    }
-
-    /**
-     * Handle significant focus loss (duration-based)
-     */
-    handleSignificantFocusLoss(duration) {
-        this.detectionState.focusLossCount++;
-        this.detectionState.recentFocusLosses.push({
-            duration: duration,
-            timestamp: Date.now()
-        });
-
-        // Keep only recent focus losses (last 5 minutes)
-        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-        this.detectionState.recentFocusLosses = this.detectionState.recentFocusLosses
-            .filter(loss => loss.timestamp > fiveMinutesAgo);
-
-        console.warn(`⚠️ Significant focus loss #${this.detectionState.focusLossCount} - Duration: ${duration}ms`);
-
-        // Evaluate pattern
-        if (this.detectionState.recentFocusLosses.length >= this.config.maxFocusLossAttempts) {
-            console.error('🚫 Too many focus losses detected!');
-
-            this.terminateExamImmediate('REPEATED_FOCUS_LOSS_VIOLATION', {
-                type: 'repeated_focus_loss',
-                count: this.detectionState.focusLossCount,
-                recentLosses: this.detectionState.recentFocusLosses,
-                timestamp: Date.now()
-            });
-        } else {
-            // Show warning but don't terminate yet
-            this.showFocusWarning(duration);
-        }
-    }
-
-    /**
-     * Handle significant visibility loss
-     */
-    handleSignificantVisibilityLoss() {
-        console.error('🚫 CRITICAL: Prolonged document hidden state!');
-
-        this.terminateExamImmediate('VISIBILITY_VIOLATION', {
-            type: 'document_hidden_prolonged',
-            timestamp: Date.now()
-        });
-    }
-
-    /**
-     * Show focus warning (non-terminating)
-     */
-    showFocusWarning(duration) {
-        console.warn(`⚠️ Focus warning shown - Duration: ${duration}ms`);
-
-        // Report as suspicious activity but don't terminate
-        this.reportViolation('focus_loss_warning', {
-            duration: duration,
-            count: this.detectionState.focusLossCount,
-            timestamp: Date.now()
-        });
-
-        // Show brief warning notification
-        this.showWarningNotification(
-            `⚠️ Focus Loss Detected\nDuration: ${Math.round(duration / 1000)}s\nWarning ${this.detectionState.focusLossCount}/${this.config.maxFocusLossAttempts}`,
-            3000
-        );
-    }
-
-    /**
-     * Setup SMART fullscreen detection
-     */
-    setupFullscreenDetection() {
-        const fullscreenHandler = () => {
-            if (!this.isActive) return;
-
-            const isFullscreen = !!(document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement ||
-                document.msFullscreenElement);
-
-            if (!isFullscreen && this.fullscreenMode) {
-                this.detectionState.fullscreenExitCount++;
-
-                console.warn(`⚠️ Fullscreen exit detected #${this.detectionState.fullscreenExitCount}`);
-
-                // Smart evaluation - allow one accidental exit
-                if (this.detectionState.fullscreenExitCount >= this.config.maxFullscreenExitAttempts) {
-                    console.error('🚫 CRITICAL: Too many fullscreen exits!');
-
-                    this.terminateExamImmediate('FULLSCREEN_EXIT_VIOLATION', {
-                        type: 'repeated_fullscreen_exit',
-                        attempt: this.detectionState.fullscreenExitCount,
-                        timestamp: Date.now()
-                    });
-                } else {
-                    // Show warning for first exit
-                    this.showFullscreenWarning();
-                }
-            }
-        };
-
-        // Listen for all fullscreen change events
-        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
-            .forEach(eventName => {
-                document.addEventListener(eventName, fullscreenHandler, { passive: false });
-                this.trackEventListener(document, eventName, fullscreenHandler);
-            });
-
-        console.log('🖥️ SMART fullscreen detection activated');
-    }
-
-    /**
-     * Show fullscreen warning
-     */
-    showFullscreenWarning() {
-        console.warn('⚠️ Fullscreen warning shown');
-
-        this.reportViolation('fullscreen_exit_warning', {
-            attempt: this.detectionState.fullscreenExitCount,
-            maxAttempts: this.config.maxFullscreenExitAttempts,
-            timestamp: Date.now()
-        });
-
-        this.showWarningNotification(
-            `⚠️ Fullscreen Exit Detected\nAttempt ${this.detectionState.fullscreenExitCount}/${this.config.maxFullscreenExitAttempts}\nReturn to fullscreen immediately!`,
-            5000
-        );
-    }
-
-    /**
-     * Setup system-level detection
-     */
-    setupSystemDetection() {
-        // Mouse detection for context menu
-        const contextMenuHandler = (e) => {
-            if (!this.isActive) return;
-
-            // Block right-click everywhere except code editor
-            if (!this.isCodeEditorArea(e.target)) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-
-                this.reportViolation('right_click_blocked', {
-                    element: e.target.tagName,
-                    className: e.target.className
-                });
-
-                return false;
-            }
-        };
-
-        document.addEventListener('contextmenu', contextMenuHandler, { capture: true, passive: false });
-        this.trackEventListener(document, 'contextmenu', contextMenuHandler);
-
-        // Copy/paste detection
-        const clipboardHandler = (e) => {
-            if (!this.isActive) return;
-
-            if (!this.isCodeEditorArea(e.target)) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-
-                this.reportViolation('clipboard_blocked', {
-                    type: e.type,
-                    element: e.target.tagName
-                });
-
-                return false;
-            }
-        };
-
-        ['copy', 'cut', 'paste'].forEach(eventType => {
-            document.addEventListener(eventType, clipboardHandler, { capture: true, passive: false });
-            this.trackEventListener(document, eventType, clipboardHandler);
-        });
-
-        console.log('🖱️ AGGRESSIVE system detection activated');
-    }
-
-    /**
-     * Setup SMART monitoring intervals
-     */
-    setupAggressiveMonitoring() {
-        // Smart focus monitoring (less aggressive)
-        this.intervals.focusMonitor = setInterval(() => {
-            if (!this.isActive) return;
-
-            // Check for prolonged focus loss
-            if (this.detectionState.focusLossStartTime) {
-                const focusLossDuration = Date.now() - this.detectionState.focusLossStartTime;
-
-                // If focus lost for more than grace period, evaluate
-                if (focusLossDuration > this.config.focusLossGracePeriod) {
-                    console.warn(`⚠️ Prolonged focus loss: ${focusLossDuration}ms`);
-
-                    // Only terminate for very long focus loss (over 5 seconds)
-                    if (focusLossDuration > 5000) {
-                        console.error('🚫 CRITICAL: Extremely long focus loss!');
-                        this.terminateExamImmediate('PROLONGED_FOCUS_LOSS_VIOLATION', {
-                            type: 'focus_lost_too_long',
-                            duration: focusLossDuration,
-                            timestamp: Date.now()
-                        });
-                    }
-                }
-            }
-
-        }, this.config.focusCheckInterval);
-
-        // Smart fullscreen monitoring
-        this.intervals.fullscreenMonitor = setInterval(() => {
-            if (!this.isActive || !this.fullscreenMode) return;
-
-            const isFullscreen = !!(document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement ||
-                document.msFullscreenElement);
-
-            // Don't immediately terminate - let the event handler deal with it
-            if (!isFullscreen) {
-                console.warn('⚠️ Monitor detected fullscreen exit');
-            }
-
-        }, this.config.fullscreenCheckInterval);
-
-        // Heartbeat for connection monitoring
+    startMonitoring() {
+        // Heartbeat
         this.intervals.heartbeat = setInterval(() => {
-            if (!this.isActive) return;
-
             if (this.socket && this.socket.connected) {
                 this.socket.emit('anticheat-heartbeat', {
                     sessionId: this.sessionId,
                     timestamp: Date.now(),
-                    violations: this.violations,
-                    focusLossCount: this.detectionState.focusLossCount,
-                    windowsKeyCount: this.detectionState.windowsKeyCount,
+                    violations: this.detectionState.totalViolations,
+                    warningLevel: this.detectionState.warningLevel,
+                    isActive: this.isActive,
                     isInFocus: document.hasFocus(),
                     isVisible: !document.hidden
                 });
             }
-
         }, this.config.heartbeatInterval);
 
-        console.log('📊 SMART monitoring intervals started');
+        console.log('📊 Monitoring intervals started');
     }
 
     /**
-     * Setup prevention measures
+     * Report to server
      */
-    setupPreventionMeasures() {
-        // Aggressive focus stealing
-        if (this.config.aggressiveFocusSteal) {
-            this.intervals.focusSteal = setInterval(() => {
-                if (!this.isActive) return;
-
-                // Steal focus back aggressively
-                window.focus();
-
-                // Try to bring window to front
-                if (window.moveBy) {
-                    try {
-                        window.moveBy(0, 0);
-                    } catch (e) {
-                        // Ignore errors
-                    }
-                }
-
-            }, 50); // Every 50ms
-        }
-
-        // Disable browser shortcuts globally
-        document.addEventListener('keydown', (e) => {
-            if (!this.isActive) return;
-
-            // Disable common browser shortcuts
-            if ((e.ctrlKey || e.metaKey) && ['KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyL', 'KeyO', 'KeyP', 'KeyU'].includes(e.code)) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                return false;
-            }
-        }, { capture: true, passive: false });
-
-        console.log('🛡️ AGGRESSIVE prevention measures activated');
-    }
-
-    /**
-     * IMMEDIATE EXAM TERMINATION - NO WARNINGS
-     */
-    terminateExamImmediate(violationType, violationData) {
-        if (this.isTerminating) return; // Prevent multiple terminations
-        this.isTerminating = true;
-
-        console.error('🚫🚫🚫 IMMEDIATE EXAM TERMINATION 🚫🚫🚫');
-        console.error('Violation Type:', violationType);
-        console.error('Violation Data:', violationData);
-
-        // Log critical violation
-        this.logCriticalViolation(violationType, violationData);
-
-        // Report to server immediately
-        if (this.socket && this.socket.connected) {
-            this.socket.emit('critical-violation', {
-                sessionId: this.sessionId,
-                violationType: violationType,
-                violationData: violationData,
-                terminatedAt: Date.now(),
-                immediate: true
-            });
-        }
-
-        // Use ExamExitManager for immediate termination
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.SECURITY_VIOLATION,
-                {
-                    violationType: violationType,
-                    violation: violationData,
-                    immediate: true,
-                    additionalInfo: 'IMMEDIATE TERMINATION - CRITICAL SECURITY VIOLATION'
-                }
-            );
-        } else {
-            // Fallback - force close
-            this.forceTerminate(violationType);
-        }
-    }
-
-    /**
-     * Force terminate if ExamExitManager not available
-     */
-    forceTerminate(violationType) {
-        // Show critical violation screen
-        document.body.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: #000;
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: Arial, sans-serif;
-                z-index: 999999;
-                text-align: center;
-            ">
-                <div>
-                    <h1 style="color: #ff4444; font-size: 48px; margin-bottom: 30px;">
-                        🚫 EXAM TERMINATED 🚫
-                    </h1>
-                    <h2 style="color: #fff; font-size: 24px; margin-bottom: 20px;">
-                        CRITICAL SECURITY VIOLATION
-                    </h2>
-                    <p style="font-size: 18px; margin-bottom: 30px;">
-                        Violation Type: ${violationType}
-                    </p>
-                    <p style="font-size: 16px; color: #ccc;">
-                        All activity has been logged.<br>
-                        Contact your instructor immediately.
-                    </p>
-                </div>
-            </div>
-        `;
-
-        // Force close after brief display
-        setTimeout(() => {
-            window.close();
-        }, 3000);
-    }
-
-    /**
-     * Log critical violation with full details
-     */
-    logCriticalViolation(violationType, violationData) {
-        const logEntry = {
-            timestamp: Date.now(),
-            sessionId: this.sessionId,
-            violationType: violationType,
-            violationData: violationData,
-            browserInfo: {
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                cookieEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack
-            },
-            windowInfo: {
-                innerWidth: window.innerWidth,
-                innerHeight: window.innerHeight,
-                screenWidth: window.screen.width,
-                screenHeight: window.screen.height,
-                devicePixelRatio: window.devicePixelRatio
-            },
-            documentInfo: {
-                hasFocus: document.hasFocus(),
-                hidden: document.hidden,
-                visibilityState: document.visibilityState,
-                fullscreenElement: !!document.fullscreenElement
-            },
-            violationCounts: {
-                total: this.violations,
-                focusLoss: this.detectionState.focusLossCount,
-                windowsKey: this.detectionState.windowsKeyCount,
-                fullscreenExit: this.detectionState.fullscreenExitCount,
-                systemKey: this.detectionState.systemKeyAttempts
-            }
-        };
-
-        console.error('📋 CRITICAL VIOLATION LOG:', logEntry);
-
-        // Send to server
-        if (this.socket && this.socket.connected) {
-            this.socket.emit('violation-log', logEntry);
-        }
-
-        return logEntry;
-    }
-
-    /**
-     * Report regular violation (non-critical)
-     */
-    reportViolation(type, data) {
-        this.violations++;
-
-        const violation = {
-            type: type,
-            data: data,
-            timestamp: Date.now(),
-            sessionId: this.sessionId
-        };
-
-        console.warn('⚠️ Anti-cheat violation:', violation);
-
+    reportToServer(severity, data) {
         if (this.socket && this.socket.connected) {
             this.socket.emit('suspicious-activity', {
-                activity: type,
-                severity: 'medium',
+                activity: data.type || 'unknown',
+                severity: severity,
                 data: data,
+                sessionId: this.sessionId,
                 timestamp: Date.now()
             });
         }
@@ -914,11 +707,30 @@ class AntiCheat {
     }
 
     /**
-     * Update configuration
+     * Continue exam (called from warning dialog)
      */
-    updateConfig(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-        console.log('⚙️ Anti-cheat configuration updated:', this.config);
+    continueExam() {
+        this.hideWarningDialog();
+        console.log('✅ Student chose to continue exam');
+    }
+
+    /**
+     * Exit exam (called from warning dialog)
+     */
+    exitExam(reason = 'student_choice') {
+        console.log(`🚪 Student chose to exit exam: ${reason}`);
+
+        if (window.ExamExitManager) {
+            window.ExamExitManager.handleExamExit(
+                window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION,
+                { reason: reason }
+            );
+        } else {
+            // Fallback
+            if (confirm('Сигурни ли сте че искате да напуснете изпита?')) {
+                window.close();
+            }
+        }
     }
 
     /**
@@ -929,40 +741,21 @@ class AntiCheat {
 
         this.isActive = false;
 
-        // Clear all intervals
+        // Clear intervals
         Object.values(this.intervals).forEach(interval => {
             if (interval) clearInterval(interval);
         });
 
-        // Remove all event listeners
+        // Remove event listeners
         this.eventListeners.forEach(({ element, event, handler }) => {
             element.removeEventListener(event, handler);
         });
         this.eventListeners = [];
 
-        console.log('🔓 AGGRESSIVE Anti-cheat deactivated');
-    }
+        // Hide any visible warnings
+        this.hideWarningDialog();
 
-    /**
-     * Continue exam (called from warning dialog - NOT USED in aggressive mode)
-     */
-    continueExam() {
-        // In aggressive mode, there are no warnings - only termination
-        console.warn('⚠️ continueExam() called but aggressive mode has no warnings');
-    }
-
-    /**
-     * Exit exam (called from warning dialog)
-     */
-    exitExam() {
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION,
-                { reason: 'Student chose to exit from violation dialog' }
-            );
-        } else {
-            window.close();
-        }
+        console.log('🔓 Balanced Anti-cheat deactivated');
     }
 
     /**
@@ -971,8 +764,11 @@ class AntiCheat {
     getStats() {
         return {
             isActive: this.isActive,
-            violations: this.violations,
-            detectionState: { ...this.detectionState },
+            totalViolations: this.detectionState.totalViolations,
+            focusLossCount: this.detectionState.focusLossCount,
+            windowsKeyCount: this.detectionState.windowsKeyCount,
+            fullscreenExitCount: this.detectionState.fullscreenExitCount,
+            warningLevel: this.detectionState.warningLevel,
             config: { ...this.config },
             sessionId: this.sessionId,
             fullscreenMode: this.fullscreenMode
@@ -983,4 +779,4 @@ class AntiCheat {
 // Make available globally
 window.AntiCheat = AntiCheat;
 
-console.log('🛡️ SMART AGGRESSIVE Anti-Cheat System v2 loaded - BALANCED MODE READY');
+console.log('🛡️ Balanced Anti-Cheat System v3 loaded and ready');
