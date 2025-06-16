@@ -148,11 +148,41 @@ class AntiCheat {
      * Check if event is Windows key related
      */
     isWindowsKeyEvent(e) {
-        return (e.code === 'MetaLeft' || e.code === 'MetaRight' ||
+        // Direct Windows key detection with better browser support
+        if (e.code === 'MetaLeft' || e.code === 'MetaRight' ||
             e.code === 'OSLeft' || e.code === 'OSRight' ||
-            e.key === 'Meta' || e.key === 'OS' ||
-            e.metaKey || e.getModifierState?.('Meta') ||
-            (e.altKey && e.code === 'Tab')); // Alt+Tab included
+            e.key === 'Meta' || e.key === 'OS') {
+            return true;
+        }
+
+        // Windows key combinations with fallbacks
+        if (e.metaKey) {
+            return true;
+        }
+
+        // Additional checks for different browsers
+        if (e.getModifierState) {
+            if (e.getModifierState('Meta') || e.getModifierState('OS')) {
+                return true;
+            }
+        }
+
+        // Alt+Tab (system switching) - also critical
+        if (e.altKey && e.code === 'Tab') {
+            return true;
+        }
+
+        // Ctrl+Alt+Del combination
+        if (e.ctrlKey && e.altKey && e.code === 'Delete') {
+            return true;
+        }
+
+        // Additional Windows shortcuts that should be blocked
+        if (e.ctrlKey && e.shiftKey && e.code === 'Escape') { // Task Manager
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -195,6 +225,11 @@ class AntiCheat {
 
         // Refresh (but not critical)
         if ((e.ctrlKey && e.code === 'KeyR') || e.code === 'F5') {
+            return true;
+        }
+
+        // Esc key (block but allow in warnings)
+        if (e.code === 'Escape' && !this.isWarningVisible) {
             return true;
         }
 
@@ -366,16 +401,25 @@ class AntiCheat {
      */
     handleCriticalViolation(type, data) {
         this.detectionState.totalViolations++;
-        this.detectionState.windowsKeyCount++;
+
+        if (type === 'windows_key') {
+            this.detectionState.windowsKeyCount++;
+        }
+
         this.detectionState.lastViolationType = type;
 
         console.error(`🚫 CRITICAL VIOLATION: ${type}`, data);
 
-        // Always show warning first, even for critical violations
-        this.showCriticalWarning(type, data);
+        // For Windows key - immediate termination with warning
+        if (type === 'windows_key') {
+            this.terminateExamWithWarning('Windows клавишът е строго забранен!', type, data);
+        } else {
+            // For other critical violations - show warning first
+            this.showCriticalWarning(type, data);
+        }
 
         // Report to server
-        this.reportToServer('critical_violation', { type, data, immediate: false });
+        this.reportToServer('critical_violation', { type, data, immediate: type === 'windows_key' });
     }
 
     /**
@@ -479,6 +523,135 @@ class AntiCheat {
         } else {
             // Show notification for lighter warnings
             this.showWarningNotification(message, 5000);
+        }
+    }
+
+    /**
+     * Immediate termination with warning screen for critical violations
+     */
+    terminateExamWithWarning(message, violationType, violationData) {
+        if (this.isTerminating) return;
+        this.isTerminating = true;
+
+        console.error(`🚫🚫🚫 IMMEDIATE TERMINATION: ${violationType} 🚫🚫🚫`);
+
+        // Create termination overlay with inline styles
+        const overlay = document.createElement('div');
+        overlay.id = 'criticalViolationOverlay';
+        overlay.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(220, 53, 69, 0.95) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 999999 !important;
+            font-family: Arial, sans-serif !important;
+            color: white !important;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: #dc3545 !important;
+                padding: 40px !important;
+                border-radius: 12px !important;
+                text-align: center !important;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+                max-width: 500px !important;
+                width: 90% !important;
+            ">
+                <div style="
+                    font-size: 48px !important;
+                    margin-bottom: 20px !important;
+                ">🚫</div>
+                
+                <h1 style="
+                    font-size: 28px !important;
+                    margin-bottom: 20px !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                ">ИЗПИТЪТ Е ПРЕКРАТЕН</h1>
+                
+                <p style="
+                    font-size: 18px !important;
+                    margin-bottom: 30px !important;
+                    line-height: 1.5 !important;
+                    color: white !important;
+                ">${message}<br><br>Всички действия са регистрирани.</p>
+                
+                <div style="
+                    background: rgba(255,255,255,0.1) !important;
+                    padding: 15px !important;
+                    border-radius: 8px !important;
+                    margin-bottom: 25px !important;
+                ">
+                    <div style="font-size: 14px !important; color: #ffdddd !important;">
+                        Нарушение: ${violationType}<br>
+                        Време: ${new Date().toLocaleTimeString()}
+                    </div>
+                </div>
+                
+                <div id="countdown-text" style="
+                    font-size: 16px !important;
+                    color: #ffdddd !important;
+                    margin-bottom: 20px !important;
+                ">Прозорецът ще се затвори след <span id="countdown">5</span> секунди...</div>
+                
+                <button id="close-now-btn" style="
+                    background: rgba(255,255,255,0.2) !important;
+                    color: white !important;
+                    border: 2px solid white !important;
+                    padding: 12px 24px !important;
+                    border-radius: 6px !important;
+                    font-size: 14px !important;
+                    font-weight: bold !important;
+                    cursor: pointer !important;
+                    transition: background 0.3s !important;
+                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
+                   onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+                   onclick="window.antiCheat.forceCloseExam()">
+                    Затвори сега
+                </button>
+            </div>
+        `;
+
+        // Force inject into body
+        document.body.appendChild(overlay);
+
+        // Make antiCheat globally accessible for the onclick handler
+        window.antiCheat = this;
+
+        // Start countdown
+        let countdown = 5;
+        const countdownElement = overlay.querySelector('#countdown');
+
+        const countdownTimer = setInterval(() => {
+            countdown--;
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+
+            if (countdown <= 0) {
+                clearInterval(countdownTimer);
+                this.forceExamTermination(violationType, violationData);
+            }
+        }, 1000);
+
+        // Store timer for manual close
+        this.terminationTimer = countdownTimer;
+
+        // Report immediate termination to server
+        if (this.socket && this.socket.connected) {
+            this.socket.emit('critical-violation', {
+                sessionId: this.sessionId,
+                violationType: violationType,
+                violationData: violationData,
+                terminatedAt: Date.now(),
+                immediate: true
+            });
         }
     }
 
