@@ -97,22 +97,34 @@ export class ExamExitManager {
             [this.exitReasons.STUDENT_FINISH]: {
                 type: 'success',
                 autoClose: false,
-                showCloseButton: true
+                showCloseButton: true,
+                icon: '✅',
+                title: 'ИЗПИТЪТ Е ЗАВЪРШЕН',
+                message: 'Вашият изпит е успешно приключен.'
             },
             [this.exitReasons.TIME_EXPIRED]: {
                 type: 'warning',
                 autoClose: true,
-                autoCloseDelay: 10000
+                autoCloseDelay: 10000,
+                icon: '⏰',
+                title: 'ВРЕМЕТО ИЗТЕЧЕ',
+                message: 'Времето за изпита е изтекло.'
             },
             [this.exitReasons.ANTI_CHEAT_VIOLATION]: {
                 type: 'error',
                 autoClose: true,
-                autoCloseDelay: 5000
+                autoCloseDelay: 5000,
+                icon: '🚫',
+                title: 'НАРУШЕНИЕ НА ПРАВИЛАТА',
+                message: 'Изпитът е прекратен поради нарушение на правилата.'
             },
             [this.exitReasons.FULLSCREEN_VIOLATION]: {
                 type: 'error',
                 autoClose: true,
-                autoCloseDelay: 5000
+                autoCloseDelay: 5000,
+                icon: '🔒',
+                title: 'FULLSCREEN НАРУШЕНИЕ',
+                message: 'Изпитът е прекратен поради излизане от fullscreen режим.'
             }
         };
 

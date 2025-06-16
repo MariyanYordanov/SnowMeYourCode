@@ -1,87 +1,47 @@
 /**
- * LoginForm Component - Student login UI
- * Handles login form interactions and validation
+ * LoginForm Component - Pure behavior for existing login form
+ * Works with existing DOM elements in index.html
  */
 import { Validation } from '../shared/js/utils.js';
 
 export class LoginForm {
-    constructor(container, websocketService) {
-        this.container = container;
+    constructor(websocketService) {
         this.websocketService = websocketService;
         this.isLoading = false;
         this.callbacks = new Map();
 
+        // Cache existing DOM elements from index.html
         this.elements = {
-            form: null,
-            nameInput: null,
-            classInput: null,
-            submitButton: null,
-            statusDiv: null
+            nameInput: document.getElementById('student-name'),
+            classInput: document.getElementById('student-class'),
+            submitButton: document.getElementById('login-btn'),
+            statusDiv: document.getElementById('login-status')
         };
 
-        this.render();
+        this.validateElements();
         this.setupEventListeners();
         console.log('📝 LoginForm component initialized');
     }
 
     /**
-     * Render login form
+     * Validate that required DOM elements exist
      */
-    render() {
-        this.container.innerHTML = `
-            <div class="login-form">
-                <h2>Programming Exam Login</h2>
-                <p class="login-subtitle">Enter your details to begin the exam</p>
+    validateElements() {
+        const required = ['nameInput', 'classInput', 'submitButton', 'statusDiv'];
+        const missing = required.filter(key => !this.elements[key]);
 
-                <form id="student-login-form">
-                    <input 
-                        type="text" 
-                        id="student-name" 
-                        placeholder="Full Name (e.g., Ivan Ivanov)" 
-                        autocomplete="off"
-                        required
-                    >
-                    <input 
-                        type="text" 
-                        id="student-class" 
-                        placeholder="Class (e.g., 11А)" 
-                        autocomplete="off"
-                        required
-                    >
-                    <button type="submit" id="login-btn" class="login-btn">
-                        Enter Exam
-                    </button>
-                </form>
-
-                <div id="login-status" class="login-status"></div>
-
-                <div class="fullscreen-notice">
-                    <strong>🔒 Security Notice:</strong> The exam will switch to fullscreen mode for security.
-                    Attempting to exit fullscreen or switch applications will trigger security warnings.
-                </div>
-            </div>
-        `;
-
-        this.cacheElements();
+        if (missing.length > 0) {
+            console.error('❌ Missing DOM elements:', missing);
+            throw new Error(`LoginForm requires DOM elements: ${missing.join(', ')}`);
+        }
     }
 
     /**
-     * Cache DOM elements
-     */
-    cacheElements() {
-        this.elements.form = this.container.querySelector('#student-login-form');
-        this.elements.nameInput = this.container.querySelector('#student-name');
-        this.elements.classInput = this.container.querySelector('#student-class');
-        this.elements.submitButton = this.container.querySelector('#login-btn');
-        this.elements.statusDiv = this.container.querySelector('#login-status');
-    }
-
-    /**
-     * Setup event listeners
+     * Setup event listeners for existing form
      */
     setupEventListeners() {
         // Form submission
-        this.elements.form.addEventListener('submit', (e) => {
+        this.elements.submitButton.addEventListener('click', (e) => {
             e.preventDefault();
             this.handleSubmit();
         });
@@ -167,7 +127,7 @@ export class LoginForm {
     }
 
     /**
-     * Validate single input
+     * Validate single input and update styling
      */
     validateInput(input, type) {
         const value = input.value.trim();
@@ -179,7 +139,7 @@ export class LoginForm {
             isValid = Validation.isValidClassName(value);
         }
 
-        // Update input styling
+        // Update input styling via CSS classes
         input.classList.toggle('invalid', !isValid && value.length > 0);
     }
 
@@ -212,12 +172,11 @@ export class LoginForm {
         this.elements.submitButton.disabled = loading;
 
         if (loading) {
-            this.elements.submitButton.innerHTML = `
-                <div class="loading-spinner"></div>
-                Logging in...
-            `;
+            this.elements.submitButton.textContent = 'Logging in...';
+            this.elements.submitButton.classList.add('loading');
         } else {
-            this.elements.submitButton.innerHTML = 'Enter Exam';
+            this.elements.submitButton.textContent = 'Enter Exam';
+            this.elements.submitButton.classList.remove('loading');
         }
     }
 
@@ -250,7 +209,8 @@ export class LoginForm {
      * Clear form
      */
     clear() {
-        this.elements.form.reset();
+        this.elements.nameInput.value = '';
+        this.elements.classInput.value = '';
         this.elements.statusDiv.style.display = 'none';
         this.setLoading(false);
     }
