@@ -2,8 +2,8 @@
  * Exam Service - Exam state management and business logic
  * Manages exam session, timer, and state transitions
  */
-import { EXAM_CONFIG, SESSION_STATES } from '../../shared/js/constants.js';
-import { Time } from '../../shared/js/utils.js';
+import { EXAM_CONFIG, SESSION_STATES } from '/shared/js/constants.js';
+import { Time } from '/shared/js/utils.js';
 
 export class ExamService {
     constructor(websocketService) {

@@ -177,7 +177,7 @@ import { websocketService } from '../services/websocketService.js';
 <link rel="stylesheet" href="../shared/css/common.css">
 <link rel="stylesheet" href="css/student.css">
 <link rel="stylesheet" href="css/components.css">
-<link rel="stylesheet" href="css/anticheat.css">
+<link rel="stylesheet" href="css/anti-cheat.css">
 ```
 
 ### **3. File Organization Rules:**

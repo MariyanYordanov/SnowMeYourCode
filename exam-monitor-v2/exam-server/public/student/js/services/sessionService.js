@@ -2,8 +2,8 @@
  * Session Service - Session state management
  * Handles login state, session persistence, and recovery
  */
-import { Storage } from '../../shared/js/utils.js';
-import { EventEmitter } from '../../shared/js/events.js';
+import { Storage } from '/shared/js/utils.js';
+import { EventEmitter } from '/shared/js/events.js';
 
 export class SessionService extends EventEmitter {
     constructor() {

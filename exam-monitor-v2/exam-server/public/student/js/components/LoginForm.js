@@ -2,7 +2,7 @@
  * LoginForm Component - Pure behavior for existing login form
  * Works with existing DOM elements in index.html
  */
-import { Validation } from '../../shared/js/utils.js';
+import { Validation } from '/shared/js/utils.js';
 
 export class LoginForm {
     constructor(websocketService) {

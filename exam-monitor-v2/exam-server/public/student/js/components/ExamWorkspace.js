@@ -6,7 +6,7 @@ import { LoginForm } from './LoginForm.js';
 import { ExamTimer } from './ExamTimer.js';
 import { CodeEditor } from './CodeEditor.js';
 import { ConsoleOutput } from './ConsoleOutput.js';
-import { ExamExitManager } from '../ExamExitManager.js';
+import { ExamExitManager } from '/student/js/components/ExamExitManager.js';
 
 export class ExamWorkspace {
     constructor(websocketService, examService, antiCheatCore) {

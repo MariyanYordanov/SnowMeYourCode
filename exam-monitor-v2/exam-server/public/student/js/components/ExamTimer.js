@@ -2,7 +2,7 @@
  * ExamTimer Component - Pure behavior for existing timer
  * Works with existing DOM elements in index.html
  */
-import { Time } from '../shared/js/utils.js';
+import { Time } from '/shared/js/utils.js';
 
 export class ExamTimer {
     constructor() {

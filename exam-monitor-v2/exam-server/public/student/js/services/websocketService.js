@@ -2,7 +2,7 @@
  * WebSocket Service - Pure communication wrapper
  * Handles WebSocket connection and message routing
  */
-import { SOCKET_EVENTS } from '../../shared/js/constants.js';
+import { SOCKET_EVENTS } from '/shared/js/constants.js';
 
 export class WebSocketService {
     constructor() {
