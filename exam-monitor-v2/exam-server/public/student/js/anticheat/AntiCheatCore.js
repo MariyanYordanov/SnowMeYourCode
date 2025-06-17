@@ -51,20 +51,27 @@ export class AntiCheatCore {
                 import('./ReportingService.js')
             ]);
 
-            // Initialize modules
+            // Initialize modules - ПОПРАВЕНО: правилен ред на параметрите
             this.violationTracker = new ViolationTracker(this.config);
             this.reportingService = new ReportingService(this.socket, this.sessionId);
             this.uiManager = new UIManager(this.config);
-            this.detectionEngine = new DetectionEngine(this.config);
+            // ПОПРАВЕНО: подаваме violationTracker като първи параметър
+            this.detectionEngine = new DetectionEngine(this.violationTracker, this.config);
 
-            // Setup module connections
-            this.detectionEngine.callbacks.onViolation = (data) => this.handleViolation(data);
-            this.detectionEngine.callbacks.onDevToolsDetected = () =>
-                this.handleViolation({ type: 'devTools', severity: 'high' });
+            // Setup UI callbacks
+            this.uiManager.callbacks.onContinueExam = () => {
+                console.log('Student chose to continue');
+                this.reportingService.reportActivity({
+                    type: 'warning_dismissed'
+                });
+            };
 
-            this.detectionEngine.on('suspiciousActivity', (data) => {
-                this.reportingService.reportActivity(data);
-            });
+            this.uiManager.callbacks.onExitExam = () => {
+                this.handleTermination('student_choice', 'Student chose to exit');
+            };
+
+            // ПРЕМАХНАТО: DetectionEngine не използва callbacks или events
+            // Той директно използва violationTracker чрез handleDetection()
 
             console.log('✅ Anti-cheat modules initialized successfully');
             return true;
@@ -92,8 +99,8 @@ export class AntiCheatCore {
             }
         }
 
-        // Activate detection engine
-        this.detectionEngine.startDetection();
+        // Activate detection engine - ПОПРАВЕНО: правилен метод
+        this.detectionEngine.activate();
 
         // Start monitoring
         this.startMonitoring();
@@ -123,8 +130,10 @@ export class AntiCheatCore {
     performSystemCheck() {
         // Check if still in fullscreen
         if (this.fullscreenMode && !document.fullscreenElement) {
-            this.handleViolation('fullscreenExit', 'high', {
-                message: 'Exited fullscreen mode'
+            this.handleViolation({
+                type: 'fullscreenExit',
+                severity: 'high',
+                details: { message: 'Exited fullscreen mode' }
             });
         }
 
@@ -134,16 +143,19 @@ export class AntiCheatCore {
 
         if (devToolsOpen && !this.devToolsWarned) {
             this.devToolsWarned = true;
-            this.handleViolation('devTools', 'medium', {
-                message: 'Developer tools detected'
+            this.handleViolation({
+                type: 'devTools',
+                severity: 'medium',
+                details: { message: 'Developer tools detected' }
             });
         }
     }
 
     /**
-     * Handle violation from any source
+     * Handle violation from any source - ПОПРАВЕНО: един параметър
      */
-    handleViolation(type, severity = 'medium', details = {}) {
+    handleViolation(data) {
+        const { type, severity = 'medium', details = {} } = data;
         console.warn(`🚨 Violation detected: ${type} (${severity})`);
 
         // Track violation
@@ -211,19 +223,6 @@ export class AntiCheatCore {
         };
 
         this.uiManager.showWarningDialog(config);
-
-        // Set callbacks
-        this.uiManager.callbacks.onContinueExam = () => {
-            console.log('Student chose to continue');
-            this.reportingService.reportActivity({
-                type: 'warning_dismissed',
-                violationType: type
-            });
-        };
-
-        this.uiManager.callbacks.onExitExam = () => {
-            this.handleTermination(type, 'Student chose to exit');
-        };
     }
 
     /**
@@ -250,13 +249,26 @@ export class AntiCheatCore {
         // Deactivate system
         this.deactivate();
 
-        // Trigger exam exit
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit('anti_cheat_violation', {
+        // Trigger exam exit - ПОПРАВЕНО: използваме import
+        import('/student/js/components/ExamExitManager.js').then(({ examExitManager }) => {
+            examExitManager.handleExamExit('anti_cheat_violation', {
                 reason,
                 details
             });
-        }
+        });
+    }
+
+    /**
+     * Handle fullscreen exit
+     */
+    handleFullscreenExit() {
+        if (!this.isActive) return;
+
+        this.handleViolation({
+            type: 'fullscreenExit',
+            severity: 'high',
+            details: { message: 'Exited fullscreen during exam' }
+        });
     }
 
     /**
@@ -276,9 +288,9 @@ export class AntiCheatCore {
             this.heartbeatInterval = null;
         }
 
-        // Stop detection
+        // Stop detection - ПОПРАВЕНО: правилен метод
         if (this.detectionEngine) {
-            this.detectionEngine.stopDetection();
+            this.detectionEngine.deactivate();
         }
 
         // Clear UI

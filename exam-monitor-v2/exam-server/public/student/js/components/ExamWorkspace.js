@@ -219,6 +219,44 @@ export class ExamWorkspace {
     }
 
     /**
+ * Handle new session creation
+ */
+    handleNewSession(data) {
+        const { sessionId, timeLeft } = data;
+
+        // Use startExam instead of setSessionData
+        this.examService.startExam({
+            sessionId,
+            timeLeft,
+            studentName: this.state.studentName,
+            studentClass: this.state.studentClass
+        });
+
+        console.log(`📝 New session created: ${sessionId}`);
+
+        // ДОБАВЕТЕ ТОВА - преминаване към изпитен екран
+        this.enterFullscreen().then(() => {
+            this.switchToExamView();
+        }).catch(err => {
+            console.warn('⚠️ Could not enter fullscreen:', err);
+            // Продължаваме без fullscreen
+            this.switchToExamView();
+        });
+    }
+
+    /**
+     * Handle login success
+     */
+    async handleLoginSuccess(data) {
+        const { studentName, studentClass } = data;
+
+        // Store student info
+        this.state.studentName = studentName;
+        this.state.studentClass = studentClass;
+        console.log(`✅ Login successful: ${studentName}`);
+    }
+
+    /**
      * Handle session restore
      */
     handleSessionRestore(data) {
