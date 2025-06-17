@@ -2,17 +2,20 @@
  * Main Entry Point - Application Bootstrapper
  * Initializes all services and starts the exam system
  */
-
-// Import services
-import { websocketService } from './services/websocketService.js';
-import { sessionService } from './services/sessionService.js';
-import { examService } from './services/examService.js';
+import { WebSocketService } from './services/websocketService.js';
+import { SessionService } from './services/sessionService.js';
+import { ExamService } from './services/examService.js';
 
 // Import anti-cheat system
 import { AntiCheatCore } from './anticheat/AntiCheatCore.js';
 
 // Import main workspace
 import { ExamWorkspace } from './components/ExamWorkspace.js';
+
+// Create service instances
+const websocketService = new WebSocketService();
+const sessionService = new SessionService();
+const examService = new ExamService(websocketService);
 
 // Global application instance
 let app = null;
