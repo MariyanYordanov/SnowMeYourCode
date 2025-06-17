@@ -4,7 +4,7 @@
  */
 
 // Import services
-import { websocketService } from './services/webсocketService.js';
+import { websocketService } from './services/websoketService.js';
 import { sessionService } from './services/sessionService.js';
 import { examService } from './services/examService.js';
 
