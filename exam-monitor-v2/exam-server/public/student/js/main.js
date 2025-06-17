@@ -3,7 +3,7 @@
  * Initializes all services and starts the exam system
  */
 import { WebSocketService } from './services/websocketService.js';
-import { SessionService } from './services/sessionService.js';
+import { SessionService, sessionService } from './services/sessionService.js';
 import { ExamService } from './services/examService.js';
 
 // Import anti-cheat system
@@ -12,9 +12,8 @@ import { AntiCheatCore } from './anticheat/AntiCheatCore.js';
 // Import main workspace
 import { ExamWorkspace } from './components/ExamWorkspace.js';
 
-// Create service instances
+// Create service instances with proper dependencies
 const websocketService = new WebSocketService();
-const sessionService = new SessionService();
 const examService = new ExamService(websocketService);
 
 // Global application instance
