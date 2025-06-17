@@ -2,8 +2,10 @@
  * Main Entry Point - Application Bootstrapper
  * Initializes all services and starts the exam system
  */
+
+// Import service classes and singletons
 import { WebSocketService } from './services/websocketService.js';
-import { SessionService, sessionService } from './services/sessionService.js';
+import { sessionService } from './services/sessionService.js';
 import { ExamService } from './services/examService.js';
 
 // Import anti-cheat system
@@ -85,8 +87,10 @@ async function initializeServices() {
     // WebSocket needs to connect
     await websocketService.connect();
 
-    // Exam service depends on others
-    await examService.initialize(websocketService, sessionService);
+    // ExamService doesn't have initialize method - it's ready after construction
+    // Removed: await examService.initialize(websocketService, sessionService);
+
+    console.log('✅ All services initialized');
 }
 
 /**
