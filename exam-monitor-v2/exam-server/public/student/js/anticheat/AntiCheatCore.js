@@ -1,435 +1,451 @@
 /**
- * AntiCheatCore - Main coordinator for anti-cheat system
- * Orchestrates all anti-cheat modules and provides unified API
+ * ExamWorkspace Component - Main exam workspace coordinator
+ * Orchestrates all exam components and handles exam flow
  */
-export class AntiCheatCore {
-    constructor(socket, sessionId, config = {}) {
-        this.socket = socket;
-        this.sessionId = sessionId;
-        this.isActive = false;
-        this.fullscreenMode = false;
+import { LoginForm } from './LoginForm.js';
+import { ExamTimer } from './ExamTimer.js';
+import { CodeEditor } from './CodeEditor.js';
+import { ConsoleOutput } from './ConsoleOutput.js';
+import { ExamExitManager } from '../ExamExitManager.js';
 
-        // Will be initialized in setup
-        this.violationTracker = null;
-        this.detectionEngine = null;
-        this.uiManager = null;
-        this.reportingService = null;
+export class ExamWorkspace {
+    constructor(websocketService, examService, antiCheatCore) {
+        this.websocketService = websocketService;
+        this.examService = examService;
+        this.antiCheatCore = antiCheatCore;
 
-        // Default configuration
-        this.config = {
-            enableAutoWarnings: true,
-            enableTeacherNotifications: true,
-            logToConsole: true,
-            ...config
+        this.state = {
+            currentView: 'login', // login, exam, exit
+            isExamActive: false,
+            isFullscreenActive: false
         };
 
-        console.log('🛡️ AntiCheatCore initialized');
+        // Component instances
+        this.components = {
+            loginForm: null,
+            examTimer: null,
+            codeEditor: null,
+            consoleOutput: null  // Now using the new component
+        };
+
+        // Cache DOM containers
+        this.containers = {
+            login: document.getElementById('login-container'),
+            exam: document.getElementById('exam-container'),
+            output: document.getElementById('code-output')
+        };
+
+        this.validateContainers();
+        this.initializeComponents();
+        this.setupEventListeners();
+        this.setupFullscreenHandling();
+
+        console.log('🏗️ ExamWorkspace initialized');
     }
 
     /**
-     * Initialize all anti-cheat modules
+     * Validate required DOM containers exist
      */
-    async initialize() {
+    validateContainers() {
+        const required = ['login', 'exam', 'output'];
+        const missing = required.filter(key => !this.containers[key]);
+
+        if (missing.length > 0) {
+            throw new Error(`ExamWorkspace requires containers: ${missing.join(', ')}`);
+        }
+    }
+
+    /**
+     * Initialize all child components
+     */
+    initializeComponents() {
+        // Initialize login form
+        this.components.loginForm = new LoginForm(this.websocketService);
+        this.components.loginForm.on('loginSuccess', (data) => {
+            this.handleLoginSuccess(data);
+        });
+
+        // Initialize exam timer
+        this.components.examTimer = new ExamTimer();
+        this.components.examTimer.on('timerExpired', () => {
+            this.handleExamTimeExpired();
+        });
+        this.components.examTimer.on('timeWarning', (data) => {
+            this.handleTimeWarning(data);
+        });
+
+        // Initialize code editor
+        this.components.codeEditor = new CodeEditor(this.examService);
+        this.components.codeEditor.on('runCode', (data) => {
+            this.handleRunCode(data);
+        });
+        this.components.codeEditor.on('codeSaved', () => {
+            this.updateLastSavedIndicator();
+        });
+
+        // Initialize console output component
+        this.components.consoleOutput = new ConsoleOutput(this.containers.output, {
+            maxOutputLines: 100,
+            clearOnRun: true
+        });
+
+        console.log('🧩 Components initialized');
+    }
+
+    /**
+     * Setup workspace event listeners
+     */
+    setupEventListeners() {
+        // WebSocket events
+        this.websocketService.on('studentIdAssigned', (data) => {
+            this.handleNewSession(data);
+        });
+
+        this.websocketService.on('sessionRestored', (data) => {
+            this.handleSessionRestore(data);
+        });
+
+        this.websocketService.on('loginError', (data) => {
+            this.components.loginForm.handleLoginError(data);
+        });
+
+        this.websocketService.on('examExpired', (data) => {
+            this.handleExamExpired(data);
+        });
+
+        this.websocketService.on('forceDisconnect', (data) => {
+            this.handleForceDisconnect(data);
+        });
+
+        // Exam service events
+        this.examService.on('timerUpdate', (data) => {
+            this.components.examTimer.update(data.timeLeft);
+        });
+
+        this.examService.on('examExpired', () => {
+            this.handleExamTimeExpired();
+        });
+
+        // UI buttons
+        this.setupUIButtons();
+    }
+
+    /**
+     * Setup UI button handlers
+     */
+    setupUIButtons() {
+        // Run code button
+        const runBtn = document.getElementById('run-code-btn');
+        if (runBtn) {
+            runBtn.addEventListener('click', () => {
+                const code = this.components.codeEditor.getCode();
+                this.handleRunCode({ code });
+            });
+        }
+
+        // Clear output button
+        const clearBtn = document.getElementById('clear-output-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.components.consoleOutput.clear();
+            });
+        }
+
+        // Finish exam button
+        const finishBtn = document.getElementById('finish-exam-btn');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', () => {
+                this.handleFinishExam();
+            });
+        }
+    }
+
+    /**
+     * Setup fullscreen handling
+     */
+    setupFullscreenHandling() {
+        // Fullscreen change events
+        document.addEventListener('fullscreenchange', () => {
+            this.handleFullscreenChange();
+        });
+
+        document.addEventListener('fullscreenerror', (event) => {
+            console.error('Fullscreen error:', event);
+            this.handleFullscreenError(event);
+        });
+
+        // Exit fullscreen prevention
+        document.addEventListener('keydown', (e) => {
+            if (this.state.isFullscreenActive && e.key === 'Escape') {
+                e.preventDefault();
+                console.warn('🔒 ESC blocked during exam');
+            }
+        });
+    }
+
+    /**
+     * Handle login success
+     */
+    async handleLoginSuccess(data) {
+        const { studentName, studentClass } = data;
+
+        // Initialize exam session
+        await this.examService.startSession(studentName, studentClass);
+
+        // Enter fullscreen
+        await this.enterFullscreen();
+
+        // Switch to exam view
+        this.switchToExamView();
+    }
+
+    /**
+     * Handle new session creation
+     */
+    handleNewSession(data) {
+        const { sessionId, timeLeft } = data;
+
+        this.examService.setSessionData({
+            sessionId,
+            timeLeft,
+            isActive: true
+        });
+
+        console.log(`📝 New session created: ${sessionId}`);
+    }
+
+    /**
+     * Handle session restore
+     */
+    handleSessionRestore(data) {
+        const { sessionId, lastCode, timeLeft } = data;
+
+        console.log(`♻️ Session restored: ${sessionId}`);
+
+        // Restore exam state
+        this.examService.setSessionData({
+            sessionId,
+            timeLeft,
+            isActive: true
+        });
+
+        // Enter fullscreen
+        this.enterFullscreen();
+
+        // Switch to exam view with restored code
+        this.switchToExamView(lastCode);
+    }
+
+    /**
+     * Enter fullscreen mode
+     */
+    async enterFullscreen() {
         try {
-            console.log('🚀 Initializing anti-cheat modules...');
+            const elem = document.documentElement;
 
-            // Dynamic imports for modules
-            const [
-                { ViolationTracker },
-                { DetectionEngine },
-                { UIManager },
-                { ReportingService }
-            ] = await Promise.all([
-                import('./ViolationTracker.js'),
-                import('./DetectionEngine.js'),
-                import('./UIManager.js'),
-                import('./ReportingService.js')
-            ]);
+            if (elem.requestFullscreen) {
+                await elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                await elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                await elem.msRequestFullscreen();
+            }
 
-            // Initialize modules
-            this.violationTracker = new ViolationTracker(this.config);
-            this.reportingService = new ReportingService(this.socket, this.sessionId);
-            this.uiManager = new UIManager(this.config);
-            this.detectionEngine = new DetectionEngine(this.violationTracker, this.config);
+            this.state.isFullscreenActive = true;
 
-            // Setup module interconnections
-            this.setupModuleCallbacks();
+            // Activate anti-cheat
+            if (this.antiCheatCore) {
+                await this.antiCheatCore.activate();
+                this.antiCheatCore.setFullscreenMode(true);
+            }
 
-            console.log('✅ AntiCheat modules initialized successfully');
-            return true;
-
+            console.log('🔒 Entered fullscreen mode');
         } catch (error) {
-            console.error('❌ Failed to initialize anti-cheat modules:', error);
-            return false;
+            console.error('❌ Fullscreen failed:', error);
+            this.handleFullscreenError(error);
         }
     }
 
     /**
-     * Setup callbacks between modules
+     * Switch to exam view
      */
-    setupModuleCallbacks() {
-        // ViolationTracker callbacks
-        this.violationTracker.setCallbacks({
-            onViolationAdded: (data) => this.handleViolationAdded(data),
-            onThresholdExceeded: (data) => this.handleThresholdExceeded(data),
-            onWarningLevelChanged: (data) => this.handleWarningLevelChanged(data)
-        });
+    switchToExamView(lastCode = '') {
+        // Hide login, show exam
+        this.containers.login.style.display = 'none';
+        this.containers.exam.style.display = 'flex';
 
-        // UIManager callbacks
-        this.uiManager.setCallbacks({
-            onContinueExam: () => this.handleContinueExam(),
-            onExitExam: () => this.handleExitExam(),
-            onForceClose: () => this.handleForceClose()
-        });
+        // Setup exam
+        this.state.currentView = 'exam';
+        this.state.isExamActive = true;
 
-        // ReportingService callbacks
-        this.reportingService.setCallback('serverWarning', (data) => {
-            this.handleServerWarning(data);
-        });
+        // Initialize exam timer
+        const examState = this.examService.getState();
+        this.components.examTimer.start(examState.timeLeft);
 
-        this.reportingService.setCallback('serverAction', (data) => {
-            this.handleServerAction(data);
-        });
+        // Setup code editor
+        this.components.codeEditor.enable();
+        if (lastCode) {
+            this.components.codeEditor.setCode(lastCode);
+        }
 
-        console.log('🔗 Module callbacks configured');
+        // Update student info in header
+        this.updateStudentInfo(examState);
+
+        console.log('📚 Switched to exam view');
     }
 
     /**
-     * Activate anti-cheat protection
+     * Update student info in exam header
      */
-    async activate() {
-        if (this.isActive) {
-            console.log('⚠️ AntiCheat already active');
-            return;
-        }
+    updateStudentInfo(examState) {
+        const nameEl = document.getElementById('student-name-display');
+        const classEl = document.getElementById('student-class-display');
+        const sessionEl = document.getElementById('session-id-display');
 
-        console.log('🚫 Activating anti-cheat protection...');
-
-        // Ensure modules are initialized
-        if (!this.violationTracker) {
-            const success = await this.initialize();
-            if (!success) {
-                console.error('❌ Cannot activate - initialization failed');
-                return;
-            }
-        }
-
-        // Activate detection engine
-        this.detectionEngine.activate();
-        this.isActive = true;
-
-        // Report activation
-        await this.reportingService.reportExamEvent('anticheat_activated', {
-            config: this.config,
-            fullscreenMode: this.fullscreenMode
-        });
-
-        console.log('✅ Anti-cheat protection activated');
+        if (nameEl) nameEl.textContent = examState.studentName;
+        if (classEl) classEl.textContent = examState.studentClass;
+        if (sessionEl) sessionEl.textContent = examState.sessionId;
     }
 
     /**
-     * Deactivate anti-cheat protection
+     * Handle code execution - NOW USING ConsoleOutput component
      */
-    async deactivate() {
-        if (!this.isActive) return;
+    handleRunCode(data) {
+        const { code } = data;
 
-        console.log('🔓 Deactivating anti-cheat protection...');
+        // Save code before running
+        this.examService.saveCode(code);
 
-        // Deactivate detection
-        if (this.detectionEngine) {
-            this.detectionEngine.deactivate();
-        }
+        // Execute using ConsoleOutput component
+        this.components.consoleOutput.execute(code);
 
-        // Hide any visible warnings
-        if (this.uiManager) {
-            this.uiManager.hideWarning();
-        }
-
-        this.isActive = false;
-
-        // Report deactivation
-        if (this.reportingService) {
-            await this.reportingService.reportExamEvent('anticheat_deactivated');
-        }
-
-        console.log('🔓 Anti-cheat protection deactivated');
+        console.log('▶️ Code executed');
     }
 
     /**
-     * Handle violation added
+     * Handle finish exam request
      */
-    async handleViolationAdded(data) {
-        const { type, violations, thresholdResult } = data;
+    handleFinishExam() {
+        if (!this.state.isExamActive) return;
 
-        if (this.config.logToConsole) {
-            console.log(`🚨 Violation: ${type}`, data);
-        }
-
-        // Report to server
-        await this.reportingService.reportViolation(
-            type,
-            data,
-            this.violationTracker.getViolationSeverity(type)
-        );
-
-        // Handle based on threshold result
-        if (thresholdResult.exceeded) {
-            this.handleThresholdExceeded({ type, result: thresholdResult });
-        } else {
-            // Show appropriate UI response
-            this.showViolationResponse(type, data);
-        }
-    }
-
-    /**
-     * Handle threshold exceeded
-     */
-    async handleThresholdExceeded(data) {
-        const { type, result } = data;
-
-        console.warn(`🚫 Threshold exceeded: ${type} - ${result.action}`);
-
-        // Report critical violation
-        await this.reportingService.reportCriticalViolation(type, {
-            action: result.action,
-            message: result.message,
-            violations: this.violationTracker.getStatistics().violations
-        });
-
-        // Execute action
-        switch (result.action) {
-            case 'terminate':
-                this.terminateExam(type, result);
-                break;
-            case 'critical_warning':
-                this.showCriticalWarning(type, result);
-                break;
-            default:
-                this.showViolationResponse(type, data);
-        }
-    }
-
-    /**
-     * Handle warning level changed
-     */
-    handleWarningLevelChanged(data) {
-        const { newLevel, violations } = data;
-
-        console.log(`⚠️ Warning level changed: ${newLevel}`, data);
-
-        // Could update UI indicators, change behavior, etc.
-        if (newLevel >= 2) {
-            this.uiManager.showNotification(
-                `Предупреждение ниво ${newLevel} - внимавайте с действията си!`,
-                'warning'
-            );
-        }
-    }
-
-    /**
-     * Show violation response in UI
-     */
-    showViolationResponse(type, data) {
-        const count = data.count || 1;
-        const maxAttempts = this.getMaxAttempts(type);
-
-        // Only show warning if cooldown allows
-        if (this.violationTracker.shouldShowWarning()) {
-            this.uiManager.showWarning(type, {
-                count: count,
-                maxAttempts: maxAttempts,
-                ...data
-            });
-        } else {
-            // Show minor notification
-            this.uiManager.showNotification(
-                this.getViolationMessage(type, count),
-                'warning'
-            );
-        }
-    }
-
-    /**
-     * Show critical warning
-     */
-    showCriticalWarning(type, result) {
-        this.uiManager.showWarning(type, {
-            critical: true,
-            message: result.message,
-            ...result
-        });
-    }
-
-    /**
-     * Terminate exam due to violations
-     */
-    async terminateExam(violationType, result) {
-        console.error(`🚫 TERMINATING EXAM: ${violationType}`);
-
-        // Use ExamExitManager if available
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION,
-                {
-                    violation: violationType,
-                    reason: result.message,
-                    automatic: true
-                }
-            );
-        } else {
-            // Fallback termination
-            this.uiManager.showWarning('totalViolations', {
-                immediate: true,
-                violationType: violationType,
-                message: result.message
-            });
-        }
-    }
-
-    /**
-     * Handle continue exam button
-     */
-    handleContinueExam() {
-        console.log('✅ Student chose to continue exam');
-
-        // Focus back on exam
-        setTimeout(() => {
-            const codeEditor = document.getElementById('code-editor');
-            if (codeEditor) {
-                codeEditor.focus();
-            }
-        }, 100);
-    }
-
-    /**
-     * Handle exit exam button
-     */
-    handleExitExam() {
-        console.log('🚪 Student chose to exit exam');
-
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.STUDENT_FINISH,
+        if (confirm('Are you sure you want to finish the exam?')) {
+            this.examService.completeExam();
+            ExamExitManager.handleExamExit(
+                ExamExitManager.getExitReasons().STUDENT_FINISH,
                 { voluntary: true }
             );
         }
     }
 
     /**
-     * Handle force close
+     * Handle exam time expiration
      */
-    handleForceClose() {
-        console.log('🔴 Force close requested');
+    handleExamTimeExpired() {
+        this.state.isExamActive = false;
+        this.components.codeEditor.disable();
 
-        if (window.ExamExitManager) {
-            window.ExamExitManager.handleExamExit(
-                window.ExamExitManager.exitReasons.ANTI_CHEAT_VIOLATION,
-                { forced: true }
+        ExamExitManager.handleExamExit(
+            ExamExitManager.getExitReasons().TIME_EXPIRED,
+            { message: 'Exam time has expired!' }
+        );
+    }
+
+    /**
+     * Handle time warning
+     */
+    handleTimeWarning(data) {
+        const { minutesLeft, message } = data;
+
+        // Show notification
+        if (this.antiCheatCore) {
+            this.antiCheatCore.uiManager.showNotification(message, 'warning');
+        }
+
+        console.log(`⏰ Time warning: ${minutesLeft} minutes left`);
+    }
+
+    /**
+     * Handle fullscreen change
+     */
+    handleFullscreenChange() {
+        const isFullscreen = !!document.fullscreenElement;
+
+        if (this.state.isExamActive && !isFullscreen) {
+            console.warn('⚠️ Exited fullscreen during exam!');
+
+            // Notify anti-cheat
+            if (this.antiCheatCore) {
+                this.antiCheatCore.handleViolation('fullscreenExit');
+            }
+        }
+
+        this.state.isFullscreenActive = isFullscreen;
+    }
+
+    /**
+     * Handle fullscreen error
+     */
+    handleFullscreenError(error) {
+        console.error('Fullscreen error:', error);
+
+        // Show error to user
+        if (this.antiCheatCore) {
+            this.antiCheatCore.uiManager.showNotification(
+                'Fullscreen mode is required for the exam!',
+                'error'
             );
         }
     }
 
     /**
-     * Handle server warning
+     * Handle exam expired
      */
-    handleServerWarning(data) {
-        console.log('📡 Server warning:', data.message);
-        this.uiManager.showNotification(data.message, 'warning', 5000);
+    handleExamExpired(data) {
+        this.state.isExamActive = false;
+        ExamExitManager.handleExamExit(
+            ExamExitManager.getExitReasons().TIME_EXPIRED,
+            data
+        );
     }
 
     /**
-     * Handle server action
+     * Handle force disconnect
      */
-    handleServerAction(data) {
-        console.log('📡 Server action:', data);
+    handleForceDisconnect(data) {
+        this.state.isExamActive = false;
+        ExamExitManager.handleExamExit(
+            ExamExitManager.getExitReasons().TEACHER_FORCE,
+            data
+        );
+    }
 
-        if (data.action === 'force_disconnect') {
-            this.terminateExam('server_action', data);
+    /**
+     * Update last saved indicator
+     */
+    updateLastSavedIndicator() {
+        const indicator = document.getElementById('last-saved-display');
+        if (indicator) {
+            const now = new Date().toLocaleTimeString();
+            indicator.textContent = `Last saved: ${now}`;
         }
     }
 
     /**
-     * Set fullscreen mode
-     */
-    setFullscreenMode(enabled) {
-        this.fullscreenMode = enabled;
-        if (this.detectionEngine) {
-            this.detectionEngine.setFullscreenMode(enabled);
-        }
-        console.log(`🖥️ Fullscreen mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
-    }
-
-    /**
-     * Update configuration
-     */
-    updateConfig(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-
-        // Update module configs
-        if (this.violationTracker) {
-            this.violationTracker.updateConfig(newConfig);
-        }
-        if (this.detectionEngine) {
-            this.detectionEngine.updateConfig(newConfig);
-        }
-        if (this.uiManager) {
-            this.uiManager.updateConfig(newConfig);
-        }
-
-        console.log('⚙️ AntiCheat configuration updated');
-    }
-
-    /**
-     * Get system statistics
-     */
-    getStatistics() {
-        return {
-            isActive: this.isActive,
-            fullscreenMode: this.fullscreenMode,
-            sessionId: this.sessionId,
-            violations: this.violationTracker ? this.violationTracker.getStatistics() : null,
-            detection: this.detectionEngine ? this.detectionEngine.getStatistics() : null,
-            reporting: this.reportingService ? this.reportingService.getStatus() : null,
-            ui: this.uiManager ? this.uiManager.getState() : null
-        };
-    }
-
-    /**
-     * Helper methods
-     */
-    getMaxAttempts(type) {
-        const limits = {
-            windowsKey: 2,
-            focusLoss: 5,
-            fullscreenExit: 3
-        };
-        return limits[type] || 3;
-    }
-
-    getViolationMessage(type, count) {
-        const messages = {
-            windowsKey: `Windows клавиш засечен (${count}/2)`,
-            focusLoss: `Излизане от прозореца (${count}/5)`,
-            fullscreenExit: `Излизане от fullscreen (${count}/3)`,
-            clipboardAttempt: 'Опит за копиране/поставяне',
-            rightClick: 'Десен клик ограничен'
-        };
-        return messages[type] || `Подозрителна активност: ${type}`;
-    }
-
-    /**
-     * Cleanup
+     * Cleanup on destroy
      */
     destroy() {
-        this.deactivate();
+        // Cleanup components
+        Object.values(this.components).forEach(component => {
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        });
 
-        if (this.reportingService) {
-            this.reportingService.destroy();
+        // Exit fullscreen
+        if (document.exitFullscreen && this.state.isFullscreenActive) {
+            document.exitFullscreen();
         }
 
-        console.log('🧹 AntiCheatCore destroyed');
+        console.log('🧹 ExamWorkspace destroyed');
     }
 }
-
-// Global export for backward compatibility
-window.AntiCheatCore = AntiCheatCore;
