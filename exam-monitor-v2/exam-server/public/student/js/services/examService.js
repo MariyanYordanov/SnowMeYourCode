@@ -290,3 +290,5 @@ export class ExamService {
         console.log('🧹 Exam Service destroyed');
     }
 }
+
+export const examService = new ExamService();
