@@ -7,6 +7,7 @@ import { ExamTimer } from './ExamTimer.js';
 import { CodeEditor } from './CodeEditor.js';
 import { ConsoleOutput } from './ConsoleOutput.js';
 import { ExamExitManager } from '/student/js/components/ExamExitManager.js';
+import { EXIT_REASONS } from '/shared/js/constants.js';
 
 export class ExamWorkspace {
     constructor(websocketService, examService, antiCheatCore) {
@@ -25,7 +26,7 @@ export class ExamWorkspace {
             loginForm: null,
             examTimer: null,
             codeEditor: null,
-            consoleOutput: null  // Now using the new component
+            consoleOutput: null
         };
 
         // Cache DOM containers
@@ -189,8 +190,9 @@ export class ExamWorkspace {
     async handleLoginSuccess(data) {
         const { studentName, studentClass } = data;
 
-        // Initialize exam session
-        await this.examService.startSession(studentName, studentClass);
+        // Store student info
+        this.state.studentName = studentName;
+        this.state.studentClass = studentClass;
 
         // Enter fullscreen
         await this.enterFullscreen();
@@ -205,10 +207,12 @@ export class ExamWorkspace {
     handleNewSession(data) {
         const { sessionId, timeLeft } = data;
 
-        this.examService.setSessionData({
+        // Use startExam instead of setSessionData
+        this.examService.startExam({
             sessionId,
             timeLeft,
-            isActive: true
+            studentName: this.state.studentName,
+            studentClass: this.state.studentClass
         });
 
         console.log(`📝 New session created: ${sessionId}`);
@@ -222,15 +226,17 @@ export class ExamWorkspace {
 
         console.log(`♻️ Session restored: ${sessionId}`);
 
-        // Restore exam state
-        this.examService.setSessionData({
+        // Use updateSession instead of setSessionData
+        this.examService.updateSession({
             sessionId,
             timeLeft,
-            isActive: true
+            lastCode
         });
 
         // Enter fullscreen
-        this.enterFullscreen();
+        this.enterFullscreen().catch(err => {
+            console.warn('⚠️ Could not enter fullscreen:', err);
+        });
 
         // Switch to exam view with restored code
         this.switchToExamView(lastCode);
@@ -253,10 +259,15 @@ export class ExamWorkspace {
 
             this.state.isFullscreenActive = true;
 
-            // Activate anti-cheat
+            // Activate anti-cheat with error handling
             if (this.antiCheatCore) {
-                await this.antiCheatCore.activate();
-                this.antiCheatCore.setFullscreenMode(true);
+                try {
+                    await this.antiCheatCore.activate();
+                    this.antiCheatCore.setFullscreenMode(true);
+                } catch (antiCheatError) {
+                    console.error('⚠️ Anti-cheat activation error:', antiCheatError);
+                    // Continue without anti-cheat rather than failing completely
+                }
             }
 
             console.log('🔒 Entered fullscreen mode');
@@ -308,7 +319,7 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle code execution - NOW USING ConsoleOutput component
+     * Handle code execution
      */
     handleRunCode(data) {
         const { code } = data;
@@ -323,15 +334,26 @@ export class ExamWorkspace {
     }
 
     /**
+     * Update last saved indicator
+     */
+    updateLastSavedIndicator() {
+        const indicator = document.getElementById('last-saved-indicator');
+        if (indicator) {
+            const now = new Date();
+            indicator.textContent = `Last saved: ${now.toLocaleTimeString()}`;
+        }
+    }
+
+    /**
      * Handle finish exam request
      */
     handleFinishExam() {
         if (!this.state.isExamActive) return;
 
-        if (confirm('Are you sure you want to finish the exam?')) {
+        if (confirm('Сигурни ли сте, че искате да приключите изпита?')) {
             this.examService.completeExam();
             ExamExitManager.handleExamExit(
-                ExamExitManager.getExitReasons().STUDENT_FINISH,
+                EXIT_REASONS.STUDENT_FINISH,
                 { voluntary: true }
             );
         }
@@ -345,8 +367,8 @@ export class ExamWorkspace {
         this.components.codeEditor.disable();
 
         ExamExitManager.handleExamExit(
-            ExamExitManager.getExitReasons().TIME_EXPIRED,
-            { message: 'Exam time has expired!' }
+            EXIT_REASONS.TIME_EXPIRED,
+            { message: 'Времето за изпита изтече!' }
         );
     }
 
@@ -357,7 +379,7 @@ export class ExamWorkspace {
         const { minutesLeft, message } = data;
 
         // Show notification
-        if (this.antiCheatCore) {
+        if (this.antiCheatCore && this.antiCheatCore.uiManager) {
             this.antiCheatCore.uiManager.showNotification(message, 'warning');
         }
 
@@ -368,33 +390,26 @@ export class ExamWorkspace {
      * Handle fullscreen change
      */
     handleFullscreenChange() {
-        const isFullscreen = !!document.fullscreenElement;
-
-        if (this.state.isExamActive && !isFullscreen) {
-            console.warn('⚠️ Exited fullscreen during exam!');
-
-            // Notify anti-cheat
-            if (this.antiCheatCore) {
-                this.antiCheatCore.handleViolation('fullscreenExit');
-            }
-        }
+        const isFullscreen = !!(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement);
 
         this.state.isFullscreenActive = isFullscreen;
+
+        if (!isFullscreen && this.state.isExamActive) {
+            console.warn('⚠️ Exited fullscreen during exam!');
+            if (this.antiCheatCore) {
+                this.antiCheatCore.handleFullscreenExit();
+            }
+        }
     }
 
     /**
      * Handle fullscreen error
      */
     handleFullscreenError(error) {
-        console.error('Fullscreen error:', error);
-
-        // Show error to user
-        if (this.antiCheatCore) {
-            this.antiCheatCore.uiManager.showNotification(
-                'Fullscreen mode is required for the exam!',
-                'error'
-            );
-        }
+        console.error('❌ Fullscreen error:', error);
+        // Could show user-friendly error message
     }
 
     /**
@@ -402,9 +417,11 @@ export class ExamWorkspace {
      */
     handleExamExpired(data) {
         this.state.isExamActive = false;
+        this.components.codeEditor.disable();
+
         ExamExitManager.handleExamExit(
-            ExamExitManager.getExitReasons().TIME_EXPIRED,
-            data
+            EXIT_REASONS.TIME_EXPIRED,
+            { message: data.message || 'Времето за изпита изтече!' }
         );
     }
 
@@ -413,25 +430,18 @@ export class ExamWorkspace {
      */
     handleForceDisconnect(data) {
         this.state.isExamActive = false;
+
         ExamExitManager.handleExamExit(
-            ExamExitManager.getExitReasons().TEACHER_FORCE,
-            data
+            EXIT_REASONS.INSTRUCTOR_TERMINATED,
+            {
+                message: data.message || 'Изпитът беше прекратен от преподавателя',
+                reason: data.reason
+            }
         );
     }
 
     /**
-     * Update last saved indicator
-     */
-    updateLastSavedIndicator() {
-        const indicator = document.getElementById('last-saved-display');
-        if (indicator) {
-            const now = new Date().toLocaleTimeString();
-            indicator.textContent = `Last saved: ${now}`;
-        }
-    }
-
-    /**
-     * Cleanup on destroy
+     * Cleanup
      */
     destroy() {
         // Cleanup components
@@ -442,7 +452,7 @@ export class ExamWorkspace {
         });
 
         // Exit fullscreen
-        if (document.exitFullscreen && this.state.isFullscreenActive) {
+        if (document.exitFullscreen) {
             document.exitFullscreen();
         }
 

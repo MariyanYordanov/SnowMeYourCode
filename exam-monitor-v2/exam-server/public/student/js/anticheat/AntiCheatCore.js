@@ -58,9 +58,9 @@ export class AntiCheatCore {
             this.detectionEngine = new DetectionEngine(this.config);
 
             // Setup module connections
-            this.detectionEngine.on('violation', (data) => {
-                this.handleViolation(data.type, data.severity, data.details);
-            });
+            this.detectionEngine.callbacks.onViolation = (data) => this.handleViolation(data);
+            this.detectionEngine.callbacks.onDevToolsDetected = () =>
+                this.handleViolation({ type: 'devTools', severity: 'high' });
 
             this.detectionEngine.on('suspiciousActivity', (data) => {
                 this.reportingService.reportActivity(data);
