@@ -189,7 +189,17 @@ export class AntiCheatCore {
     showBlockingWarning(type, count, maxAttempts) {
         const messages = {
             windowsKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА WINDOWS КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
             escapeKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ESCAPE КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
+            altF4Key: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ALT+F4!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
+            altTabKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ALT+TAB!\n\nПревключването между приложения е забранено.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
+            topAreaClick: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕН ОПИТ ЗА ЗАТВАРЯНЕ НА ПРОЗОРЕЦА!\n\nКликването в горната част на екрана е забранено.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
+            topAreaRightClick: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕН ДЕСЕН КЛИК В ЗАБРАНЕНА ЗОНА!\n\nДесният клик в горната част на екрана е забранен.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+
             default: `⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!\n\nЗасечена е забранена активност.\n\nОпит ${count} от ${maxAttempts}.`
         };
 
@@ -270,7 +280,12 @@ export class AntiCheatCore {
         const mapping = {
             'windowsKey': 'ANTI_CHEAT_VIOLATION',
             'escapeKey': 'ANTI_CHEAT_VIOLATION',
-            'altF4': 'ANTI_CHEAT_VIOLATION',
+            'altF4Key': 'ANTI_CHEAT_VIOLATION',
+            'altTabKey': 'ANTI_CHEAT_VIOLATION',
+            'topAreaClick': 'ANTI_CHEAT_VIOLATION',
+            'topAreaRightClick': 'ANTI_CHEAT_VIOLATION',
+            'ctrlAltDelKey': 'ANTI_CHEAT_VIOLATION',
+            'taskManagerKey': 'ANTI_CHEAT_VIOLATION',
             'fullscreenExit': 'FULLSCREEN_VIOLATION',
             'default': 'STUDENT_FINISH'
         };
@@ -500,7 +515,14 @@ export class AntiCheatCore {
     getMaxAttempts(type) {
         const limits = {
             windowsKey: 3,
-            escapeKey: 3,        // НОВО: Escape key same as Windows key
+            escapeKey: 3,           // НОВО: Escape key same as Windows key
+            altF4Key: 3,            // НОВО: Alt+F4 same as Windows key
+            altTabKey: 3,           // НОВО: Alt+Tab same as Windows key
+            topAreaClick: 2,        // НОВО: Mouse clicks in top area - only 2 attempts
+            topAreaRightClick: 2,   // НОВО: Right clicks in top area - only 2 attempts
+            ctrlAltDelKey: 1,       // НОВО: Ctrl+Alt+Del - immediate termination
+            taskManagerKey: 1,      // НОВО: Task Manager - immediate termination
+            mouseDangerZone: 10,    // НОВО: Mouse in danger zone - many warnings
             focusLoss: 5,
             fullscreenExit: 3,
             clipboardAttempt: 3,
@@ -513,7 +535,14 @@ export class AntiCheatCore {
     getViolationMessage(type, count) {
         const messages = {
             windowsKey: `Windows клавиш засечен (${count}/3)`,
-            escapeKey: `Escape клавиш засечен (${count}/3)`,     // НОВО
+            escapeKey: `Escape клавиш засечен (${count}/3)`,         // ПОПРАВЕНО
+            altF4Key: `Alt+F4 засечен (${count}/3)`,                // НОВО
+            altTabKey: `Alt+Tab засечен (${count}/3)`,              // НОВО
+            topAreaClick: `Клик в забранена зона (${count}/2)`,     // НОВО
+            topAreaRightClick: `Десен клик в забранена зона (${count}/2)`, // НОВО
+            ctrlAltDelKey: `Ctrl+Alt+Del засечен (${count}/1)`,     // НОВО
+            taskManagerKey: `Task Manager клавиш засечен (${count}/1)`, // НОВО
+            mouseDangerZone: `Мишка в опасна зона (${count}/10)`,   // НОВО
             focusLoss: `Излизане от прозореца (${count}/5)`,
             fullscreenExit: `Излизане от fullscreen (${count}/3)`,
             clipboardAttempt: 'Опит за копиране/поставяне',

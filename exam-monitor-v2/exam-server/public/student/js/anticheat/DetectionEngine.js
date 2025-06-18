@@ -97,23 +97,29 @@ export class DetectionEngine {
     }
 
     /**
-     * Setup keyboard detection - ПОПРАВЕНО: Added Alt+F4 + Escape + Critical violations
+     * Setup keyboard detection
      */
+    /**
+ * Setup keyboard detection - ПОПРАВЕНО: Правилни типове за различни клавиши
+ */
     setupKeyboardDetection() {
         const keydownHandler = (e) => {
             if (!this.isActive) return;
 
-            // Critical violations (Windows key, Alt+F4, Escape)
-            if (this.isWindowsKeyEvent(e)) {
+            // ПОПРАВЕНО: Разграничаваме типовете на критичните клавиши
+            const criticalKeyType = this.getCriticalKeyType(e);
+            if (criticalKeyType) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // НОВО: Веднага извикваме критичен violation
-                this.handleCriticalDetection('windowsKey', {
+                // НОВО: Използваме правилния тип вместо винаги 'windowsKey'
+                this.handleCriticalDetection(criticalKeyType, {
                     key: e.key,
                     code: e.code,
                     metaKey: e.metaKey,
-                    altKey: e.altKey
+                    altKey: e.altKey,
+                    ctrlKey: e.ctrlKey,
+                    shiftKey: e.shiftKey
                 });
                 return false;
             }
@@ -147,6 +153,144 @@ export class DetectionEngine {
         );
 
         console.log('⌨️ Keyboard detection active');
+    }
+
+    /**
+     * НОВО: Get critical key type - разграничава различните критични клавиши
+     */
+    getCriticalKeyType(e) {
+        // Direct Windows key detection
+        if (['MetaLeft', 'MetaRight', 'OSLeft', 'OSRight'].includes(e.code) ||
+            ['Meta', 'OS'].includes(e.key) ||
+            e.metaKey) {
+            return 'windowsKey';
+        }
+
+        // НОВО: Escape key (отделен тип)
+        if (e.code === 'Escape' || e.key === 'Escape') {
+            return 'escapeKey';
+        }
+
+        // НОВО: Alt+F4 (отделен тип)
+        if (e.altKey && e.code === 'F4') {
+            return 'altF4Key';
+        }
+
+        // Alt+Tab (system switching)
+        if (e.altKey && e.code === 'Tab') {
+            return 'altTabKey';
+        }
+
+        // Ctrl+Alt+Del
+        if (e.ctrlKey && e.altKey && e.code === 'Delete') {
+            return 'ctrlAltDelKey';
+        }
+
+        // Ctrl+Shift+Esc (Task Manager)
+        if (e.ctrlKey && e.shiftKey && e.code === 'Escape') {
+            return 'taskManagerKey';
+        }
+
+        return null; // Not a critical key
+    }
+
+
+    /**
+     * НОВО: Setup mouse detection за блокиране на X бутона
+     */
+    setupMouseDetection() {
+        // Block mouse movements near top of screen (where X button is)
+        const mouseMoveHandler = (e) => {
+            if (!this.isActive) return;
+
+            // Check if mouse is in danger zone (top 50px of screen)
+            if (e.clientY <= 50) {
+                this.handleDetection('mouseDangerZone', {
+                    x: e.clientX,
+                    y: e.clientY,
+                    timestamp: Date.now()
+                });
+            }
+        };
+
+        // Block clicks in top area completely
+        const clickHandler = (e) => {
+            if (!this.isActive) return;
+
+            // Block any clicks in top 100px of screen
+            if (e.clientY <= 100) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                this.handleCriticalDetection('topAreaClick', {
+                    x: e.clientX,
+                    y: e.clientY,
+                    button: e.button,
+                    timestamp: Date.now()
+                });
+                return false;
+            }
+        };
+
+        // Also prevent context menu in top area
+        const contextMenuHandler = (e) => {
+            if (!this.isActive) return;
+
+            if (e.clientY <= 100) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                this.handleCriticalDetection('topAreaRightClick', {
+                    x: e.clientX,
+                    y: e.clientY,
+                    timestamp: Date.now()
+                });
+                return false;
+            }
+        };
+
+        // Add all mouse event listeners
+        this.addEventListenerWithTracking(document, 'mousemove', mouseMoveHandler, { passive: true });
+        this.addEventListenerWithTracking(document, 'click', clickHandler, { capture: true, passive: false });
+        this.addEventListenerWithTracking(document, 'mousedown', clickHandler, { capture: true, passive: false });
+        this.addEventListenerWithTracking(document, 'contextmenu', contextMenuHandler, { capture: true, passive: false });
+
+        console.log('🖱️ Mouse protection active');
+    }
+
+    /**
+     * ПОПРАВЕНО: Activate detection systems - добавяме mouse detection
+     */
+    activate() {
+        if (this.isActive) return;
+
+        console.log('🚫 Activating detection systems...');
+        this.isActive = true;
+
+        // Setup detection systems with delay for stability
+        setTimeout(() => {
+            if (this.config.enableKeyboardDetection) {
+                this.setupKeyboardDetection();
+            }
+            if (this.config.enableFocusDetection) {
+                this.setupFocusDetection();
+            }
+            if (this.config.enableFullscreenDetection) {
+                this.setupFullscreenDetection();
+            }
+            if (this.config.enableClipboardDetection) {
+                this.setupClipboardDetection();
+            }
+            if (this.config.enableContextMenuDetection) {
+                this.setupContextMenuDetection();
+            }
+
+            // НОВО: Добавяме mouse detection
+            this.setupMouseDetection();
+
+            console.log('✅ Detection systems activated');
+        }, 1000);
     }
 
     /**
