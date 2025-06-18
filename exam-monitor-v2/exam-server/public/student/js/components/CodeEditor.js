@@ -159,6 +159,13 @@ export class CodeEditor {
     }
 
     /**
+ * Execute code (alias for runCode for backward compatibility)
+ */
+    executeCode() {
+        return this.runCode();
+    }
+    
+    /**
      * Format code with basic indentation
      */
     formatCode() {
