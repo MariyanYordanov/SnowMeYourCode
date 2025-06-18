@@ -129,6 +129,20 @@ export class ReportingService {
         return this.sendReport('exam-event', report);
     }
 
+    async reportActivity(data = {}) {
+        const report = {
+            type: 'activity',
+            data: data,
+            sessionId: this.sessionId,
+            timestamp: Date.now(),
+            userAgent: navigator.userAgent
+        };
+
+        console.log(`📝 Reporting activity:`, data);
+
+        return this.sendReport('student-activity', report);
+    }
+
     /**
      * Send report to server with retry logic
      */
