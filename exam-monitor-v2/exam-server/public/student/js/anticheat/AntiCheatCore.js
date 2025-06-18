@@ -9,6 +9,8 @@ export class AntiCheatCore {
         this.isActive = false;
         this.fullscreenMode = false;
         this.devToolsWarned = false;
+        this.devToolsDetected = false; // За предотвратяване на множествени devTools детекции
+        this.fullscreenViolationDetected = false; // За предотвратяване на множествени fullscreen детекции
 
         // Will be initialized in setup
         this.violationTracker = null;
@@ -70,9 +72,6 @@ export class AntiCheatCore {
                 this.handleTermination('student_choice', 'Student chose to exit');
             };
 
-            // ПРЕМАХНАТО: DetectionEngine не използва callbacks или events
-            // Той директно използва violationTracker чрез handleDetection()
-
             console.log('✅ Anti-cheat modules initialized successfully');
             return true;
 
@@ -99,7 +98,7 @@ export class AntiCheatCore {
             }
         }
 
-        // Activate detection engine - ПОПРАВЕНО: правилен метод
+        // Activate detection engine
         this.detectionEngine.activate();
 
         // Start monitoring
@@ -120,40 +119,40 @@ export class AntiCheatCore {
 
     /**
      * Perform system check for violations
+     * КРИТИЧНО ПОПРАВЕНО: Добавена логика за предотвратяване на множествени violations
      */
     performSystemCheck() {
         if (!this.isActive) return;
 
-        // Check for DevTools
-        let devtools = {
-            open: false,
-            orientation: null
-        };
-
+        // Check for DevTools - ПОПРАВЕНО: Без nested setInterval!
         const threshold = 160;
+        const currentDevToolsOpen = window.outerHeight - window.innerHeight > threshold ||
+            window.outerWidth - window.innerWidth > threshold;
 
-        setInterval(() => {
-            if (window.outerHeight - window.innerHeight > threshold ||
-                window.outerWidth - window.innerWidth > threshold) {
-                if (!devtools.open) {
-                    devtools.open = true;
-                    devtools.orientation = window.outerHeight - window.innerHeight > threshold ? 'vertical' : 'horizontal';
-                    this.handleViolation('devTools', 'medium', {
-                        orientation: devtools.orientation,
-                        timestamp: Date.now()
-                    });
-                }
-            } else {
-                devtools.open = false;
-                devtools.orientation = null;
-            }
-        }, 500);
+        // Само ако преди не бяха отворени, а сега са
+        if (currentDevToolsOpen && !this.devToolsDetected) {
+            this.devToolsDetected = true;
+            this.handleViolation('devTools', 'medium', {
+                orientation: window.outerHeight - window.innerHeight > threshold ? 'vertical' : 'horizontal',
+                timestamp: Date.now()
+            });
+        } else if (!currentDevToolsOpen) {
+            this.devToolsDetected = false;
+        }
 
-        // Check fullscreen status
-        if (this.fullscreenMode && !this.isDocumentInFullscreen()) {
+        // Check fullscreen status - ПОПРАВЕНО: Добавена същата логика
+        const currentlyInFullscreen = this.isDocumentInFullscreen();
+        const shouldBeInFullscreen = this.fullscreenMode;
+
+        // Само ако трябва да е fullscreen, но не е, и не сме вече съобщили за това
+        if (shouldBeInFullscreen && !currentlyInFullscreen && !this.fullscreenViolationDetected) {
+            this.fullscreenViolationDetected = true;
             this.handleViolation('fullscreenExit', 'high', {
                 timestamp: Date.now()
             });
+        } else if (currentlyInFullscreen || !shouldBeInFullscreen) {
+            // Ако сме върнали fullscreen или не трябва да бъдем в fullscreen
+            this.fullscreenViolationDetected = false;
         }
     }
 
@@ -262,7 +261,7 @@ export class AntiCheatCore {
         // Deactivate system
         this.deactivate();
 
-        // Trigger exam exit - ПОПРАВЕНО: използваме import
+        // Trigger exam exit
         import('/student/js/components/ExamExitManager.js').then(({ examExitManager }) => {
             examExitManager.handleExamExit('anti_cheat_violation', {
                 reason,
@@ -270,7 +269,6 @@ export class AntiCheatCore {
             });
         }).catch(error => {
             console.warn('⚠️ ExamExitManager not available:', error);
-            // Continue without exit manager
         });
     }
 
@@ -280,10 +278,8 @@ export class AntiCheatCore {
     handleFullscreenExit() {
         if (!this.isActive) return;
 
-        this.handleViolation({
-            type: 'fullscreenExit',
-            severity: 'high',
-            details: { message: 'Exited fullscreen during exam' }
+        this.handleViolation('fullscreenExit', 'high', {
+            message: 'Exited fullscreen during exam'
         });
     }
 
@@ -304,7 +300,7 @@ export class AntiCheatCore {
             this.heartbeatInterval = null;
         }
 
-        // Stop detection - ПОПРАВЕНО: правилен метод
+        // Stop detection
         if (this.detectionEngine) {
             this.detectionEngine.deactivate();
         }
