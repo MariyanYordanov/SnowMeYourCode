@@ -4,6 +4,75 @@
     box-sizing: border-box;
 }
 
+html:fullscreen {
+    overflow: hidden !important;
+}
+
+body:fullscreen,
+html:fullscreen body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+/* Скриваме browser UI в fullscreen */
+:fullscreen {
+    /* Премахваме всички browser контроли */
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+/* За WebKit browsers (Chrome, Safari) */
+::-webkit-fullscreen-controls {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* За Firefox */
+:fullscreen::-moz-full-screen-ancestor {
+    display: none !important;
+}
+
+/* КРИТИЧНО: Блокираме top hover area */
+body:fullscreen::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    z-index: 999999;
+    pointer-events: none;
+    background: transparent;
+    display: block;
+}
+
+
+.fullscreen-protection-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 100px !important;
+    z-index: 999999 !important;
+    pointer-events: all !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+body:fullscreen .fullscreen-protection-overlay {
+    display: block !important;
+}
+
+/* Премахваме всички възможни browser hints */
+*:fullscreen {
+    cursor: default !important;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
@@ -63,4 +132,11 @@ body {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+@media screen and (max-width: 768px) {
+    :fullscreen {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+    }
 }

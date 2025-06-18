@@ -302,19 +302,27 @@ export class ExamWorkspace {
     }
 
     /**
-     * Enter fullscreen mode
+     * Enter fullscreen mode - ПОПРАВЕНО: Enhanced protection
      */
     async enterFullscreen() {
         try {
             const element = document.documentElement;
 
+            // НОВО: Добавяме protection overlay преди fullscreen
+            this.createFullscreenProtection();
+
             if (element.requestFullscreen) {
-                await element.requestFullscreen();
+                await element.requestFullscreen({ navigationUI: "hide" });
             } else if (element.webkitRequestFullscreen) {
-                await element.webkitRequestFullscreen();
+                await element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
             } else if (element.msRequestFullscreen) {
                 await element.msRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                await element.mozRequestFullScreen();
             }
+
+            // НОВО: Допълнителна защита след fullscreen
+            this.enhanceFullscreenProtection();
 
             // Activate anti-cheat after fullscreen
             if (this.antiCheatCore) {
@@ -329,6 +337,151 @@ export class ExamWorkspace {
             console.error('❌ Failed to enter fullscreen:', error);
             throw error;
         }
+    }
+
+    /**
+     * НОВО: Create fullscreen protection overlay
+     */
+    createFullscreenProtection() {
+        // Премахваме стар overlay ако съществува
+        const existingOverlay = document.getElementById('fullscreen-protection');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
+        // Създаваме нов protection overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'fullscreen-protection';
+        overlay.className = 'fullscreen-protection-overlay';
+
+        // Блокираме всички mouse events в top area
+        overlay.addEventListener('mousemove', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }, { capture: true, passive: false });
+
+        overlay.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // Trigger violation
+            if (this.antiCheatCore && this.antiCheatCore.detectionEngine) {
+                this.antiCheatCore.detectionEngine.handleCriticalDetection('topAreaClick', {
+                    x: e.clientX,
+                    y: e.clientY,
+                    blocked: true,
+                    timestamp: Date.now()
+                });
+            }
+            return false;
+        }, { capture: true, passive: false });
+
+        overlay.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }, { capture: true, passive: false });
+
+        document.body.appendChild(overlay);
+        console.log('🛡️ Fullscreen protection overlay created');
+    }
+
+    /**
+     * НОВО: Enhanced fullscreen protection
+     */
+    enhanceFullscreenProtection() {
+        // Скриваме browser cursor hints
+        document.body.style.cursor = 'default';
+
+        // Блокираме context menu глобално
+        document.addEventListener('contextmenu', this.blockContextMenu, { capture: true, passive: false });
+
+        // Блокираме drag операции
+        document.addEventListener('dragstart', this.blockDrag, { capture: true, passive: false });
+        document.addEventListener('drop', this.blockDrag, { capture: true, passive: false });
+
+        // Блокираме selection
+        document.addEventListener('selectstart', this.blockSelection, { capture: true, passive: false });
+
+        // НОВО: Скриваме всички потенциални browser UI елементи
+        this.hideBrowserUI();
+
+        console.log('🔒 Enhanced fullscreen protection activated');
+    }
+
+    /**
+     * НОВО: Hide browser UI elements
+     */
+    hideBrowserUI() {
+        // Добавяме CSS за скриване на browser controls
+        const style = document.createElement('style');
+        style.id = 'fullscreen-protection-styles';
+        style.textContent = `
+            /* КРИТИЧНО: Скриваме browser fullscreen controls */
+            body:fullscreen {
+                -webkit-app-region: no-drag !important;
+            }
+            
+            /* Скриваме hover effects в top area */
+            body:fullscreen *:hover {
+                cursor: default !important;
+            }
+            
+            /* Блокираме pointer events в top 100px */
+            body:fullscreen .exam-container::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 100px;
+                z-index: 999998;
+                pointer-events: all;
+                background: transparent;
+            }
+        `;
+
+        // Премахваме стар style ако съществува
+        const existingStyle = document.getElementById('fullscreen-protection-styles');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+
+        document.head.appendChild(style);
+    }
+
+    /**
+     * НОВО: Block context menu
+     */
+    blockContextMenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+
+    /**
+     * НОВО: Block drag operations
+     */
+    blockDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+
+    /**
+     * НОВО: Block text selection
+     */
+    blockSelection = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
     }
 
     /**
@@ -404,7 +557,7 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle fullscreen change
+     * Handle fullscreen change - ПОПРАВЕНО: Enhanced detection
      */
     handleFullscreenChange() {
         const isFullscreen = !!(document.fullscreenElement ||
@@ -415,10 +568,44 @@ export class ExamWorkspace {
 
         if (!isFullscreen && this.state.isExamActive) {
             console.warn('⚠️ Exited fullscreen during exam!');
+
+            // Почистваме protection
+            this.cleanupFullscreenProtection();
+
             if (this.antiCheatCore) {
                 this.antiCheatCore.handleFullscreenExit();
             }
+        } else if (isFullscreen) {
+            // Усилваме защитата когато влизаме в fullscreen
+            setTimeout(() => {
+                this.enhanceFullscreenProtection();
+            }, 500);
         }
+    }
+
+    /**
+     * НОВО: Cleanup fullscreen protection
+     */
+    cleanupFullscreenProtection() {
+        // Премахваме overlay
+        const overlay = document.getElementById('fullscreen-protection');
+        if (overlay) {
+            overlay.remove();
+        }
+
+        // Премахваме styles
+        const style = document.getElementById('fullscreen-protection-styles');
+        if (style) {
+            style.remove();
+        }
+
+        // Премахваме event listeners
+        document.removeEventListener('contextmenu', this.blockContextMenu, { capture: true });
+        document.removeEventListener('dragstart', this.blockDrag, { capture: true });
+        document.removeEventListener('drop', this.blockDrag, { capture: true });
+        document.removeEventListener('selectstart', this.blockSelection, { capture: true });
+
+        console.log('🧹 Fullscreen protection cleaned up');
     }
 
     /**
@@ -463,6 +650,9 @@ export class ExamWorkspace {
      * Cleanup
      */
     destroy() {
+        // Cleanup fullscreen protection
+        this.cleanupFullscreenProtection();
+
         // Cleanup components
         Object.values(this.components).forEach(component => {
             if (component && typeof component.destroy === 'function') {
