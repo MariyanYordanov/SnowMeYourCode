@@ -129,6 +129,10 @@ export class ReportingService {
         return this.sendReport('exam-event', report);
     }
 
+    /**
+     * Report general activity (non-violation events)
+     * Used for tracking student actions like continuing exam, dismissing warnings, etc.
+     */
     async reportActivity(data = {}) {
         const report = {
             type: 'activity',
@@ -141,6 +145,23 @@ export class ReportingService {
         console.log(`📝 Reporting activity:`, data);
 
         return this.sendReport('student-activity', report);
+    }
+
+    /**
+     * Report exam termination
+     */
+    async reportTermination(data = {}) {
+        const report = {
+            type: 'termination',
+            data: data,
+            sessionId: this.sessionId,
+            timestamp: Date.now(),
+            final: true
+        };
+
+        console.error(`🛑 Reporting termination:`, data);
+
+        return this.sendReport('exam-termination', report);
     }
 
     /**

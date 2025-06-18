@@ -110,55 +110,62 @@ export class AntiCheatCore {
     }
 
     /**
-     * Start monitoring intervals
+     * Start monitoring for violations
      */
     startMonitoring() {
-        // Periodic system checks
         this.monitoringInterval = setInterval(() => {
             this.performSystemCheck();
-        }, 5000); // Every 5 seconds
-
-        // Heartbeat to server
-        this.heartbeatInterval = setInterval(() => {
-            this.reportingService.sendHeartbeat();
-        }, 30000); // Every 30 seconds
+        }, 1000); // Check every second
     }
 
     /**
-     * Perform system integrity check
+     * Perform system check for violations
      */
     performSystemCheck() {
-        // Check if still in fullscreen
-        if (this.fullscreenMode && !document.fullscreenElement) {
-            this.handleViolation({
-                type: 'fullscreenExit',
-                severity: 'high',
-                details: { message: 'Exited fullscreen mode' }
-            });
-        }
+        if (!this.isActive) return;
 
-        // Check for developer tools (basic check)
-        const devToolsOpen = window.outerHeight - window.innerHeight > 200 ||
-            window.outerWidth - window.innerWidth > 200;
+        // Check for DevTools
+        let devtools = {
+            open: false,
+            orientation: null
+        };
 
-        if (devToolsOpen && !this.devToolsWarned) {
-            this.devToolsWarned = true;
-            this.handleViolation({
-                type: 'devTools',
-                severity: 'medium',
-                details: { message: 'Developer tools detected' }
+        const threshold = 160;
+
+        setInterval(() => {
+            if (window.outerHeight - window.innerHeight > threshold ||
+                window.outerWidth - window.innerWidth > threshold) {
+                if (!devtools.open) {
+                    devtools.open = true;
+                    devtools.orientation = window.outerHeight - window.innerHeight > threshold ? 'vertical' : 'horizontal';
+                    this.handleViolation('devTools', 'medium', {
+                        orientation: devtools.orientation,
+                        timestamp: Date.now()
+                    });
+                }
+            } else {
+                devtools.open = false;
+                devtools.orientation = null;
+            }
+        }, 500);
+
+        // Check fullscreen status
+        if (this.fullscreenMode && !this.isDocumentInFullscreen()) {
+            this.handleViolation('fullscreenExit', 'high', {
+                timestamp: Date.now()
             });
         }
     }
 
     /**
-     * Handle violation from any source - ПОПРАВЕНО: един параметър
+     * Handle detected violation
      */
-    handleViolation(data) {
-        const { type, severity = 'medium', details = {} } = data;
+    handleViolation(type, severity = 'medium', details = {}) {
+        if (!this.isActive || !this.violationTracker) return;
+
         console.warn(`🚨 Violation detected: ${type} (${severity})`);
 
-        // Track violation
+        // Add violation to tracker
         const result = this.violationTracker.addViolation(type, severity, details);
 
         // Report to server
@@ -231,11 +238,17 @@ export class AntiCheatCore {
     handleTermination(reason, details) {
         console.error(`🛑 EXAM TERMINATED: ${reason}`);
 
+        // Check if method exists before calling
+        const violationData = this.violationTracker &&
+            typeof this.violationTracker.getViolationHistory === 'function'
+            ? this.violationTracker.getViolationHistory()
+            : { violations: {}, totalCount: 0 };
+
         // Report termination
         this.reportingService.reportTermination({
             reason,
             details,
-            violations: this.violationTracker.getViolationHistory(),
+            violations: violationData,
             timestamp: Date.now()
         });
 
@@ -243,7 +256,7 @@ export class AntiCheatCore {
         this.uiManager.showTerminationScreen({
             reason: reason,
             message: 'Изпитът беше прекратен поради нарушения на правилата.',
-            violations: this.violationTracker.getViolationHistory()
+            violations: violationData
         });
 
         // Deactivate system
@@ -255,6 +268,9 @@ export class AntiCheatCore {
                 reason,
                 details
             });
+        }).catch(error => {
+            console.warn('⚠️ ExamExitManager not available:', error);
+            // Continue without exit manager
         });
     }
 
@@ -295,7 +311,7 @@ export class AntiCheatCore {
 
         // Clear UI
         if (this.uiManager) {
-            this.uiManager.hideAll();
+            this.uiManager.hideWarning();
         }
 
         this.isActive = false;
@@ -313,6 +329,16 @@ export class AntiCheatCore {
         }
 
         console.log(`🖥️ Fullscreen mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    }
+
+    /**
+     * Check if document is in fullscreen
+     */
+    isDocumentInFullscreen() {
+        return !!(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
     }
 
     /**
@@ -360,7 +386,7 @@ export class AntiCheatCore {
             fullscreenExit: 3,
             clipboardAttempt: 3,
             rightClick: 5,
-            devTools: 2
+            devTools: 3
         };
         return limits[type] || 3;
     }

@@ -24,7 +24,8 @@ export class ViolationTracker {
             windowsKeyCount: 0,
             focusLossCount: 0,
             fullscreenExitCount: 0,
-            systemKeyAttempts: 0
+            systemKeyAttempts: 0,
+            devToolsCount: 0
         };
 
         // Progressive tracking
@@ -62,47 +63,51 @@ export class ViolationTracker {
             type,
             data,
             timestamp: Date.now(),
-            count: this.violations[`${type}Count`] || this.violations.totalCount
+            count: this.violations[`${type}Count`] || 1
         });
 
         if (this.state.recentViolations.length > 10) {
-            this.state.recentViolations = this.state.recentViolations.slice(0, 10);
-        }
-
-        // Calculate new warning level
-        const newWarningLevel = this.calculateWarningLevel();
-        if (newWarningLevel !== this.state.warningLevel) {
-            this.state.warningLevel = newWarningLevel;
-            this.notifyWarningLevelChanged(newWarningLevel);
+            this.state.recentViolations.pop();
         }
 
         // Check thresholds
         const thresholdResult = this.checkThresholds(type);
 
-        // Notify callbacks
-        this.notifyViolationAdded(type, data, thresholdResult);
+        // Update warning level
+        const oldLevel = this.state.warningLevel;
+        this.state.warningLevel = this.calculateWarningLevel();
 
-        return {
+        if (oldLevel !== this.state.warningLevel) {
+            this.notifyWarningLevelChanged(this.state.warningLevel);
+        }
+
+        // Create result object
+        const result = {
             type,
-            count: this.violations[`${type}Count`] || this.violations.totalCount,
+            count: this.violations[`${type}Count`] || 1,
             totalCount: this.violations.totalCount,
             warningLevel: this.state.warningLevel,
             thresholdExceeded: thresholdResult.exceeded,
-            action: thresholdResult.action
+            shouldTerminate: thresholdResult.action === 'terminate',
+            terminated: false
         };
+
+        // Notify callbacks
+        this.notifyViolationAdded(type, data, thresholdResult);
+
+        return result;
     }
 
     /**
-     * Check if violation thresholds are exceeded
+     * Check violation thresholds
      */
     checkThresholds(violationType) {
         const result = {
             exceeded: false,
-            action: 'log',
+            action: 'none',
             message: ''
         };
 
-        // Check specific violation limits
         switch (violationType) {
             case 'windowsKey':
                 if (this.violations.windowsKeyCount >= this.config.maxWindowsKeyAttempts) {
@@ -125,6 +130,14 @@ export class ViolationTracker {
                     result.exceeded = true;
                     result.action = 'critical_warning';
                     result.message = 'Fullscreen exit limit exceeded';
+                }
+                break;
+
+            case 'devTools':
+                if (this.violations.devToolsCount >= 3) {
+                    result.exceeded = true;
+                    result.action = 'critical_warning';
+                    result.message = 'Dev tools detection limit exceeded';
                 }
                 break;
         }
@@ -166,6 +179,7 @@ export class ViolationTracker {
             windowsKey: currentCount >= 2 ? 'critical' : 'high',
             focusLoss: currentCount >= 3 ? 'high' : 'medium',
             fullscreenExit: currentCount >= 2 ? 'high' : 'medium',
+            devTools: currentCount >= 2 ? 'high' : 'medium',
             systemKey: 'low',
             clipboard: 'low'
         };
@@ -202,6 +216,20 @@ export class ViolationTracker {
     }
 
     /**
+     * Get violation history for reporting
+     */
+    getViolationHistory() {
+        return {
+            violations: { ...this.violations },
+            recentViolations: [...this.state.recentViolations],
+            warningLevel: this.state.warningLevel,
+            totalCount: this.violations.totalCount,
+            lastViolationType: this.state.lastViolationType,
+            timestamp: Date.now()
+        };
+    }
+
+    /**
      * Reset specific violation type
      */
     resetViolationType(type) {
@@ -222,7 +250,8 @@ export class ViolationTracker {
             windowsKeyCount: 0,
             focusLossCount: 0,
             fullscreenExitCount: 0,
-            systemKeyAttempts: 0
+            systemKeyAttempts: 0,
+            devToolsCount: 0
         };
 
         this.state = {

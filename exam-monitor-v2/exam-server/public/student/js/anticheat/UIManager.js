@@ -164,6 +164,13 @@ export class UIManager {
                 immediate: data.attempt >= 3,
                 showExit: true
             },
+            devTools: {
+                title: '⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!',
+                message: 'Засечени са отворени Developer Tools!\nТова може да доведе до прекратяване на изпита.',
+                severity: 'high',
+                immediate: false,
+                showExit: false
+            },
             totalViolations: {
                 title: '🚫 ПРЕКРАТЯВАНЕ НА ИЗПИТА',
                 message: 'Превишен е лимитът от нарушения!\nИзпитът ще бъде прекратен автоматично.',
@@ -422,5 +429,19 @@ export class UIManager {
     updateConfig(newConfig) {
         this.config = { ...this.config, ...newConfig };
         console.log('⚙️ UIManager configuration updated');
+    }
+
+    /**
+     * Cleanup method
+     */
+    destroy() {
+        this.hideWarning();
+        this.clearAllNotifications();
+
+        if (this.state.terminationTimerId) {
+            clearInterval(this.state.terminationTimerId);
+        }
+
+        console.log('🧹 UIManager destroyed');
     }
 }
