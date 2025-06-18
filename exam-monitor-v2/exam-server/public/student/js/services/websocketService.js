@@ -38,7 +38,7 @@ export class WebSocketService {
     }
 
     /**
-     * Setup socket event handlers
+     * Setup socket event handlers - ПОПРАВЕНО: Complete implementation
      */
     setupEventHandlers() {
         // Connection events
@@ -46,7 +46,7 @@ export class WebSocketService {
         this.socket.on('disconnect', (reason) => this.handleDisconnect(reason));
         this.socket.on('connect_error', (error) => this.handleConnectionError(error));
 
-        // Student events
+        // Student events - ПОПРАВЕНО: Всички events са завършени правилно
         this.socket.on(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, (data) =>
             this.emit('studentIdAssigned', data));
         this.socket.on(SOCKET_EVENTS.SESSION_RESTORED, (data) =>
@@ -55,38 +55,44 @@ export class WebSocketService {
             this.emit('loginError', data));
         this.socket.on(SOCKET_EVENTS.EXAM_EXPIRED, (data) =>
             this.emit('examExpired', data));
+        this.socket.on(SOCKET_EVENTS.FORCE_DISCONNECT, (data) =>
+            this.emit('forceDisconnect', data));
         this.socket.on(SOCKET_EVENTS.TIME_WARNING, (data) =>
             this.emit('timeWarning', data));
 
-        // Anti-cheat events
-        this.socket.on('anti-cheat-warning', (data) =>
-            this.emit('antiCheatWarning', data));
-        this.socket.on('force-disconnect', (data) =>
-            this.emit('forceDisconnect', data));
+        // Heartbeat
+        this.socket.on(SOCKET_EVENTS.HEARTBEAT, (data) =>
+            this.emit('heartbeat', data));
+
+        console.log('📡 Socket event handlers setup complete');
     }
 
     /**
      * Handle successful connection
      */
     handleConnect() {
-        console.log('✅ Connected to server');
         this.isConnected = true;
         this.reconnectAttempts = 0;
 
-        this.flushMessageQueue();
+        console.log('✅ Connected to server');
         this.emit('connected');
+
+        // Flush any queued messages
+        this.flushMessageQueue();
     }
 
     /**
      * Handle disconnection
      */
     handleDisconnect(reason) {
-        console.warn('🔌 Disconnected:', reason);
         this.isConnected = false;
+
+        console.log(`🔌 Disconnected: ${reason}`);
         this.emit('disconnected', { reason });
 
-        if (reason !== 'io server disconnect') {
-            this.attemptReconnect();
+        // Attempt reconnection if not manual
+        if (reason !== 'io client disconnect' && reason !== 'io server disconnect') {
+            this.attemptReconnection();
         }
     }
 
@@ -94,25 +100,26 @@ export class WebSocketService {
      * Handle connection errors
      */
     handleConnectionError(error) {
-        console.error('❌ Connection error:', error);
+        console.error(`❌ Connection error:`, error);
         this.emit('connectionError', { error });
-        this.attemptReconnect();
+
+        this.attemptReconnection();
     }
 
     /**
-     * Attempt reconnection with exponential backoff
+     * Attempt to reconnect
      */
-    attemptReconnect() {
+    attemptReconnection() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.error('❌ Max reconnection attempts reached');
-            this.emit('reconnectFailed');
+            this.emit('maxReconnectAttemptsReached');
             return;
         }
 
         this.reconnectAttempts++;
-        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
 
-        console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+        console.log(`🔄 Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
         this.emit('reconnecting', { attempt: this.reconnectAttempts });
 
         setTimeout(() => {

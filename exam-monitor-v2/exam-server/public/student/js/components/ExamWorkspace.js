@@ -6,8 +6,6 @@ import { LoginForm } from './LoginForm.js';
 import { ExamTimer } from './ExamTimer.js';
 import { CodeEditor } from './CodeEditor.js';
 import { ConsoleOutput } from './ConsoleOutput.js';
-import { ExamExitManager } from '/student/js/components/ExamExitManager.js';
-import { EXIT_REASONS } from '/shared/js/constants.js';
 
 export class ExamWorkspace {
     constructor(websocketService, examService, antiCheatCore) {
@@ -18,7 +16,9 @@ export class ExamWorkspace {
         this.state = {
             currentView: 'login', // login, exam, exit
             isExamActive: false,
-            isFullscreenActive: false
+            isFullscreenActive: false,
+            studentName: null,
+            studentClass: null
         };
 
         // Component instances
@@ -91,20 +91,32 @@ export class ExamWorkspace {
     }
 
     /**
-     * Setup WebSocket event listeners
+     * Setup WebSocket event listeners - ПОПРАВЕНО: Complete implementation
      */
     setupEventListeners() {
-        // WebSocket events
-        this.websocketService.on('student-joined', (data) => {
+        // WebSocket events - ПОПРАВЕНО: Правилни event names
+        this.websocketService.on('studentIdAssigned', (data) => {
             this.handleNewSession(data);
         });
 
-        this.websocketService.on('exam-expired', (data) => {
+        this.websocketService.on('sessionRestored', (data) => {
+            this.handleSessionRestore(data);
+        });
+
+        this.websocketService.on('loginError', (data) => {
+            this.components.loginForm.handleLoginError(data);
+        });
+
+        this.websocketService.on('examExpired', (data) => {
             this.handleExamExpired(data);
         });
 
-        this.websocketService.on('force-disconnect', (data) => {
+        this.websocketService.on('forceDisconnect', (data) => {
             this.handleForceDisconnect(data);
+        });
+
+        this.websocketService.on('timeWarning', (data) => {
+            this.handleTimeWarning(data);
         });
 
         // UI event listeners
@@ -230,12 +242,23 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle new session creation
+     * Handle new session creation - ПОПРАВЕНО: Complete implementation
      */
     handleNewSession(data) {
-        const { sessionId, timeLeft } = data;
+        const { sessionId, timeLeft, studentName, studentClass } = data;
 
-        // Use startExam instead of setSessionData
+        console.log(`📝 New session created: ${sessionId}`);
+
+        // Store session info
+        this.state.sessionId = sessionId;
+
+        // Update student info if available
+        if (studentName && studentClass) {
+            this.state.studentName = studentName;
+            this.state.studentClass = studentClass;
+        }
+
+        // Start exam with session data
         this.examService.startExam({
             sessionId,
             timeLeft,
@@ -243,7 +266,21 @@ export class ExamWorkspace {
             studentClass: this.state.studentClass
         });
 
-        console.log(`📝 New session created: ${sessionId}`);
+        // If not already in exam view, switch to it
+        if (this.state.currentView === 'login') {
+            this.handleLoginSuccess({
+                studentName: this.state.studentName,
+                studentClass: this.state.studentClass
+            });
+        }
+    }
+
+    /**
+     * Handle session restore
+     */
+    handleSessionRestore(data) {
+        console.log('📝 Session restored:', data);
+        this.handleNewSession(data);
     }
 
     /**
@@ -251,7 +288,9 @@ export class ExamWorkspace {
      */
     handleCodeChange(data) {
         // Auto-save code changes
-        this.examService.saveCode(data.code, data.filename);
+        if (this.state.sessionId) {
+            this.examService.saveCode(data.code, data.filename);
+        }
     }
 
     /**
@@ -321,10 +360,13 @@ export class ExamWorkspace {
     handleFinishExam() {
         if (confirm('Сигурни ли сте че искате да завършите изпита?')) {
             this.examService.completeExam();
-            ExamExitManager.handleExamExit(
-                EXIT_REASONS.STUDENT_FINISH,
-                { voluntary: true }
-            );
+
+            // Use ExamExitManager if available
+            if (window.ExamExitManager) {
+                window.ExamExitManager.handleExamExit('STUDENT_FINISH', {
+                    voluntary: true
+                });
+            }
         }
     }
 
@@ -335,10 +377,12 @@ export class ExamWorkspace {
         this.state.isExamActive = false;
         this.components.codeEditor.disable();
 
-        ExamExitManager.handleExamExit(
-            EXIT_REASONS.TIME_EXPIRED,
-            { message: 'Времето за изпита изтече!' }
-        );
+        // Use ExamExitManager if available
+        if (window.ExamExitManager) {
+            window.ExamExitManager.handleExamExit('TIME_EXPIRED', {
+                message: 'Времето за изпита изтече!'
+            });
+        }
     }
 
     /**
@@ -349,7 +393,11 @@ export class ExamWorkspace {
 
         // Show notification
         if (this.antiCheatCore && this.antiCheatCore.uiManager) {
-            this.antiCheatCore.uiManager.showNotification(message, 'warning');
+            this.antiCheatCore.uiManager.showNotification({
+                message: message || `Остават ${minutesLeft} минути`,
+                type: 'warning',
+                duration: 5000
+            });
         }
 
         console.log(`⏰ Time warning: ${minutesLeft} minutes left`);
@@ -388,10 +436,12 @@ export class ExamWorkspace {
         this.state.isExamActive = false;
         this.components.codeEditor.disable();
 
-        ExamExitManager.handleExamExit(
-            EXIT_REASONS.TIME_EXPIRED,
-            { message: data.message || 'Времето за изпита изтече!' }
-        );
+        // Use ExamExitManager if available
+        if (window.ExamExitManager) {
+            window.ExamExitManager.handleExamExit('TIME_EXPIRED', {
+                message: data.message || 'Времето за изпита изтече!'
+            });
+        }
     }
 
     /**
@@ -400,13 +450,13 @@ export class ExamWorkspace {
     handleForceDisconnect(data) {
         this.state.isExamActive = false;
 
-        ExamExitManager.handleExamExit(
-            EXIT_REASONS.INSTRUCTOR_TERMINATED,
-            {
+        // Use ExamExitManager if available
+        if (window.ExamExitManager) {
+            window.ExamExitManager.handleExamExit('INSTRUCTOR_TERMINATED', {
                 message: data.message || 'Изпитът беше прекратен от преподавателя',
                 reason: data.reason
-            }
-        );
+            });
+        }
     }
 
     /**
