@@ -34,7 +34,7 @@ export class AntiCheatCore {
     }
 
     /**
-     * Initialize all anti-cheat modules
+     * Initialize all anti-cheat modules - ПОПРАВЕНО: Callback integration
      */
     async initialize() {
         try {
@@ -53,12 +53,16 @@ export class AntiCheatCore {
                 import('./ReportingService.js')
             ]);
 
-            // Initialize modules - ПОПРАВЕНО: правилен ред на параметрите
+            // Initialize modules
             this.violationTracker = new ViolationTracker(this.config);
             this.reportingService = new ReportingService(this.socket, this.sessionId);
             this.uiManager = new UIManager(this.config);
-            // ПОПРАВЕНО: подаваме violationTracker като първи параметър
             this.detectionEngine = new DetectionEngine(this.violationTracker, this.config);
+
+            // НОВО: Setup callback for critical violations от DetectionEngine
+            this.detectionEngine.setCriticalViolationCallback((type, data, result) => {
+                this.handleCriticalViolationFromDetection(type, data, result);
+            });
 
             // Setup UI callbacks
             this.uiManager.callbacks.onContinueExam = () => {
@@ -119,7 +123,7 @@ export class AntiCheatCore {
 
     /**
      * Perform system check for violations
-     * КРИТИЧНО ПОПРАВЕНО: Добавена логика за предотвратяване на множествени violations
+     * ПОПРАВЕНО: Премахнато fullscreen checking (DetectionEngine го прави)
      */
     performSystemCheck() {
         if (!this.isActive) return;
@@ -133,154 +137,227 @@ export class AntiCheatCore {
         if (currentDevToolsOpen && !this.devToolsDetected) {
             this.devToolsDetected = true;
             this.handleViolation('devTools', 'medium', {
-                orientation: window.outerHeight - window.innerHeight > threshold ? 'vertical' : 'horizontal',
-                timestamp: Date.now()
+                orientation: window.outerHeight - window.innerHeight > threshold ?
+                    'horizontal' : 'vertical'
             });
-        } else if (!currentDevToolsOpen) {
+        } else if (!currentDevToolsOpen && this.devToolsDetected) {
+            // Reset флага ако DevTools са затворени
             this.devToolsDetected = false;
         }
 
-        // Check fullscreen status - ПОПРАВЕНО: Добавена същата логика
-        const currentlyInFullscreen = this.isDocumentInFullscreen();
-        const shouldBeInFullscreen = this.fullscreenMode;
-
-        // Само ако трябва да е fullscreen, но не е, и не сме вече съобщили за това
-        if (shouldBeInFullscreen && !currentlyInFullscreen && !this.fullscreenViolationDetected) {
-            this.fullscreenViolationDetected = true;
-            this.handleViolation('fullscreenExit', 'high', {
-                timestamp: Date.now()
-            });
-        } else if (currentlyInFullscreen || !shouldBeInFullscreen) {
-            // Ако сме върнали fullscreen или не трябва да бъдем в fullscreen
-            this.fullscreenViolationDetected = false;
-        }
+        // ПРЕМАХНАТО: Fullscreen checking (DetectionEngine го прави вече)
+        // Това причиняваше двойното count-ване на fullscreen violations
     }
 
     /**
-     * Handle detected violation
+     * НОВО: Handle critical violations from DetectionEngine
      */
-    handleViolation(type, severity = 'medium', details = {}) {
-        if (!this.isActive || !this.violationTracker) return;
+    handleCriticalViolationFromDetection(type, data, result) {
+        console.log(`🚨 Critical violation from DetectionEngine: ${type}`, { data, result });
 
-        console.warn(`🚨 Violation detected: ${type} (${severity})`);
+        // Determine severity and action based on violation count
+        const maxAttempts = this.getMaxAttempts(type);
+        const currentCount = result.count || 1;
 
-        // Add violation to tracker
-        const result = this.violationTracker.addViolation(type, severity, details);
+        // Log violation
+        console.log(`Violation logged: ${type} (${currentCount})`);
 
         // Report to server
         this.reportingService.reportViolation({
-            type,
-            severity,
-            details,
-            count: result.count,
-            totalScore: result.totalScore,
+            type: type,
+            severity: 'high',
+            data: data,
+            count: currentCount,
+            maxAttempts: maxAttempts,
             timestamp: Date.now()
         });
 
-        // Take action based on severity and count
-        this.handleViolationAction(type, severity, result);
-
-        return result;
-    }
-
-    /**
-     * Handle violation actions
-     */
-    handleViolationAction(type, severity, violationResult) {
-        const { count, totalScore, terminated } = violationResult;
-
-        // Check if should terminate
-        if (terminated) {
-            this.handleTermination(type, 'Maximum violations exceeded');
-            return;
-        }
-
-        // Get max attempts for this type
-        const maxAttempts = this.getMaxAttempts(type);
-
-        // Show warnings based on severity
-        if (severity === 'critical' || count >= maxAttempts - 1) {
-            // Show blocking warning
-            this.showBlockingWarning(type, count, maxAttempts);
-        } else if (severity === 'high' || count >= maxAttempts / 2) {
-            // Show prominent notification
-            this.uiManager.showNotification(
-                this.getViolationMessage(type, count),
-                'warning',
-                5000
-            );
+        // Determine action based on count
+        if (currentCount >= maxAttempts) {
+            // Terminate exam
+            this.handleTermination(`${type}_limit_exceeded`,
+                `Превишен лимит от ${maxAttempts} опита за ${type}`);
         } else {
-            // Log only for low severity
-            console.log(`Violation logged: ${type} (${count})`);
+            // Show warning dialog ВЕДНАГА
+            this.showBlockingWarning(type, currentCount, maxAttempts);
         }
     }
 
     /**
-     * Show blocking warning dialog
+     * Show blocking warning dialog for critical violations - ПОПРАВЕНО: Support all critical keys
      */
     showBlockingWarning(type, count, maxAttempts) {
+        const messages = {
+            windowsKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА WINDOWS КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+            escapeKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ESCAPE КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
+            default: `⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!\n\nЗасечена е забранена активност.\n\nОпит ${count} от ${maxAttempts}.`
+        };
+
+        const message = messages[type] || messages.default;
+
         const config = {
             title: '⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!',
-            message: this.getViolationMessage(type, count),
+            message: message,
             severity: count >= maxAttempts - 1 ? 'critical' : 'high',
-            description: `Опит ${count} от ${maxAttempts}. При достигане на лимита изпитът ще бъде прекратен!`,
+            description: count >= maxAttempts - 1 ?
+                'ПОСЛЕДНО ПРЕДУПРЕЖДЕНИЕ! Следващото нарушение ще прекрати изпита!' :
+                'Моля, спазвайте правилата на изпита.',
             continueText: 'Продължи изпита',
-            exitText: 'Прекрати изпита'
+            exitText: 'Напусни изпита',
+            // НОВО: Callback за exit бутона с double confirmation
+            onExit: () => this.handleExitWithConfirmation(type)
         };
 
         this.uiManager.showWarningDialog(config);
     }
 
     /**
-     * Handle termination
+     * НОВО: Handle exit with double confirmation
      */
-    handleTermination(reason, details) {
-        console.error(`🛑 EXAM TERMINATED: ${reason}`);
+    handleExitWithConfirmation(violationType) {
+        // First confirmation
+        const confirmed = confirm('Сигурни ли сте че искате да напуснете изпита?\n\nТова действие не може да бъде отменено!');
 
-        // Check if method exists before calling
-        const violationData = this.violationTracker &&
-            typeof this.violationTracker.getViolationHistory === 'function'
-            ? this.violationTracker.getViolationHistory()
-            : { violations: {}, totalCount: 0 };
+        if (!confirmed) {
+            console.log('✅ Student cancelled exam exit');
+            return;
+        }
 
-        // Report termination
-        this.reportingService.reportTermination({
-            reason,
-            details,
-            violations: violationData,
+        // Second confirmation for critical violations
+        const doubleConfirm = confirm('ПОСЛЕДНО ПРЕДУПРЕЖДЕНИЕ!\n\nНапускането на изпита ще бъде записано като прекратяване поради нарушение.\n\nНаистина ли искате да продължите?');
+
+        if (!doubleConfirm) {
+            console.log('✅ Student cancelled exam exit on second confirmation');
+            return;
+        }
+
+        // Hide warning dialog first
+        if (this.uiManager) {
+            this.uiManager.hideWarning();
+        }
+
+        // Proceed with exit
+        this.handleExamExit(violationType);
+    }
+
+    /**
+     * НОВО: Handle exam exit using ExamExitManager
+     */
+    handleExamExit(reason) {
+        console.log(`🚪 Handling exam exit: ${reason}`);
+
+        // Try to use ExamExitManager (window global)
+        if (window.ExamExitManager && typeof window.ExamExitManager.handleExamExit === 'function') {
+            const exitReason = this.mapToExitReason(reason);
+
+            window.ExamExitManager.handleExamExit(exitReason, {
+                violationType: reason,
+                voluntary: true,
+                confirmedByStudent: true,
+                timestamp: Date.now()
+            });
+        } else {
+            // Fallback to direct termination
+            console.warn('⚠️ ExamExitManager not available, using fallback');
+            this.handleTermination(`voluntary_exit_${reason}`, `Student chose to exit due to ${reason}`);
+        }
+    }
+
+    /**
+     * НОВО: Map violation types to ExamExitManager reasons
+     */
+    mapToExitReason(violationType) {
+        const mapping = {
+            'windowsKey': 'ANTI_CHEAT_VIOLATION',
+            'escapeKey': 'ANTI_CHEAT_VIOLATION',
+            'altF4': 'ANTI_CHEAT_VIOLATION',
+            'fullscreenExit': 'FULLSCREEN_VIOLATION',
+            'default': 'STUDENT_FINISH'
+        };
+
+        return mapping[violationType] || mapping.default;
+    }
+
+    /**
+     * Handle violations - enhanced with proper tracking
+     */
+    handleViolation(type, severity, data = {}) {
+        console.log(`🚨 Violation detected: ${type} (${severity})`);
+
+        // Add violation through tracker
+        const result = this.violationTracker.addViolation(type, {
+            severity,
+            timestamp: Date.now(),
+            ...data
+        });
+
+        // Determine action based on violation count and severity
+        const maxAttempts = this.getMaxAttempts(type);
+        const shouldWarn = result.warningLevel > 0;
+        const shouldTerminate = result.count >= maxAttempts;
+
+        if (shouldTerminate) {
+            this.handleTermination(`${type}_violation`,
+                `Exceeded maximum attempts for ${type}: ${result.count}/${maxAttempts}`);
+            return;
+        }
+
+        // Handle violation action
+        this.handleViolationAction(type, result, severity);
+    }
+
+    /**
+     * Handle violation actions
+     */
+    handleViolationAction(type, result, severity) {
+        const { count, warningLevel, thresholdExceeded } = result;
+        const maxAttempts = this.getMaxAttempts(type);
+
+        // Report violation
+        this.reportingService.reportViolation({
+            type,
+            severity,
+            count,
+            warningLevel,
+            maxAttempts,
             timestamp: Date.now()
         });
 
-        // Show termination screen
-        this.uiManager.showTerminationScreen({
-            reason: reason,
-            message: 'Изпитът беше прекратен поради нарушения на правилата.',
-            violations: violationData
-        });
+        // Show appropriate response based on severity and count
+        if (severity === 'critical' || thresholdExceeded) {
+            this.showBlockingWarning(type, count, maxAttempts);
+        } else if (warningLevel >= 2) {
+            this.showNotification(type, count);
+        }
 
-        // Deactivate system
-        this.deactivate();
+        console.log(`Violation logged: ${type} (${count})`);
+    }
 
-        // Trigger exam exit
-        import('/student/js/components/ExamExitManager.js').then(({ examExitManager }) => {
-            examExitManager.handleExamExit('anti_cheat_violation', {
-                reason,
-                details
-            });
-        }).catch(error => {
-            console.warn('⚠️ ExamExitManager not available:', error);
+    /**
+     * Show notification for minor violations
+     */
+    showNotification(type, count) {
+        const maxAttempts = this.getMaxAttempts(type);
+        const message = this.getViolationMessage(type, count);
+
+        this.uiManager.showNotification({
+            message: `${message} (${count}/${maxAttempts})`,
+            type: 'warning',
+            duration: 3000
         });
     }
 
     /**
-     * Handle fullscreen exit
+     * Handle fullscreen exit - ПОПРАВЕНО: Simplified (DetectionEngine handles detection)
      */
     handleFullscreenExit() {
         if (!this.isActive) return;
 
-        this.handleViolation('fullscreenExit', 'high', {
-            message: 'Exited fullscreen during exam'
-        });
+        // Само логваме, DetectionEngine вече е добавил violation-а
+        console.log('🖥️ Fullscreen exit handled by DetectionEngine');
+
+        // ПРЕМАХНАТО: handleViolation call (DetectionEngine го прави)
+        // Това причиняваше двойното count-ване
     }
 
     /**
@@ -312,6 +389,51 @@ export class AntiCheatCore {
 
         this.isActive = false;
         console.log('🔓 Anti-cheat system DEACTIVATED');
+    }
+
+    /**
+     * Handle termination - ПОПРАВЕНО: Better ExamExitManager integration
+     */
+    handleTermination(reason, details) {
+        console.error(`🛑 EXAM TERMINATED: ${reason}`);
+
+        // Get violation data
+        const violationData = this.violationTracker &&
+            typeof this.violationTracker.getViolationHistory === 'function'
+            ? this.violationTracker.getViolationHistory()
+            : { violations: {}, totalCount: 0 };
+
+        // Report termination
+        this.reportingService.reportTermination({
+            reason,
+            details,
+            violations: violationData,
+            timestamp: Date.now()
+        });
+
+        // Show termination screen
+        this.uiManager.showTerminationScreen({
+            reason: reason,
+            message: 'Изпитът беше прекратен поради нарушения на правилата.',
+            violations: violationData
+        });
+
+        // Deactivate system
+        this.deactivate();
+
+        // ПОПРАВЕНО: Use window.ExamExitManager directly
+        if (window.ExamExitManager && typeof window.ExamExitManager.handleExamExit === 'function') {
+            const exitReason = this.mapToExitReason(reason);
+
+            window.ExamExitManager.handleExamExit(exitReason, {
+                reason: reason,
+                details: details,
+                automatic: true,
+                violationTerminated: true
+            });
+        } else {
+            console.warn('⚠️ ExamExitManager not available during termination');
+        }
     }
 
     /**
@@ -373,11 +495,12 @@ export class AntiCheatCore {
     }
 
     /**
-     * Helper methods
+     * Helper methods - ПОПРАВЕНО: Added escapeKey support
      */
     getMaxAttempts(type) {
         const limits = {
-            windowsKey: 2,
+            windowsKey: 3,
+            escapeKey: 3,        // НОВО: Escape key same as Windows key
             focusLoss: 5,
             fullscreenExit: 3,
             clipboardAttempt: 3,
@@ -389,7 +512,8 @@ export class AntiCheatCore {
 
     getViolationMessage(type, count) {
         const messages = {
-            windowsKey: `Windows клавиш засечен (${count}/2)`,
+            windowsKey: `Windows клавиш засечен (${count}/3)`,
+            escapeKey: `Escape клавиш засечен (${count}/3)`,     // НОВО
             focusLoss: `Излизане от прозореца (${count}/5)`,
             fullscreenExit: `Излизане от fullscreen (${count}/3)`,
             clipboardAttempt: 'Опит за копиране/поставяне',

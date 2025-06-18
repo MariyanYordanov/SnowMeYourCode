@@ -1,12 +1,16 @@
 /**
  * DetectionEngine - Core detection algorithms for anti-cheat system
  * Handles keyboard, mouse, focus, and fullscreen detection
+ * ПОПРАВЕНО: Added Alt+F4 + Escape support + Critical violation callback
  */
 export class DetectionEngine {
     constructor(violationTracker, config = {}) {
         this.violationTracker = violationTracker;
         this.isActive = false;
         this.fullscreenMode = false;
+
+        // НОВО: Callback за критични violations към AntiCheatCore
+        this.onCriticalViolation = null;
 
         this.config = {
             // Detection settings
@@ -34,6 +38,13 @@ export class DetectionEngine {
         };
 
         console.log('🔍 DetectionEngine initialized');
+    }
+
+    /**
+     * НОВО: Set callback for critical violations
+     */
+    setCriticalViolationCallback(callback) {
+        this.onCriticalViolation = callback;
     }
 
     /**
@@ -86,19 +97,23 @@ export class DetectionEngine {
     }
 
     /**
-     * Setup keyboard detection
+     * Setup keyboard detection - ПОПРАВЕНО: Added Alt+F4 + Escape + Critical violations
      */
     setupKeyboardDetection() {
         const keydownHandler = (e) => {
             if (!this.isActive) return;
 
-            // Critical violations (Windows key, system shortcuts)
+            // Critical violations (Windows key, Alt+F4, Escape)
             if (this.isWindowsKeyEvent(e)) {
                 e.preventDefault();
-                this.handleDetection('windowsKey', {
+                e.stopPropagation();
+
+                // НОВО: Веднага извикваме критичен violation
+                this.handleCriticalDetection('windowsKey', {
                     key: e.key,
                     code: e.code,
-                    metaKey: e.metaKey
+                    metaKey: e.metaKey,
+                    altKey: e.altKey
                 });
                 return false;
             }
@@ -135,13 +150,23 @@ export class DetectionEngine {
     }
 
     /**
-     * Check if event is Windows key related
+     * Check if event is Windows key related - ПОПРАВЕНО: Added Alt+F4 + Escape
      */
     isWindowsKeyEvent(e) {
         // Direct Windows key detection
         if (['MetaLeft', 'MetaRight', 'OSLeft', 'OSRight'].includes(e.code) ||
             ['Meta', 'OS'].includes(e.key) ||
             e.metaKey) {
+            return true;
+        }
+
+        // НОВО: Escape key (критичен като Windows key)
+        if (e.code === 'Escape' || e.key === 'Escape') {
+            return true;
+        }
+
+        // НОВО: Alt+F4 (критичен като Windows key)
+        if (e.altKey && e.code === 'F4') {
             return true;
         }
 
@@ -168,7 +193,6 @@ export class DetectionEngine {
      */
     isSystemShortcut(e) {
         const criticalShortcuts = [
-            { alt: true, code: 'F4' }, // Close window
             { code: 'F11' }, // Toggle fullscreen
             { ctrl: true, code: 'KeyW' }, // Close tab
             { ctrl: true, code: 'KeyT' }, // New tab
@@ -185,22 +209,13 @@ export class DetectionEngine {
      */
     isSuspiciousKeyCombo(e) {
         // F-keys (except allowed ones)
-        if (e.code.startsWith('F') && !['F1', 'F2', 'F3'].includes(e.code)) {
+        if (e.code.startsWith('F') && !['F1', 'F5'].includes(e.code)) {
             return true;
         }
 
-        // Print Screen, Context Menu
-        if (['PrintScreen', 'ContextMenu'].includes(e.code)) {
-            return true;
-        }
-
-        // Refresh
-        if ((e.ctrlKey && e.code === 'KeyR') || e.code === 'F5') {
-            return true;
-        }
-
-        // Escape key (in exam context)
-        if (e.code === 'Escape') {
+        // Developer shortcuts
+        if (e.code === 'F12' ||
+            (e.ctrlKey && e.shiftKey && ['KeyI', 'KeyJ', 'KeyC'].includes(e.code))) {
             return true;
         }
 
@@ -208,69 +223,97 @@ export class DetectionEngine {
     }
 
     /**
+     * НОВО: Handle critical detection (Windows key, Alt+F4, Escape)
+     */
+    handleCriticalDetection(type, data = {}) {
+        console.log(`🚨 CRITICAL Detection: ${type}`, data);
+
+        // Add violation through tracker
+        const result = this.violationTracker.addViolation(type, data);
+
+        // НОВО: Веднага извикваме callback към AntiCheatCore за warning dialog
+        if (this.onCriticalViolation && typeof this.onCriticalViolation === 'function') {
+            this.onCriticalViolation(type, data, result);
+        }
+
+        console.log(`📊 Critical Violation result:`, result);
+        return result;
+    }
+
+    /**
+     * Handle regular detection event (non-critical)
+     */
+    handleDetection(type, data = {}) {
+        console.log(`🚨 Detection: ${type}`, data);
+
+        // Add violation through tracker
+        const result = this.violationTracker.addViolation(type, data);
+
+        console.log(`📊 Violation result:`, result);
+        return result;
+    }
+
+    /**
      * Setup focus detection
      */
     setupFocusDetection() {
+        // Window focus/blur events
+        const focusHandler = () => {
+            if (!this.isActive) return;
+
+            this.state.lastFocusTime = Date.now();
+
+            // If we had a focus loss, calculate duration
+            if (this.state.focusLossStartTime) {
+                const duration = Date.now() - this.state.focusLossStartTime;
+                this.state.focusLossStartTime = null;
+
+                // Only report significant focus losses
+                if (duration >= this.config.focusLossMinDuration) {
+                    this.handleDetection('focusLoss', {
+                        duration,
+                        significant: true
+                    });
+                } else if (duration < this.config.shortFocusLossIgnore) {
+                    console.log(`👁️ Ignoring short focus loss: ${duration}ms`);
+                }
+            }
+
+            console.log('👁️ Focus gained');
+        };
+
         const blurHandler = () => {
             if (!this.isActive) return;
+
             this.state.focusLossStartTime = Date.now();
             console.log('👁️ Focus lost - monitoring...');
         };
 
-        const focusHandler = () => {
-            if (!this.isActive) return;
-
-            if (this.state.focusLossStartTime) {
-                const duration = Date.now() - this.state.focusLossStartTime;
-                this.evaluateFocusLoss(duration);
-                this.state.focusLossStartTime = null;
-            }
-
-            this.state.lastFocusTime = Date.now();
-        };
-
+        // Document visibility events
         const visibilityHandler = () => {
             if (!this.isActive) return;
 
-            if (document.hidden) {
+            if (document.hidden && !this.state.isDocumentHidden) {
                 this.state.isDocumentHidden = true;
-                // Monitor for prolonged hiding
+
+                // Start monitoring duration
                 setTimeout(() => {
-                    if (document.hidden && this.isActive) {
+                    if (this.state.isDocumentHidden) {
                         this.handleDetection('documentHidden', {
-                            duration: this.config.focusLossGracePeriod
+                            duration: 3000 // Minimum 3 seconds
                         });
                     }
-                }, this.config.focusLossGracePeriod);
-            } else {
+                }, 3000);
+            } else if (!document.hidden) {
                 this.state.isDocumentHidden = false;
             }
         };
 
-        this.addEventListenerWithTracking(window, 'blur', blurHandler);
         this.addEventListenerWithTracking(window, 'focus', focusHandler);
+        this.addEventListenerWithTracking(window, 'blur', blurHandler);
         this.addEventListenerWithTracking(document, 'visibilitychange', visibilityHandler);
 
         console.log('👁️ Focus detection active');
-    }
-
-    /**
-     * Evaluate focus loss with balanced approach
-     */
-    evaluateFocusLoss(duration) {
-        // Ignore very short focus losses
-        if (duration < this.config.shortFocusLossIgnore) {
-            console.log(`👁️ Ignoring short focus loss: ${duration}ms`);
-            return;
-        }
-
-        // Significant focus loss
-        if (duration > this.config.focusLossMinDuration) {
-            this.handleDetection('focusLoss', {
-                duration: duration,
-                significant: true
-            });
-        }
     }
 
     /**
@@ -282,14 +325,14 @@ export class DetectionEngine {
 
             const isFullscreen = this.isDocumentInFullscreen();
 
-            if (!isFullscreen && this.fullscreenMode) {
+            if (this.fullscreenMode && !isFullscreen) {
                 this.handleDetection('fullscreenExit', {
                     timestamp: Date.now()
                 });
             }
         };
 
-        // Listen for all fullscreen events
+        // Multiple event types for cross-browser compatibility
         ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
             .forEach(eventName => {
                 this.addEventListenerWithTracking(document, eventName, fullscreenHandler);
@@ -358,21 +401,6 @@ export class DetectionEngine {
         );
 
         console.log('🖱️ Context menu detection active');
-    }
-
-    /**
-     * Handle detection event
-     */
-    handleDetection(type, data = {}) {
-        console.log(`🚨 Detection: ${type}`, data);
-
-        // Add violation through tracker
-        const result = this.violationTracker.addViolation(type, data);
-
-        // Log detection with result
-        console.log(`📊 Violation result:`, result);
-
-        return result;
     }
 
     /**

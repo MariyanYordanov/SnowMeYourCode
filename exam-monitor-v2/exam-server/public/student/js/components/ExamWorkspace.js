@@ -76,71 +76,58 @@ export class ExamWorkspace {
         });
 
         // Initialize code editor
-        this.components.codeEditor = new CodeEditor(this.examService);
-        this.components.codeEditor.on('runCode', (data) => {
-            this.handleRunCode(data);
+        this.components.codeEditor = new CodeEditor();
+        this.components.codeEditor.on('codeChange', (data) => {
+            this.handleCodeChange(data);
         });
-        this.components.codeEditor.on('codeSaved', () => {
-            this.updateLastSavedIndicator();
+        this.components.codeEditor.on('codeExecute', (data) => {
+            this.handleCodeExecute(data);
         });
 
-        // Initialize console output component
-        this.components.consoleOutput = new ConsoleOutput(this.containers.output, {
-            maxOutputLines: 100,
-            clearOnRun: true
-        });
+        // Initialize console output
+        this.components.consoleOutput = new ConsoleOutput(this.containers.output);
 
         console.log('🧩 Components initialized');
     }
 
     /**
-     * Setup workspace event listeners
+     * Setup WebSocket event listeners
      */
     setupEventListeners() {
         // WebSocket events
-        this.websocketService.on('studentIdAssigned', (data) => {
+        this.websocketService.on('student-joined', (data) => {
             this.handleNewSession(data);
         });
 
-        this.websocketService.on('sessionRestored', (data) => {
-            this.handleSessionRestore(data);
-        });
-
-        this.websocketService.on('loginError', (data) => {
-            this.components.loginForm.handleLoginError(data);
-        });
-
-        this.websocketService.on('examExpired', (data) => {
+        this.websocketService.on('exam-expired', (data) => {
             this.handleExamExpired(data);
         });
 
-        this.websocketService.on('forceDisconnect', (data) => {
+        this.websocketService.on('force-disconnect', (data) => {
             this.handleForceDisconnect(data);
         });
 
-        // Exam service events
-        this.examService.on('timerUpdate', (data) => {
-            this.components.examTimer.update(data.timeLeft);
-        });
-
-        this.examService.on('examExpired', () => {
-            this.handleExamTimeExpired();
-        });
-
-        // UI buttons
-        this.setupUIButtons();
+        // UI event listeners
+        this.setupUIEventListeners();
     }
 
     /**
-     * Setup UI button handlers
+     * Setup UI event listeners
      */
-    setupUIButtons() {
+    setupUIEventListeners() {
         // Run code button
         const runBtn = document.getElementById('run-code-btn');
         if (runBtn) {
             runBtn.addEventListener('click', () => {
-                const code = this.components.codeEditor.getCode();
-                this.handleRunCode({ code });
+                this.components.codeEditor.executeCode();
+            });
+        }
+
+        // Save code button
+        const saveBtn = document.getElementById('save-code-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.components.codeEditor.saveCode();
             });
         }
 
@@ -162,7 +149,7 @@ export class ExamWorkspace {
     }
 
     /**
-     * Setup fullscreen handling
+     * Setup fullscreen handling - ПОПРАВЕНО: Esc показва червен екран
      */
     setupFullscreenHandling() {
         // Fullscreen change events
@@ -175,13 +162,54 @@ export class ExamWorkspace {
             this.handleFullscreenError(event);
         });
 
-        // Exit fullscreen prevention
+        // ПОПРАВЕНО: Exit fullscreen prevention → Red screen
         document.addEventListener('keydown', (e) => {
             if (this.state.isFullscreenActive && e.key === 'Escape') {
                 e.preventDefault();
-                console.warn('🔒 ESC blocked during exam');
+                console.warn('🚨 ESC pressed during exam - showing violation warning');
+
+                // НОВО: Показваме червен екран вместо просто блокиране
+                this.handleEscapeViolation();
             }
         });
+    }
+
+    /**
+     * НОВО: Handle Escape key violation
+     */
+    handleEscapeViolation() {
+        // Trigger same critical violation as other forbidden keys
+        if (this.antiCheatCore && this.antiCheatCore.detectionEngine) {
+            // Manually trigger critical violation
+            this.antiCheatCore.detectionEngine.handleCriticalDetection('escapeKey', {
+                key: 'Escape',
+                code: 'Escape',
+                blocked: true,
+                message: 'Escape key pressed during exam'
+            });
+        } else {
+            // Fallback if antiCheatCore not available
+            console.error('❌ AntiCheatCore not available for Escape violation');
+            this.showFallbackExitConfirmation();
+        }
+    }
+
+    /**
+     * НОВО: Fallback exit confirmation if antiCheatCore unavailable
+     */
+    showFallbackExitConfirmation() {
+        const confirmed = confirm('⚠️ ВНИМАНИЕ!\n\nЗасечено е натискане на забранен клавиш!\n\nИскате ли да напуснете изпита?');
+
+        if (confirmed) {
+            const doubleConfirm = confirm('Сигурни ли сте че искате да напуснете изпита?\n\nТова действие не може да бъде отменено!');
+
+            if (doubleConfirm && window.ExamExitManager) {
+                window.ExamExitManager.handleExamExit('escape_key_violation', {
+                    voluntary: true,
+                    reason: 'Student pressed Escape key'
+                });
+            }
+        }
     }
 
     /**
@@ -219,65 +247,19 @@ export class ExamWorkspace {
     }
 
     /**
- * Handle new session creation
- */
-    handleNewSession(data) {
-        const { sessionId, timeLeft } = data;
-
-        // Use startExam instead of setSessionData
-        this.examService.startExam({
-            sessionId,
-            timeLeft,
-            studentName: this.state.studentName,
-            studentClass: this.state.studentClass
-        });
-
-        console.log(`📝 New session created: ${sessionId}`);
-
-        // ДОБАВЕТЕ ТОВА - преминаване към изпитен екран
-        this.enterFullscreen().then(() => {
-            this.switchToExamView();
-        }).catch(err => {
-            console.warn('⚠️ Could not enter fullscreen:', err);
-            // Продължаваме без fullscreen
-            this.switchToExamView();
-        });
+     * Handle code changes
+     */
+    handleCodeChange(data) {
+        // Auto-save code changes
+        this.examService.saveCode(data.code, data.filename);
     }
 
     /**
-     * Handle login success
+     * Handle code execution
      */
-    async handleLoginSuccess(data) {
-        const { studentName, studentClass } = data;
-
-        // Store student info
-        this.state.studentName = studentName;
-        this.state.studentClass = studentClass;
-        console.log(`✅ Login successful: ${studentName}`);
-    }
-
-    /**
-     * Handle session restore
-     */
-    handleSessionRestore(data) {
-        const { sessionId, lastCode, timeLeft } = data;
-
-        console.log(`♻️ Session restored: ${sessionId}`);
-
-        // Use updateSession instead of setSessionData
-        this.examService.updateSession({
-            sessionId,
-            timeLeft,
-            lastCode
-        });
-
-        // Enter fullscreen
-        this.enterFullscreen().catch(err => {
-            console.warn('⚠️ Could not enter fullscreen:', err);
-        });
-
-        // Switch to exam view with restored code
-        this.switchToExamView(lastCode);
+    handleCodeExecute(data) {
+        console.log('▶️ Code executed');
+        this.components.consoleOutput.addOutput(data.output, data.type);
     }
 
     /**
@@ -285,110 +267,59 @@ export class ExamWorkspace {
      */
     async enterFullscreen() {
         try {
-            const elem = document.documentElement;
+            const element = document.documentElement;
 
-            if (elem.requestFullscreen) {
-                await elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                await elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                await elem.msRequestFullscreen();
+            if (element.requestFullscreen) {
+                await element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                await element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                await element.msRequestFullscreen();
+            }
+
+            // Activate anti-cheat after fullscreen
+            if (this.antiCheatCore) {
+                await this.antiCheatCore.activate();
+                this.antiCheatCore.setFullscreenMode(true);
             }
 
             this.state.isFullscreenActive = true;
-
-            // Activate anti-cheat with error handling
-            if (this.antiCheatCore) {
-                try {
-                    await this.antiCheatCore.activate();
-                    this.antiCheatCore.setFullscreenMode(true);
-                } catch (antiCheatError) {
-                    console.error('⚠️ Anti-cheat activation error:', antiCheatError);
-                    // Continue without anti-cheat rather than failing completely
-                }
-            }
-
             console.log('🔒 Entered fullscreen mode');
+
         } catch (error) {
-            console.error('❌ Fullscreen failed:', error);
-            this.handleFullscreenError(error);
+            console.error('❌ Failed to enter fullscreen:', error);
+            throw error;
         }
     }
 
     /**
      * Switch to exam view
      */
-    switchToExamView(lastCode = '') {
-        // Hide login, show exam
+    switchToExamView() {
+        // Hide login container
         this.containers.login.style.display = 'none';
-        this.containers.exam.style.display = 'flex';
 
-        // Setup exam
+        // Show exam container
+        this.containers.exam.style.display = 'block';
+
+        // Update state
         this.state.currentView = 'exam';
         this.state.isExamActive = true;
 
-        // Initialize exam timer
-        const examState = this.examService.getState();
-        this.components.examTimer.start(examState.timeLeft);
+        // Start timer
+        this.components.examTimer.start();
 
-        // Setup code editor
-        this.components.codeEditor.enable();
-        if (lastCode) {
-            this.components.codeEditor.setCode(lastCode);
-        }
-
-        // Update student info in header
-        this.updateStudentInfo(examState);
+        // Focus on code editor
+        this.components.codeEditor.focus();
 
         console.log('📚 Switched to exam view');
     }
 
     /**
-     * Update student info in exam header
-     */
-    updateStudentInfo(examState) {
-        const nameEl = document.getElementById('student-name-display');
-        const classEl = document.getElementById('student-class-display');
-        const sessionEl = document.getElementById('session-id-display');
-
-        if (nameEl) nameEl.textContent = examState.studentName;
-        if (classEl) classEl.textContent = examState.studentClass;
-        if (sessionEl) sessionEl.textContent = examState.sessionId;
-    }
-
-    /**
-     * Handle code execution
-     */
-    handleRunCode(data) {
-        const { code } = data;
-
-        // Save code before running
-        this.examService.saveCode(code);
-
-        // Execute using ConsoleOutput component
-        this.components.consoleOutput.execute(code);
-
-        console.log('▶️ Code executed');
-    }
-
-    /**
-     * Update last saved indicator
-     */
-    updateLastSavedIndicator() {
-        const indicator = document.getElementById('last-saved-indicator');
-        if (indicator) {
-            const now = new Date();
-            indicator.textContent = `Last saved: ${now.toLocaleTimeString()}`;
-        }
-    }
-
-    /**
-     * Handle finish exam request
+     * Handle finish exam
      */
     handleFinishExam() {
-        if (!this.state.isExamActive) return;
-
-        if (confirm('Сигурни ли сте, че искате да приключите изпита?')) {
+        if (confirm('Сигурни ли сте че искате да завършите изпита?')) {
             this.examService.completeExam();
             ExamExitManager.handleExamExit(
                 EXIT_REASONS.STUDENT_FINISH,
