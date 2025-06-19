@@ -65,7 +65,8 @@ export class ExamWorkspace {
      * Initialize all child components
      */
     initializeComponents() {
-        this.components.loginForm = new LoginForm(this.containers.login);
+        // Initialize with correct parameters
+        this.components.loginForm = new LoginForm(this.websocketService);
         this.components.examTimer = new ExamTimer(document.getElementById('exam-timer'));
         this.components.codeEditor = new CodeEditor(document.getElementById('code-editor'));
         this.components.consoleOutput = new ConsoleOutput(this.containers.output);
@@ -82,11 +83,12 @@ export class ExamWorkspace {
         this.components.codeEditor.on('codeSaved', (data) => this.handleCodeSaved(data));
         this.components.codeEditor.on('runCode', (data) => this.handleRunCode(data));
 
-        // WebSocket events
-        this.websocketService.on('session-restored', (data) => this.handleSessionRestore(data));
-        this.websocketService.on('new-session', (data) => this.handleNewSession(data));
-        this.websocketService.on('exam-expired', (data) => this.handleExamExpired(data));
-        this.websocketService.on('force-disconnect', (data) => this.handleForceDisconnect(data));
+        // WebSocket events - use correct event names
+        this.websocketService.on('studentIdAssigned', (data) => this.handleNewSession(data));
+        this.websocketService.on('sessionRestored', (data) => this.handleSessionRestore(data));
+        this.websocketService.on('loginError', (data) => this.handleLoginError(data));
+        this.websocketService.on('examExpired', (data) => this.handleExamExpired(data));
+        this.websocketService.on('forceDisconnect', (data) => this.handleForceDisconnect(data));
 
         // Finish exam button
         const finishBtn = document.getElementById('finish-exam-btn');
@@ -341,6 +343,18 @@ export class ExamWorkspace {
                 blocked: true,
                 timestamp: Date.now()
             });
+        }
+    }
+
+    /**
+     * Handle login error
+     */
+    handleLoginError(data) {
+        console.error('❌ Login error:', data);
+
+        // Let LoginForm handle the error display
+        if (this.components.loginForm?.handleLoginError) {
+            this.components.loginForm.handleLoginError(data);
         }
     }
 
