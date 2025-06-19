@@ -126,6 +126,13 @@ function showLoginStatus(message, type) {
 // ================================
 function setupSocket() {
     try {
+        // Check if Socket.io is loaded
+        if (typeof io === 'undefined') {
+            console.warn('⚠️ Socket.io not loaded yet, retrying...');
+            setTimeout(setupSocket, 500);
+            return;
+        }
+
         const socket = io({
             transports: ['websocket', 'polling'],
             timeout: 10000,
