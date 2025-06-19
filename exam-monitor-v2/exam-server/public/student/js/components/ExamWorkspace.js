@@ -1,7 +1,7 @@
 /**
- * ExamWorkspace Component - Clean Architecture
- * Main exam coordinator with nuclear fullscreen protection
- * FOLLOWS REFACTORING GUIDELINES: No inline HTML/CSS, clean separation
+ * ExamWorkspace Component - Clean Architecture with Nuclear Protection
+ * Main exam coordinator - NO inline HTML/CSS, clean separation of concerns
+ * CRITICAL FIX: Proper AntiCheatCore initialization before activation
  */
 import { LoginForm } from './LoginForm.js';
 import { ExamTimer } from './ExamTimer.js';
@@ -62,11 +62,12 @@ export class ExamWorkspace {
     }
 
     /**
-     * Initialize all child components
+     * Initialize all child components with CORRECT parameters
      */
     initializeComponents() {
-        // Initialize with correct parameters
+        // FIXED: LoginForm expects websocketService, not container
         this.components.loginForm = new LoginForm(this.websocketService);
+
         this.components.examTimer = new ExamTimer(document.getElementById('exam-timer'));
         this.components.codeEditor = new CodeEditor(document.getElementById('code-editor'));
         this.components.consoleOutput = new ConsoleOutput(this.containers.output);
@@ -75,20 +76,24 @@ export class ExamWorkspace {
     }
 
     /**
-     * Setup event listeners
+     * Setup event listeners - FIXED: Correct event names and methods
      */
     setupEventListeners() {
-        // Component events
-        this.components.loginForm.on('loginSubmit', (data) => this.handleLoginSubmit(data));
-        this.components.codeEditor.on('codeSaved', (data) => this.handleCodeSaved(data));
-        this.components.codeEditor.on('runCode', (data) => this.handleRunCode(data));
+        // LoginForm doesn't emit 'loginSubmit' - it handles submission internally
+        // We listen for WebSocket events instead
 
-        // WebSocket events - use correct event names
+        // WebSocket events - FIXED: Use correct event names from websocketService
         this.websocketService.on('studentIdAssigned', (data) => this.handleNewSession(data));
         this.websocketService.on('sessionRestored', (data) => this.handleSessionRestore(data));
         this.websocketService.on('loginError', (data) => this.handleLoginError(data));
         this.websocketService.on('examExpired', (data) => this.handleExamExpired(data));
         this.websocketService.on('forceDisconnect', (data) => this.handleForceDisconnect(data));
+
+        // Component events - IF they exist (some components might not emit these)
+        if (this.components.codeEditor.on) {
+            this.components.codeEditor.on('codeSaved', (data) => this.handleCodeSaved(data));
+            this.components.codeEditor.on('runCode', (data) => this.handleRunCode(data));
+        }
 
         // Finish exam button
         const finishBtn = document.getElementById('finish-exam-btn');
@@ -102,20 +107,10 @@ export class ExamWorkspace {
      */
     setupFullscreenHandling() {
         // Fullscreen change events
-        const fullscreenEvents = [
-            'fullscreenchange',
-            'webkitfullscreenchange',
-            'mozfullscreenchange',
-            'MSFullscreenChange'
-        ];
-
-        fullscreenEvents.forEach(event => {
-            document.addEventListener(event, () => {
-                this.handleFullscreenChange();
-            });
+        document.addEventListener('fullscreenchange', () => {
+            this.handleFullscreenChange();
         });
 
-        // Fullscreen error handling
         document.addEventListener('fullscreenerror', (event) => {
             console.error('Fullscreen error:', event);
             this.handleFullscreenError(event);
@@ -132,29 +127,36 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle login form submission
+     * Handle new session creation
      */
-    async handleLoginSubmit(data) {
-        const { studentName, studentClass } = data;
+    handleNewSession(data) {
+        console.log('📝 New session created:', data.sessionId);
+        this.handleLoginSuccess(data);
+    }
 
-        try {
-            this.websocketService.emit('student-join', {
-                studentName,
-                studentClass
-            });
+    /**
+     * Handle session restoration
+     */
+    handleSessionRestore(data) {
+        console.log('📝 Session restored:', data);
+        this.handleLoginSuccess(data);
+    }
 
-            // Store for later use
-            this.state.studentName = studentName;
-            this.state.studentClass = studentClass;
+    /**
+     * Handle login error
+     */
+    handleLoginError(data) {
+        console.error('❌ Login error:', data);
 
-        } catch (error) {
-            console.error('❌ Login failed:', error);
-            this.components.loginForm.showError('Login failed. Please try again.');
+        // Delegate to LoginForm to handle error display
+        if (this.components.loginForm?.handleLoginError) {
+            this.components.loginForm.handleLoginError(data);
         }
     }
 
     /**
      * Handle successful login and session creation
+     * CRITICAL FIX: Initialize AntiCheatCore BEFORE activate
      */
     async handleLoginSuccess(sessionData) {
         console.log('📝 Login successful:', sessionData);
@@ -163,23 +165,32 @@ export class ExamWorkspace {
         this.state.isExamActive = true;
 
         // Update components
-        this.components.examTimer.start(sessionData.timeLeft);
-        this.examService.start(sessionData.sessionId);
+        if (this.components.examTimer?.start) {
+            this.components.examTimer.start(sessionData.timeLeft);
+        }
 
-        // Initialize and activate anti-cheat with proper parameters
+        // FIXED: Use correct method name - startExam, not start
+        this.examService.startExam(sessionData);
+
+        // CRITICAL FIX: Initialize AntiCheatCore before activation
         try {
-            // FIXED: Initialize before activate
+            console.log('🛡️ Initializing anti-cheat system...');
+
+            // Check if already initialized
             if (!this.antiCheatCore.violationTracker) {
+                console.log('🔄 Initializing AntiCheatCore modules...');
                 await this.antiCheatCore.initialize();
             }
 
-            // Switch to exam view and enter fullscreen
+            // Switch to exam view
             this.showExamView();
+
+            // Enter fullscreen and activate anti-cheat
             await this.enterFullscreen();
 
         } catch (error) {
-            console.error('❌ Failed to activate anti-cheat:', error);
-            // Continue with exam but log error
+            console.error('❌ Failed to initialize anti-cheat:', error);
+            // Continue with exam but without anti-cheat protection
             this.showExamView();
         }
     }
@@ -193,7 +204,9 @@ export class ExamWorkspace {
 
         // Load saved code if available
         const savedCode = sessionStorage.getItem('exam_code') || '';
-        this.components.codeEditor.setCode(savedCode);
+        if (this.components.codeEditor?.setCode) {
+            this.components.codeEditor.setCode(savedCode);
+        }
     }
 
     /**
@@ -213,7 +226,8 @@ export class ExamWorkspace {
                 await element.msRequestFullscreen();
             }
 
-            // Activate anti-cheat after successful fullscreen
+            // FIXED: Activate anti-cheat AFTER successful fullscreen
+            console.log('🛡️ Activating anti-cheat system...');
             await this.antiCheatCore.activate();
 
         } catch (error) {
@@ -251,7 +265,7 @@ export class ExamWorkspace {
     }
 
     /**
-     * Activate nuclear protection (overlays and CSS loaded from files)
+     * Activate nuclear protection using CSS classes (no inline styles)
      */
     activateNuclearProtection() {
         if (this.state.nuclearProtectionActive) return;
@@ -347,49 +361,23 @@ export class ExamWorkspace {
     }
 
     /**
-     * Handle login error
-     */
-    handleLoginError(data) {
-        console.error('❌ Login error:', data);
-
-        // Let LoginForm handle the error display
-        if (this.components.loginForm?.handleLoginError) {
-            this.components.loginForm.handleLoginError(data);
-        }
-    }
-
-    /**
-     * Handle session restoration
-     */
-    handleSessionRestore(data) {
-        console.log('📝 Session restored:', data);
-        this.handleLoginSuccess(data);
-    }
-
-    /**
-     * Handle new session creation
-     */
-    handleNewSession(data) {
-        console.log('📝 New session created:', data.sessionId);
-        this.handleLoginSuccess(data);
-    }
-
-    /**
      * Handle code save
      */
     handleCodeSaved(data) {
         // Save to session storage as backup
         sessionStorage.setItem('exam_code', data.code);
 
-        // Send to server via exam service
-        this.examService.saveCode(data.code);
+        // FIXED: Use correct method - saveCode exists in ExamService
+        this.examService.saveCode(data.code, data.filename);
     }
 
     /**
      * Handle code execution
      */
     handleRunCode(data) {
-        this.components.consoleOutput.executeCode(data.code);
+        if (this.components.consoleOutput?.executeCode) {
+            this.components.consoleOutput.executeCode(data.code);
+        }
     }
 
     /**
@@ -397,10 +385,12 @@ export class ExamWorkspace {
      */
     handleExamExpired(data) {
         this.state.isExamActive = false;
-        this.components.codeEditor.disable();
-        this.cleanupNuclearProtection();
 
-        // Show exit screen or redirect
+        if (this.components.codeEditor?.disable) {
+            this.components.codeEditor.disable();
+        }
+
+        this.cleanupNuclearProtection();
         alert(data.message || 'Времето за изпита изтече!');
     }
 
@@ -410,7 +400,6 @@ export class ExamWorkspace {
     handleForceDisconnect(data) {
         this.state.isExamActive = false;
         this.cleanupNuclearProtection();
-
         alert(data.message || 'Изпитът беше прекратен от преподавателя');
     }
 
@@ -420,7 +409,9 @@ export class ExamWorkspace {
     handleFinishExam() {
         if (confirm('Сигурни ли сте, че искате да завършите изпита?')) {
             this.state.isExamActive = false;
-            this.examService.finishExam();
+
+            // FIXED: Use correct method name - completeExam exists in ExamService
+            this.examService.completeExam();
             this.cleanupNuclearProtection();
         }
     }
