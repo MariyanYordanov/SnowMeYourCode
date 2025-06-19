@@ -1,0 +1,237 @@
+/* Nuclear Protection CSS - Clean Architecture */
+/* Replaces all inline CSS from ExamWorkspace.js */
+
+/* Base nuclear protection state */
+.nuclear-protection-active {
+    overflow: hidden !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-app-region: no-drag !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Nuclear protection body state */
+.nuclear-protection-active html,
+.nuclear-protection-active body {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide browser scrollbars and selection */
+.nuclear-protection-active ::-webkit-scrollbar {
+    display: none !important;
+}
+
+.nuclear-protection-active ::selection {
+    background: transparent !important;
+}
+
+.nuclear-protection-active ::-moz-selection {
+    background: transparent !important;
+}
+
+/* Block ALL interactions by default */
+.nuclear-protection-active * {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    pointer-events: none !important;
+}
+
+/* Enable interactions ONLY for exam elements */
+.nuclear-protection-active #code-editor,
+.nuclear-protection-active #run-code-btn,
+.nuclear-protection-active #save-code-btn,
+.nuclear-protection-active #format-code-btn,
+.nuclear-protection-active #clear-output-btn,
+.nuclear-protection-active #finish-exam-btn,
+.nuclear-protection-active .exam-container,
+.nuclear-protection-active .exam-container * {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    pointer-events: auto !important;
+}
+
+/* Nuclear overlay base styles */
+.nuclear-overlay {
+    position: fixed;
+    z-index: 2147483647;
+    /* Maximum z-index */
+    background: transparent;
+    pointer-events: all;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+/* Top chrome overlay (X button, tabs, address bar) */
+.nuclear-overlay-top {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+}
+
+/* Right edge overlay (scroll bars, resize) */
+.nuclear-overlay-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+}
+
+/* Bottom chrome overlay (status bar, downloads) */
+.nuclear-overlay-bottom {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+}
+
+/* Left edge overlay */
+.nuclear-overlay-left {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 30px;
+}
+
+/* X button specific overlays (multiple layers) */
+.nuclear-overlay-x-button {
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+}
+
+.nuclear-overlay-x-extended {
+    top: -10px;
+    right: -10px;
+    width: 120px;
+    height: 120px;
+}
+
+.nuclear-overlay-x-wide {
+    top: -20px;
+    right: -20px;
+    width: 140px;
+    height: 140px;
+}
+
+/* Nuclear monitoring indicator */
+.nuclear-monitoring-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #ff0000, #8b0000);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 2147483646;
+    pointer-events: none;
+    animation: nuclearPulse 1.5s infinite;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+}
+
+/* Nuclear pulse animation */
+@keyframes nuclearPulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Force cursor for dangerous areas */
+.nuclear-protection-active .nuclear-overlay {
+    cursor: not-allowed !important;
+    pointer-events: all !important;
+}
+
+/* Hide dangerous browser elements in fullscreen */
+.nuclear-protection-active body:fullscreen {
+    cursor: default !important;
+}
+
+/* Debug indicator for development (remove in production) */
+.nuclear-protection-active::before {
+    content: "💀 NUCLEAR PROTECTION ACTIVE";
+    position: fixed;
+    top: 50px;
+    left: 20px;
+    background: rgba(255, 0, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 2147483645;
+    pointer-events: none;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+    .nuclear-overlay-top {
+        height: 80px;
+        /* Smaller on mobile */
+    }
+
+    .nuclear-overlay-right {
+        width: 40px;
+    }
+
+    .nuclear-overlay-x-button {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* High DPI display adjustments */
+@media (min-resolution: 192dpi) {
+    .nuclear-overlay-top {
+        height: 140px;
+        /* Account for high DPI chrome */
+    }
+}
+
+/* Alternative fullscreen API compatibility */
+:-webkit-full-screen .nuclear-overlay {
+    position: fixed !important;
+}
+
+:-moz-full-screen .nuclear-overlay {
+    position: fixed !important;
+}
+
+:-ms-fullscreen .nuclear-overlay {
+    position: fixed !important;
+}
+
+:fullscreen .nuclear-overlay {
+    position: fixed !important;
+}
