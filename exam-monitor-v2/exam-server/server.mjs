@@ -17,6 +17,8 @@ const app = express();
 const server = createServer(app);
 
 const io = new Server(server, {
+    serveClient: true,      
+    path: '/socket.io',     
     pingTimeout: 60000,
     pingInterval: 25000,
     transports: ['websocket', 'polling']
@@ -85,96 +87,6 @@ app.get('/student', (req, res) => {
 app.get('/student-exam-window', (req, res) => {
     console.log('⚠️ Legacy popup endpoint accessed - redirecting to fullscreen mode');
     res.redirect('/student?legacy=popup');
-});
-
-// Debug route for testing fullscreen functionality
-app.get('/test-fullscreen', (req, res) => {
-    res.send(`
-        <html>
-            <head><title>Fullscreen Test</title></head>
-            <body style="font-family: Arial; padding: 40px;">
-                <h2>🔒 Fullscreen API Test</h2>
-                <p>Test the fullscreen functionality:</p>
-                
-                <button onclick="testFullscreen()">Test Enter Fullscreen</button>
-                <button onclick="testExitFullscreen()">Test Exit Fullscreen</button>
-                <button onclick="testFullscreenSupport()">Test API Support</button>
-                <button onclick="testFocusLock()">Test Focus Lock</button>
-                
-                <div id="results" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;"></div>
-                
-                <script>
-                    function log(message) {
-                        document.getElementById('results').innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
-                    }
-                    
-                    function testFullscreen() {
-                        log('Testing fullscreen entry...');
-                        const element = document.documentElement;
-                        
-                        if (element.requestFullscreen) {
-                            element.requestFullscreen().then(() => {
-                                log('✅ Fullscreen entered successfully');
-                            }).catch(err => {
-                                log('❌ Fullscreen failed: ' + err.message);
-                            });
-                        } else {
-                            log('❌ Fullscreen API not supported');
-                        }
-                    }
-                    
-                    function testExitFullscreen() {
-                        log('Testing fullscreen exit...');
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen().then(() => {
-                                log('✅ Exited fullscreen successfully');
-                            }).catch(err => {
-                                log('❌ Exit fullscreen failed: ' + err.message);
-                            });
-                        } else {
-                            log('❌ Exit fullscreen not supported');
-                        }
-                    }
-                    
-                    function testFullscreenSupport() {
-                        log('Testing API support...');
-                        const supported = !!(document.fullscreenEnabled || 
-                                           document.webkitFullscreenEnabled || 
-                                           document.mozFullScreenEnabled ||
-                                           document.msFullscreenEnabled);
-                        
-                        if (supported) {
-                            log('✅ Fullscreen API is supported');
-                        } else {
-                            log('❌ Fullscreen API is not supported');
-                        }
-                    }
-                    
-                    function testFocusLock() {
-                        log('Testing focus lock...');
-                        let focusCount = 0;
-                        const focusInterval = setInterval(() => {
-                            window.focus();
-                            focusCount++;
-                            
-                            if (focusCount >= 10) {
-                                clearInterval(focusInterval);
-                                log('✅ Focus lock test completed (10 focus attempts)');
-                            }
-                        }, 100);
-                        
-                        log('🎯 Focus lock running for 1 second...');
-                    }
-                    
-                    // Monitor fullscreen changes
-                    document.addEventListener('fullscreenchange', () => {
-                        const isFullscreen = !!document.fullscreenElement;
-                        log(isFullscreen ? '🔒 Entered fullscreen' : '🔓 Exited fullscreen');
-                    });
-                </script>
-            </body>
-        </html>
-    `);
 });
 
 // API endpoints
@@ -389,15 +301,7 @@ server.listen(PORT, async () => {
     console.log(`🚀 Exam Monitor v2 - Fullscreen Mode running on http://localhost:${PORT}`);
     console.log(`📊 Teacher dashboard: http://localhost:${PORT}/teacher`);
     console.log(`👨‍🎓 Student fullscreen exam: http://localhost:${PORT}/student`);
-    console.log(`🔒 Test fullscreen: http://localhost:${PORT}/test-fullscreen`);
     console.log(`🌐 Network: ExamNet hotspot on port ${PORT}`);
-
-    console.log('\n🔒 New Fullscreen Architecture Features:');
-    console.log('  ✅ Mandatory fullscreen exam environment');
-    console.log('  ✅ Aggressive focus lock protection');
-    console.log('  ✅ Fullscreen violation detection');
-    console.log('  ✅ Automatic exam termination for violations');
-    console.log('  ✅ Single-page architecture for maximum security');
 
     // Start cleanup timer for expired sessions
     sessionManager.startCleanupTimer();
