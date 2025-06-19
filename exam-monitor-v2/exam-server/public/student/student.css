@@ -1,15 +1,27 @@
+/* ================================
+   STUDENT EXAM INTERFACE STYLES
+   ================================ */
+
+/* Reset & Base */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html:fullscreen {
-    overflow: hidden !important;
+html,
+body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background-color: #f5f5f5;
+    overflow: hidden;
 }
 
-body:fullscreen,
-html:fullscreen body {
+/* ================================
+   FULLSCREEN PROTECTION
+   ================================ */
+html:fullscreen,
+body:fullscreen {
     margin: 0 !important;
     padding: 0 !important;
     width: 100vw !important;
@@ -17,27 +29,24 @@ html:fullscreen body {
     overflow: hidden !important;
 }
 
-/* Скриваме browser UI в fullscreen */
 :fullscreen {
-    /* Премахваме всички browser контроли */
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
     user-select: none !important;
 }
 
-/* За WebKit browsers (Chrome, Safari) */
+/* Block browser UI in fullscreen */
 ::-webkit-fullscreen-controls {
     display: none !important;
     visibility: hidden !important;
 }
 
-/* За Firefox */
 :fullscreen::-moz-full-screen-ancestor {
     display: none !important;
 }
 
-/* КРИТИЧНО: Блокираме top hover area */
+/* Fullscreen protection overlay */
 body:fullscreen::before {
     content: '';
     position: fixed;
@@ -51,92 +60,594 @@ body:fullscreen::before {
     display: block;
 }
 
-
-.fullscreen-protection-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 100px !important;
-    z-index: 999999 !important;
-    pointer-events: all !important;
-    background: transparent !important;
-    display: none !important;
-}
-
-body:fullscreen .fullscreen-protection-overlay {
-    display: block !important;
-}
-
-/* Премахваме всички възможни browser hints */
-*:fullscreen {
-    cursor: default !important;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+/* ================================
+   LOGIN CONTAINER
+   ================================ */
+.login-container {
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .login-form {
     background: white;
     padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     width: 400px;
-}
-
-.login-form h2 {
-    margin-bottom: 20px;
-    color: #333;
     text-align: center;
 }
 
-.login-form input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
+.login-form h2 {
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
 }
 
-.login-form button {
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group input,
+.form-group select {
     width: 100%;
-    padding: 12px;
-    background-color: #2196F3;
+    padding: 14px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.login-form button:hover {
-    background-color: #1976D2;
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.workspace {
-    padding: 20px;
-}
-
-#code-editor {
-    width: 100%;
-    height: 400px;
-    font-family: monospace;
+.status-message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 6px;
     font-size: 14px;
-    padding: 10px;
-    border: 1px solid #ccc;
+    font-weight: 500;
+}
+
+.status-message.error {
+    background: #fee;
+    color: #c53030;
+    border: 1px solid #fed7d7;
+}
+
+.status-message.success {
+    background: #f0fff4;
+    color: #22543d;
+    border: 1px solid #c6f6d5;
+}
+
+.status-message.info {
+    background: #ebf8ff;
+    color: #2c5282;
+    border: 1px solid #bee3f8;
+}
+
+/* ================================
+   EXAM CONTAINER (FULLSCREEN)
+   ================================ */
+.exam-container {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+    background: #1e1e1e;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* ================================
+   EXAM HEADER
+   ================================ */
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #404040;
+    flex-shrink: 0;
+    height: 50px;
+}
+
+.student-info {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+.student-info strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.exam-timer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.timer-icon {
+    font-size: 20px;
+}
+
+/* ================================
+   EXAM CONTENT (MAIN AREA)
+   ================================ */
+.exam-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ================================
+   EDITOR PANEL (LEFT)
+   ================================ */
+.editor-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #404040;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #404040;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.panel-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.editor-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.editor-controls button {
+    padding: 6px 12px;
+    border: 1px solid #404040;
     border-radius: 4px;
+    background: #3c3c3c;
+    color: #ffffff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.editor-controls button:hover {
+    background: #4a4a4a;
+    border-color: #555;
+}
+
+.btn-success {
+    background: #4CAF50 !important;
+    border-color: #4CAF50 !important;
+}
+
+.btn-success:hover {
+    background: #45a049 !important;
+}
+
+.btn-primary {
+    background: #2196F3 !important;
+    border-color: #2196F3 !important;
+}
+
+.btn-secondary {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.editor-controls select {
+    padding: 4px 8px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    background: #3c3c3c;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+/* Monaco Editor Container */
+.monaco-container {
+    flex: 1;
+    overflow: hidden;
+    border: none;
+}
+
+/* ================================
+   OUTPUT PANEL (RIGHT)
+   ================================ */
+.output-panel {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    background: #252526;
+}
+
+.code-output {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    background: #1e1e1e;
+}
+
+.output-placeholder {
+    color: #6a6a6a;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.output-line {
+    margin-bottom: 4px;
+    color: #e0e0e0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Error Panel */
+.error-panel {
+    background: #3c1e1e;
+    border-top: 1px solid #ff6b6b;
+    padding: 12px 16px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.error-header {
+    font-weight: 600;
+    color: #ff6b6b;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.error-content {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 12px;
+    color: #ffb3b3;
+    white-space: pre-wrap;
+}
+
+/* ================================
+   EXAM FOOTER
+   ================================ */
+.exam-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #2d2d2d;
+    border-top: 1px solid #404040;
+    flex-shrink: 0;
+    height: 50px;
+}
+
+.exam-status {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: #b0b0b0;
+}
+
+.status-connected {
+    color: #4CAF50;
+}
+
+.status-disconnected {
+    color: #ff6b6b;
+}
+
+.btn-danger {
+    padding: 10px 20px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #ff3838;
+    transform: translateY(-1px);
+}
+
+/* ================================
+   VIOLATION SCREEN (RED)
+   ================================ */
+.violation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(220, 53, 69, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+}
+
+.violation-dialog {
+    background: #dc3545;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    color: white;
+}
+
+.violation-header {
+    margin-bottom: 30px;
+}
+
+.violation-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.violation-dialog h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+    color: white;
+}
+
+.violation-body {
+    margin-bottom: 30px;
+}
+
+.violation-message {
+    font-size: 18px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: white;
+}
+
+.violation-warning {
+    font-size: 14px;
+    opacity: 0.9;
+    color: white;
+}
+
+.violation-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-warning {
+    padding: 15px 30px;
+    background: #ffc107;
+    color: #212529;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+.violation-actions .btn-danger {
+    padding: 15px 30px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    font-size: 16px;
+}
+
+.violation-actions .btn-danger:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ================================
+   LOADING SCREEN
+   ================================ */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999998;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-content p {
+    font-size: 16px;
+    color: #e0e0e0;
+}
+
+/* ================================
+   RESPONSIVE DESIGN
+   ================================ */
+@media screen and (max-width: 1024px) {
+    .exam-content {
+        flex-direction: column;
+    }
+
+    .editor-panel {
+        border-right: none;
+        border-bottom: 1px solid #404040;
+        flex: 1;
+    }
+
+    .output-panel {
+        width: 100%;
+        height: 300px;
+    }
+
+    .student-info {
+        gap: 15px;
+        font-size: 12px;
+    }
+
+    .exam-timer {
+        font-size: 16px;
+    }
 }
 
 @media screen and (max-width: 768px) {
-    :fullscreen {
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
+    .login-form {
+        width: 90%;
+        padding: 30px;
     }
+
+    .exam-header {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .editor-controls {
+        flex-wrap: wrap;
+    }
+
+    .exam-footer {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+    }
+
+    .violation-dialog {
+        padding: 30px;
+    }
+
+    .violation-actions {
+        flex-direction: column;
+    }
+}
+
+/* ================================
+   ANTI-CHEAT DETECTION STATES
+   ================================ */
+.exam-container.violation-detected {
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+.exam-container.focus-lost {
+    opacity: 0.7;
+}
+
+/* ================================
+   UTILITY CLASSES
+   ================================ */
+.hidden {
+    display: none !important;
+}
+
+.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-danger {
+    color: #ff6b6b;
+}
+
+.text-success {
+    color: #4CAF50;
+}
+
+.text-warning {
+    color: #ffc107;
 }

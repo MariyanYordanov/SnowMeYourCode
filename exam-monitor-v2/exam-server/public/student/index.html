@@ -7,9 +7,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Programming Exam System</title>
 
-    <!-- External CSS -->
-    <link rel="stylesheet" href="css/student.css">
-    <link rel="stylesheet" href="css/editor.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="student.css">
+
+    <!-- Monaco Editor (CDN) -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    </script>
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -22,22 +27,20 @@
             <h2>🎓 Вход в изпита по програмиране</h2>
 
             <div class="form-group">
-                <input type="text" id="student-name" class="form-control" placeholder="Име и фамилия" autocomplete="off"
-                    required>
+                <input type="text" id="student-name" placeholder="Име и фамилия" required>
             </div>
 
             <div class="form-group">
-                <select id="student-class" class="form-control" required>
+                <select id="student-class" required>
                     <option value="">Изберете клас</option>
                     <option value="11А">11А</option>
                     <option value="11Б">11Б</option>
-                    <option value="11В">11В</option>
                     <option value="12А">12А</option>
                     <option value="12Б">12Б</option>
                 </select>
             </div>
 
-            <button id="login-btn" class="btn btn-primary btn-block">
+            <button id="login-btn" class="btn-primary">
                 🚀 Влез в изпита
             </button>
 
@@ -45,96 +48,117 @@
         </div>
     </div>
 
-    <!-- Exam Container -->
+    <!-- Fullscreen Exam Container -->
     <div id="exam-container" class="exam-container" style="display: none;">
-        <!-- Exam Header -->
+        <!-- Header -->
         <div class="exam-header">
             <div class="student-info">
-                <span class="info-label">Студент:</span>
-                <span id="student-name-display" class="info-value"></span>
-                <span class="info-separator">|</span>
-                <span class="info-label">Клас:</span>
-                <span id="student-class-display" class="info-value"></span>
-                <span class="info-separator">|</span>
-                <span class="info-label">ID:</span>
-                <span id="session-id-display" class="info-value"></span>
+                <span>Студент: <strong id="student-name-display"></strong></span>
+                <span>Клас: <strong id="student-class-display"></strong></span>
+                <span>ID: <strong id="session-id-display"></strong></span>
             </div>
 
-            <div id="exam-timer" class="exam-timer">
+            <div class="exam-timer">
                 <span class="timer-icon">⏱️</span>
                 <span id="timer-display">03:00:00</span>
             </div>
         </div>
 
-        <!-- Main Exam Content -->
+        <!-- Main Content -->
         <div class="exam-content">
-            <!-- Code Editor Section -->
-            <div class="editor-section">
-                <div class="editor-header">
+            <!-- Code Editor Panel -->
+            <div class="editor-panel">
+                <div class="panel-header">
                     <h3>📝 Код Редактор</h3>
                     <div class="editor-controls">
-                        <button id="run-code-btn" class="btn btn-success">
-                            ▶️ Run
-                        </button>
-                        <button id="format-code-btn" class="btn btn-primary">
-                            🎨 Format
-                        </button>
-                        <button id="save-code-btn" class="btn btn-secondary">
-                            💾 Save
-                        </button>
+                        <button id="run-code-btn" class="btn-success">▶️ Стартирай</button>
+                        <button id="format-code-btn" class="btn-primary">🎨 Форматирай</button>
+                        <button id="save-code-btn" class="btn-secondary">💾 Запази</button>
+                        <select id="theme-selector">
+                            <option value="vs-dark">Dark</option>
+                            <option value="vs">Light</option>
+                            <option value="hc-black">High Contrast</option>
+                        </select>
                     </div>
                 </div>
 
-                <textarea id="code-editor" class="code-editor" placeholder="// Напишете вашият код тук..."
-                    spellcheck="false"></textarea>
+                <!-- Monaco Editor -->
+                <div id="monaco-editor" class="monaco-container"></div>
             </div>
 
-            <!-- Output Section -->
-            <div class="output-section">
-                <div class="output-header">
+            <!-- Output Panel -->
+            <div class="output-panel">
+                <div class="panel-header">
                     <h3>🖥️ Console Output</h3>
-                    <button id="clear-output-btn" class="btn btn-secondary">
-                        🗑️ Clear
-                    </button>
+                    <button id="clear-output-btn" class="btn-secondary">🗑️ Изчисти</button>
                 </div>
 
                 <div id="code-output" class="code-output">
                     <div class="output-placeholder">
-                        Your code output will appear here...
-
-                        Use console.log() to display results.
+                        Резултатът от вашия код ще се покаже тук...
                     </div>
+                </div>
+
+                <!-- Error Panel -->
+                <div id="error-panel" class="error-panel" style="display: none;">
+                    <div class="error-header">❌ Грешка в кода</div>
+                    <div id="error-content" class="error-content"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Exam Footer -->
+        <!-- Footer -->
         <div class="exam-footer">
             <div class="exam-status">
-                <span id="last-saved-display" class="status-item">
-                    Last saved: Never
-                </span>
-                <span class="status-separator">|</span>
-                <span id="connection-status" class="status-item">
-                    <span class="connection-dot"></span>
-                    Connected
-                </span>
+                <span id="last-saved">Последно запазване: Никога</span>
+                <span id="connection-status" class="status-connected">● Свързан</span>
+                <span id="fullscreen-status">🔒 Fullscreen активен</span>
             </div>
 
-            <button id="finish-exam-btn" class="btn btn-danger">
-                🏁 Finish Exam
+            <button id="finish-exam-btn" class="btn-danger">
+                🏁 Приключи изпита
             </button>
         </div>
     </div>
 
-    <!-- Error Container -->
-    <div id="error-container" class="error-message" style="display: none;"></div>
+    <!-- Red Violation Screen -->
+    <div id="violation-screen" class="violation-overlay" style="display: none;">
+        <div class="violation-dialog">
+            <div class="violation-header">
+                <div class="violation-icon">🚫</div>
+                <h2>ЗАСЕЧЕНО НАРУШЕНИЕ</h2>
+            </div>
 
-    <!-- Anti-cheat Warning Overlay (hidden by default) -->
-    <div id="antiCheatOverlay" class="anti-cheat-overlay" style="display: none;"></div>
+            <div class="violation-body">
+                <p id="violation-reason" class="violation-message">
+                    Причина за нарушението ще се покаже тук
+                </p>
+                <p class="violation-warning">
+                    Всички действия са регистрирани.
+                </p>
+            </div>
 
-    <!-- Legacy AntiCheat (temporary until full migration) -->
-    <script src="js/AntiCheat.js"></script>
+            <div class="violation-actions">
+                <button id="continue-exam-btn" class="btn-warning">
+                    ⚠️ Продължи изпита
+                </button>
+                <button id="exit-violation-btn" class="btn-danger">
+                    🚪 Напусни изпита
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Зареждане на изпита...</p>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script src="student.js"></script>
 </body>
 
 </html>
