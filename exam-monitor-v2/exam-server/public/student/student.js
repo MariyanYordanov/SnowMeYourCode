@@ -122,21 +122,75 @@ function showLoginStatus(message, type) {
 }
 
 // ================================
-// SOCKET.IO COMMUNICATION
+// SOCKET.IO COMMUNICATION - FIXED VERSION
 // ================================
 function setupSocket() {
     try {
-        // Check if Socket.io is loaded
-        if (typeof io === 'undefined') {
-            console.warn('⚠️ Socket.io not loaded yet, retrying...');
+        console.log('🔌 Attempting to setup Socket.io...');
+        console.log('Document ready state:', document.readyState);
+        console.log('Available objects:', {
+            'typeof io': typeof io,
+            'window.io': typeof window.io,
+            'globalThis.io': typeof globalThis.io
+        });
+
+        // Wait for document to be fully loaded
+        if (document.readyState !== 'complete') {
+            console.log('⏳ Waiting for document to load completely...');
+            window.addEventListener('load', setupSocket, { once: true });
+            return;
+        }
+
+        // Multiple ways to access Socket.io
+        let socketIO = null;
+
+        // Try different global scopes
+        if (typeof io !== 'undefined') {
+            socketIO = io;
+            console.log('✅ Found io in global scope');
+        } else if (typeof window.io !== 'undefined') {
+            socketIO = window.io;
+            console.log('✅ Found io in window scope');
+        } else if (typeof globalThis.io !== 'undefined') {
+            socketIO = globalThis.io;
+            console.log('✅ Found io in globalThis scope');
+        } else if (typeof self.io !== 'undefined') {
+            socketIO = self.io;
+            console.log('✅ Found io in self scope');
+        }
+
+        // If still not found, check if script is loaded but not executed yet
+        if (!socketIO) {
+            const socketScript = document.querySelector('script[src*="socket.io"]');
+            if (socketScript) {
+                console.log('📜 Socket.io script found, but not ready. Retrying in 200ms...');
+                setTimeout(setupSocket, 200);
+                return;
+            } else {
+                console.error('❌ No Socket.io script found in DOM');
+                // Try to load manually as fallback
+                loadSocketIOManually();
+                return;
+            }
+        }
+
+        // Validate that socketIO is actually a function
+        if (typeof socketIO !== 'function') {
+            console.error('❌ Socket.io found but not a function:', typeof socketIO);
             setTimeout(setupSocket, 500);
             return;
         }
 
-        const socket = io({
+        console.log('🚀 Initializing Socket.io connection...');
+
+        const socket = socketIO({
             transports: ['websocket', 'polling'],
             timeout: 10000,
-            forceNew: true
+            forceNew: true,
+            autoConnect: true,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
         });
 
         window.ExamApp.socket = socket;
@@ -159,9 +213,105 @@ function setupSocket() {
         // Anti-cheat events
         socket.on('anti-cheat-warning', handleAntiCheatWarning);
 
-        console.log('✅ Socket.io initialized');
+        console.log('✅ Socket.io initialized successfully');
+
+        // Test connection immediately
+        socket.emit('test-connection', { timestamp: Date.now() });
+
     } catch (error) {
-        console.error('❌ Socket initialization failed:', error);
+        console.error('❌ Socket setup failed:', error);
+        console.log('🔄 Retrying in 1 second...');
+        setTimeout(setupSocket, 1000);
+    }
+}
+
+// Manual Socket.io loading as fallback
+function loadSocketIOManually() {
+    console.log('🔧 Loading Socket.io manually...');
+
+    const script = document.createElement('script');
+    script.src = '/socket.io/socket.io.js';
+    script.async = true;
+
+    script.onload = function () {
+        console.log('📦 Socket.io script loaded manually');
+        // Wait a bit for the script to execute
+        setTimeout(setupSocket, 100);
+    };
+
+    script.onerror = function (error) {
+        console.error('❌ Failed to load Socket.io manually:', error);
+        // Try CDN fallback
+        loadSocketIOFromCDN();
+    };
+
+    document.head.appendChild(script);
+}
+
+// CDN fallback
+function loadSocketIOFromCDN() {
+    console.log('🌐 Trying Socket.io from CDN...');
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+    script.async = true;
+
+    script.onload = function () {
+        console.log('📦 Socket.io loaded from CDN');
+        setTimeout(setupSocket, 100);
+    };
+
+    script.onerror = function (error) {
+        console.error('❌ Failed to load Socket.io from CDN:', error);
+        showError('Неуспешно зареждане на Socket.io. Моля опитайте отново.');
+    };
+
+    document.head.appendChild(script);
+}
+
+// ================================
+// IMPROVED INITIALIZATION
+// ================================
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 DOM Content Loaded - Initializing Student Exam System...');
+
+    // Wait for all scripts to load
+    if (document.readyState === 'loading') {
+        console.log('⏳ Document still loading, waiting...');
+        document.addEventListener('readystatechange', function () {
+            if (document.readyState === 'interactive' || document.readyState === 'complete') {
+                console.log('📄 Document ready state:', document.readyState);
+                initializeAppSafely();
+            }
+        });
+    } else {
+        initializeAppSafely();
+    }
+});
+
+// Safe initialization with proper timing
+function initializeAppSafely() {
+    console.log('🎯 Starting safe initialization...');
+
+    try {
+        // Setup core components first
+        setupLoginForm();
+        setupAntiCheat();
+        setupFullscreenMonitoring();
+        setupExamControls();
+
+        console.log('✅ Core components initialized');
+
+        // Setup Socket.io with delay to ensure scripts are ready
+        setTimeout(() => {
+            setupSocket();
+        }, 100);
+
+        console.log('✅ Student Exam System initialization started');
+
+    } catch (error) {
+        console.error('❌ Failed to initialize app:', error);
+        showError('Грешка при зареждане на системата');
     }
 }
 
