@@ -1,7 +1,7 @@
 /**
- * DetectionEngine - Core detection algorithms for anti-cheat system
- * Handles keyboard, mouse, focus, and fullscreen detection
- * ПОПРАВЕНО: Added Alt+F4 + Escape support + Critical violation callback
+ * DetectionEngine - NUCLEAR DETECTION SYSTEM
+ * Aggressive detection for all escape attempts
+ * ZERO TOLERANCE - IMMEDIATE DETECTION AND TERMINATION
  */
 export class DetectionEngine {
     constructor(violationTracker, config = {}) {
@@ -9,21 +9,23 @@ export class DetectionEngine {
         this.isActive = false;
         this.fullscreenMode = false;
 
-        // НОВО: Callback за критични violations към AntiCheatCore
+        // NUCLEAR: Critical violation callback
         this.onCriticalViolation = null;
 
         this.config = {
-            // Detection settings
+            // NUCLEAR Detection settings - ALL ENABLED
             enableKeyboardDetection: true,
             enableFocusDetection: true,
             enableFullscreenDetection: true,
             enableClipboardDetection: true,
             enableContextMenuDetection: true,
+            enableMouseDetection: true,          // ← НОВО
+            enableAdvancedDetection: true,       // ← НОВО
 
-            // Tolerance settings
-            focusLossGracePeriod: 3000, // 3 seconds
-            focusLossMinDuration: 2000, // Must be lost for 2+ seconds
-            shortFocusLossIgnore: 1000, // Ignore losses under 1 second
+            // ZERO tolerance settings
+            focusLossGracePeriod: 0,            // ← NO grace period
+            focusLossMinDuration: 500,          // ← Very sensitive
+            shortFocusLossIgnore: 0,            // ← Detect everything
 
             // Override with provided config
             ...config
@@ -34,113 +36,110 @@ export class DetectionEngine {
             lastFocusTime: Date.now(),
             focusLossStartTime: null,
             isDocumentHidden: false,
-            eventListeners: [] // Track for cleanup
+            eventListeners: [], // Track for cleanup
+            mouseInDangerZone: false,
+            consecutiveDangerZoneEvents: 0
         };
 
-        console.log('🔍 DetectionEngine initialized');
+        console.log('💀 DetectionEngine initialized - NUCLEAR DETECTION MODE');
     }
 
     /**
-     * НОВО: Set callback for critical violations
+     * Set callback for critical violations
      */
     setCriticalViolationCallback(callback) {
         this.onCriticalViolation = callback;
     }
 
     /**
-     * Activate detection systems
+     * Activate NUCLEAR detection systems
      */
     activate() {
         if (this.isActive) return;
 
-        console.log('🚫 Activating detection systems...');
+        console.log('💀 ACTIVATING NUCLEAR DETECTION SYSTEMS...');
         this.isActive = true;
 
-        // Setup detection systems with delay for stability
-        setTimeout(() => {
-            if (this.config.enableKeyboardDetection) {
-                this.setupKeyboardDetection();
-            }
-            if (this.config.enableFocusDetection) {
-                this.setupFocusDetection();
-            }
-            if (this.config.enableFullscreenDetection) {
-                this.setupFullscreenDetection();
-            }
-            if (this.config.enableClipboardDetection) {
-                this.setupClipboardDetection();
-            }
-            if (this.config.enableContextMenuDetection) {
-                this.setupContextMenuDetection();
-            }
+        // Setup ALL detection systems immediately
+        this.setupNuclearKeyboardDetection();
+        this.setupNuclearMouseDetection();
+        this.setupAggressiveFocusDetection();
+        this.setupFullscreenDetection();
+        this.setupClipboardDetection();
+        this.setupContextMenuDetection();
+        this.setupAdvancedThreatDetection();
 
-            console.log('✅ Detection systems activated');
-        }, 1000);
+        console.log('💀💀💀 NUCLEAR DETECTION SYSTEMS ACTIVE - ZERO TOLERANCE');
     }
 
     /**
-     * Deactivate detection systems
+     * NUCLEAR: Keyboard detection - IMMEDIATE TERMINATION
      */
-    deactivate() {
-        if (!this.isActive) return;
+    setupNuclearKeyboardDetection() {
+        console.log('⌨️ NUCLEAR Keyboard detection active');
 
-        console.log('🔓 Deactivating detection systems...');
-        this.isActive = false;
-
-        // Remove all event listeners
-        this.state.eventListeners.forEach(({ element, event, handler, options }) => {
-            element.removeEventListener(event, handler, options);
-        });
-        this.state.eventListeners = [];
-
-        console.log('🔓 Detection systems deactivated');
-    }
-
-    /**
-     * Setup keyboard detection
-     */
-    /**
- * Setup keyboard detection - ПОПРАВЕНО: Правилни типове за различни клавиши
- */
-    setupKeyboardDetection() {
-        const keydownHandler = (e) => {
+        const nuclearKeyboardHandler = (e) => {
             if (!this.isActive) return;
 
-            // ПОПРАВЕНО: Разграничаваме типовете на критичните клавиши
-            const criticalKeyType = this.getCriticalKeyType(e);
-            if (criticalKeyType) {
+            // Check for NUCLEAR-level violations FIRST
+            const nuclearKeyType = this.getNuclearKeyType(e);
+            if (nuclearKeyType) {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
 
-                // НОВО: Използваме правилния тип вместо винаги 'windowsKey'
-                this.handleCriticalDetection(criticalKeyType, {
+                // IMMEDIATE TERMINATION for nuclear keys
+                this.handleNuclearDetection(nuclearKeyType, {
                     key: e.key,
                     code: e.code,
-                    metaKey: e.metaKey,
-                    altKey: e.altKey,
                     ctrlKey: e.ctrlKey,
-                    shiftKey: e.shiftKey
+                    altKey: e.altKey,
+                    shiftKey: e.shiftKey,
+                    metaKey: e.metaKey,
+                    target: e.target.id || 'unknown',
+                    timestamp: Date.now()
                 });
+
                 return false;
             }
 
-            // System shortcuts
-            if (this.isSystemShortcut(e)) {
+            // Check for dangerous shortcuts (also immediate termination)
+            if (this.isDangerousShortcut(e)) {
                 e.preventDefault();
-                this.handleDetection('systemShortcut', {
-                    combination: this.getKeyComboName(e),
-                    blocked: true
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                this.handleNuclearDetection('dangerous_shortcut', {
+                    key: e.key,
+                    code: e.code,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    shiftKey: e.shiftKey,
+                    metaKey: e.metaKey,
+                    shortcut: this.getShortcutName(e),
+                    target: e.target.id || 'unknown'
                 });
+
                 return false;
             }
 
-            // Suspicious combinations (block but don't penalize heavily)
-            if (this.isSuspiciousKeyCombo(e)) {
+            // Block clipboard outside code editor
+            const isCodeEditor = e.target && (
+                e.target.id === 'code-editor' ||
+                e.target.closest('#code-editor')
+            );
+
+            if (!isCodeEditor && this.isClipboardOperation(e)) {
                 e.preventDefault();
-                this.handleDetection('suspiciousKey', {
-                    combination: this.getKeyComboName(e),
-                    blocked: true
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                this.handleNuclearDetection('unauthorized_clipboard', {
+                    key: e.key,
+                    target: e.target.id || 'unknown',
+                    isCodeEditor: false
                 });
+
                 return false;
             }
         };
@@ -148,316 +147,237 @@ export class DetectionEngine {
         this.addEventListenerWithTracking(
             document,
             'keydown',
-            keydownHandler,
+            nuclearKeyboardHandler,
             { capture: true, passive: false }
         );
 
-        console.log('⌨️ Keyboard detection active');
+        console.log('💀 NUCLEAR keyboard protection: ACTIVE');
     }
 
     /**
-     * НОВО: Get critical key type - разграничава различните критични клавиши
+     * Get nuclear-level key violations
      */
-    getCriticalKeyType(e) {
-        // Direct Windows key detection
+    getNuclearKeyType(e) {
+        // Direct Windows/Meta key detection
         if (['MetaLeft', 'MetaRight', 'OSLeft', 'OSRight'].includes(e.code) ||
-            ['Meta', 'OS'].includes(e.key) ||
-            e.metaKey) {
+            ['Meta', 'OS'].includes(e.key) || e.metaKey) {
             return 'windowsKey';
         }
 
-        // НОВО: Escape key (отделен тип)
+        // Escape key (NUCLEAR)
         if (e.code === 'Escape' || e.key === 'Escape') {
             return 'escapeKey';
         }
 
-        // НОВО: Alt+F4 (отделен тип)
+        // Alt+F4 (NUCLEAR)
         if (e.altKey && e.code === 'F4') {
             return 'altF4Key';
         }
 
-        // Alt+Tab (system switching)
+        // Alt+Tab (NUCLEAR)
         if (e.altKey && e.code === 'Tab') {
             return 'altTabKey';
         }
 
-        // Ctrl+Alt+Del
+        // Ctrl+Alt+Del (NUCLEAR)
         if (e.ctrlKey && e.altKey && e.code === 'Delete') {
             return 'ctrlAltDelKey';
         }
 
-        // Ctrl+Shift+Esc (Task Manager)
+        // Ctrl+Shift+Esc (Task Manager) (NUCLEAR)
         if (e.ctrlKey && e.shiftKey && e.code === 'Escape') {
             return 'taskManagerKey';
         }
 
-        return null; // Not a critical key
-    }
-
-
-    /**
-     * НОВО: Setup mouse detection за блокиране на X бутона
-     */
-    setupMouseDetection() {
-        // Block mouse movements near top of screen (where X button is)
-        const mouseMoveHandler = (e) => {
-            if (!this.isActive) return;
-
-            // Check if mouse is in danger zone (top 50px of screen)
-            if (e.clientY <= 50) {
-                this.handleDetection('mouseDangerZone', {
-                    x: e.clientX,
-                    y: e.clientY,
-                    timestamp: Date.now()
-                });
-            }
-        };
-
-        // Block clicks in top area completely
-        const clickHandler = (e) => {
-            if (!this.isActive) return;
-
-            // Block any clicks in top 100px of screen
-            if (e.clientY <= 100) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-
-                this.handleCriticalDetection('topAreaClick', {
-                    x: e.clientX,
-                    y: e.clientY,
-                    button: e.button,
-                    timestamp: Date.now()
-                });
-                return false;
-            }
-        };
-
-        // Also prevent context menu in top area
-        const contextMenuHandler = (e) => {
-            if (!this.isActive) return;
-
-            if (e.clientY <= 100) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                this.handleCriticalDetection('topAreaRightClick', {
-                    x: e.clientX,
-                    y: e.clientY,
-                    timestamp: Date.now()
-                });
-                return false;
-            }
-        };
-
-        // Add all mouse event listeners
-        this.addEventListenerWithTracking(document, 'mousemove', mouseMoveHandler, { passive: true });
-        this.addEventListenerWithTracking(document, 'click', clickHandler, { capture: true, passive: false });
-        this.addEventListenerWithTracking(document, 'mousedown', clickHandler, { capture: true, passive: false });
-        this.addEventListenerWithTracking(document, 'contextmenu', contextMenuHandler, { capture: true, passive: false });
-
-        console.log('🖱️ Mouse protection active');
+        return null;
     }
 
     /**
-     * ПОПРАВЕНО: Activate detection systems - добавяме mouse detection
+     * Check for dangerous shortcuts
      */
-    activate() {
-        if (this.isActive) return;
+    isDangerousShortcut(e) {
+        return (
+            // Browser controls
+            (e.ctrlKey && ['KeyW', 'KeyT', 'KeyN', 'KeyR'].includes(e.code)) ||
+            (e.ctrlKey && e.shiftKey && ['KeyT', 'KeyN'].includes(e.code)) ||
 
-        console.log('🚫 Activating detection systems...');
-        this.isActive = true;
+            // Developer tools
+            (e.code === 'F12') ||
+            (e.ctrlKey && e.shiftKey && ['KeyI', 'KeyJ', 'KeyC'].includes(e.code)) ||
 
-        // Setup detection systems with delay for stability
-        setTimeout(() => {
-            if (this.config.enableKeyboardDetection) {
-                this.setupKeyboardDetection();
-            }
-            if (this.config.enableFocusDetection) {
-                this.setupFocusDetection();
-            }
-            if (this.config.enableFullscreenDetection) {
-                this.setupFullscreenDetection();
-            }
-            if (this.config.enableClipboardDetection) {
-                this.setupClipboardDetection();
-            }
-            if (this.config.enableContextMenuDetection) {
-                this.setupContextMenuDetection();
-            }
+            // Address bar
+            (e.ctrlKey && e.code === 'KeyL') ||
 
-            // НОВО: Добавяме mouse detection
-            this.setupMouseDetection();
-
-            console.log('✅ Detection systems activated');
-        }, 1000);
-    }
-
-    /**
-     * Check if event is Windows key related - ПОПРАВЕНО: Added Alt+F4 + Escape
-     */
-    isWindowsKeyEvent(e) {
-        // Direct Windows key detection
-        if (['MetaLeft', 'MetaRight', 'OSLeft', 'OSRight'].includes(e.code) ||
-            ['Meta', 'OS'].includes(e.key) ||
-            e.metaKey) {
-            return true;
-        }
-
-        // НОВО: Escape key (критичен като Windows key)
-        if (e.code === 'Escape' || e.key === 'Escape') {
-            return true;
-        }
-
-        // НОВО: Alt+F4 (критичен като Windows key)
-        if (e.altKey && e.code === 'F4') {
-            return true;
-        }
-
-        // Alt+Tab (system switching)
-        if (e.altKey && e.code === 'Tab') {
-            return true;
-        }
-
-        // Ctrl+Alt+Del
-        if (e.ctrlKey && e.altKey && e.code === 'Delete') {
-            return true;
-        }
-
-        // Ctrl+Shift+Esc (Task Manager)
-        if (e.ctrlKey && e.shiftKey && e.code === 'Escape') {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if event is system shortcut
-     */
-    isSystemShortcut(e) {
-        const criticalShortcuts = [
-            { code: 'F11' }, // Toggle fullscreen
-            { ctrl: true, code: 'KeyW' }, // Close tab
-            { ctrl: true, code: 'KeyT' }, // New tab
-            { ctrl: true, code: 'KeyN' } // New window
-        ];
-
-        return criticalShortcuts.some(shortcut =>
-            this.matchesShortcut(e, shortcut)
+            // Other dangerous F-keys
+            (['F1', 'F5', 'F6', 'F11'].includes(e.code))
         );
     }
 
     /**
-     * Check if suspicious but not critical
+     * Get shortcut name for reporting
      */
-    isSuspiciousKeyCombo(e) {
-        // F-keys (except allowed ones)
-        if (e.code.startsWith('F') && !['F1', 'F5'].includes(e.code)) {
-            return true;
-        }
-
-        // Developer shortcuts
-        if (e.code === 'F12' ||
-            (e.ctrlKey && e.shiftKey && ['KeyI', 'KeyJ', 'KeyC'].includes(e.code))) {
-            return true;
-        }
-
-        return false;
+    getShortcutName(e) {
+        if (e.ctrlKey && e.code === 'KeyW') return 'Ctrl+W';
+        if (e.ctrlKey && e.code === 'KeyT') return 'Ctrl+T';
+        if (e.ctrlKey && e.code === 'KeyR') return 'Ctrl+R';
+        if (e.ctrlKey && e.code === 'KeyL') return 'Ctrl+L';
+        if (e.code === 'F12') return 'F12';
+        if (e.ctrlKey && e.shiftKey && e.code === 'KeyI') return 'Ctrl+Shift+I';
+        return `${e.ctrlKey ? 'Ctrl+' : ''}${e.altKey ? 'Alt+' : ''}${e.shiftKey ? 'Shift+' : ''}${e.key}`;
     }
 
     /**
-     * НОВО: Handle critical detection (Windows key, Alt+F4, Escape)
+     * Check for clipboard operations
      */
-    handleCriticalDetection(type, data = {}) {
-        console.log(`🚨 CRITICAL Detection: ${type}`, data);
-
-        // Add violation through tracker
-        const result = this.violationTracker.addViolation(type, data);
-
-        // НОВО: Веднага извикваме callback към AntiCheatCore за warning dialog
-        if (this.onCriticalViolation && typeof this.onCriticalViolation === 'function') {
-            this.onCriticalViolation(type, data, result);
-        }
-
-        console.log(`📊 Critical Violation result:`, result);
-        return result;
+    isClipboardOperation(e) {
+        return e.ctrlKey && ['KeyC', 'KeyV', 'KeyX'].includes(e.code);
     }
 
     /**
-     * Handle regular detection event (non-critical)
+     * NUCLEAR: Mouse detection for browser chrome areas
      */
-    handleDetection(type, data = {}) {
-        console.log(`🚨 Detection: ${type}`, data);
+    setupNuclearMouseDetection() {
+        console.log('🖱️ NUCLEAR Mouse detection active');
 
-        // Add violation through tracker
-        const result = this.violationTracker.addViolation(type, data);
+        // Define danger zones (browser chrome areas)
+        const dangerZones = {
+            topChrome: { x: 0, y: 0, width: window.innerWidth, height: 100 },
+            rightEdge: { x: window.innerWidth - 50, y: 0, width: 50, height: window.innerHeight },
+            xButtonArea: { x: window.innerWidth - 80, y: 0, width: 80, height: 50 }
+        };
 
-        console.log(`📊 Violation result:`, result);
-        return result;
-    }
-
-    /**
-     * Setup focus detection
-     */
-    setupFocusDetection() {
-        // Window focus/blur events
-        const focusHandler = () => {
+        const nuclearMouseHandler = (e) => {
             if (!this.isActive) return;
 
-            this.state.lastFocusTime = Date.now();
+            const mousePos = { x: e.clientX, y: e.clientY };
 
-            // If we had a focus loss, calculate duration
-            if (this.state.focusLossStartTime) {
-                const duration = Date.now() - this.state.focusLossStartTime;
-                this.state.focusLossStartTime = null;
-
-                // Only report significant focus losses
-                if (duration >= this.config.focusLossMinDuration) {
-                    this.handleDetection('focusLoss', {
-                        duration,
-                        significant: true
-                    });
-                } else if (duration < this.config.shortFocusLossIgnore) {
-                    console.log(`👁️ Ignoring short focus loss: ${duration}ms`);
+            // Check if mouse is in any danger zone
+            for (const [zoneName, zone] of Object.entries(dangerZones)) {
+                if (this.isPointInZone(mousePos, zone)) {
+                    this.handleMouseDangerZone(zoneName, mousePos, e.type);
+                    break;
                 }
             }
-
-            console.log('👁️ Focus gained');
         };
+
+        const nuclearClickHandler = (e) => {
+            if (!this.isActive) return;
+
+            const mousePos = { x: e.clientX, y: e.clientY };
+
+            // IMMEDIATE TERMINATION for clicks in danger zones
+            for (const [zoneName, zone] of Object.entries(dangerZones)) {
+                if (this.isPointInZone(mousePos, zone)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+
+                    this.handleNuclearDetection('browser_chrome_click', {
+                        zone: zoneName,
+                        x: mousePos.x,
+                        y: mousePos.y,
+                        button: e.button,
+                        timestamp: Date.now()
+                    });
+
+                    return false;
+                }
+            }
+        };
+
+        // Track mouse movements and clicks
+        this.addEventListenerWithTracking(document, 'mousemove', nuclearMouseHandler, { passive: true });
+        this.addEventListenerWithTracking(document, 'click', nuclearClickHandler, { capture: true, passive: false });
+        this.addEventListenerWithTracking(document, 'mousedown', nuclearClickHandler, { capture: true, passive: false });
+
+        console.log('💀 NUCLEAR mouse protection: ACTIVE');
+    }
+
+    /**
+     * Check if point is in danger zone
+     */
+    isPointInZone(point, zone) {
+        return point.x >= zone.x &&
+            point.x <= zone.x + zone.width &&
+            point.y >= zone.y &&
+            point.y <= zone.y + zone.height;
+    }
+
+    /**
+     * Handle mouse in danger zone
+     */
+    handleMouseDangerZone(zoneName, mousePos, eventType) {
+        if (eventType === 'mousemove') {
+            this.state.consecutiveDangerZoneEvents++;
+
+            // If mouse stays in danger zone too long, trigger warning
+            if (this.state.consecutiveDangerZoneEvents > 10) {
+                this.handleDetection('mouseDangerZone', {
+                    zone: zoneName,
+                    x: mousePos.x,
+                    y: mousePos.y,
+                    consecutiveEvents: this.state.consecutiveDangerZoneEvents
+                });
+
+                this.state.consecutiveDangerZoneEvents = 0; // Reset counter
+            }
+        }
+    }
+
+    /**
+     * NUCLEAR: Aggressive focus detection
+     */
+    setupAggressiveFocusDetection() {
+        console.log('👁️ NUCLEAR Focus detection active');
 
         const blurHandler = () => {
             if (!this.isActive) return;
 
             this.state.focusLossStartTime = Date.now();
-            console.log('👁️ Focus lost - monitoring...');
+            console.warn('⚠️ FOCUS LOST - MONITORING...');
+
+            // Start monitoring for focus return
+            setTimeout(() => {
+                if (this.state.focusLossStartTime &&
+                    Date.now() - this.state.focusLossStartTime > this.config.focusLossMinDuration) {
+
+                    this.handleNuclearDetection('focusLoss', {
+                        duration: Date.now() - this.state.focusLossStartTime,
+                        timestamp: Date.now()
+                    });
+                }
+            }, this.config.focusLossMinDuration);
         };
 
-        // Document visibility events
+        const focusHandler = () => {
+            if (!this.isActive) return;
+
+            if (this.state.focusLossStartTime) {
+                const duration = Date.now() - this.state.focusLossStartTime;
+                console.log(`✅ Focus restored after ${duration}ms`);
+                this.state.focusLossStartTime = null;
+            }
+
+            this.state.lastFocusTime = Date.now();
+        };
+
+        // Page Visibility API for tab switching detection
         const visibilityHandler = () => {
             if (!this.isActive) return;
 
-            if (document.hidden && !this.state.isDocumentHidden) {
-                this.state.isDocumentHidden = true;
-
-                // Start monitoring duration
-                setTimeout(() => {
-                    if (this.state.isDocumentHidden) {
-                        this.handleDetection('documentHidden', {
-                            duration: 3000 // Minimum 3 seconds
-                        });
-                    }
-                }, 3000);
-            } else if (!document.hidden) {
-                this.state.isDocumentHidden = false;
+            if (document.hidden) {
+                this.handleNuclearDetection('tab_switch', {
+                    hidden: true,
+                    timestamp: Date.now()
+                });
             }
         };
 
-        this.addEventListenerWithTracking(window, 'focus', focusHandler);
-        this.addEventListenerWithTracking(window, 'blur', blurHandler);
-        this.addEventListenerWithTracking(document, 'visibilitychange', visibilityHandler);
+        this.addEventListenerWithTracking(window, 'blur', blurHandler, { passive: true });
+        this.addEventListenerWithTracking(window, 'focus', focusHandler, { passive: true });
+        this.addEventListenerWithTracking(document, 'visibilitychange', visibilityHandler, { passive: true });
 
-        console.log('👁️ Focus detection active');
+        console.log('💀 NUCLEAR focus detection: ACTIVE');
     }
 
     /**
@@ -467,20 +387,24 @@ export class DetectionEngine {
         const fullscreenHandler = () => {
             if (!this.isActive) return;
 
-            const isFullscreen = this.isDocumentInFullscreen();
+            const isFullscreen = !!(document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement);
 
             if (this.fullscreenMode && !isFullscreen) {
-                this.handleDetection('fullscreenExit', {
-                    timestamp: Date.now()
+                this.handleNuclearDetection('fullscreenExit', {
+                    timestamp: Date.now(),
+                    previousState: this.fullscreenMode
                 });
             }
+
+            this.fullscreenMode = isFullscreen;
         };
 
-        // Multiple event types for cross-browser compatibility
-        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
-            .forEach(eventName => {
-                this.addEventListenerWithTracking(document, eventName, fullscreenHandler);
-            });
+        this.addEventListenerWithTracking(document, 'fullscreenchange', fullscreenHandler, { passive: true });
+        this.addEventListenerWithTracking(document, 'webkitfullscreenchange', fullscreenHandler, { passive: true });
+        this.addEventListenerWithTracking(document, 'mozfullscreenchange', fullscreenHandler, { passive: true });
 
         console.log('🖥️ Fullscreen detection active');
     }
@@ -489,29 +413,33 @@ export class DetectionEngine {
      * Setup clipboard detection
      */
     setupClipboardDetection() {
-        const clipboardHandler = (e) => {
-            if (!this.isActive) return;
+        const clipboardEvents = ['copy', 'cut', 'paste'];
 
-            // Allow in code editor areas
-            if (this.isCodeEditorArea(e.target)) {
-                return; // Allow clipboard in editor
-            }
+        clipboardEvents.forEach(eventType => {
+            const handler = (e) => {
+                if (!this.isActive) return;
 
-            e.preventDefault();
-            this.handleDetection('clipboardAttempt', {
-                type: e.type,
-                blocked: true
-            });
-            return false;
-        };
+                const isCodeEditor = e.target && (
+                    e.target.id === 'code-editor' ||
+                    e.target.closest('#code-editor')
+                );
 
-        ['copy', 'cut', 'paste'].forEach(eventType => {
-            this.addEventListenerWithTracking(
-                document,
-                eventType,
-                clipboardHandler,
-                { capture: true, passive: false }
-            );
+                if (!isCodeEditor) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+
+                    this.handleNuclearDetection('unauthorized_clipboard', {
+                        type: eventType,
+                        target: e.target.id || 'unknown',
+                        timestamp: Date.now()
+                    });
+
+                    return false;
+                }
+            };
+
+            this.addEventListenerWithTracking(document, eventType, handler, { capture: true, passive: false });
         });
 
         console.log('📋 Clipboard detection active');
@@ -521,66 +449,90 @@ export class DetectionEngine {
      * Setup context menu detection
      */
     setupContextMenuDetection() {
-        const contextMenuHandler = (e) => {
+        const contextHandler = (e) => {
             if (!this.isActive) return;
 
-            // Allow in code editor areas
-            if (this.isCodeEditorArea(e.target)) {
-                return; // Allow right-click in editor
-            }
+            const isCodeEditor = e.target && (
+                e.target.id === 'code-editor' ||
+                e.target.closest('#code-editor')
+            );
 
-            e.preventDefault();
-            this.handleDetection('rightClick', {
-                target: e.target.tagName,
-                blocked: true
-            });
-            return false;
+            if (!isCodeEditor) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                this.handleNuclearDetection('unauthorized_context_menu', {
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: e.target.id || 'unknown',
+                    timestamp: Date.now()
+                });
+
+                return false;
+            }
         };
 
-        this.addEventListenerWithTracking(
-            document,
-            'contextmenu',
-            contextMenuHandler,
-            { capture: true, passive: false }
-        );
-
+        this.addEventListenerWithTracking(document, 'contextmenu', contextHandler, { capture: true, passive: false });
         console.log('🖱️ Context menu detection active');
     }
 
     /**
-     * Helper methods
+     * Setup advanced threat detection
      */
-    matchesShortcut(event, shortcut) {
-        return Object.keys(shortcut).every(key => {
-            if (key === 'code') return event.code === shortcut[key];
-            if (key === 'ctrl') return event.ctrlKey === shortcut[key];
-            if (key === 'alt') return event.altKey === shortcut[key];
-            if (key === 'shift') return event.shiftKey === shortcut[key];
-            return true;
-        });
+    setupAdvancedThreatDetection() {
+        // Detect attempts to open new windows/tabs
+        const openHandler = (e) => {
+            this.handleNuclearDetection('window_open_attempt', {
+                url: e.target?.href || 'unknown',
+                timestamp: Date.now()
+            });
+        };
+
+        // Override window.open
+        const originalOpen = window.open;
+        window.open = (...args) => {
+            this.handleNuclearDetection('window_open_blocked', {
+                arguments: args,
+                timestamp: Date.now()
+            });
+            return null; // Block the operation
+        };
+
+        console.log('🔍 Advanced threat detection active');
     }
 
-    getKeyComboName(e) {
-        const parts = [];
-        if (e.ctrlKey) parts.push('Ctrl');
-        if (e.altKey) parts.push('Alt');
-        if (e.shiftKey) parts.push('Shift');
-        if (e.metaKey) parts.push('Win');
-        parts.push(e.code);
-        return parts.join('+');
+    /**
+     * NUCLEAR: Handle nuclear-level detection (immediate termination)
+     */
+    handleNuclearDetection(type, data = {}) {
+        console.error(`💀💀💀 NUCLEAR DETECTION: ${type}`, data);
+
+        // Add violation through tracker
+        const result = this.violationTracker.addViolation(type, data);
+
+        // IMMEDIATE callback to AntiCheatCore for termination
+        if (this.onCriticalViolation && typeof this.onCriticalViolation === 'function') {
+            this.onCriticalViolation(type, data, result);
+        }
+
+        console.error(`💀 NUCLEAR VIOLATION LOGGED:`, result);
+        return result;
     }
 
-    isDocumentInFullscreen() {
-        return !!(document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement);
+    /**
+     * Handle regular detection event (now also nuclear)
+     */
+    handleDetection(type, data = {}) {
+        console.warn(`🚨 Detection: ${type}`, data);
+
+        // In nuclear mode, even regular detections become critical
+        return this.handleNuclearDetection(type, data);
     }
 
-    isCodeEditorArea(element) {
-        return element.closest('#code-editor, textarea, input[type="text"], .code-output');
-    }
-
+    /**
+     * Add event listener with tracking for cleanup
+     */
     addEventListenerWithTracking(element, event, handler, options = {}) {
         element.addEventListener(event, handler, options);
         this.state.eventListeners.push({ element, event, handler, options });
@@ -595,11 +547,22 @@ export class DetectionEngine {
     }
 
     /**
-     * Update configuration
+     * Deactivate detection systems
      */
-    updateConfig(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-        console.log('⚙️ DetectionEngine configuration updated');
+    deactivate() {
+        if (!this.isActive) return;
+
+        console.log('🔓 Deactivating nuclear detection systems...');
+
+        // Remove all event listeners
+        this.state.eventListeners.forEach(({ element, event, handler, options }) => {
+            element.removeEventListener(event, handler, options);
+        });
+
+        this.state.eventListeners = [];
+        this.isActive = false;
+
+        console.log('✅ Nuclear detection systems deactivated');
     }
 
     /**
@@ -609,12 +572,9 @@ export class DetectionEngine {
         return {
             isActive: this.isActive,
             fullscreenMode: this.fullscreenMode,
-            config: { ...this.config },
-            state: {
-                lastFocusTime: this.state.lastFocusTime,
-                isDocumentHidden: this.state.isDocumentHidden,
-                eventListenersCount: this.state.eventListeners.length
-            }
+            eventListeners: this.state.eventListeners.length,
+            lastFocusTime: this.state.lastFocusTime,
+            consecutiveDangerZoneEvents: this.state.consecutiveDangerZoneEvents
         };
     }
 }

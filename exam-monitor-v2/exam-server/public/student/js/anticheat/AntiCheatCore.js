@@ -1,6 +1,7 @@
 /**
- * AntiCheatCore - Main coordinator for anti-cheat system
- * Orchestrates all anti-cheat modules and provides unified API
+ * AntiCheatCore - NUCLEAR ZERO TOLERANCE VERSION
+ * Main coordinator for anti-cheat system
+ * IMMEDIATE TERMINATION - NO WARNINGS - NO MERCY
  */
 export class AntiCheatCore {
     constructor(socket, sessionId, config = {}) {
@@ -9,8 +10,8 @@ export class AntiCheatCore {
         this.isActive = false;
         this.fullscreenMode = false;
         this.devToolsWarned = false;
-        this.devToolsDetected = false; // За предотвратяване на множествени devTools детекции
-        this.fullscreenViolationDetected = false; // За предотвратяване на множествени fullscreen детекции
+        this.devToolsDetected = false;
+        this.fullscreenViolationDetected = false;
 
         // Will be initialized in setup
         this.violationTracker = null;
@@ -22,19 +23,21 @@ export class AntiCheatCore {
         this.monitoringInterval = null;
         this.heartbeatInterval = null;
 
-        // Default configuration
+        // NUCLEAR CONFIGURATION - ZERO TOLERANCE
         this.config = {
-            enableAutoWarnings: true,
+            enableAutoWarnings: false,           // ← DISABLED - No warnings!
             enableTeacherNotifications: true,
             logToConsole: true,
+            zeroToleranceMode: true,             // ← НОВO - Nuclear mode
+            immediateTermination: true,          // ← НОВO - No attempts allowed
             ...config
         };
 
-        console.log('🛡️ AntiCheatCore initialized');
+        console.log('💀 AntiCheatCore initialized - NUCLEAR ZERO TOLERANCE MODE');
     }
 
     /**
-     * Initialize all anti-cheat modules - ПОПРАВЕНО: Callback integration
+     * Initialize all anti-cheat modules
      */
     async initialize() {
         try {
@@ -64,315 +67,328 @@ export class AntiCheatCore {
                 this.handleCriticalViolationFromDetection(type, data, result);
             });
 
-            // Setup UI callbacks
-            this.uiManager.callbacks.onContinueExam = () => {
-                console.log('Student chose to continue');
-                this.reportingService.reportActivity({
-                    type: 'warning_dismissed'
-                });
-            };
-
-            this.uiManager.callbacks.onExitExam = () => {
-                this.handleTermination('student_choice', 'Student chose to exit');
-            };
-
+            // NO UI callbacks needed - immediate termination only
             console.log('✅ Anti-cheat modules initialized successfully');
             return true;
 
         } catch (error) {
             console.error('❌ Failed to initialize anti-cheat modules:', error);
-            return false;
+            throw error;
         }
     }
 
     /**
-     * Activate anti-cheat system
+     * Activate the anti-cheat system
      */
     async activate() {
         if (this.isActive) {
-            console.warn('⚠️ Anti-cheat already active');
+            console.log('⚠️ Anti-cheat system already active');
             return;
         }
 
-        // Initialize modules if not done
-        if (!this.violationTracker) {
-            const initialized = await this.initialize();
-            if (!initialized) {
-                throw new Error('Failed to initialize anti-cheat modules');
+        try {
+            console.log('🛡️ Activating anti-cheat system...');
+
+            if (!this.detectionEngine) {
+                throw new Error('DetectionEngine not initialized');
             }
+
+            this.detectionEngine.activate();
+            this.startMonitoring();
+            this.startHeartbeat();
+            this.isActive = true;
+
+            console.log('🛡️ Anti-cheat system ACTIVATED');
+
+        } catch (error) {
+            console.error('❌ Failed to activate anti-cheat system:', error);
+            throw error;
         }
-
-        // Activate detection engine
-        this.detectionEngine.activate();
-
-        // Start monitoring
-        this.startMonitoring();
-
-        this.isActive = true;
-        console.log('🛡️ Anti-cheat system ACTIVATED');
     }
 
     /**
-     * Start monitoring for violations
+     * NUCLEAR: Handle critical violations - IMMEDIATE TERMINATION ONLY
+     */
+    handleCriticalViolationFromDetection(type, data, result) {
+        console.error(`💀 NUCLEAR VIOLATION DETECTED: ${type}`, { data, result });
+
+        // Log violation details
+        const violation = {
+            type: type,
+            severity: 'NUCLEAR',
+            data: data,
+            count: result.count || 1,
+            timestamp: Date.now(),
+            action: 'IMMEDIATE_TERMINATION'
+        };
+
+        console.error(`💀 TERMINATION TRIGGERED:`, violation);
+
+        // Report to server
+        this.reportingService.reportViolation(violation);
+
+        // 🚨 IMMEDIATE TERMINATION - NO QUESTIONS ASKED
+        this.handleImmediateTermination(type, violation);
+    }
+
+    /**
+     * NUCLEAR: Immediate termination handler
+     */
+    handleImmediateTermination(violationType, violationData) {
+        console.error(`💀💀💀 IMMEDIATE TERMINATION: ${violationType}`);
+
+        // Deactivate all systems
+        this.deactivate();
+
+        // Show nuclear termination screen
+        this.showNuclearTerminationScreen(violationType, violationData);
+
+        // Report termination to server
+        this.reportingService.reportViolation({
+            type: 'exam_terminated',
+            reason: violationType,
+            data: violationData,
+            timestamp: Date.now()
+        });
+
+        // Block all further interactions
+        this.blockAllInteractions();
+    }
+
+    /**
+     * Show nuclear termination screen
+     */
+    showNuclearTerminationScreen(violationType, violationData) {
+        // Remove all existing content
+        document.body.innerHTML = '';
+
+        // Create nuclear termination screen
+        const terminationScreen = document.createElement('div');
+        terminationScreen.id = 'nuclear-termination';
+
+        terminationScreen.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff0000, #8b0000);
+            color: white;
+            font-family: 'Arial Black', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 2147483647;
+            user-select: none;
+            overflow: hidden;
+        `;
+
+        terminationScreen.innerHTML = `
+            <div style="font-size: 120px; margin-bottom: 30px; animation: shake 0.5s infinite;">⛔</div>
+            <h1 style="font-size: 48px; margin-bottom: 30px; text-shadow: 3px 3px 6px black;">
+                ИЗПИТЪТ Е ПРЕКРАТЕН
+            </h1>
+            <div style="font-size: 28px; margin-bottom: 40px; max-width: 800px; line-height: 1.4;">
+                <strong>ПРИЧИНА:</strong> ${this.getNuclearViolationMessage(violationType)}
+            </div>
+            <div style="font-size: 20px; margin-bottom: 30px; color: #ffcccc;">
+                Засечено е нарушение със ZERO TOLERANCE политика
+            </div>
+            <div style="font-size: 18px; color: #ffdddd; max-width: 600px; line-height: 1.3;">
+                • Изпитът е автоматично прекратен<br>
+                • Всички данни са запазени<br>
+                • Преподавателят е уведомен<br>
+                • Този екран НЕ МОЖЕ да бъде затворен
+            </div>
+            <div style="position: absolute; bottom: 20px; font-size: 14px; color: #ffcccc;">
+                Exam Monitor v2 - Nuclear Security System
+            </div>
+        `;
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                50% { transform: translateX(5px); }
+                75% { transform: translateX(-5px); }
+                100% { transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(terminationScreen);
+
+        // Block all events on the termination screen
+        ['click', 'contextmenu', 'keydown', 'keyup', 'mousedown', 'mouseup'].forEach(eventType => {
+            terminationScreen.addEventListener(eventType, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+            }, { capture: true, passive: false });
+        });
+    }
+
+    /**
+     * Get nuclear violation message
+     */
+    getNuclearViolationMessage(violationType) {
+        const messages = {
+            windowsKey: 'Натискане на Windows клавиш',
+            escapeKey: 'Натискане на Escape клавиш',
+            altF4Key: 'Натискане на Alt+F4',
+            altTabKey: 'Натискане на Alt+Tab',
+            topAreaClick: 'Опит за достъп до браузър контролите',
+            topAreaRightClick: 'Десен клик в забранена зона',
+            ctrlAltDelKey: 'Натискане на Ctrl+Alt+Del',
+            taskManagerKey: 'Опит за отваряне на Task Manager',
+            devTools: 'Опит за отваряне на Developer Tools',
+            focusLoss: 'Излизане от прозореца на изпита',
+            fullscreenExit: 'Излизане от fullscreen режим',
+            clipboardAttempt: 'Неразрешен достъп до clipboard'
+        };
+
+        return messages[violationType] || 'Неидентифицирано нарушение';
+    }
+
+    /**
+     * Block all interactions after termination
+     */
+    blockAllInteractions() {
+        // Override all global event handlers
+        const blockEvent = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        };
+
+        // Block all possible events
+        const events = [
+            'keydown', 'keyup', 'keypress',
+            'mousedown', 'mouseup', 'click', 'dblclick',
+            'contextmenu', 'wheel', 'scroll',
+            'touchstart', 'touchend', 'touchmove',
+            'dragstart', 'drop', 'paste', 'copy', 'cut'
+        ];
+
+        events.forEach(eventType => {
+            document.addEventListener(eventType, blockEvent, { capture: true, passive: false });
+            window.addEventListener(eventType, blockEvent, { capture: true, passive: false });
+        });
+
+        // Block beforeunload
+        window.addEventListener('beforeunload', (e) => {
+            e.preventDefault();
+            e.returnValue = 'Изпитът е прекратен. Този прозорец не може да бъде затворен.';
+            return 'Изпитът е прекратен. Този прозорец не може да бъде затворен.';
+        });
+
+        console.log('🔒 ALL INTERACTIONS BLOCKED');
+    }
+
+    /**
+     * NUCLEAR: Zero tolerance limits - NO ATTEMPTS ALLOWED
+     */
+    getMaxAttempts(type) {
+        // NUCLEAR POLICY - ZERO TOLERANCE
+        const nuclearLimits = {
+            windowsKey: 0,              // ← ZERO attempts allowed
+            escapeKey: 0,               // ← ZERO attempts allowed
+            altF4Key: 0,                // ← ZERO attempts allowed
+            altTabKey: 0,               // ← ZERO attempts allowed
+            topAreaClick: 0,            // ← ZERO attempts allowed
+            topAreaRightClick: 0,       // ← ZERO attempts allowed
+            ctrlAltDelKey: 0,           // ← ZERO attempts allowed
+            taskManagerKey: 0,          // ← ZERO attempts allowed
+            devTools: 0,                // ← ZERO attempts allowed
+            focusLoss: 2,               // ← Slightly tolerant for technical issues
+            fullscreenExit: 0,          // ← ZERO attempts allowed
+            clipboardAttempt: 0,        // ← ZERO attempts allowed
+            mouseDangerZone: 5,         // ← Some tolerance for accidental movement
+            rightClick: 2               // ← Some tolerance for accidents
+        };
+
+        return nuclearLimits[type] !== undefined ? nuclearLimits[type] : 0;
+    }
+
+    /**
+     * Handle violation (legacy method - now triggers immediate termination)
+     */
+    handleViolation(type, severity, data) {
+        console.error(`💀 NUCLEAR: Legacy violation converted to termination: ${type}`);
+
+        // Convert legacy violation to immediate termination
+        this.handleImmediateTermination(type, {
+            legacyViolation: true,
+            severity: severity,
+            data: data,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * Start monitoring systems
      */
     startMonitoring() {
+        if (this.monitoringInterval) return;
+
         this.monitoringInterval = setInterval(() => {
-            this.performSystemCheck();
-        }, 1000); // Check every second
+            this.performMonitoringCheck();
+        }, 5000); // Every 5 seconds
+
+        console.log('👁️ Monitoring systems started');
     }
 
     /**
-     * Perform system check for violations
-     * ПОПРАВЕНО: Премахнато fullscreen checking (DetectionEngine го прави)
+     * Perform periodic monitoring check
      */
-    performSystemCheck() {
+    performMonitoringCheck() {
         if (!this.isActive) return;
 
-        // Check for DevTools - ПОПРАВЕНО: Без nested setInterval!
+        // Check for developer tools (simplified but effective)
         const threshold = 160;
         const currentDevToolsOpen = window.outerHeight - window.innerHeight > threshold ||
             window.outerWidth - window.innerWidth > threshold;
 
-        // Само ако преди не бяха отворени, а сега са
         if (currentDevToolsOpen && !this.devToolsDetected) {
             this.devToolsDetected = true;
-            this.handleViolation('devTools', 'medium', {
+            this.handleImmediateTermination('devTools', {
                 orientation: window.outerHeight - window.innerHeight > threshold ?
-                    'horizontal' : 'vertical'
-            });
-        } else if (!currentDevToolsOpen && this.devToolsDetected) {
-            // Reset флага ако DevTools са затворени
-            this.devToolsDetected = false;
-        }
-
-        // ПРЕМАХНАТО: Fullscreen checking (DetectionEngine го прави вече)
-        // Това причиняваше двойното count-ване на fullscreen violations
-    }
-
-    /**
-     * НОВО: Handle critical violations from DetectionEngine
-     */
-    handleCriticalViolationFromDetection(type, data, result) {
-        console.log(`🚨 Critical violation from DetectionEngine: ${type}`, { data, result });
-
-        // Determine severity and action based on violation count
-        const maxAttempts = this.getMaxAttempts(type);
-        const currentCount = result.count || 1;
-
-        // Log violation
-        console.log(`Violation logged: ${type} (${currentCount})`);
-
-        // Report to server
-        this.reportingService.reportViolation({
-            type: type,
-            severity: 'high',
-            data: data,
-            count: currentCount,
-            maxAttempts: maxAttempts,
-            timestamp: Date.now()
-        });
-
-        // Determine action based on count
-        if (currentCount >= maxAttempts) {
-            // Terminate exam
-            this.handleTermination(`${type}_limit_exceeded`,
-                `Превишен лимит от ${maxAttempts} опита за ${type}`);
-        } else {
-            // Show warning dialog ВЕДНАГА
-            this.showBlockingWarning(type, currentCount, maxAttempts);
-        }
-    }
-
-    /**
-     * Show blocking warning dialog for critical violations - ПОПРАВЕНО: Support all critical keys
-     */
-    showBlockingWarning(type, count, maxAttempts) {
-        const messages = {
-            windowsKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА WINDOWS КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            escapeKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ESCAPE КЛАВИШ!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            altF4Key: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ALT+F4!\n\nТова е строго забранено по време на изпита.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            altTabKey: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕНО НАТИСКАНЕ НА ALT+TAB!\n\nПревключването между приложения е забранено.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            topAreaClick: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕН ОПИТ ЗА ЗАТВАРЯНЕ НА ПРОЗОРЕЦА!\n\nКликването в горната част на екрана е забранено.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            topAreaRightClick: `⚠️ ВНИМАНИЕ! ЗАСЕЧЕН ДЕСЕН КЛИК В ЗАБРАНЕНА ЗОНА!\n\nДесният клик в горната част на екрана е забранен.\n\nОпит ${count} от ${maxAttempts}.\n\nПри достигане на лимита изпитът ще бъде прекратен автоматично!`,
-
-            default: `⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!\n\nЗасечена е забранена активност.\n\nОпит ${count} от ${maxAttempts}.`
-        };
-
-        const message = messages[type] || messages.default;
-
-        const config = {
-            title: '⚠️ ВНИМАНИЕ! НАРУШЕНИЕ!',
-            message: message,
-            severity: count >= maxAttempts - 1 ? 'critical' : 'high',
-            description: count >= maxAttempts - 1 ?
-                'ПОСЛЕДНО ПРЕДУПРЕЖДЕНИЕ! Следващото нарушение ще прекрати изпита!' :
-                'Моля, спазвайте правилата на изпита.',
-            continueText: 'Продължи изпита',
-            exitText: 'Напусни изпита',
-            // НОВО: Callback за exit бутона с double confirmation
-            onExit: () => this.handleExitWithConfirmation(type)
-        };
-
-        this.uiManager.showWarningDialog(config);
-    }
-
-    /**
-     * НОВО: Handle exit with double confirmation
-     */
-    handleExitWithConfirmation(violationType) {
-        // First confirmation
-        const confirmed = confirm('Сигурни ли сте че искате да напуснете изпита?\n\nТова действие не може да бъде отменено!');
-
-        if (!confirmed) {
-            console.log('✅ Student cancelled exam exit');
-            return;
-        }
-
-        // Second confirmation for critical violations
-        const doubleConfirm = confirm('ПОСЛЕДНО ПРЕДУПРЕЖДЕНИЕ!\n\nНапускането на изпита ще бъде записано като прекратяване поради нарушение.\n\nНаистина ли искате да продължите?');
-
-        if (!doubleConfirm) {
-            console.log('✅ Student cancelled exam exit on second confirmation');
-            return;
-        }
-
-        // Hide warning dialog first
-        if (this.uiManager) {
-            this.uiManager.hideWarning();
-        }
-
-        // Proceed with exit
-        this.handleExamExit(violationType);
-    }
-
-    /**
-     * НОВО: Handle exam exit using ExamExitManager
-     */
-    handleExamExit(reason) {
-        console.log(`🚪 Handling exam exit: ${reason}`);
-
-        // Try to use ExamExitManager (window global)
-        if (window.ExamExitManager && typeof window.ExamExitManager.handleExamExit === 'function') {
-            const exitReason = this.mapToExitReason(reason);
-
-            window.ExamExitManager.handleExamExit(exitReason, {
-                violationType: reason,
-                voluntary: true,
-                confirmedByStudent: true,
+                    'horizontal' : 'vertical',
                 timestamp: Date.now()
             });
-        } else {
-            // Fallback to direct termination
-            console.warn('⚠️ ExamExitManager not available, using fallback');
-            this.handleTermination(`voluntary_exit_${reason}`, `Student chose to exit due to ${reason}`);
+        } else if (!currentDevToolsOpen && this.devToolsDetected) {
+            this.devToolsDetected = false;
         }
     }
 
     /**
-     * НОВО: Map violation types to ExamExitManager reasons
+     * Start heartbeat
      */
-    mapToExitReason(violationType) {
-        const mapping = {
-            'windowsKey': 'ANTI_CHEAT_VIOLATION',
-            'escapeKey': 'ANTI_CHEAT_VIOLATION',
-            'altF4Key': 'ANTI_CHEAT_VIOLATION',
-            'altTabKey': 'ANTI_CHEAT_VIOLATION',
-            'topAreaClick': 'ANTI_CHEAT_VIOLATION',
-            'topAreaRightClick': 'ANTI_CHEAT_VIOLATION',
-            'ctrlAltDelKey': 'ANTI_CHEAT_VIOLATION',
-            'taskManagerKey': 'ANTI_CHEAT_VIOLATION',
-            'fullscreenExit': 'FULLSCREEN_VIOLATION',
-            'default': 'STUDENT_FINISH'
-        };
+    startHeartbeat() {
+        if (this.heartbeatInterval || !this.reportingService) return;
 
-        return mapping[violationType] || mapping.default;
+        this.heartbeatInterval = setInterval(() => {
+            this.reportingService.sendHeartbeat();
+        }, 30000); // Every 30 seconds
+
+        console.log('💓 Heartbeat started');
     }
 
     /**
-     * Handle violations - enhanced with proper tracking
+     * Set fullscreen mode
      */
-    handleViolation(type, severity, data = {}) {
-        console.log(`🚨 Violation detected: ${type} (${severity})`);
-
-        // Add violation through tracker
-        const result = this.violationTracker.addViolation(type, {
-            severity,
-            timestamp: Date.now(),
-            ...data
-        });
-
-        // Determine action based on violation count and severity
-        const maxAttempts = this.getMaxAttempts(type);
-        const shouldWarn = result.warningLevel > 0;
-        const shouldTerminate = result.count >= maxAttempts;
-
-        if (shouldTerminate) {
-            this.handleTermination(`${type}_violation`,
-                `Exceeded maximum attempts for ${type}: ${result.count}/${maxAttempts}`);
-            return;
+    setFullscreenMode(enabled) {
+        this.fullscreenMode = enabled;
+        if (this.detectionEngine) {
+            this.detectionEngine.setFullscreenMode(enabled);
         }
-
-        // Handle violation action
-        this.handleViolationAction(type, result, severity);
-    }
-
-    /**
-     * Handle violation actions
-     */
-    handleViolationAction(type, result, severity) {
-        const { count, warningLevel, thresholdExceeded } = result;
-        const maxAttempts = this.getMaxAttempts(type);
-
-        // Report violation
-        this.reportingService.reportViolation({
-            type,
-            severity,
-            count,
-            warningLevel,
-            maxAttempts,
-            timestamp: Date.now()
-        });
-
-        // Show appropriate response based on severity and count
-        if (severity === 'critical' || thresholdExceeded) {
-            this.showBlockingWarning(type, count, maxAttempts);
-        } else if (warningLevel >= 2) {
-            this.showNotification(type, count);
-        }
-
-        console.log(`Violation logged: ${type} (${count})`);
-    }
-
-    /**
-     * Show notification for minor violations
-     */
-    showNotification(type, count) {
-        const maxAttempts = this.getMaxAttempts(type);
-        const message = this.getViolationMessage(type, count);
-
-        this.uiManager.showNotification({
-            message: `${message} (${count}/${maxAttempts})`,
-            type: 'warning',
-            duration: 3000
-        });
-    }
-
-    /**
-     * Handle fullscreen exit - ПОПРАВЕНО: Simplified (DetectionEngine handles detection)
-     */
-    handleFullscreenExit() {
-        if (!this.isActive) return;
-
-        // Само логваме, DetectionEngine вече е добавил violation-а
-        console.log('🖥️ Fullscreen exit handled by DetectionEngine');
-
-        // ПРЕМАХНАТО: handleViolation call (DetectionEngine го прави)
-        // Това причиняваше двойното count-ване
+        console.log(`🖥️ Fullscreen mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
     }
 
     /**
@@ -381,7 +397,14 @@ export class AntiCheatCore {
     deactivate() {
         if (!this.isActive) return;
 
-        // Stop monitoring
+        console.log('🔓 Deactivating anti-cheat system...');
+
+        this.isActive = false;
+
+        if (this.detectionEngine) {
+            this.detectionEngine.deactivate();
+        }
+
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
             this.monitoringInterval = null;
@@ -392,106 +415,7 @@ export class AntiCheatCore {
             this.heartbeatInterval = null;
         }
 
-        // Stop detection
-        if (this.detectionEngine) {
-            this.detectionEngine.deactivate();
-        }
-
-        // Clear UI
-        if (this.uiManager) {
-            this.uiManager.hideWarning();
-        }
-
-        this.isActive = false;
-        console.log('🔓 Anti-cheat system DEACTIVATED');
-    }
-
-    /**
-     * Handle termination - ПОПРАВЕНО: Better ExamExitManager integration
-     */
-    handleTermination(reason, details) {
-        console.error(`🛑 EXAM TERMINATED: ${reason}`);
-
-        // Get violation data
-        const violationData = this.violationTracker &&
-            typeof this.violationTracker.getViolationHistory === 'function'
-            ? this.violationTracker.getViolationHistory()
-            : { violations: {}, totalCount: 0 };
-
-        // Report termination
-        this.reportingService.reportTermination({
-            reason,
-            details,
-            violations: violationData,
-            timestamp: Date.now()
-        });
-
-        // Show termination screen
-        this.uiManager.showTerminationScreen({
-            reason: reason,
-            message: 'Изпитът беше прекратен поради нарушения на правилата.',
-            violations: violationData
-        });
-
-        // Deactivate system
-        this.deactivate();
-
-        // ПОПРАВЕНО: Use window.ExamExitManager directly
-        if (window.ExamExitManager && typeof window.ExamExitManager.handleExamExit === 'function') {
-            const exitReason = this.mapToExitReason(reason);
-
-            window.ExamExitManager.handleExamExit(exitReason, {
-                reason: reason,
-                details: details,
-                automatic: true,
-                violationTerminated: true
-            });
-        } else {
-            console.warn('⚠️ ExamExitManager not available during termination');
-        }
-    }
-
-    /**
-     * Set fullscreen mode
-     */
-    setFullscreenMode(enabled) {
-        this.fullscreenMode = enabled;
-
-        if (this.detectionEngine) {
-            this.detectionEngine.setFullscreenMode(enabled);
-        }
-
-        console.log(`🖥️ Fullscreen mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
-    }
-
-    /**
-     * Check if document is in fullscreen
-     */
-    isDocumentInFullscreen() {
-        return !!(document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement);
-    }
-
-    /**
-     * Update configuration
-     */
-    updateConfig(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-
-        // Update module configs
-        if (this.violationTracker) {
-            this.violationTracker.updateConfig(newConfig);
-        }
-        if (this.detectionEngine) {
-            this.detectionEngine.updateConfig(newConfig);
-        }
-        if (this.uiManager) {
-            this.uiManager.updateConfig(newConfig);
-        }
-
-        console.log('⚙️ AntiCheat configuration updated');
+        console.log('✅ Anti-cheat system deactivated');
     }
 
     /**
@@ -501,55 +425,11 @@ export class AntiCheatCore {
         return {
             isActive: this.isActive,
             fullscreenMode: this.fullscreenMode,
-            sessionId: this.sessionId,
             violations: this.violationTracker ? this.violationTracker.getStatistics() : null,
             detection: this.detectionEngine ? this.detectionEngine.getStatistics() : null,
             reporting: this.reportingService ? this.reportingService.getStatus() : null,
             ui: this.uiManager ? this.uiManager.getState() : null
         };
-    }
-
-    /**
-     * Helper methods - ПОПРАВЕНО: Added escapeKey support
-     */
-    getMaxAttempts(type) {
-        const limits = {
-            windowsKey: 3,
-            escapeKey: 3,           // НОВО: Escape key same as Windows key
-            altF4Key: 3,            // НОВО: Alt+F4 same as Windows key
-            altTabKey: 3,           // НОВО: Alt+Tab same as Windows key
-            topAreaClick: 2,        // НОВО: Mouse clicks in top area - only 2 attempts
-            topAreaRightClick: 2,   // НОВО: Right clicks in top area - only 2 attempts
-            ctrlAltDelKey: 1,       // НОВО: Ctrl+Alt+Del - immediate termination
-            taskManagerKey: 1,      // НОВО: Task Manager - immediate termination
-            mouseDangerZone: 10,    // НОВО: Mouse in danger zone - many warnings
-            focusLoss: 5,
-            fullscreenExit: 3,
-            clipboardAttempt: 3,
-            rightClick: 5,
-            devTools: 3
-        };
-        return limits[type] || 3;
-    }
-
-    getViolationMessage(type, count) {
-        const messages = {
-            windowsKey: `Windows клавиш засечен (${count}/3)`,
-            escapeKey: `Escape клавиш засечен (${count}/3)`,         // ПОПРАВЕНО
-            altF4Key: `Alt+F4 засечен (${count}/3)`,                // НОВО
-            altTabKey: `Alt+Tab засечен (${count}/3)`,              // НОВО
-            topAreaClick: `Клик в забранена зона (${count}/2)`,     // НОВО
-            topAreaRightClick: `Десен клик в забранена зона (${count}/2)`, // НОВО
-            ctrlAltDelKey: `Ctrl+Alt+Del засечен (${count}/1)`,     // НОВО
-            taskManagerKey: `Task Manager клавиш засечен (${count}/1)`, // НОВО
-            mouseDangerZone: `Мишка в опасна зона (${count}/10)`,   // НОВО
-            focusLoss: `Излизане от прозореца (${count}/5)`,
-            fullscreenExit: `Излизане от fullscreen (${count}/3)`,
-            clipboardAttempt: 'Опит за копиране/поставяне',
-            rightClick: 'Десен клик ограничен',
-            devTools: 'Developer tools засечени'
-        };
-        return messages[type] || `Подозрителна активност: ${type}`;
     }
 
     /**
