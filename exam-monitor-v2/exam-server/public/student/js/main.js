@@ -37,7 +37,7 @@ async function initializeApp() {
 
         // Initialize anti-cheat
         console.log('🛡️ Initializing anti-cheat system...');
-        const antiCheatCore = new AntiCheatCore(websocketService);
+        const antiCheatCore = new AntiCheatCore(websocketService, sessionService.getSessionId());
 
         // Create main workspace
         console.log('🏗️ Creating exam workspace...');
