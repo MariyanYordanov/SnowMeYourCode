@@ -1,6 +1,7 @@
 /**
  * Monaco Editor Module
  * Handles Monaco editor setup, code execution, and editor controls
+ * SIMPLIFIED: Only saves last version, no backups
  */
 
 // Import socket functions
@@ -145,11 +146,6 @@ function setupEditorIntegrations(editor) {
  */
 function setupKeyboardShortcuts(editor) {
     try {
-        // Ctrl+S for save
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-            saveCode();
-        });
-
         // Ctrl+Enter for run
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
             runCode();
@@ -181,12 +177,6 @@ export function setupEditorControls(actions) {
         const formatBtn = document.getElementById('format-code-btn');
         if (formatBtn && actions.formatCode) {
             formatBtn.addEventListener('click', actions.formatCode);
-        }
-
-        // Save code button
-        const saveBtn = document.getElementById('save-code-btn');
-        if (saveBtn && actions.saveCode) {
-            saveBtn.addEventListener('click', actions.saveCode);
         }
 
         // Clear output button
@@ -363,7 +353,7 @@ export function formatCode() {
 }
 
 /**
- * Save code to server
+ * Save code to server (SIMPLIFIED - no backups)
  */
 export function saveCode() {
     try {

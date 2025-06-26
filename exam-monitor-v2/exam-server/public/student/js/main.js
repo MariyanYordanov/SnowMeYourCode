@@ -1,551 +1,487 @@
 /**
- * Custom Dialog System - Fullscreen Safe
- * Replaces browser confirm/alert to prevent fullscreen exits
- * Maintains exam security by staying in fullscreen mode
+ * Student Exam System - Main Entry Point
+ * Coordinates all modules and initializes the exam system
  */
 
-// Active dialog tracking
-let activeDialog = null;
+// Import all required modules
+import { setupLoginForm, handleLoginSuccess, handleSessionRestore, handleLoginError } from './login.js';
+import { setupSocket, sendCodeUpdate, reportSuspiciousActivity } from './socket.js';
+import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, saveCode, clearOutput, changeTheme } from './editor.js';
+import { startExamTimer, updateTimerDisplay, handleTimeWarning, handleExamExpired } from './timer.js';
+import { setupAntiCheat, activateAntiCheat, deactivateAntiCheat, enterFullscreenMode } from './anticheat.js';
+import { showCompletionDialog, showViolationExitDialog, showInfoDialog, hideCustomDialogs } from './dialogs.js';
 
-/**
- * Show custom completion dialog for exam exit
- * @param {Object} options - Dialog configuration
- * @returns {Promise<boolean>} - User choice (true = confirm, false = cancel)
- */
-export function showCompletionDialog(options = {}) {
-    const defaultOptions = {
-        title: 'Напускане на изпита',
-        message: 'Потвърдете напускане на изпита.',
-        confirmText: 'Да, напускам',
-        cancelText: 'Не, продължавам',
-        type: 'completion'
-    };
+// ================================
+// GLOBAL STATE MANAGEMENT
+// ================================
+window.ExamApp = {
+    // Core state
+    socket: null,
+    editor: null,
+    sessionId: null,
+    studentName: null,
+    studentClass: null,
 
-    const config = { ...defaultOptions, ...options };
+    // Exam timing
+    examStartTime: null,
+    examDuration: 3 * 60 * 60 * 1000, // 3 hours
+    examEndTime: null,
+    timeLeft: 0,
+    timerInterval: null,
 
-    return new Promise((resolve) => {
-        // Close any existing dialog
-        hideCustomDialogs();
+    // Security state
+    isFullscreen: false,
+    violationCount: 0,
+    antiCheatActive: false,
 
-        // Create dialog HTML
-        const dialogHTML = createDialogHTML(config);
+    // UI state
+    isLoggedIn: false,
+    lastSaveTime: null,
+    isConnected: false,
+    completionInProgress: false,
 
-        // Show dialog
-        showDialog(dialogHTML, (result) => {
-            hideCustomDialogs();
-            resolve(result);
+    // Dialog system
+    dialogSystemActive: true,
+
+    // Function references for cross-module access
+    startExam: null,
+    exitExam: null,
+    showViolationScreen: null,
+    hideViolationScreen: null,
+    showNotification: null,
+    showError: null
+};
+
+// ================================
+// APPLICATION INITIALIZATION
+// ================================
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 DOM Content Loaded - Initializing Student Exam System...');
+
+    // Wait for all scripts to load
+    if (document.readyState === 'loading') {
+        console.log('⏳ Document still loading, waiting...');
+        document.addEventListener('readystatechange', function () {
+            if (document.readyState === 'interactive' || document.readyState === 'complete') {
+                console.log('📄 Document ready state:', document.readyState);
+                initializeAppSafely();
+            }
         });
-    });
-}
-
-/**
- * Show custom violation exit dialog
- * @param {string} violationMessage - The violation message to display
- * @returns {Promise<boolean>} - User choice
- */
-export function showViolationExitDialog(violationMessage = 'Искате ли да напуснете изпита?') {
-    const options = {
-        title: 'Нарушение на правилата',
-        message: violationMessage,
-        confirmText: 'Да, напускам',
-        cancelText: 'Не, продължавам',
-        type: 'violation'
-    };
-
-    return new Promise((resolve) => {
-        // Close any existing dialog
-        hideCustomDialogs();
-
-        // Create dialog HTML
-        const dialogHTML = createDialogHTML(options);
-
-        // Show dialog
-        showDialog(dialogHTML, (result) => {
-            hideCustomDialogs();
-            resolve(result);
-        });
-    });
-}
-
-/**
- * Show custom information dialog (non-blocking)
- * @param {Object} options - Dialog configuration
- * @returns {Promise<void>}
- */
-export function showInfoDialog(options = {}) {
-    const defaultOptions = {
-        title: 'Информация',
-        message: 'Информационно съобщение',
-        confirmText: 'Разбрах',
-        type: 'info',
-        showCancel: false
-    };
-
-    const config = { ...defaultOptions, ...options };
-
-    return new Promise((resolve) => {
-        // Close any existing dialog
-        hideCustomDialogs();
-
-        // Create dialog HTML
-        const dialogHTML = createDialogHTML(config);
-
-        // Show dialog
-        showDialog(dialogHTML, () => {
-            hideCustomDialogs();
-            resolve();
-        });
-    });
-}
-
-/**
- * Create dialog HTML structure
- * @param {Object} config - Dialog configuration
- * @returns {HTMLElement} - Dialog element
- */
-function createDialogHTML(config) {
-    try {
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-dialog-overlay';
-        overlay.id = 'custom-dialog-overlay';
-
-        // Create dialog box
-        const dialog = document.createElement('div');
-        dialog.className = `custom-dialog custom-dialog-${config.type}`;
-
-        // Dialog header
-        const header = document.createElement('div');
-        header.className = 'dialog-header';
-
-        const icon = getDialogIcon(config.type);
-        const title = document.createElement('h2');
-        title.className = 'dialog-title';
-        title.textContent = config.title;
-
-        header.appendChild(icon);
-        header.appendChild(title);
-
-        // Dialog message
-        const messageEl = document.createElement('p');
-        messageEl.className = 'dialog-message';
-        messageEl.textContent = config.message;
-
-        // Dialog buttons
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'dialog-buttons';
-
-        // Confirm button
-        const confirmBtn = document.createElement('button');
-        confirmBtn.className = `dialog-btn dialog-btn-confirm dialog-btn-${config.type}`;
-        confirmBtn.textContent = config.confirmText;
-        confirmBtn.setAttribute('data-action', 'confirm');
-
-        buttonsContainer.appendChild(confirmBtn);
-
-        // Cancel button (if needed)
-        if (config.showCancel !== false && config.cancelText) {
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'dialog-btn dialog-btn-cancel';
-            cancelBtn.textContent = config.cancelText;
-            cancelBtn.setAttribute('data-action', 'cancel');
-
-            buttonsContainer.appendChild(cancelBtn);
-        }
-
-        // Assemble dialog
-        dialog.appendChild(header);
-        dialog.appendChild(messageEl);
-        dialog.appendChild(buttonsContainer);
-
-        overlay.appendChild(dialog);
-
-        return overlay;
-
-    } catch (error) {
-        console.error('❌ Error creating dialog HTML:', error);
-        return null;
+    } else {
+        initializeAppSafely();
     }
-}
+});
 
-/**
- * Get appropriate icon for dialog type
- * @param {string} type - Dialog type
- * @returns {HTMLElement} - Icon element
- */
-function getDialogIcon(type) {
-    const iconEl = document.createElement('div');
-    iconEl.className = 'dialog-icon';
+// Safe initialization with proper timing
+function initializeAppSafely() {
+    console.log('🎯 Starting safe initialization...');
 
-    const icons = {
-        'completion': '🏁',
-        'violation': '⚠️',
-        'info': 'ℹ️',
-        'error': '❌',
-        'warning': '⚠️'
-    };
-
-    iconEl.textContent = icons[type] || 'ℹ️';
-    return iconEl;
-}
-
-/**
- * Show dialog and setup event handlers
- * @param {HTMLElement} dialogElement - The dialog element
- * @param {Function} callback - Callback function with result
- */
-function showDialog(dialogElement, callback) {
     try {
-        if (!dialogElement) {
-            console.error('❌ Cannot show dialog: invalid element');
-            callback(false);
-            return;
-        }
+        // Setup core components first
+        setupLoginForm();
+        setupAntiCheat();
+        setupExamControls();
+        setupViolationScreen();
+        setupNotificationSystem();
 
-        // Get container
-        const container = getDialogContainer();
+        console.log('✅ Core components initialized');
 
-        // Add dialog to container
-        container.appendChild(dialogElement);
-
-        // Store reference
-        activeDialog = dialogElement;
-
-        // Setup event handlers
-        setupDialogEventHandlers(dialogElement, callback);
-
-        // Show with animation
+        // Setup Socket.io with delay to ensure scripts are ready
         setTimeout(() => {
-            dialogElement.classList.add('dialog-visible');
-        }, 10);
+            setupSocket();
+        }, 100);
 
-        // Focus first button for keyboard navigation
-        const firstButton = dialogElement.querySelector('.dialog-btn');
-        if (firstButton) {
-            firstButton.focus();
-        }
-
-        console.log('💬 Custom dialog shown');
+        console.log('✅ Student Exam System initialization started');
 
     } catch (error) {
-        console.error('❌ Error showing dialog:', error);
-        callback(false);
+        console.error('❌ Failed to initialize app:', error);
+        showError('Грешка при зареждане на системата');
     }
 }
 
-/**
- * Setup event handlers for dialog
- * @param {HTMLElement} dialogElement - Dialog element
- * @param {Function} callback - Callback function
- */
-function setupDialogEventHandlers(dialogElement, callback) {
+// ================================
+// EXAM CONTROLS SETUP
+// ================================
+function setupExamControls() {
     try {
-        // Get dialog type for security level
-        const dialogType = getDialogType(dialogElement);
-        const isSecureDialog = ['completion', 'violation'].includes(dialogType);
-
-        // Button click handlers
-        const buttons = dialogElement.querySelectorAll('.dialog-btn');
-        buttons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const action = button.getAttribute('data-action');
-                const result = action === 'confirm';
-
-                console.log(`💬 Dialog action: ${action} (result: ${result})`);
-                callback(result);
-            });
+        // Setup editor controls with proper action handlers (NO SAVE BUTTON)
+        setupEditorControls({
+            runCode: runCode,
+            formatCode: formatCode,
+            clearOutput: clearOutput,
+            changeTheme: changeTheme
+            // saveCode removed - auto-save only
         });
 
-        // Keyboard handlers - AGGRESSIVE BLOCKING
-        dialogElement.addEventListener('keydown', (e) => {
-            switch (e.key) {
-                case 'Enter':
-                    // Enter = confirm
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('💬 Dialog confirmed via Enter key');
-                    callback(true);
-                    break;
-
-                case 'Escape':
-                    // BLOCK Escape for secure dialogs
-                    if (isSecureDialog) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🚫 Escape blocked for secure dialog');
-                        showBlockedFeedback(dialogElement);
-                        return false;
-                    }
-
-                    // Allow Escape for info dialogs
-                    const cancelBtn = dialogElement.querySelector('[data-action="cancel"]');
-                    if (cancelBtn) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('💬 Dialog cancelled via Escape key');
-                        callback(false);
-                    }
-                    break;
-
-                case 'Tab':
-                    // Handle tab navigation between buttons
-                    handleTabNavigation(e, dialogElement);
-                    break;
-
-                default:
-                    // Block all other keys for secure dialogs
-                    if (isSecureDialog && (e.ctrlKey || e.altKey || e.metaKey)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log(`🚫 Blocked key combination: ${e.key}`);
-                        return false;
-                    }
-                    break;
-            }
-        });
-
-        // AGGRESSIVE click outside blocking
-        dialogElement.addEventListener('click', (e) => {
-            if (e.target === dialogElement) {
-                // Clicked on overlay, not dialog content
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Show aggressive feedback for secure dialogs
-                if (isSecureDialog) {
-                    showBlockedFeedback(dialogElement);
-                } else {
-                    // Gentle shake for info dialogs
-                    const dialog = dialogElement.querySelector('.custom-dialog');
-                    if (dialog) {
-                        dialog.classList.add('dialog-shake');
-                        setTimeout(() => {
-                            dialog.classList.remove('dialog-shake');
-                        }, 500);
-                    }
-                }
-
-                return false;
-            }
-        });
-
-        // Block context menu on dialog
-        dialogElement.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (isSecureDialog) {
-                showBlockedFeedback(dialogElement);
-            }
-            return false;
-        });
-
-        // Block text selection for secure dialogs
-        if (isSecureDialog) {
-            dialogElement.addEventListener('selectstart', (e) => {
-                e.preventDefault();
-                return false;
-            });
-
-            dialogElement.addEventListener('dragstart', (e) => {
-                e.preventDefault();
-                return false;
-            });
+        // Finish exam button
+        const finishBtn = document.getElementById('finish-exam-btn');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', handleFinishExam);
         }
 
+        console.log('✅ Exam controls initialized (no manual save)');
     } catch (error) {
-        console.error('❌ Error setting up dialog handlers:', error);
+        console.error('❌ Failed to setup exam controls:', error);
     }
 }
 
-/**
- * Handle tab navigation within dialog
- * @param {KeyboardEvent} e - Keyboard event
- * @param {HTMLElement} dialogElement - Dialog element
- */
-function handleTabNavigation(e, dialogElement) {
+// ================================
+// VIOLATION SCREEN SETUP
+// ================================
+function setupViolationScreen() {
     try {
-        const buttons = dialogElement.querySelectorAll('.dialog-btn');
-        if (buttons.length <= 1) return;
+        // Violation screen buttons
+        const continueBtn = document.getElementById('continue-exam-btn');
+        const exitBtn = document.getElementById('exit-violation-btn');
 
-        const focusedElement = document.activeElement;
-        const currentIndex = Array.from(buttons).indexOf(focusedElement);
-
-        if (currentIndex !== -1) {
-            e.preventDefault();
-
-            let nextIndex;
-            if (e.shiftKey) {
-                // Shift+Tab - go backwards
-                nextIndex = currentIndex === 0 ? buttons.length - 1 : currentIndex - 1;
-            } else {
-                // Tab - go forwards
-                nextIndex = currentIndex === buttons.length - 1 ? 0 : currentIndex + 1;
-            }
-
-            buttons[nextIndex].focus();
+        if (continueBtn) {
+            continueBtn.addEventListener('click', continueAfterViolation);
         }
+
+        if (exitBtn) {
+            exitBtn.addEventListener('click', exitAfterViolation);
+        }
+
+        // Add functions to global scope for cross-module access
+        window.ExamApp.showViolationScreen = showViolationScreen;
+        window.ExamApp.hideViolationScreen = hideViolationScreen;
+
+        console.log('✅ Violation screen setup completed');
     } catch (error) {
-        console.error('❌ Error handling tab navigation:', error);
+        console.error('❌ Failed to setup violation screen:', error);
     }
 }
 
-/**
- * Get or create dialog container
- * @returns {HTMLElement} - Container element
- */
-function getDialogContainer() {
+// ================================
+// NOTIFICATION SYSTEM
+// ================================
+function setupNotificationSystem() {
     try {
-        let container = document.getElementById('custom-dialog-container');
+        // Add notification functions to global scope
+        window.ExamApp.showNotification = showNotification;
+        window.ExamApp.showError = showError;
 
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'custom-dialog-container';
-            container.className = 'custom-dialog-container';
-            document.body.appendChild(container);
-        }
-
-        return container;
+        console.log('✅ Notification system setup completed');
     } catch (error) {
-        console.error('❌ Error getting dialog container:', error);
-        return document.body; // Fallback
+        console.error('❌ Failed to setup notification system:', error);
     }
 }
 
+// ================================
+// EXAM LIFECYCLE FUNCTIONS
+// ================================
+
 /**
- * Hide any active custom dialogs
+ * Start exam after successful login
  */
-export function hideCustomDialogs() {
+async function startExam(data) {
     try {
-        if (activeDialog) {
-            // Add fade out animation
-            activeDialog.classList.add('dialog-hiding');
+        console.log('🎯 Starting exam...');
 
-            setTimeout(() => {
-                if (activeDialog && activeDialog.parentNode) {
-                    activeDialog.parentNode.removeChild(activeDialog);
-                }
-                activeDialog = null;
-            }, 200);
-        }
+        // Hide login, show exam
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('exam-container').style.display = 'flex';
 
-        // Clean up container
-        const container = document.getElementById('custom-dialog-container');
-        if (container) {
-            container.innerHTML = '';
-        }
+        // Update student info display
+        updateStudentDisplay();
 
-    } catch (error) {
-        console.error('❌ Error hiding dialogs:', error);
-    }
-}
-
-/**
- * Check if any dialog is currently active
- * @returns {boolean} - True if dialog is active
- */
-export function isDialogActive() {
-    return activeDialog !== null;
-}
-
-/**
- * Check if dialog is currently blocking focus events
- * @returns {boolean} - True if secure dialog is active
- */
-export function isSecureDialogActive() {
-    try {
-        if (!activeDialog) return false;
-
-        const dialogType = getDialogType(activeDialog);
-        return ['completion', 'violation'].includes(dialogType);
-    } catch (error) {
-        console.error('❌ Error checking secure dialog status:', error);
-        return false;
-    }
-}
-
-/**
- * Get dialog type from element
- * @param {HTMLElement} dialogElement - Dialog element
- * @returns {string} - Dialog type
- */
-function getDialogType(dialogElement) {
-    try {
-        const dialog = dialogElement.querySelector('.custom-dialog');
-        if (dialog) {
-            const classes = dialog.className.split(' ');
-            for (const className of classes) {
-                if (className.startsWith('custom-dialog-')) {
-                    return className.replace('custom-dialog-', '');
-                }
-            }
-        }
-        return 'info';
-    } catch (error) {
-        console.error('❌ Error getting dialog type:', error);
-        return 'info';
-    }
-}
-
-/**
- * Show blocked feedback for aggressive dialogs
- * @param {HTMLElement} dialogElement - Dialog element
- */
-function showBlockedFeedback(dialogElement) {
-    try {
-        const dialog = dialogElement.querySelector('.custom-dialog');
-        if (dialog) {
-            // Add strong visual feedback
-            dialog.classList.add('dialog-blocked');
-
-            // Flash red border
-            setTimeout(() => {
-                dialog.classList.remove('dialog-blocked');
-            }, 800);
-
-            // Show temporary message
-            showBlockedMessage(dialog);
-        }
-    } catch (error) {
-        console.error('❌ Error showing blocked feedback:', error);
-    }
-}
-
-/**
- * Show temporary blocked message
- * @param {HTMLElement} dialog - Dialog element
- */
-function showBlockedMessage(dialog) {
-    try {
-        // Remove existing blocked message
-        const existingMessage = dialog.querySelector('.blocked-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-
-        // Create blocked message
-        const message = document.createElement('div');
-        message.className = 'blocked-message';
-        message.textContent = 'Моля използвайте бутоните!';
-
-        // Insert after dialog header
-        const header = dialog.querySelector('.dialog-header');
-        if (header) {
-            header.insertAdjacentElement('afterend', message);
+        // Start timer
+        if (data.timeLeft) {
+            startExamTimer(data.timeLeft);
         } else {
-            dialog.insertBefore(message, dialog.firstChild);
+            startExamTimer(window.ExamApp.examDuration);
         }
 
-        // Remove message after 2 seconds
-        setTimeout(() => {
-            if (message.parentNode) {
-                message.remove();
-            }
-        }, 2000);
+        // Initialize Monaco Editor
+        await initializeMonacoEditor(data.lastCode || '');
 
+        // Enter fullscreen
+        enterFullscreenMode();
+
+        // Activate anti-cheat
+        activateAntiCheat();
+
+        // Mark as logged in
+        window.ExamApp.isLoggedIn = true;
+
+        console.log('✅ Exam started successfully');
     } catch (error) {
-        console.error('❌ Error showing blocked message:', error);
+        console.error('❌ Failed to start exam:', error);
+        showError('Грешка при стартиране на изпита');
     }
 }
+
+/**
+ * Update student display in exam interface
+ */
+function updateStudentDisplay() {
+    try {
+        const nameEl = document.getElementById('student-name-display');
+        const classEl = document.getElementById('student-class-display');
+        const sessionEl = document.getElementById('session-id-display');
+
+        if (nameEl) nameEl.textContent = window.ExamApp.studentName || 'Неизвестен';
+        if (classEl) classEl.textContent = window.ExamApp.studentClass || 'Неизвестен';
+        if (sessionEl) sessionEl.textContent = window.ExamApp.sessionId || 'Неизвестен';
+
+        console.log(`📋 Student display updated: ${window.ExamApp.studentName} (${window.ExamApp.studentClass}) - ${window.ExamApp.sessionId}`);
+    } catch (error) {
+        console.error('❌ Failed to update student display:', error);
+    }
+}
+
+/**
+ * Handle finish exam button
+ */
+async function handleFinishExam() {
+    try {
+        // Use custom dialog instead of browser confirm
+        const shouldExit = await showCompletionDialog({
+            title: 'Приключване на изпита',
+            message: 'Сигурен ли сте че искате да приключите изпита?\n\nВашият код ще бъде автоматично запазен.',
+            confirmText: 'Да, приключвам',
+            cancelText: 'Не, продължавам'
+        });
+
+        if (shouldExit) {
+            console.log('🏁 Student finishing exam normally');
+            exitExam('completed');
+        }
+    } catch (error) {
+        console.error('❌ Error handling finish exam:', error);
+    }
+}
+
+/**
+ * Exit exam with specified reason
+ */
+function exitExam(reason) {
+    try {
+        console.log(`🚪 Exiting exam with reason: ${reason}`);
+
+        // Mark completion in progress to prevent violations
+        window.ExamApp.completionInProgress = true;
+
+        // Different handling based on reason
+        if (reason === 'fullscreen_violation' || reason === 'document_hidden_violation') {
+            // For violations - don't save code (cheater penalty)
+            console.log(`🚫 ${reason} - code NOT saved`);
+        } else {
+            // For normal completion - auto-save handles final save
+            console.log('✅ Normal completion - auto-save active');
+        }
+
+        // Send completion to server
+        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+            window.ExamApp.socket.emit('exam-complete', {
+                sessionId: window.ExamApp.sessionId,
+                reason: reason,
+                completed: reason === 'completed',
+                terminated: reason.includes('violation'),
+                timestamp: Date.now()
+            });
+        }
+
+        // Clean up
+        deactivateAntiCheat();
+        if (window.ExamApp.timerInterval) {
+            clearInterval(window.ExamApp.timerInterval);
+        }
+
+        // Close window after appropriate delay
+        const closeDelay = reason.includes('violation') ? 3000 : 1000;
+        setTimeout(() => {
+            window.close();
+        }, closeDelay);
+
+    } catch (error) {
+        console.error('❌ Error exiting exam:', error);
+        // Force close on error
+        window.close();
+    }
+}
+
+// ================================
+// VIOLATION SCREEN HANDLERS
+// ================================
+
+/**
+ * Show violation screen
+ */
+function showViolationScreen(reason) {
+    try {
+        console.log(`🚫 Showing violation screen: ${reason}`);
+
+        document.getElementById('violation-reason').textContent = reason;
+        document.getElementById('violation-screen').style.display = 'flex';
+
+        // Blur exam content
+        document.getElementById('exam-container').classList.add('violation-detected');
+    } catch (error) {
+        console.error('❌ Error showing violation screen:', error);
+    }
+}
+
+/**
+ * Hide violation screen
+ */
+function hideViolationScreen() {
+    try {
+        document.getElementById('violation-screen').style.display = 'none';
+        document.getElementById('exam-container').classList.remove('violation-detected');
+    } catch (error) {
+        console.error('❌ Error hiding violation screen:', error);
+    }
+}
+
+/**
+ * Continue after violation
+ */
+function continueAfterViolation() {
+    try {
+        console.log('✅ Student chose to continue after violation');
+
+        hideViolationScreen();
+
+        // Re-enter fullscreen if needed
+        if (!window.ExamApp.isFullscreen) {
+            enterFullscreenMode();
+        }
+    } catch (error) {
+        console.error('❌ Error continuing after violation:', error);
+    }
+}
+
+/**
+ * Exit after violation
+ */
+async function exitAfterViolation() {
+    try {
+        // Use custom dialog instead of browser confirm
+        const shouldExit = await showViolationExitDialog(
+            'Сигурен ли сте че искате да напуснете изпита поради нарушение?\n\nТова действие не може да бъде отменено.'
+        );
+
+        if (shouldExit) {
+            console.log('🚪 Student chose to exit after violation');
+            exitExam('violation');
+        }
+    } catch (error) {
+        console.error('❌ Error handling violation exit:', error);
+    }
+}
+
+// ================================
+// NOTIFICATION FUNCTIONS
+// ================================
+
+/**
+ * Show notification to user
+ */
+function showNotification(message, type = 'info') {
+    try {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        `;
+
+        // Set background color based on type
+        const colors = {
+            'success': '#4CAF50',
+            'error': '#ff4757',
+            'warning': '#ffc107',
+            'info': '#2196F3'
+        };
+        notification.style.backgroundColor = colors[type] || colors.info;
+
+        document.body.appendChild(notification);
+
+        // Show notification
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Hide notification after 5 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 5000);
+
+    } catch (error) {
+        console.error('❌ Error showing notification:', error);
+    }
+}
+
+/**
+ * Show error message
+ */
+function showError(message) {
+    try {
+        const errorPanel = document.getElementById('error-panel');
+        const errorContent = document.getElementById('error-content');
+
+        if (errorPanel && errorContent) {
+            errorContent.textContent = message;
+            errorPanel.style.display = 'block';
+        }
+
+        console.error('Error shown to user:', message);
+    } catch (error) {
+        console.error('❌ Failed to show error:', error);
+    }
+}
+
+// ================================
+// ASSIGN GLOBAL FUNCTIONS
+// ================================
+
+// Make main functions available globally for module access
+window.ExamApp.startExam = startExam;
+window.ExamApp.exitExam = exitExam;
+
+// Socket event handlers for login responses
+window.ExamApp.handleLoginSuccess = handleLoginSuccess;
+window.ExamApp.handleSessionRestore = handleSessionRestore;
+window.ExamApp.handleLoginError = handleLoginError;
+
+// Timer event handlers
+window.ExamApp.handleTimeWarning = handleTimeWarning;
+window.ExamApp.handleExamExpired = handleExamExpired;
+
+// ================================
+// DEBUGGING FUNCTIONS (DEVELOPMENT ONLY)
+// ================================
+if (window.location.hostname === 'localhost') {
+    window.examDebug = {
+        getState: () => window.ExamApp,
+        triggerViolation: (reason) => showViolationScreen(reason),
+        forceFullscreen: () => enterFullscreenMode(),
+        saveCode: () => saveCode(),
+        runCode: () => runCode(),
+        resetState: () => {
+            window.ExamApp.isLoggedIn = false;
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('exam-container').style.display = 'none';
+        }
+    };
+
+    console.log('🐛 Debug functions available: window.examDebug');
+}
+
+console.log('🎯 Student Exam System Main Entry Point loaded successfully!');

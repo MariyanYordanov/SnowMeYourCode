@@ -1,45 +1,27 @@
 /**
- * Anti-Cheat Security Module
- * Focus-based monitoring - tracks fullscreen exits instead of blocking keys
- * FIRST violation: choice screen, SECOND violation: automatic termination
- * Updated with Custom Dialog System for fullscreen-safe interactions
+ * Anti-Cheat Security Module - SIMPLE APPROACH
+ * No blocking - just detection and auto-reload on violations
+ * LOGIC: Exit fullscreen → warning → reload page (no code saving for cheaters)
  */
 
 // Import socket functions for reporting
 import { reportSuspiciousActivity } from './socket.js';
 
-// Import custom dialog system
-import {
-    showViolationExitDialog,
-    showInfoDialog,
-    hideCustomDialogs,
-    isSecureDialogActive
-} from './dialogs.js';
-
-// Grace periods for accidental violations
-const GRACE_PERIODS = {
-    windowBlur: 3000, // 3 seconds
-    documentHidden: 5000 // 5 seconds
-};
-
-// Violation tracking - only count fullscreen exits
-let fullscreenViolationCount = 0;
-const MAX_FULLSCREEN_VIOLATIONS = 1; // After 1 violation, next one terminates
-
-// Timeouts for grace periods
-let graceTimeouts = new Map();
+// Violation tracking
+let violationCount = 0;
+const MAX_VIOLATIONS = 2; // 1st = warning + reload, 2nd = instant reload
 
 /**
- * Setup anti-cheat monitoring (passive, before exam starts)
+ * Setup anti-cheat monitoring (passive detection only)
  */
 export function setupAntiCheat() {
     try {
-        console.log('🛡️ Setting up focus-based anti-cheat monitoring...');
+        console.log('🛡️ Setting up SIMPLE anti-cheat monitoring...');
 
         // Setup fullscreen monitoring (always active)
         setupFullscreenMonitoring();
 
-        console.log('✅ Focus-based anti-cheat monitoring setup completed');
+        console.log('✅ Simple anti-cheat monitoring setup completed');
         return true;
     } catch (error) {
         console.error('❌ Failed to setup anti-cheat:', error);
@@ -48,22 +30,21 @@ export function setupAntiCheat() {
 }
 
 /**
- * Activate full anti-cheat protection (when exam starts)
+ * Activate anti-cheat protection (when exam starts)
  */
 export function activateAntiCheat() {
     try {
-        console.log('🛡️ Activating focus-based anti-cheat protection...');
+        console.log('🛡️ Activating simple anti-cheat protection...');
 
         // Mark as active
         window.ExamApp.antiCheatActive = true;
 
-        // Setup monitoring systems (no keyboard blocking)
-        setupFocusMonitoring();
-        setupVisibilityMonitoring();
-        setupContextMenuBlocking();
-        setupCopyPasteMonitoring();
+        // Setup detection systems
+        setupFocusDetection();
+        setupVisibilityDetection();
+        setupTouchpadGestureDetection(); // NEW: Detect touchpad gestures
 
-        console.log('✅ Focus-based anti-cheat protection activated');
+        console.log('✅ Simple anti-cheat protection activated');
         return true;
     } catch (error) {
         console.error('❌ Failed to activate anti-cheat:', error);
@@ -81,20 +62,10 @@ export function deactivateAntiCheat() {
         // Mark as inactive
         window.ExamApp.antiCheatActive = false;
 
-        // Remove event listeners (no keyboard monitoring to remove)
-        removeFocusMonitoring();
-        removeVisibilityMonitoring();
-        removeContextMenuBlocking();
-        removeCopyPasteMonitoring();
-
-        // Clear grace timeouts
-        clearAllGraceTimeouts();
-
-        // Remove fullscreen protection CSS
-        const protectionStyle = document.getElementById('fullscreen-protection');
-        if (protectionStyle) {
-            protectionStyle.remove();
-        }
+        // Remove event listeners
+        removeFocusDetection();
+        removeVisibilityDetection();
+        removeTouchpadGestureDetection(); // NEW: Remove gesture detection
 
         console.log('✅ Anti-cheat protection deactivated');
     } catch (error) {
@@ -103,11 +74,11 @@ export function deactivateAntiCheat() {
 }
 
 /**
- * Setup fullscreen monitoring (core mechanism)
+ * Setup fullscreen monitoring (core detection)
  */
 export function setupFullscreenMonitoring() {
     try {
-        // Listen for fullscreen changes - this is our main detection method
+        // Listen for fullscreen changes
         const fullscreenEvents = [
             'fullscreenchange',
             'webkitfullscreenchange',
@@ -119,7 +90,7 @@ export function setupFullscreenMonitoring() {
             document.addEventListener(eventName, handleFullscreenChange);
         });
 
-        console.log('🔒 Focus-based fullscreen monitoring initialized');
+        console.log('🔒 Simple fullscreen monitoring initialized');
     } catch (error) {
         console.error('❌ Failed to setup fullscreen monitoring:', error);
     }
@@ -155,7 +126,7 @@ export function enterFullscreenMode() {
 }
 
 /**
- * Handle fullscreen change events - MAIN VIOLATION DETECTION
+ * Handle fullscreen change events - MAIN DETECTION
  */
 function handleFullscreenChange() {
     try {
@@ -171,9 +142,6 @@ function handleFullscreenChange() {
         if (isFullscreen) {
             console.log('✅ Entered fullscreen mode');
             updateFullscreenStatus('🔒 Fullscreen активен');
-
-            // Inject fullscreen protection CSS
-            injectFullscreenProtectionCSS();
         } else {
             console.log('⚠️ Exited fullscreen mode - VIOLATION DETECTED');
             updateFullscreenStatus('⚠️ Fullscreen неактивен');
@@ -193,249 +161,105 @@ function handleFullscreenChange() {
 }
 
 /**
- * Inject fullscreen protection CSS (old student.css rules)
- */
-function injectFullscreenProtectionCSS() {
-    try {
-        // Remove existing protection CSS
-        const existingStyle = document.getElementById('fullscreen-protection');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-
-        // Create protection CSS using old student.css rules
-        const style = document.createElement('style');
-        style.id = 'fullscreen-protection';
-        style.innerHTML = `
-            /* FOCUS-BASED FULLSCREEN PROTECTION */
-            html:fullscreen,
-            body:fullscreen {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                overflow: hidden !important;
-            }
-
-            :fullscreen {
-                -webkit-user-select: none !important;
-                -moz-user-select: none !important;
-                -ms-user-select: none !important;
-                user-select: none !important;
-            }
-
-            /* Block browser UI in fullscreen */
-            ::-webkit-fullscreen-controls {
-                display: none !important;
-                visibility: hidden !important;
-            }
-
-            :fullscreen::-moz-full-screen-ancestor {
-                display: none !important;
-            }
-
-            /* Fullscreen protection overlay */
-            body:fullscreen::before {
-                content: '';
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 100px;
-                z-index: 999999;
-                pointer-events: none;
-                background: transparent;
-                display: block;
-            }
-        `;
-
-        document.head.appendChild(style);
-        console.log('🔒 Focus-based fullscreen protection CSS injected');
-    } catch (error) {
-        console.error('❌ Failed to inject fullscreen protection CSS:', error);
-    }
-}
-
-/**
- * Handle fullscreen violation - CORE LOGIC: 1st choice, 2nd terminate
+ * Handle fullscreen violation - DIRECT TERMINATION
  */
 function handleFullscreenViolation() {
     try {
-        fullscreenViolationCount++;
-        console.log(`🚫 Fullscreen exit violation #${fullscreenViolationCount}`);
+        violationCount++;
+        console.log(`🚫 Fullscreen exit violation - TERMINATING EXAM`);
 
         // Report to server
-        reportSuspiciousActivity('fullscreen_exit', {
-            violationNumber: fullscreenViolationCount,
-            method: 'focus_detection', // How we detected it
+        reportSuspiciousActivity('fullscreen_exit_termination', {
+            violationNumber: violationCount,
+            method: 'direct_termination',
             timestamp: Date.now()
         });
 
-        if (fullscreenViolationCount === 1) {
-            // FIRST violation - show choice screen with custom dialogs
-            console.log('🟡 First violation - showing choice screen with custom dialogs');
-
-            showFirstViolationScreen();
-
-        } else {
-            // SECOND+ violation - automatic termination
-            console.log('🔴 AUTOMATIC TERMINATION: Second fullscreen violation');
-
-            reportSuspiciousActivity('automatic_termination', {
-                reason: 'second_fullscreen_exit',
-                totalViolations: fullscreenViolationCount,
-                timestamp: Date.now()
-            });
-
-            showAutomaticTerminationScreen();
-        }
+        // DIRECT TERMINATION - no second chances
+        console.log('🔴 TERMINATING EXAM: Fullscreen violation');
+        terminateExamDirectly();
 
     } catch (error) {
         console.error('❌ Error handling fullscreen violation:', error);
-        // Fallback - terminate immediately if error handling fails
-        if (fullscreenViolationCount >= 2) {
-            window.close();
-        }
-    }
-}
-
-/**
- * Show first violation screen - REMOVE AUTO RE-ENTER
- */
-function showFirstViolationScreen() {
-    try {
-        // Close any existing custom dialogs first
-        hideCustomDialogs();
-
-        // Show traditional violation screen first
-        if (window.ExamApp.showViolationScreen) {
-            window.ExamApp.showViolationScreen(
-                'Излизане от fullscreen режим е забранено!\n\n' +
-                'Това е вашето единствено предупреждение.\n' +
-                'При следващо нарушение изпитът ще бъде прекратен автоматично.\n\n' +
-                'Натиснете "Продължи изпита" за да се върнете в fullscreen режим.'
-            );
-        }
-
-        // REMOVED: Auto re-enter fullscreen (was causing errors)
-        // User must manually click "Continue" to re-enter fullscreen
-
-    } catch (error) {
-        console.error('❌ Error showing first violation screen:', error);
-    }
-}
-
-/**
- * Show automatic termination screen with countdown
- */
-function showAutomaticTerminationScreen() {
-    try {
-        // Close any existing custom dialogs
-        hideCustomDialogs();
-
-        // Show termination violation screen
-        if (window.ExamApp.showViolationScreen) {
-            window.ExamApp.showViolationScreen(
-                'ПРЕКРАТЯВАНЕ НА ИЗПИТА!\n\n' +
-                'Второ излизане от fullscreen режим.\n\n' +
-                'Изпитът ще бъде прекратен автоматично след 5 секунди.'
-            );
-        }
-
-        // Disable anti-cheat to prevent further violations during termination
-        window.ExamApp.antiCheatActive = false;
-
-        // Auto-terminate after 5 seconds
-        setTimeout(() => {
-            console.log('🚫 TERMINATING EXAM: Second fullscreen violation');
-            if (window.ExamApp.exitExam) {
-                window.ExamApp.exitExam('automatic_termination');
-            } else {
-                window.close();
-            }
-        }, 5000);
-
-    } catch (error) {
-        console.error('❌ Error showing termination screen:', error);
-        // Fallback - immediate termination
+        // Fallback - force close
         window.close();
     }
 }
 
 /**
- * Setup focus monitoring (detect alt+tab, window switching)
+ * Terminate exam directly - no warnings, no second chances
  */
-function setupFocusMonitoring() {
+function terminateExamDirectly() {
+    try {
+        // Mark completion in progress to prevent other violations
+        window.ExamApp.completionInProgress = true;
+
+        // Show termination screen
+        if (window.ExamApp.showViolationScreen) {
+            window.ExamApp.showViolationScreen(
+                'ИЗПИТЪТ Е ПРЕКРАТЕН!\n\n' +
+                'Нарушение на правилата на изпита.\n' +
+                'Излязохте от прозореца или fullscreen режим.\n\n' +
+                'Прозорецът ще се затвори автоматично.'
+            );
+        }
+
+        // Determine termination reason based on how we got here
+        let reason = 'fullscreen_violation';
+        if (document.hidden) {
+            reason = 'document_hidden_violation';
+        }
+
+        // Call main exit function
+        if (window.ExamApp.exitExam) {
+            setTimeout(() => {
+                window.ExamApp.exitExam(reason);
+            }, 2000);
+        } else {
+            // Fallback - direct close
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        }
+
+    } catch (error) {
+        console.error('❌ Error terminating exam:', error);
+        // Force close on error
+        window.close();
+    }
+}
+
+/**
+ * Setup focus detection (optional monitoring)
+ */
+function setupFocusDetection() {
     window.addEventListener('blur', handleWindowBlur);
     window.addEventListener('focus', handleWindowFocus);
 }
 
-function removeFocusMonitoring() {
+function removeFocusDetection() {
     window.removeEventListener('blur', handleWindowBlur);
     window.removeEventListener('focus', handleWindowFocus);
 }
 
 /**
- * Handle window blur (focus lost)
+ * Handle window blur (focus lost) - JUST REPORT, NO ACTION
  */
 function handleWindowBlur() {
     if (!window.ExamApp.antiCheatActive) return;
 
     try {
-        console.log('👁️ Window lost focus');
+        console.log('👁️ Window lost focus - reporting only');
 
-        // Skip focus warnings if secure dialog is active
-        if (isSecureDialogActive()) {
-            console.log('🔒 Secure dialog active - skipping focus warning');
-            return;
-        }
-
-        // Report to server (for monitoring, not violations)
+        // Just report to server for monitoring
         reportSuspiciousActivity('window_blur', {
             timestamp: Date.now()
         });
 
-        // Give grace period for accidental clicks
-        const timeoutId = setTimeout(() => {
-            if (!document.hasFocus() &&
-                window.ExamApp.antiCheatActive &&
-                !isSecureDialogActive()) {
-                // Show warning using custom dialog (not counted as violation)
-                showFocusWarningDialog();
-            }
-        }, GRACE_PERIODS.windowBlur);
+        // NO ACTION - just detection
 
-        graceTimeouts.set('windowBlur', timeoutId);
     } catch (error) {
         console.error('❌ Error handling window blur:', error);
-    }
-}
-
-/**
- * Show focus warning using custom dialog
- */
-function showFocusWarningDialog() {
-    try {
-        // Check if dialog system is available
-        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
-            showInfoDialog({
-                title: 'Внимание',
-                message: 'Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.',
-                confirmText: 'Разбрах',
-                type: 'warning'
-            }).then(() => {
-                console.log('💬 Focus warning acknowledged');
-            }).catch(error => {
-                console.error('❌ Error showing focus warning dialog:', error);
-            });
-        } else {
-            // Fallback to violation screen
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.');
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error showing focus warning:', error);
     }
 }
 
@@ -447,77 +271,44 @@ function handleWindowFocus() {
 
     try {
         console.log('👁️ Window regained focus');
-
-        // Clear grace timeout
-        const timeoutId = graceTimeouts.get('windowBlur');
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-            graceTimeouts.delete('windowBlur');
-        }
-
-        // Hide any warning dialogs when focus is regained
-        if (window.ExamApp.dialogSystemActive) {
-            hideCustomDialogs();
-        }
-
+        // Just log - no action needed
     } catch (error) {
         console.error('❌ Error handling window focus:', error);
     }
 }
 
 /**
- * Setup visibility monitoring
+ * Setup visibility detection (optional monitoring)
  */
-function setupVisibilityMonitoring() {
+function setupVisibilityDetection() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 }
 
-function removeVisibilityMonitoring() {
+function removeVisibilityDetection() {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
 }
 
 /**
- * Handle visibility change
+ * Handle visibility change - DIRECT TERMINATION on document hidden
  */
 function handleVisibilityChange() {
     if (!window.ExamApp.antiCheatActive) return;
 
     try {
         if (document.hidden) {
-            console.log('👁️ Document hidden');
+            console.log('👁️ Document hidden - TERMINATING EXAM');
 
-            // Skip warnings if secure dialog is active
-            if (isSecureDialogActive()) {
-                console.log('🔒 Secure dialog active - skipping visibility warning');
-                return;
-            }
-
-            reportSuspiciousActivity('document_hidden', {
+            // Report and terminate immediately
+            reportSuspiciousActivity('document_hidden_termination', {
                 timestamp: Date.now()
             });
 
-            // Show warning after grace period (not counted as violation)
-            const timeoutId = setTimeout(() => {
-                if (document.hidden &&
-                    window.ExamApp.antiCheatActive &&
-                    !isSecureDialogActive()) {
-                    showVisibilityWarningDialog();
-                }
-            }, GRACE_PERIODS.documentHidden);
+            // DIRECT TERMINATION - no warnings
+            console.log('🔴 TERMINATING EXAM: Document hidden violation');
+            terminateExamDirectly();
 
-            graceTimeouts.set('documentHidden', timeoutId);
         } else {
-            // Clear grace timeout when visible again
-            const timeoutId = graceTimeouts.get('documentHidden');
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                graceTimeouts.delete('documentHidden');
-            }
-
-            // Hide warning dialogs when visibility is restored (but not secure dialogs)
-            if (window.ExamApp.dialogSystemActive && !isSecureDialogActive()) {
-                hideCustomDialogs();
-            }
+            console.log('👁️ Document visible again');
         }
     } catch (error) {
         console.error('❌ Error handling visibility change:', error);
@@ -525,207 +316,165 @@ function handleVisibilityChange() {
 }
 
 /**
- * Show visibility warning using custom dialog
+ * Setup touchpad gesture detection for three-finger swipes
  */
-function showVisibilityWarningDialog() {
+function setupTouchpadGestureDetection() {
     try {
-        // Check if dialog system is available
-        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
-            showInfoDialog({
-                title: 'Внимание',
-                message: 'Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.',
-                confirmText: 'Разбрах',
-                type: 'warning'
-            }).then(() => {
-                console.log('💬 Visibility warning acknowledged');
-            }).catch(error => {
-                console.error('❌ Error showing visibility warning dialog:', error);
+        // Detect touchpad/trackpad gestures that can exit fullscreen
+        const gestureEvents = [
+            'wheel',           // Touchpad scroll with modifiers
+            'gesturestart',    // Touch gestures (Safari)
+            'gesturechange',   // Touch gesture change
+            'gestureend',      // Touch gesture end
+            'touchstart',      // Touch screen start
+            'touchmove',       // Touch screen move
+            'touchend'         // Touch screen end
+        ];
+
+        gestureEvents.forEach(eventType => {
+            document.addEventListener(eventType, handlePotentialGesture, {
+                capture: true,
+                passive: false
             });
-        } else {
-            // Fallback to violation screen
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.');
+        });
+
+        // Monitor for rapid fullscreen changes (gesture-induced)
+        setupFullscreenChangeMonitoring();
+
+        console.log('🔒 Touchpad gesture detection activated');
+    } catch (error) {
+        console.error('❌ Failed to setup gesture detection:', error);
+    }
+}
+
+/**
+ * Remove touchpad gesture detection
+ */
+function removeTouchpadGestureDetection() {
+    try {
+        const gestureEvents = [
+            'wheel', 'gesturestart', 'gesturechange', 'gestureend',
+            'touchstart', 'touchmove', 'touchend'
+        ];
+
+        gestureEvents.forEach(eventType => {
+            document.removeEventListener(eventType, handlePotentialGesture, { capture: true });
+        });
+
+        if (window.ExamApp.fullscreenMonitorInterval) {
+            clearInterval(window.ExamApp.fullscreenMonitorInterval);
+        }
+
+        console.log('🔒 Touchpad gesture detection removed');
+    } catch (error) {
+        console.error('❌ Failed to remove gesture detection:', error);
+    }
+}
+
+/**
+ * Handle potential gestures that might exit fullscreen
+ */
+function handlePotentialGesture(e) {
+    if (!window.ExamApp.antiCheatActive || !window.ExamApp.isFullscreen) return;
+
+    try {
+        let suspiciousGesture = false;
+        let gestureType = '';
+
+        // Detect three-finger swipe (wheel event with specific characteristics)
+        if (e.type === 'wheel') {
+            // Three-finger swipe usually has deltaY but no deltaX, and specific deltaMode
+            if (Math.abs(e.deltaY) > 50 && Math.abs(e.deltaX) < 20) {
+                suspiciousGesture = true;
+                gestureType = 'three_finger_swipe';
+            }
+
+            // Pinch-to-zoom gesture (wheel with ctrl)
+            if (e.ctrlKey || e.metaKey) {
+                suspiciousGesture = true;
+                gestureType = 'pinch_zoom';
             }
         }
-    } catch (error) {
-        console.error('❌ Error showing visibility warning:', error);
-    }
-}
 
-/**
- * Setup context menu blocking
- */
-function setupContextMenuBlocking() {
-    document.addEventListener('contextmenu', handleContextMenu, { capture: true });
-}
+        // Detect touch gestures (mobile/touch screens)
+        if (e.type.startsWith('gesture')) {
+            suspiciousGesture = true;
+            gestureType = 'touch_gesture';
+        }
 
-function removeContextMenuBlocking() {
-    document.removeEventListener('contextmenu', handleContextMenu, { capture: true });
-}
+        // Detect multi-touch (three finger touch)
+        if (e.type.startsWith('touch') && e.touches && e.touches.length >= 3) {
+            suspiciousGesture = true;
+            gestureType = 'multi_touch';
+        }
 
-/**
- * Handle context menu attempts (minor violation - warning only)
- */
-function handleContextMenu(e) {
-    if (!window.ExamApp.antiCheatActive) return;
+        if (suspiciousGesture) {
+            console.log(`🚫 Detected suspicious gesture: ${gestureType}`);
 
-    try {
-        // Allow context menu only in editor area
-        const editorArea = e.target.closest('#monaco-editor');
-        if (!editorArea) {
-            e.preventDefault();
-
-            // Report but don't count as serious violation
-            reportSuspiciousActivity('context_menu', {
+            // Report to server
+            reportSuspiciousActivity('suspicious_gesture', {
+                gestureType: gestureType,
+                eventType: e.type,
+                deltaX: e.deltaX,
+                deltaY: e.deltaY,
+                touches: e.touches ? e.touches.length : 0,
                 timestamp: Date.now()
             });
 
-            // Show brief warning using custom dialog
-            showContextMenuWarning();
-
-            return false;
+            // Check for fullscreen exit in next tick
+            setTimeout(() => {
+                if (!window.ExamApp.isFullscreen && window.ExamApp.antiCheatActive) {
+                    console.log(`🚫 Fullscreen exited after ${gestureType} - TERMINATING`);
+                    handleFullscreenViolation();
+                }
+            }, 100);
         }
+
     } catch (error) {
-        console.error('❌ Error handling context menu:', error);
+        console.error('❌ Error handling gesture:', error);
     }
 }
 
 /**
- * Show context menu warning
+ * Setup active fullscreen monitoring (check every 200ms)
  */
-function showContextMenuWarning() {
+function setupFullscreenChangeMonitoring() {
     try {
-        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
-            showInfoDialog({
-                title: 'Ограничение',
-                message: 'Десният клик е ограничен по време на изпита!',
-                confirmText: 'Разбрах',
-                type: 'warning'
-            }).catch(error => {
-                console.error('❌ Error showing context menu warning:', error);
-            });
+        // Clear existing monitor
+        if (window.ExamApp.fullscreenMonitorInterval) {
+            clearInterval(window.ExamApp.fullscreenMonitorInterval);
         }
+
+        // Monitor fullscreen status every 200ms
+        window.ExamApp.fullscreenMonitorInterval = setInterval(() => {
+            if (!window.ExamApp.antiCheatActive) return;
+
+            const isCurrentlyFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+
+            // If we think we're in fullscreen but we're actually not
+            if (window.ExamApp.isFullscreen && !isCurrentlyFullscreen) {
+                console.log('🚫 DETECTED: Fullscreen exit via gesture/swipe');
+
+                // Update state
+                window.ExamApp.isFullscreen = false;
+                updateFullscreenStatus('⚠️ Fullscreen неактивен');
+
+                // Trigger violation
+                handleFullscreenViolation();
+            }
+
+        }, 200); // Check every 200ms
+
+        console.log('🔒 Active fullscreen monitoring started');
     } catch (error) {
-        console.error('❌ Error showing context menu warning:', error);
+        console.error('❌ Failed to setup fullscreen monitoring:', error);
     }
 }
-
-/**
- * Setup copy/paste monitoring
- */
-function setupCopyPasteMonitoring() {
-    document.addEventListener('copy', handleCopyAttempt, { capture: true });
-    document.addEventListener('paste', handlePasteAttempt, { capture: true });
-    document.addEventListener('cut', handleCutAttempt, { capture: true });
-}
-
-function removeCopyPasteMonitoring() {
-    document.removeEventListener('copy', handleCopyAttempt, { capture: true });
-    document.removeEventListener('paste', handlePasteAttempt, { capture: true });
-    document.removeEventListener('cut', handleCutAttempt, { capture: true });
-}
-
-/**
- * Handle copy attempts (minor violation - warning only)
- */
-function handleCopyAttempt(e) {
-    if (!window.ExamApp.antiCheatActive) return;
-
-    try {
-        // Allow copy only in editor area
-        const editorArea = e.target.closest('#monaco-editor');
-        if (!editorArea) {
-            e.preventDefault();
-
-            reportSuspiciousActivity('copy_attempt', {
-                timestamp: Date.now()
-            });
-
-            showCopyPasteWarning('copy');
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Error handling copy attempt:', error);
-    }
-}
-
-/**
- * Handle paste attempts (minor violation - warning only)
- */
-function handlePasteAttempt(e) {
-    if (!window.ExamApp.antiCheatActive) return;
-
-    try {
-        // Allow paste only in editor area
-        const editorArea = e.target.closest('#monaco-editor');
-        if (!editorArea) {
-            e.preventDefault();
-
-            reportSuspiciousActivity('paste_attempt', {
-                timestamp: Date.now()
-            });
-
-            showCopyPasteWarning('paste');
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Error handling paste attempt:', error);
-    }
-}
-
-/**
- * Handle cut attempts (minor violation - warning only)
- */
-function handleCutAttempt(e) {
-    if (!window.ExamApp.antiCheatActive) return;
-
-    try {
-        // Allow cut only in editor area
-        const editorArea = e.target.closest('#monaco-editor');
-        if (!editorArea) {
-            e.preventDefault();
-
-            reportSuspiciousActivity('cut_attempt', {
-                timestamp: Date.now()
-            });
-
-            showCopyPasteWarning('cut');
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Error handling cut attempt:', error);
-    }
-}
-
-/**
- * Show copy/paste warning
- */
-function showCopyPasteWarning(action) {
-    try {
-        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
-            const messages = {
-                'copy': 'Копирането е забранено извън редактора!',
-                'paste': 'Поставянето е забранено извън редактора!',
-                'cut': 'Изрязването е забранено извън редактора!'
-            };
-
-            showInfoDialog({
-                title: 'Ограничение',
-                message: messages[action] || 'Действието е ограничено!',
-                confirmText: 'Разбрах',
-                type: 'warning'
-            }).catch(error => {
-                console.error('❌ Error showing copy/paste warning:', error);
-            });
-        }
-    } catch (error) {
-        console.error('❌ Error showing copy/paste warning:', error);
-    }
-}
-
-/**
- * Update fullscreen status display
- */
 function updateFullscreenStatus(text) {
     try {
         const statusEl = document.getElementById('fullscreen-status');
@@ -738,35 +487,19 @@ function updateFullscreenStatus(text) {
 }
 
 /**
- * Clear all grace timeouts
- */
-function clearAllGraceTimeouts() {
-    for (const timeoutId of graceTimeouts.values()) {
-        clearTimeout(timeoutId);
-    }
-    graceTimeouts.clear();
-}
-
-/**
  * Emergency violation reset (admin function)
  */
 export function emergencyResetViolations() {
     try {
-        // Reset fullscreen violation counter
-        fullscreenViolationCount = 0;
+        // Reset violation counter
+        violationCount = 0;
 
-        clearAllGraceTimeouts();
-
-        // Hide both traditional violation screen and custom dialogs
+        // Hide violation screen
         if (window.ExamApp.hideViolationScreen) {
             window.ExamApp.hideViolationScreen();
         }
 
-        if (window.ExamApp.dialogSystemActive) {
-            hideCustomDialogs();
-        }
-
-        console.log('🚨 Emergency violation reset - fullscreen violations reset to 0');
+        console.log('🚨 Emergency violation reset - violations reset to 0');
         return true;
     } catch (error) {
         console.error('❌ Error in emergency violation reset:', error);
@@ -779,12 +512,10 @@ export function emergencyResetViolations() {
  */
 export function getViolationStatus() {
     return {
-        fullscreenViolationCount: fullscreenViolationCount,
-        maxViolationsAllowed: MAX_FULLSCREEN_VIOLATIONS,
-        nextViolationWillTerminate: fullscreenViolationCount >= MAX_FULLSCREEN_VIOLATIONS,
+        violationCount: violationCount,
+        maxViolationsAllowed: MAX_VIOLATIONS,
         antiCheatActive: window.ExamApp.antiCheatActive,
         isFullscreen: window.ExamApp.isFullscreen,
-        dialogSystemActive: window.ExamApp.dialogSystemActive,
         completionInProgress: window.ExamApp.completionInProgress
     };
 }
