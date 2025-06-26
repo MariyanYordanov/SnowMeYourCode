@@ -17,19 +17,19 @@ import {
     saveCode,
     clearOutput,
     changeTheme
-} from '..js/editor.js';
+} from './editor.js';
 
 import {
     setupSocket,
     updateConnectionStatus
-} from '..js/socket.js';
+} from './socket.js';
 
 import {
     startExamTimer,
     updateTimerDisplay,
     handleTimeWarning,
     handleExamExpired
-} from '..js/timer.js';
+} from './timer.js';
 
 import {
     setupAntiCheat,
@@ -39,16 +39,16 @@ import {
     enterFullscreenMode
 } from './anticheat.js';
 
-import {
-    initializeEnhancedConsole,
-    overrideConsoleMethods,
-    ENHANCED_CONSOLE_STYLES
-} from './console.js';
+// import {
+//     initializeEnhancedConsole,
+//     overrideConsoleMethods,
+//     ENHANCED_CONSOLE_STYLES
+// } from './console.js';
 
-import {
-    initializeDOMPreview,
-    DOM_PREVIEW_STYLES
-} from './preview.js';
+// import {
+//     initializeDOMPreview,
+//     DOM_PREVIEW_STYLES
+// } from './preview.js';
 
 // ================================
 // GLOBAL STATE MANAGEMENT
@@ -109,7 +109,8 @@ function initializeAppSafely() {
 
     try {
         // Inject CSS styles first
-        injectModuleStyles();
+        // TODO: restore injection
+        //injectModuleStyles();
 
         // Setup core components
         setupLoginForm();
@@ -135,29 +136,30 @@ function initializeAppSafely() {
 // ================================
 // STYLE INJECTION
 // ================================
-function injectModuleStyles() {
-    try {
-        // Create style element
-        const styleElement = document.createElement('style');
-        styleElement.id = 'module-styles';
+// TODO: restore
+// function injectModuleStyles() {
+//     try {
+//         // Create style element
+//         const styleElement = document.createElement('style');
+//         styleElement.id = 'module-styles';
 
-        // Combine all module styles
-        const combinedStyles = `
-            /* Enhanced Console Styles */
-            ${ENHANCED_CONSOLE_STYLES}
+//         // Combine all module styles
+//         const combinedStyles = `
+//             /* Enhanced Console Styles */
+//             ${ENHANCED_CONSOLE_STYLES}
             
-            /* DOM Preview Styles */
-            ${DOM_PREVIEW_STYLES}
-        `;
+//             /* DOM Preview Styles */
+//             ${DOM_PREVIEW_STYLES}
+//         `;
 
-        styleElement.textContent = combinedStyles;
-        document.head.appendChild(styleElement);
+//         styleElement.textContent = combinedStyles;
+//         document.head.appendChild(styleElement);
 
-        console.log('✅ Module styles injected');
-    } catch (error) {
-        console.error('❌ Failed to inject styles:', error);
-    }
-}
+//         console.log('✅ Module styles injected');
+//     } catch (error) {
+//         console.error('❌ Failed to inject styles:', error);
+//     }
+// }
 
 // ================================
 // EXAM CONTROLS SETUP
@@ -218,11 +220,20 @@ function startExam(data) {
         // Start timer
         startExamTimer(data.timeLeft || window.ExamApp.examDuration);
 
-        // Initialize Monaco Editor
-        window.ExamApp.editor = initializeMonacoEditor(data.lastCode || '');
+        // Initialize Monaco Editor (async)
+        initializeMonacoEditor(data.lastCode || '')
+            .then(editor => {
+                window.ExamApp.editor = editor;
+                console.log('✅ Monaco Editor ready for use');
+            })
+            .catch(error => {
+                console.error('❌ Monaco Editor initialization failed:', error);
+                showError('Грешка при зареждане на редактора');
+            });
 
         // Initialize enhanced features
-        initializeEnhancedFeatures();
+        // TODO: restore
+        //initializeEnhancedFeatures();
 
         // Enter fullscreen
         enterFullscreenMode();

@@ -71,7 +71,8 @@ export function activateAntiCheat() {
         setupVisibilityMonitoring();
         setupContextMenuBlocking();
         setupCopyPasteMonitoring();
-        setupDevToolsDetection();
+        // TODO: restore
+        //setupDevToolsDetection();
 
         console.log('✅ Anti-cheat protection activated');
         return true;
@@ -590,18 +591,19 @@ function handleCutAttempt(e) {
 /**
  * Setup developer tools detection
  */
-function setupDevToolsDetection() {
-    try {
-        // DevTools detection using console
-        setInterval(() => {
-            if (window.ExamApp.antiCheatActive) {
-                detectDevTools();
-            }
-        }, 1000);
-    } catch (error) {
-        console.error('❌ Error setting up dev tools detection:', error);
-    }
-}
+// TODO: restore
+// function setupDevToolsDetection() {
+//     try {
+//         // DevTools detection using console
+//         setInterval(() => {
+//             if (window.ExamApp.antiCheatActive) {
+//                 detectDevTools();
+//             }
+//         }, 1000);
+//     } catch (error) {
+//         console.error('❌ Error setting up dev tools detection:', error);
+//     }
+// }
 
 /**
  * Detect developer tools opening
