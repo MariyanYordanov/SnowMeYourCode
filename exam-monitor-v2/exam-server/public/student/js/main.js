@@ -10,7 +10,7 @@ import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, saveC
 import { startExamTimer, updateTimerDisplay, handleTimeWarning, handleExamExpired } from './timer.js';
 import { setupAntiCheat, activateAntiCheat, deactivateAntiCheat, enterFullscreenMode } from './anticheat.js';
 import { showCompletionDialog, showViolationExitDialog, showInfoDialog, hideCustomDialogs } from './dialogs.js';
-
+import { setupTabs } from './tabs.js';
 // ================================
 // GLOBAL STATE MANAGEMENT
 // ================================
@@ -105,6 +105,7 @@ function setupExamControls() {
             clearOutput: clearOutput,
             changeTheme: changeTheme
             // saveCode removed - auto-save only
+            
         });
 
         // Finish exam button
@@ -112,6 +113,7 @@ function setupExamControls() {
         if (finishBtn) {
             finishBtn.addEventListener('click', handleFinishExam);
         }
+        setupTabs();
 
     } catch (error) {
         console.error('❌ Failed to setup exam controls:', error);

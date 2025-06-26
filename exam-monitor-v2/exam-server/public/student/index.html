@@ -212,22 +212,71 @@
             <div class="output-panel">
                 <div class="panel-header">
                     <h3>🖥️ Резултат</h3>
-                </div>
-
-                <div id="code-output" class="code-output">
-                    <div class="output-placeholder">
-                        Резултатът от вашия код ще се покаже тук...
+                    <!-- NEW: Tab Navigation -->
+                    <div class="output-tabs">
+                        <button class="tab-btn active" data-tab="console" id="console-tab">
+                            🖥️ Console
+                        </button>
+                        <button class="tab-btn" data-tab="mdn" id="mdn-tab">
+                            📚 MDN Reference
+                        </button>
                     </div>
                 </div>
-
-                <!-- Error Panel -->
-                <div id="error-panel" class="error-panel" style="display: none;">
-                    <div class="error-header">❌ Грешка в кода</div>
-                    <div id="error-content" class="error-content"></div>
+            
+                <!-- Console Tab Content -->
+                <div id="console-tab-content" class="tab-content active">
+                    <div id="code-output" class="code-output">
+                        <div class="output-placeholder">
+                            Резултатът от вашия код ще се покаже тук...
+                        </div>
+                    </div>
+            
+                    <!-- Error Panel -->
+                    <div id="error-panel" class="error-panel" style="display: none;">
+                        <div class="error-header">❌ Грешка в кода</div>
+                        <div id="error-content" class="error-content"></div>
+                    </div>
+            
+                    <!-- Execution Info Display -->
+                    <div id="execution-info" style="display: none;"></div>
                 </div>
-
-                <!-- Execution Info Display -->
-                <div id="execution-info" style="display: none;"></div>
+            
+                <!-- NEW: MDN Tab Content -->
+                <div id="mdn-tab-content" class="tab-content" style="display: none;">
+                    <div class="mdn-panel">
+                        <!-- MDN Search -->
+                        <div class="mdn-search">
+                            <input type="text" id="mdn-search" placeholder="🔍 Search JavaScript APIs..." autocomplete="off">
+                            <div class="search-results" id="search-results"></div>
+                        </div>
+            
+                        <!-- MDN Categories -->
+                        <div class="mdn-categories">
+                            <div class="category-tabs">
+                                <button class="category-btn active" data-category="all">All APIs</button>
+                                <button class="category-btn" data-category="fetch">Fetch & AJAX</button>
+                                <button class="category-btn" data-category="dom">DOM API</button>
+                                <button class="category-btn" data-category="array">Arrays</button>
+                                <button class="category-btn" data-category="object">Objects</button>
+                                <button class="category-btn" data-category="storage">Storage</button>
+                            </div>
+                        </div>
+            
+                        <!-- MDN Content Display -->
+                        <div class="mdn-content" id="mdn-content">
+                            <div class="mdn-welcome">
+                                <h4>📚 JavaScript Reference for SPA Development</h4>
+                                <p>Search or browse APIs needed for Single Page Applications</p>
+                                <div class="quick-links">
+                                    <button class="quick-link" data-api="fetch">Fetch API</button>
+                                    <button class="quick-link" data-api="dom">DOM Methods</button>
+                                    <button class="quick-link" data-api="array">Array Methods</button>
+                                    <button class="quick-link" data-api="json">JSON API</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
