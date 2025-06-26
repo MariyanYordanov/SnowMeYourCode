@@ -429,11 +429,11 @@ export class WebSocketHandler {
     }
 
     /**
-     * Setup heartbeat mechanism
+     * Setup heartbeat mechanism - CLEANED
      */
     setupHeartbeat() {
         setInterval(() => {
-            // Send heartbeat to all connected students
+            // Send heartbeat to all connected students (no logging)
             this.io.to('students').emit(SOCKET_EVENTS.HEARTBEAT, {
                 timestamp: Date.now()
             });
@@ -445,7 +445,7 @@ export class WebSocketHandler {
     }
 
     /**
-     * Setup time warnings for students
+     * Setup time warnings for students - CLEANED
      */
     setupTimeWarnings() {
         setInterval(() => {
@@ -476,34 +476,28 @@ export class WebSocketHandler {
     }
 
     /**
-     * Check and send time warnings - IMPROVED VERSION
+     * Check and send time warnings - CLEANED (removed excessive logging)
      */
     checkTimeWarnings() {
-        console.log(`🕐 Checking time warnings for ${this.studentSockets.size} students`);
-
         for (const [sessionId, socket] of this.studentSockets.entries()) {
             try {
                 const session = this.sessionManager.sessions.get(sessionId);
-                if (!session) {
-                    console.warn(`⚠️ Session not found for time warning check: ${sessionId}`);
-                    continue;
-                }
+                if (!session) continue;
 
                 const timeLeft = this.sessionManager.calculateRemainingTime(session);
                 const minutesLeft = Math.floor(timeLeft / (1000 * 60));
 
-                console.log(`⏰ Time check for ${sessionId}: ${minutesLeft} minutes left (${timeLeft}ms)`);
-
                 // Check if we should send a warning
                 if (this.timeWarnings.includes(minutesLeft)) {
-                    console.log(`📢 Sending time warning to ${sessionId}: ${minutesLeft} minutes`);
-
                     socket.emit(SOCKET_EVENTS.TIME_WARNING, {
                         minutesLeft,
                         message: `Внимание! Остават ${minutesLeft} минути до края на изпита`,
                         timeLeft,
                         formattedTimeLeft: this.sessionManager.formatTimeLeft(timeLeft)
                     });
+
+                    // Only log actual warnings sent
+                    console.log(`⚠️ Time warning sent: ${socket.studentInfo?.name} - ${minutesLeft}min left`);
 
                     // Notify teachers about time warning
                     this.notifyTeachers('student-time-warning', {
@@ -515,7 +509,7 @@ export class WebSocketHandler {
                 }
 
             } catch (error) {
-                console.error(`❌ Error checking time warnings for ${sessionId}:`, error);
+                console.error(`Error checking time warnings for ${sessionId}:`, error);
             }
         }
     }

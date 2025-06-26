@@ -20,8 +20,6 @@ const reconnectDelay = 1000;
  */
 export function setupSocket() {
     try {
-        console.log('🔌 Setting up Socket.io...');
-
         // Simple wait for Socket.io to be available
         let socketIO = null;
 
@@ -35,12 +33,9 @@ export function setupSocket() {
         }
 
         if (!socketIO || typeof socketIO !== 'function') {
-            console.log('⏳ Socket.io not ready, waiting...');
             setTimeout(setupSocket, 300);
             return;
         }
-
-        console.log('✅ Socket.io found and ready');
 
         // Initialize socket
         const socket = socketIO({
@@ -59,7 +54,7 @@ export function setupSocket() {
         // Setup event handlers
         setupSocketEventHandlers(socket);
 
-        console.log('✅ Socket.io initialized successfully');
+        console.log('✅ Socket.io connected');
         return true;
     } catch (error) {
         console.error('❌ Socket setup failed:', error);
@@ -91,7 +86,6 @@ function setupSocketEventHandlers(socket) {
         // Anti-cheat events
         socket.on('anti-cheat-warning', handleAntiCheatWarning);
 
-        console.log('✅ Socket event handlers configured');
     } catch (error) {
         console.error('❌ Failed to setup socket handlers:', error);
     }
@@ -102,8 +96,6 @@ function setupSocketEventHandlers(socket) {
  */
 export function handleSocketConnect(socket) {
     try {
-        console.log('✅ Connected to server');
-
         // Update global state
         window.ExamApp.isConnected = true;
         reconnectAttempts = 0;
@@ -144,7 +136,6 @@ export function handleSocketDisconnect(socket, reason) {
 
         // Don't auto-reconnect for intentional disconnects
         if (reason === 'io server disconnect' || reason === 'client namespace disconnect') {
-            console.log('🔌 Intentional disconnect, not reconnecting');
             return;
         }
 
@@ -187,8 +178,6 @@ function attemptReconnection() {
     reconnectAttempts++;
     const delay = reconnectDelay * Math.pow(2, reconnectAttempts - 1); // Exponential backoff
 
-    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
-
     setTimeout(() => {
         if (window.ExamApp.socket) {
             window.ExamApp.socket.connect();
@@ -226,8 +215,6 @@ export function updateConnectionStatus(connected) {
  */
 function handleTimeWarning(data) {
     try {
-        console.log('⚠️ Time warning received:', data);
-
         // Show time warning notification
         if (window.ExamApp.showNotification) {
             const message = `⚠️ Внимание! Остават ${data.minutesLeft} минути до края на изпита!`;
@@ -243,8 +230,6 @@ function handleTimeWarning(data) {
  */
 function handleExamExpired(data) {
     try {
-        console.log('⏰ Exam expired notification received');
-
         // Show expiration message
         if (window.ExamApp.showViolationScreen) {
             window.ExamApp.showViolationScreen('Времето за изпита изтече!');
@@ -264,8 +249,6 @@ function handleExamExpired(data) {
  */
 function handleForceDisconnect(data) {
     try {
-        console.log('🚫 Force disconnect received:', data);
-
         // Show termination message
         if (window.ExamApp.showViolationScreen) {
             window.ExamApp.showViolationScreen(`Изпитът е прекратен: ${data.message}`);
@@ -285,8 +268,6 @@ function handleForceDisconnect(data) {
  */
 function handleAntiCheatWarning(data) {
     try {
-        console.log('⚠️ Anti-cheat warning received:', data);
-
         // Show warning notification
         if (window.ExamApp.showNotification) {
             window.ExamApp.showNotification(data.message, 'warning');
@@ -302,7 +283,6 @@ function handleAntiCheatWarning(data) {
 export function sendCodeUpdate(code, filename = 'main.js') {
     try {
         if (!window.ExamApp.socket || !window.ExamApp.socket.connected) {
-            console.warn('⚠️ Cannot send code update - not connected');
             return false;
         }
 
@@ -312,7 +292,6 @@ export function sendCodeUpdate(code, filename = 'main.js') {
             timestamp: Date.now()
         });
 
-        console.log('📤 Code update sent to server');
         return true;
     } catch (error) {
         console.error('❌ Error sending code update:', error);
@@ -326,7 +305,6 @@ export function sendCodeUpdate(code, filename = 'main.js') {
 export function reportSuspiciousActivity(activity, data = {}) {
     try {
         if (!window.ExamApp.socket || !window.ExamApp.socket.connected) {
-            console.warn('⚠️ Cannot report activity - not connected');
             return false;
         }
 
@@ -351,7 +329,6 @@ export function reportSuspiciousActivity(activity, data = {}) {
 export function sendExamCompletion(reason = 'completed') {
     try {
         if (!window.ExamApp.socket || !window.ExamApp.socket.connected) {
-            console.warn('⚠️ Cannot send exam completion - not connected');
             return false;
         }
 
@@ -362,7 +339,6 @@ export function sendExamCompletion(reason = 'completed') {
             timestamp: Date.now()
         });
 
-        console.log(`📤 Exam completion sent: ${reason}`);
         return true;
     } catch (error) {
         console.error('❌ Error sending exam completion:', error);
@@ -417,8 +393,6 @@ export function getSocketInfo() {
  */
 export function manualReconnect() {
     try {
-        console.log('🔄 Manual reconnection initiated');
-
         if (window.ExamApp.socket) {
             window.ExamApp.socket.disconnect();
             setTimeout(() => {
@@ -445,7 +419,6 @@ export function disconnectSocket() {
         window.ExamApp.isConnected = false;
         updateConnectionStatus(false);
 
-        console.log('🔌 Socket disconnected gracefully');
     } catch (error) {
         console.error('❌ Error disconnecting socket:', error);
     }
@@ -466,7 +439,6 @@ export function setupHeartbeat(interval = 30000) {
             sendHeartbeat();
         }, interval);
 
-        console.log(`💓 Heartbeat setup with ${interval}ms interval`);
     } catch (error) {
         console.error('❌ Error setting up heartbeat:', error);
     }

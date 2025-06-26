@@ -12,12 +12,10 @@ import { reportSuspiciousActivity } from './socket.js';
  */
 export function setupAntiCheat() {
     try {
-        console.log('🛡️ Setting up RESULT DETECTION anti-cheat...');
-
         // Setup fullscreen monitoring (always active)
         setupFullscreenMonitoring();
 
-        console.log('✅ Result detection anti-cheat setup completed');
+        console.log('✅ Anti-cheat initialized');
         return true;
     } catch (error) {
         console.error('❌ Failed to setup anti-cheat:', error);
@@ -30,8 +28,6 @@ export function setupAntiCheat() {
  */
 export function activateAntiCheat() {
     try {
-        console.log('🛡️ Activating result detection anti-cheat...');
-
         // Mark as active
         window.ExamApp.antiCheatActive = true;
 
@@ -39,7 +35,7 @@ export function activateAntiCheat() {
         setupVisibilityDetection(); // Document hidden detection
         setupActiveFullscreenMonitoring(); // Enhanced fullscreen monitoring
 
-        console.log('✅ Result detection anti-cheat activated');
+        console.log('✅ Anti-cheat activated');
         return true;
     } catch (error) {
         console.error('❌ Failed to activate anti-cheat:', error);
@@ -52,8 +48,6 @@ export function activateAntiCheat() {
  */
 export function deactivateAntiCheat() {
     try {
-        console.log('🛡️ Deactivating anti-cheat protection...');
-
         // Mark as inactive
         window.ExamApp.antiCheatActive = false;
 
@@ -61,7 +55,6 @@ export function deactivateAntiCheat() {
         removeVisibilityDetection();
         removeActiveFullscreenMonitoring();
 
-        console.log('✅ Anti-cheat protection deactivated');
     } catch (error) {
         console.error('❌ Error deactivating anti-cheat:', error);
     }
@@ -84,7 +77,6 @@ export function setupFullscreenMonitoring() {
             document.addEventListener(eventName, handleFullscreenChange);
         });
 
-        console.log('🔒 Cross-platform fullscreen monitoring initialized');
     } catch (error) {
         console.error('❌ Failed to setup fullscreen monitoring:', error);
     }
@@ -95,8 +87,6 @@ export function setupFullscreenMonitoring() {
  */
 export function enterFullscreenMode() {
     try {
-        console.log('🔒 Entering fullscreen mode...');
-
         const element = document.documentElement;
 
         if (element.requestFullscreen) {
@@ -135,10 +125,8 @@ function handleFullscreenChange() {
         window.ExamApp.isFullscreen = isFullscreen;
 
         if (isFullscreen) {
-            console.log('✅ Entered fullscreen mode');
             updateFullscreenStatus('🔒 Fullscreen активен');
         } else {
-            console.log('🚫 FULLSCREEN EXIT DETECTED - TERMINATING EXAM');
             updateFullscreenStatus('⚠️ Fullscreen неактивен');
 
             // Handle violation if exam is active AND not in completion process
@@ -146,9 +134,8 @@ function handleFullscreenChange() {
                 window.ExamApp.antiCheatActive &&
                 !window.ExamApp.completionInProgress) {
 
+                console.log('🚫 FULLSCREEN EXIT DETECTED - TERMINATING EXAM');
                 handleFullscreenViolation();
-            } else if (window.ExamApp.completionInProgress) {
-                console.log('🔄 Fullscreen exit during completion process - allowed');
             }
         }
     } catch (error) {
@@ -161,8 +148,6 @@ function handleFullscreenChange() {
  */
 function handleFullscreenViolation() {
     try {
-        console.log('🚫 FULLSCREEN VIOLATION - TERMINATING EXAM IMMEDIATELY');
-
         // Report to server
         reportSuspiciousActivity('fullscreen_exit_violation', {
             method: 'result_detection',
@@ -209,9 +194,6 @@ function handleVisibilityChange() {
 
             // DIRECT TERMINATION
             terminateExamDirectly('document_hidden_violation');
-
-        } else {
-            console.log('👁️ Document visible again');
         }
     } catch (error) {
         console.error('❌ Error handling visibility change:', error);
@@ -241,8 +223,6 @@ function setupActiveFullscreenMonitoring() {
 
             // If we think we're in fullscreen but we're actually not
             if (window.ExamApp.isFullscreen && !isCurrentlyFullscreen) {
-                console.log('🚫 ACTIVE MONITOR: Fullscreen exit detected');
-
                 // Update state
                 window.ExamApp.isFullscreen = false;
                 updateFullscreenStatus('⚠️ Fullscreen неактивен');
@@ -253,7 +233,6 @@ function setupActiveFullscreenMonitoring() {
 
         }, 500); // Check every 500ms (balanced performance)
 
-        console.log('🔍 Active fullscreen monitoring started');
     } catch (error) {
         console.error('❌ Failed to setup active fullscreen monitoring:', error);
     }
@@ -265,7 +244,6 @@ function removeActiveFullscreenMonitoring() {
             clearInterval(window.ExamApp.fullscreenMonitorInterval);
             window.ExamApp.fullscreenMonitorInterval = null;
         }
-        console.log('🔍 Active fullscreen monitoring stopped');
     } catch (error) {
         console.error('❌ Failed to remove active fullscreen monitoring:', error);
     }
@@ -278,8 +256,6 @@ function terminateExamDirectly(violationType) {
     try {
         // Mark completion in progress to prevent other violations
         window.ExamApp.completionInProgress = true;
-
-        console.log(`🚫 DIRECT TERMINATION: ${violationType}`);
 
         // Call main exit function - NO VIOLATION SCREEN
         if (window.ExamApp.exitExam) {

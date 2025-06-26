@@ -56,14 +56,12 @@ window.ExamApp = {
 // APPLICATION INITIALIZATION
 // ================================
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 DOM Content Loaded - Initializing Student Exam System...');
+    console.log('🚀 Student Exam System initializing...');
 
     // Wait for all scripts to load
     if (document.readyState === 'loading') {
-        console.log('⏳ Document still loading, waiting...');
         document.addEventListener('readystatechange', function () {
             if (document.readyState === 'interactive' || document.readyState === 'complete') {
-                console.log('📄 Document ready state:', document.readyState);
                 initializeAppSafely();
             }
         });
@@ -74,8 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Safe initialization with proper timing
 function initializeAppSafely() {
-    console.log('🎯 Starting safe initialization...');
-
     try {
         // Setup core components first
         setupLoginForm();
@@ -84,14 +80,12 @@ function initializeAppSafely() {
         setupViolationScreen();
         setupNotificationSystem();
 
-        console.log('✅ Core components initialized');
-
         // Setup Socket.io with delay to ensure scripts are ready
         setTimeout(() => {
             setupSocket();
         }, 100);
 
-        console.log('✅ Student Exam System initialization started');
+        console.log('✅ Student Exam System initialized');
 
     } catch (error) {
         console.error('❌ Failed to initialize app:', error);
@@ -119,7 +113,6 @@ function setupExamControls() {
             finishBtn.addEventListener('click', handleFinishExam);
         }
 
-        console.log('✅ Exam controls initialized (no manual save)');
     } catch (error) {
         console.error('❌ Failed to setup exam controls:', error);
     }
@@ -146,7 +139,6 @@ function setupViolationScreen() {
         window.ExamApp.showViolationScreen = showViolationScreen;
         window.ExamApp.hideViolationScreen = hideViolationScreen;
 
-        console.log('✅ Violation screen setup completed');
     } catch (error) {
         console.error('❌ Failed to setup violation screen:', error);
     }
@@ -161,7 +153,6 @@ function setupNotificationSystem() {
         window.ExamApp.showNotification = showNotification;
         window.ExamApp.showError = showError;
 
-        console.log('✅ Notification system setup completed');
     } catch (error) {
         console.error('❌ Failed to setup notification system:', error);
     }
@@ -176,11 +167,16 @@ function setupNotificationSystem() {
  */
 async function startExam(data) {
     try {
-        console.log('🎯 Starting exam...');
-
         // Hide login, show exam
-        document.getElementById('login-container').style.display = 'none';
-        document.getElementById('exam-container').style.display = 'flex';
+        const loginContainer = document.getElementById('login-container');
+        const examContainer = document.getElementById('exam-container');
+
+        if (!loginContainer || !examContainer) {
+            throw new Error('Required containers not found in DOM');
+        }
+
+        loginContainer.style.display = 'none';
+        examContainer.style.display = 'flex';
 
         // Update student info display
         updateStudentDisplay();
@@ -224,7 +220,6 @@ function updateStudentDisplay() {
         if (classEl) classEl.textContent = window.ExamApp.studentClass || 'Неизвестен';
         if (sessionEl) sessionEl.textContent = window.ExamApp.sessionId || 'Неизвестен';
 
-        console.log(`📋 Student display updated: ${window.ExamApp.studentName} (${window.ExamApp.studentClass}) - ${window.ExamApp.sessionId}`);
     } catch (error) {
         console.error('❌ Failed to update student display:', error);
     }
@@ -244,7 +239,6 @@ async function handleFinishExam() {
         });
 
         if (shouldExit) {
-            console.log('🏁 Student finishing exam normally');
             exitExam('completed');
         }
     } catch (error) {
@@ -257,8 +251,6 @@ async function handleFinishExam() {
  */
 function exitExam(reason) {
     try {
-        console.log(`🚪 Exiting exam with reason: ${reason}`);
-
         // Mark completion in progress to prevent violations
         window.ExamApp.completionInProgress = true;
 
@@ -268,7 +260,6 @@ function exitExam(reason) {
 
         if (isViolationTermination) {
             // AUTOMATIC TERMINATION - no screens, no saves, direct exit
-            console.log(`🚫 ${reason} - AUTOMATIC TERMINATION (no code save)`);
 
             // Send completion to server immediately
             if (window.ExamApp.socket && window.ExamApp.socket.connected) {
@@ -292,7 +283,6 @@ function exitExam(reason) {
 
         } else if (isVoluntaryExit) {
             // VOLUNTARY EXIT - normal completion with auto-save
-            console.log('✅ Voluntary completion - auto-save active');
 
             // Send completion to server
             if (window.ExamApp.socket && window.ExamApp.socket.connected) {
@@ -318,7 +308,6 @@ function exitExam(reason) {
 
         } else {
             // OTHER REASONS (expired, etc.) - normal handling
-            console.log(`⏰ ${reason} - normal termination`);
 
             // Send completion to server
             if (window.ExamApp.socket && window.ExamApp.socket.connected) {
@@ -359,13 +348,14 @@ function exitExam(reason) {
  */
 function showViolationScreen(reason) {
     try {
-        console.log(`🚫 Showing violation screen: ${reason}`);
+        const violationScreen = document.getElementById('violation-screen');
+        const violationReason = document.getElementById('violation-reason');
+        const examContainer = document.getElementById('exam-container');
 
-        document.getElementById('violation-reason').textContent = reason;
-        document.getElementById('violation-screen').style.display = 'flex';
+        if (violationReason) violationReason.textContent = reason;
+        if (violationScreen) violationScreen.style.display = 'flex';
+        if (examContainer) examContainer.classList.add('violation-detected');
 
-        // Blur exam content
-        document.getElementById('exam-container').classList.add('violation-detected');
     } catch (error) {
         console.error('❌ Error showing violation screen:', error);
     }
@@ -376,8 +366,12 @@ function showViolationScreen(reason) {
  */
 function hideViolationScreen() {
     try {
-        document.getElementById('violation-screen').style.display = 'none';
-        document.getElementById('exam-container').classList.remove('violation-detected');
+        const violationScreen = document.getElementById('violation-screen');
+        const examContainer = document.getElementById('exam-container');
+
+        if (violationScreen) violationScreen.style.display = 'none';
+        if (examContainer) examContainer.classList.remove('violation-detected');
+
     } catch (error) {
         console.error('❌ Error hiding violation screen:', error);
     }
@@ -388,8 +382,6 @@ function hideViolationScreen() {
  */
 function continueAfterViolation() {
     try {
-        console.log('✅ Student chose to continue after violation');
-
         hideViolationScreen();
 
         // Re-enter fullscreen if needed
@@ -412,7 +404,6 @@ async function exitAfterViolation() {
         );
 
         if (shouldExit) {
-            console.log('🚪 Student chose to exit after violation');
             exitExam('violation');
         }
     } catch (error) {
@@ -525,12 +516,12 @@ if (window.location.hostname === 'localhost') {
         runCode: () => runCode(),
         resetState: () => {
             window.ExamApp.isLoggedIn = false;
-            document.getElementById('login-container').style.display = 'flex';
-            document.getElementById('exam-container').style.display = 'none';
+            const loginContainer = document.getElementById('login-container');
+            const examContainer = document.getElementById('exam-container');
+            if (loginContainer) loginContainer.style.display = 'flex';
+            if (examContainer) examContainer.style.display = 'none';
         }
     };
-
-    console.log('🐛 Debug functions available: window.examDebug');
 }
 
-console.log('🎯 Student Exam System Main Entry Point loaded successfully!');
+console.log('🎯 Student Exam System loaded successfully!');

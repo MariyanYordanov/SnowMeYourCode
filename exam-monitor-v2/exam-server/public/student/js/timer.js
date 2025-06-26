@@ -19,8 +19,6 @@ let warnedTimes = new Set();
  */
 export function startExamTimer(duration) {
     try {
-        console.log('⏱️ Starting exam timer...');
-
         const endTime = Date.now() + duration;
 
         // Store timer info in global state
@@ -43,7 +41,7 @@ export function startExamTimer(duration) {
         // Initial update
         updateTimerTick(endTime);
 
-        console.log('✅ Exam timer started successfully');
+        console.log('✅ Exam timer started');
         return true;
     } catch (error) {
         console.error('❌ Failed to start exam timer:', error);
@@ -158,7 +156,7 @@ export function showTimeWarning(minutes) {
             window.ExamApp.showNotification(message, 'warning');
         }
 
-        // Log warning
+        // Log warning (only when actually shown)
         console.log(`⚠️ Time warning: ${minutes} minutes left`);
 
         // Flash timer for attention
@@ -219,7 +217,6 @@ function playWarningSound(minutes) {
         }
     } catch (error) {
         // Ignore audio errors - not critical
-        console.log('Audio warning not available');
     }
 }
 
@@ -262,7 +259,6 @@ export function handleExamExpired() {
             }
         }, 10000);
 
-        console.log('⏰ Exam expiration handled');
     } catch (error) {
         console.error('❌ Error handling exam expiration:', error);
     }
@@ -273,8 +269,6 @@ export function handleExamExpired() {
  */
 export function handleTimeWarning(data) {
     try {
-        console.log('📡 Time warning received from server:', data);
-
         if (data.minutesLeft) {
             showTimeWarning(data.minutesLeft);
         }
@@ -459,7 +453,6 @@ export function stopTimer() {
         // Clear warned times
         warnedTimes.clear();
 
-        console.log('⏹️ Timer stopped and cleaned up');
         return true;
     } catch (error) {
         console.error('❌ Error stopping timer:', error);
@@ -518,7 +511,6 @@ export function injectTimerStyles() {
         `;
 
         document.head.appendChild(style);
-        console.log('✅ Timer styles injected');
     } catch (error) {
         console.error('❌ Failed to inject timer styles:', error);
     }

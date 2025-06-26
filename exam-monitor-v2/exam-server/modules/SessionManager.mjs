@@ -92,6 +92,22 @@ export class SessionManager {
      * Handle existing session logic
      */
     handleExistingSession(session) {
+        // CRITICAL: Check if session was terminated/completed
+        if (session.status === SESSION_STATES.COMPLETED ||
+            session.status === SESSION_STATES.EXPIRED ||
+            session.terminationType) {
+
+            const terminationReason = this.getTerminationMessage(session.terminationType);
+
+            return {
+                success: false,
+                type: LOGIN_RESULTS.EXAM_EXPIRED,
+                message: `Изпитът е приключен: ${terminationReason}. Няма възможност за връщане.`,
+                examEndedAt: session.endTime || session.examEndTime,
+                terminationType: session.terminationType
+            };
+        }
+
         const timeLeft = this.calculateRemainingTime(session);
 
         if (timeLeft <= 0) {
@@ -110,6 +126,8 @@ export class SessionManager {
         session.lastActivity = new Date().toISOString();
         this.updateSession(session);
 
+        console.log(`🔄 Session restored: ${session.studentName} - ${this.formatTimeLeft(timeLeft)} remaining`);
+
         return {
             success: true,
             type: LOGIN_RESULTS.CONTINUE_SESSION,
@@ -118,6 +136,23 @@ export class SessionManager {
             timeLeft: timeLeft,
             lastCode: session.lastCode || ''
         };
+    }
+
+    /**
+     * Get human-readable termination message
+     */
+    getTerminationMessage(terminationType) {
+        const messages = {
+            'graceful': 'Нормално приключване',
+            'timeout': 'Изтекло време',
+            'forced_violations': 'Нарушения на правилата',
+            'violation': 'Нарушение на правилата',
+            'fullscreen_violation': 'Излизане от fullscreen режим',
+            'document_hidden_violation': 'Скриване на прозореца',
+            'admin_action': 'Прекратен от преподавател'
+        };
+
+        return messages[terminationType] || 'Неизвестна причина';
     }
 
     /**
@@ -188,7 +223,7 @@ export class SessionManager {
             class: studentClass
         });
 
-        console.log(`✅ Created session: ${sessionId} for ${studentName} (${studentClass})`);
+        console.log(`✅ New session created: ${sessionId} for ${studentName} (${studentClass})`);
 
         return {
             success: true,
@@ -200,7 +235,7 @@ export class SessionManager {
     }
 
     /**
-     * Update session with code and activity
+     * Update session with code and activity - CLEANED
      */
     async updateSessionActivity(sessionId, data) {
         const session = this.sessions.get(sessionId);
@@ -231,7 +266,7 @@ export class SessionManager {
         // Save updates
         await this.dataStore.saveSession(session);
 
-        // Save code if provided
+        // Save code if provided (no logging - too frequent)
         if (data.code !== undefined) {
             await this.dataStore.saveStudentCode(sessionId, {
                 filename: data.filename || 'main.js',
@@ -239,7 +274,7 @@ export class SessionManager {
             });
         }
 
-        // Log suspicious activity if provided
+        // Log suspicious activity if provided (keep this logging)
         if (data.suspicious) {
             await this.dataStore.logSuspiciousActivity(sessionId, {
                 type: data.suspicious,
@@ -263,7 +298,7 @@ export class SessionManager {
         session.lastActivity = new Date().toISOString();
 
         await this.dataStore.saveSession(session);
-        console.log(`📴 Session marked as disconnected: ${sessionId}`);
+        console.log(`📴 Session disconnected: ${sessionId}`);
     }
 
     /**
@@ -385,7 +420,7 @@ export class SessionManager {
     }
 
     /**
-     * Load existing sessions from storage on startup
+     * Load existing sessions from storage on startup - CLEANED
      */
     async loadExistingSessions() {
         try {
@@ -408,15 +443,23 @@ export class SessionManager {
     }
 
     /**
-     * Cleanup expired sessions periodically
+     * Cleanup expired sessions periodically - CLEANED
      */
     startCleanupTimer() {
         setInterval(() => {
+            let expiredCount = 0;
+
             for (const session of this.sessions.values()) {
                 if (this.calculateRemainingTime(session) <= 0 &&
                     session.status !== SESSION_STATES.EXPIRED) {
                     this.expireSession(session.sessionId);
+                    expiredCount++;
                 }
+            }
+
+            // Only log if sessions were actually expired
+            if (expiredCount > 0) {
+                console.log(`🧹 Expired ${expiredCount} sessions`);
             }
         }, 60000); // Check every minute
 

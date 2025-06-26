@@ -24,8 +24,6 @@ const consoleState = {
 export function initializeMonacoEditor(initialCode = '') {
     return new Promise((resolve, reject) => {
         try {
-            console.log('🎨 Initializing Monaco Editor with Enhanced Console...');
-
             // Configure Monaco paths
             require.config({
                 paths: {
@@ -73,7 +71,7 @@ export function initializeMonacoEditor(initialCode = '') {
                     // Setup keyboard shortcuts
                     setupKeyboardShortcuts(editor);
 
-                    console.log('✅ Enhanced Monaco Editor initialized successfully');
+                    console.log('✅ Monaco Editor initialized');
                     resolve(editor);
                 } catch (error) {
                     console.error('❌ Monaco Editor creation failed:', error);
@@ -126,7 +124,6 @@ function setupAutoSave(editor) {
             }, AUTO_SAVE_DELAY);
         });
 
-        console.log('✅ Auto-save setup completed');
     } catch (error) {
         console.error('❌ Failed to setup auto-save:', error);
     }
@@ -147,7 +144,6 @@ function setupEditorIntegrations(editor) {
             });
         }
 
-        console.log('✅ Editor integrations setup completed');
     } catch (error) {
         console.error('❌ Failed to setup editor integrations:', error);
     }
@@ -168,7 +164,6 @@ function setupKeyboardShortcuts(editor) {
             formatCode();
         });
 
-        console.log('⌨️ Keyboard shortcuts setup completed');
     } catch (error) {
         console.error('❌ Failed to setup keyboard shortcuts:', error);
     }
@@ -203,7 +198,6 @@ export function setupEditorControls(actions) {
             themeSelector.addEventListener('change', actions.changeTheme);
         }
 
-        console.log('✅ Editor controls setup completed');
     } catch (error) {
         console.error('❌ Failed to setup editor controls:', error);
     }
@@ -219,8 +213,6 @@ export function runCode() {
             showError('Редакторът не е готов. Моля изчакайте.');
             return;
         }
-
-        console.log('▶️ Running code with enhanced console...');
 
         const code = window.ExamApp.editor.getValue();
         const outputEl = document.getElementById('code-output');
@@ -249,7 +241,6 @@ export function runCode() {
             highlightErrorLine(result.lineNumber);
         }
 
-        console.log('✅ Enhanced code execution completed');
     } catch (error) {
         console.error('❌ Code execution failed:', error);
         showError(`Грешка при изпълнение: ${error.message}`);
@@ -703,7 +694,6 @@ export function formatCode() {
         }
 
         window.ExamApp.editor.getAction('editor.action.formatDocument').run();
-        console.log('🎨 Code formatted');
     } catch (error) {
         console.error('❌ Code formatting failed:', error);
         showError('Грешка при форматиране на кода');
@@ -716,7 +706,6 @@ export function formatCode() {
 export function saveCode() {
     try {
         if (!window.ExamApp.editor) {
-            console.warn('⚠️ Editor not available');
             return false;
         }
 
@@ -727,9 +716,6 @@ export function saveCode() {
 
         if (success) {
             updateLastSaved();
-            console.log('💾 Code saved successfully');
-        } else {
-            console.warn('⚠️ Failed to save code - not connected');
         }
 
         return success;
@@ -780,7 +766,6 @@ export function changeTheme(event) {
 
         const theme = event.target ? event.target.value : event;
         monaco.editor.setTheme(theme);
-        console.log(`🎨 Theme changed to: ${theme}`);
     } catch (error) {
         console.error('❌ Theme change failed:', error);
     }
@@ -946,7 +931,6 @@ export function destroyEditor() {
             window.ExamApp.editor = null;
         }
 
-        console.log('🧹 Enhanced editor destroyed and cleaned up');
     } catch (error) {
         console.error('❌ Error destroying editor:', error);
     }
