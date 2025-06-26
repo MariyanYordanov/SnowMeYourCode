@@ -1668,7 +1668,6 @@ body:fullscreen::before {
     background-color: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid #ff6b6b !important;
 }
-
 /* ================================
    OFFLINE MDN TAB STYLES
    ================================ */
@@ -1732,23 +1731,48 @@ body:fullscreen::before {
     border-color: #667eea;
 }
 
-/* Hide scrollbar for MDN content area but keep scrolling functionality */
+/* FIXED: Proper MDN content area with working scrolling and hidden scrollbar */
 .mdn-content-area {
+    flex: 1;
+    overflow-y: auto !important;
+    /* Force scrolling to work */
+    overflow-x: hidden;
+    padding: 16px;
+    height: 0;
+    padding-bottom: 60px;
+    max-height: calc(100vh - 200px);
+
+    /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    /* Firefox */
     -ms-overflow-style: none;
+    /* Internet Explorer and Edge */
+
+    /* Ensure scrolling works properly */
+    -webkit-scroll-behavior: smooth;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    pointer-events: auto;
 }
 
+/* Hide scrollbar for WebKit browsers */
 .mdn-content-area::-webkit-scrollbar {
     display: none;
+    width: 0;
+    height: 0;
 }
 
 .mdn-section {
     display: none;
+    overflow: visible;
+    height: auto;
 }
 
 .mdn-section.active {
     display: block;
+    overflow: visible;
+    height: auto;
 }
 
 .mdn-section h4 {
@@ -1757,12 +1781,14 @@ body:fullscreen::before {
     font-size: 18px;
     border-bottom: 2px solid #667eea;
     padding-bottom: 6px;
+    scroll-snap-align: start;
 }
 
 .mdn-section h5 {
     color: #495057;
     margin: 16px 0 8px 0;
     font-size: 15px;
+    scroll-snap-align: start;
 }
 
 .api-syntax {
@@ -1867,4 +1893,20 @@ body:fullscreen::before {
     margin: 0;
     color: #1565c0;
     font-size: 13px;
+}
+
+/* Ensure MDN content is properly contained */
+#mdn-tab-content {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Add scroll snapping for better UX */
+.mdn-content-area {
+    scroll-snap-type: y proximity;
+}
+
+/* Ensure keyboard navigation works for scrolling */
+.mdn-content-area:focus {
+    outline: none;
 }
