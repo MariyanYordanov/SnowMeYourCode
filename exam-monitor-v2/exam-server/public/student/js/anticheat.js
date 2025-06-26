@@ -1,35 +1,21 @@
 /**
  * Anti-Cheat Security Module
- * Handles security monitoring, fullscreen enforcement, and violation detection
+ * Focus-based monitoring - tracks fullscreen exits instead of blocking keys
+ * FIRST violation: choice screen, SECOND violation: automatic termination
  */
 
 // Import socket functions for reporting
 import { reportSuspiciousActivity } from './socket.js';
-
-// Anti-cheat configuration
-const VIOLATION_LIMITS = {
-    fullscreenExit: 3,
-    keyboardShortcuts: 5,
-    contextMenu: 3,
-    copyPaste: 3,
-    devTools: 2
-};
-
-// Violation tracking
-let violations = {
-    fullscreenExit: 0,
-    keyboardShortcuts: 0,
-    contextMenu: 0,
-    copyPaste: 0,
-    devTools: 0,
-    windowBlur: 0
-};
 
 // Grace periods for accidental violations
 const GRACE_PERIODS = {
     windowBlur: 3000, // 3 seconds
     documentHidden: 5000 // 5 seconds
 };
+
+// Violation tracking - only count fullscreen exits
+let fullscreenViolationCount = 0;
+const MAX_FULLSCREEN_VIOLATIONS = 1; // After 1 violation, next one terminates
 
 // Timeouts for grace periods
 let graceTimeouts = new Map();
@@ -39,15 +25,12 @@ let graceTimeouts = new Map();
  */
 export function setupAntiCheat() {
     try {
-        console.log('🛡️ Setting up anti-cheat monitoring...');
-
-        // Reset violation counts
-        resetViolations();
+        console.log('🛡️ Setting up focus-based anti-cheat monitoring...');
 
         // Setup fullscreen monitoring (always active)
         setupFullscreenMonitoring();
 
-        console.log('✅ Anti-cheat monitoring setup completed');
+        console.log('✅ Focus-based anti-cheat monitoring setup completed');
         return true;
     } catch (error) {
         console.error('❌ Failed to setup anti-cheat:', error);
@@ -60,19 +43,18 @@ export function setupAntiCheat() {
  */
 export function activateAntiCheat() {
     try {
-        console.log('🛡️ Activating full anti-cheat protection...');
+        console.log('🛡️ Activating focus-based anti-cheat protection...');
 
         // Mark as active
         window.ExamApp.antiCheatActive = true;
 
-        // Setup all monitoring systems
-        setupKeyboardMonitoring();
+        // Setup monitoring systems (no keyboard blocking)
         setupFocusMonitoring();
         setupVisibilityMonitoring();
         setupContextMenuBlocking();
         setupCopyPasteMonitoring();
 
-        console.log('✅ Anti-cheat protection activated');
+        console.log('✅ Focus-based anti-cheat protection activated');
         return true;
     } catch (error) {
         console.error('❌ Failed to activate anti-cheat:', error);
@@ -90,8 +72,7 @@ export function deactivateAntiCheat() {
         // Mark as inactive
         window.ExamApp.antiCheatActive = false;
 
-        // Remove all event listeners
-        removeKeyboardMonitoring();
+        // Remove event listeners (no keyboard monitoring to remove)
         removeFocusMonitoring();
         removeVisibilityMonitoring();
         removeContextMenuBlocking();
@@ -100,6 +81,12 @@ export function deactivateAntiCheat() {
         // Clear grace timeouts
         clearAllGraceTimeouts();
 
+        // Remove fullscreen protection CSS
+        const protectionStyle = document.getElementById('fullscreen-protection');
+        if (protectionStyle) {
+            protectionStyle.remove();
+        }
+
         console.log('✅ Anti-cheat protection deactivated');
     } catch (error) {
         console.error('❌ Error deactivating anti-cheat:', error);
@@ -107,11 +94,11 @@ export function deactivateAntiCheat() {
 }
 
 /**
- * Setup fullscreen monitoring (always active)
+ * Setup fullscreen monitoring (core mechanism)
  */
 export function setupFullscreenMonitoring() {
     try {
-        // Listen for fullscreen changes
+        // Listen for fullscreen changes - this is our main detection method
         const fullscreenEvents = [
             'fullscreenchange',
             'webkitfullscreenchange',
@@ -123,7 +110,7 @@ export function setupFullscreenMonitoring() {
             document.addEventListener(eventName, handleFullscreenChange);
         });
 
-        console.log('🔒 Fullscreen monitoring initialized');
+        console.log('🔒 Focus-based fullscreen monitoring initialized');
     } catch (error) {
         console.error('❌ Failed to setup fullscreen monitoring:', error);
     }
@@ -159,7 +146,7 @@ export function enterFullscreenMode() {
 }
 
 /**
- * Handle fullscreen change events
+ * Handle fullscreen change events - MAIN VIOLATION DETECTION
  */
 function handleFullscreenChange() {
     try {
@@ -176,13 +163,13 @@ function handleFullscreenChange() {
             console.log('✅ Entered fullscreen mode');
             updateFullscreenStatus('🔒 Fullscreen активен');
 
-            // Inject aggressive fullscreen protection CSS
+            // Inject fullscreen protection CSS
             injectFullscreenProtectionCSS();
         } else {
-            console.log('⚠️ Exited fullscreen mode');
+            console.log('⚠️ Exited fullscreen mode - VIOLATION DETECTED');
             updateFullscreenStatus('⚠️ Fullscreen неактивен');
 
-            // Trigger violation if exam is active
+            // Handle violation if exam is active
             if (window.ExamApp.isLoggedIn && window.ExamApp.antiCheatActive) {
                 handleFullscreenViolation();
             }
@@ -193,7 +180,7 @@ function handleFullscreenChange() {
 }
 
 /**
- * Inject aggressive CSS to block fullscreen exits
+ * Inject fullscreen protection CSS (old student.css rules)
  */
 function injectFullscreenProtectionCSS() {
     try {
@@ -203,11 +190,20 @@ function injectFullscreenProtectionCSS() {
             existingStyle.remove();
         }
 
-        // Create new protection CSS
+        // Create protection CSS using old student.css rules
         const style = document.createElement('style');
         style.id = 'fullscreen-protection';
         style.innerHTML = `
-            /* AGGRESSIVE FULLSCREEN PROTECTION */
+            /* FOCUS-BASED FULLSCREEN PROTECTION */
+            html:fullscreen,
+            body:fullscreen {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+
             :fullscreen {
                 -webkit-user-select: none !important;
                 -moz-user-select: none !important;
@@ -215,258 +211,108 @@ function injectFullscreenProtectionCSS() {
                 user-select: none !important;
             }
 
-            /* Block ALL fullscreen browser controls */
-            ::-webkit-fullscreen-controls,
-            ::-webkit-media-controls-fullscreen-button,
-            ::-webkit-media-controls-toggle-closed-captions-button {
+            /* Block browser UI in fullscreen */
+            ::-webkit-fullscreen-controls {
                 display: none !important;
                 visibility: hidden !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-                width: 0 !important;
-                height: 0 !important;
             }
 
-            /* Block Mozilla fullscreen UI */
-            :-moz-full-screen-ancestor,
             :fullscreen::-moz-full-screen-ancestor {
                 display: none !important;
-                visibility: hidden !important;
             }
 
-            /* Create invisible overlay blocking top area */
+            /* Fullscreen protection overlay */
             body:fullscreen::before {
                 content: '';
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 60px;
+                height: 100px;
                 z-index: 999999;
                 pointer-events: none;
                 background: transparent;
                 display: block;
             }
-
-            /* Block any possible exit mechanisms */
-            :fullscreen button[title*="exit"],
-            :fullscreen button[title*="Exit"],
-            :fullscreen .exit-fullscreen,
-            :fullscreen [data-exit-fullscreen] {
-                display: none !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-                opacity: 0 !important;
-            }
-
-            /* Force hide browser navigation */
-            html:fullscreen,
-            body:fullscreen {
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: hidden !important;
-            }
         `;
 
         document.head.appendChild(style);
-        console.log('🔒 Fullscreen protection CSS injected');
+        console.log('🔒 Focus-based fullscreen protection CSS injected');
     } catch (error) {
         console.error('❌ Failed to inject fullscreen protection CSS:', error);
     }
 }
 
 /**
- * Handle fullscreen violation
+ * Handle fullscreen violation - CORE LOGIC: 1st choice, 2nd terminate
  */
 function handleFullscreenViolation() {
     try {
-        violations.fullscreenExit++;
-        window.ExamApp.violationCount = violations.fullscreenExit;
-
-        console.log(`🚫 Fullscreen violation #${violations.fullscreenExit}`);
+        fullscreenViolationCount++;
+        console.log(`🚫 Fullscreen exit violation #${fullscreenViolationCount}`);
 
         // Report to server
         reportSuspiciousActivity('fullscreen_exit', {
-            count: violations.fullscreenExit,
+            violationNumber: fullscreenViolationCount,
+            method: 'focus_detection', // How we detected it
             timestamp: Date.now()
         });
 
-        // Show violation screen immediately
-        if (window.ExamApp.showViolationScreen) {
-            window.ExamApp.showViolationScreen('Излизане от fullscreen режим е забранено!');
-        }
-
-        // Force re-enter fullscreen immediately
-        setTimeout(() => {
-            if (!window.ExamApp.isFullscreen) {
-                enterFullscreenMode();
-            }
-        }, 100);
-
-        // Check if limit exceeded
-        if (violations.fullscreenExit >= VIOLATION_LIMITS.fullscreenExit) {
-            handleViolationLimitExceeded('fullscreen_violations');
-        }
-    } catch (error) {
-        console.error('❌ Error handling fullscreen violation:', error);
-    }
-}
-
-/**
- * Setup keyboard monitoring
- */
-function setupKeyboardMonitoring() {
-    document.addEventListener('keydown', handleKeyDown, { capture: true });
-}
-
-function removeKeyboardMonitoring() {
-    document.removeEventListener('keydown', handleKeyDown, { capture: true });
-}
-
-/**
- * Handle keyboard events - ENHANCED ESC BLOCKING
- */
-function handleKeyDown(e) {
-    if (!window.ExamApp.antiCheatActive) return;
-
-    try {
-        // Block dangerous key combinations
-        const blocked = [
-            // ESC key (exits fullscreen) - CRITICAL BLOCK
-            e.code === 'Escape' || e.key === 'Escape',
-            // Windows key
-            e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight',
-            // Alt+Tab
-            e.altKey && e.code === 'Tab',
-            // Ctrl+Shift+I (Dev Tools)
-            e.ctrlKey && e.shiftKey && e.code === 'KeyI',
-            // F12 (Dev Tools)
-            e.code === 'F12',
-            // F11 (Fullscreen toggle)
-            e.code === 'F11',
-            // Ctrl+U (View Source)
-            e.ctrlKey && e.code === 'KeyU',
-            // Ctrl+Shift+C (Inspect Element)
-            e.ctrlKey && e.shiftKey && e.code === 'KeyC',
-            // Ctrl+W (Close Tab)
-            e.ctrlKey && e.code === 'KeyW',
-            // Ctrl+R (Refresh)
-            e.ctrlKey && e.code === 'KeyR',
-            // F5 (Refresh)
-            e.code === 'F5',
-            // Alt+F4 (Close Window)
-            e.altKey && e.code === 'F4',
-            // Ctrl+Shift+J (Console)
-            e.ctrlKey && e.shiftKey && e.code === 'KeyJ',
-            // Ctrl+Shift+K (Console Firefox)
-            e.ctrlKey && e.shiftKey && e.code === 'KeyK'
-        ];
-
-        if (blocked.some(condition => condition)) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            const violationType = getViolationType(e);
-            handleKeyboardViolation(violationType, e);
-
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Error handling keyboard event:', error);
-    }
-}
-
-/**
- * Get violation type from keyboard event
- */
-function getViolationType(e) {
-    if (e.code === 'Escape' || e.key === 'Escape') {
-        return 'escape_fullscreen';
-    }
-    if (e.code === 'F11') {
-        return 'f11_fullscreen';
-    }
-    if (e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight') {
-        return 'windows_key';
-    }
-    if (e.altKey && e.code === 'Tab') {
-        return 'alt_tab';
-    }
-    if ((e.ctrlKey && e.shiftKey && e.code === 'KeyI') || e.code === 'F12' || (e.ctrlKey && e.shiftKey && e.code === 'KeyJ') || (e.ctrlKey && e.shiftKey && e.code === 'KeyK')) {
-        return 'dev_tools';
-    }
-    if (e.ctrlKey && e.code === 'KeyU') {
-        return 'view_source';
-    }
-    if ((e.ctrlKey && e.code === 'KeyW') || (e.altKey && e.code === 'F4')) {
-        return 'close_attempt';
-    }
-    if ((e.ctrlKey && e.code === 'KeyR') || e.code === 'F5') {
-        return 'refresh_attempt';
-    }
-
-    return 'unknown_shortcut';
-}
-
-/**
- * Handle keyboard violation
- */
-function handleKeyboardViolation(violationType, event) {
-    try {
-        violations.keyboardShortcuts++;
-
-        console.log(`🚫 Keyboard violation: ${violationType} (${violations.keyboardShortcuts})`);
-
-        // Report to server
-        reportSuspiciousActivity(violationType, {
-            count: violations.keyboardShortcuts,
-            keyCode: event.code,
-            modifiers: {
-                ctrl: event.ctrlKey,
-                alt: event.altKey,
-                shift: event.shiftKey,
-                meta: event.metaKey
-            },
-            timestamp: Date.now()
-        });
-
-        // Show violation screen for serious violations
-        const seriousViolations = ['escape_fullscreen', 'f11_fullscreen', 'windows_key', 'dev_tools', 'close_attempt'];
-        if (seriousViolations.includes(violationType)) {
-            const messages = {
-                'escape_fullscreen': 'Натискане на ESC клавиша е забранено!',
-                'f11_fullscreen': 'Натискане на F11 е забранено!',
-                'windows_key': 'Натискане на Windows клавиша е забранено!',
-                'dev_tools': 'Опит за отваряне на Developer Tools!',
-                'close_attempt': 'Опит за затваряне на изпита!'
-            };
+        if (fullscreenViolationCount === 1) {
+            // FIRST violation - show choice screen
+            console.log('🟡 First violation - showing choice screen');
 
             if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen(messages[violationType] || 'Засечено нарушение!');
+                window.ExamApp.showViolationScreen('Излизане от fullscreen режим е забранено!\n\nТова е вашето единствено предупреждение.\nПри следващо нарушение изпитът ще бъде прекратен автоматично.');
             }
 
-            // Force re-enter fullscreen for fullscreen-related violations
-            if (['escape_fullscreen', 'f11_fullscreen'].includes(violationType)) {
-                setTimeout(() => {
-                    if (!window.ExamApp.isFullscreen) {
-                        enterFullscreenMode();
-                    }
-                }, 100);
+            // Force re-enter fullscreen after a short delay
+            setTimeout(() => {
+                if (!window.ExamApp.isFullscreen && window.ExamApp.antiCheatActive) {
+                    console.log('🔄 Auto re-entering fullscreen after first violation');
+                    enterFullscreenMode();
+                }
+            }, 500);
+
+        } else {
+            // SECOND+ violation - automatic termination
+            console.log('🔴 AUTOMATIC TERMINATION: Second fullscreen violation');
+
+            reportSuspiciousActivity('automatic_termination', {
+                reason: 'second_fullscreen_exit',
+                totalViolations: fullscreenViolationCount,
+                timestamp: Date.now()
+            });
+
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('ПРЕКРАТЯВАНЕ НА ИЗПИТА!\n\nВторо излизане от fullscreen режим.\n\nИзпитът ще бъде прекратен автоматично след 5 секунди.');
             }
+
+            // Disable anti-cheat to prevent further violations during termination
+            window.ExamApp.antiCheatActive = false;
+
+            // Auto-terminate after 5 seconds
+            setTimeout(() => {
+                console.log('🚫 TERMINATING EXAM: Second fullscreen violation');
+                if (window.ExamApp.exitExam) {
+                    window.ExamApp.exitExam('automatic_termination');
+                } else {
+                    window.close();
+                }
+            }, 5000);
         }
 
-        // Check if limit exceeded
-        if (violations.keyboardShortcuts >= VIOLATION_LIMITS.keyboardShortcuts) {
-            handleViolationLimitExceeded('keyboard_violations');
-        }
     } catch (error) {
-        console.error('❌ Error handling keyboard violation:', error);
+        console.error('❌ Error handling fullscreen violation:', error);
+        // Fallback - terminate immediately if error handling fails
+        if (fullscreenViolationCount >= 2) {
+            window.close();
+        }
     }
 }
 
 /**
- * Setup focus monitoring
+ * Setup focus monitoring (detect alt+tab, window switching)
  */
 function setupFocusMonitoring() {
     window.addEventListener('blur', handleWindowBlur);
@@ -486,19 +332,18 @@ function handleWindowBlur() {
 
     try {
         console.log('👁️ Window lost focus');
-        violations.windowBlur++;
 
-        // Report to server
+        // Report to server (for monitoring, not violations)
         reportSuspiciousActivity('window_blur', {
-            count: violations.windowBlur,
             timestamp: Date.now()
         });
 
         // Give grace period for accidental clicks
         const timeoutId = setTimeout(() => {
             if (!document.hasFocus() && window.ExamApp.antiCheatActive) {
+                // Show warning (not counted as violation)
                 if (window.ExamApp.showViolationScreen) {
-                    window.ExamApp.showViolationScreen('Излизане от прозореца на изпита е забранено!');
+                    window.ExamApp.showViolationScreen('Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.');
                 }
             }
         }, GRACE_PERIODS.windowBlur);
@@ -554,11 +399,11 @@ function handleVisibilityChange() {
                 timestamp: Date.now()
             });
 
-            // Show violation after grace period
+            // Show warning after grace period (not counted as violation)
             const timeoutId = setTimeout(() => {
                 if (document.hidden && window.ExamApp.antiCheatActive) {
                     if (window.ExamApp.showViolationScreen) {
-                        window.ExamApp.showViolationScreen('Скриване на прозореца е забранено!');
+                        window.ExamApp.showViolationScreen('Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.');
                     }
                 }
             }, GRACE_PERIODS.documentHidden);
@@ -589,7 +434,7 @@ function removeContextMenuBlocking() {
 }
 
 /**
- * Handle context menu attempts
+ * Handle context menu attempts (minor violation - warning only)
  */
 function handleContextMenu(e) {
     if (!window.ExamApp.antiCheatActive) return;
@@ -599,12 +444,15 @@ function handleContextMenu(e) {
         const editorArea = e.target.closest('#monaco-editor');
         if (!editorArea) {
             e.preventDefault();
-            violations.contextMenu++;
 
+            // Report but don't count as serious violation
             reportSuspiciousActivity('context_menu', {
-                count: violations.contextMenu,
                 timestamp: Date.now()
             });
+
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Десният клик е ограничен по време на изпита!');
+            }
 
             return false;
         }
@@ -629,7 +477,7 @@ function removeCopyPasteMonitoring() {
 }
 
 /**
- * Handle copy attempts
+ * Handle copy attempts (minor violation - warning only)
  */
 function handleCopyAttempt(e) {
     if (!window.ExamApp.antiCheatActive) return;
@@ -639,12 +487,14 @@ function handleCopyAttempt(e) {
         const editorArea = e.target.closest('#monaco-editor');
         if (!editorArea) {
             e.preventDefault();
-            violations.copyPaste++;
 
             reportSuspiciousActivity('copy_attempt', {
-                count: violations.copyPaste,
                 timestamp: Date.now()
             });
+
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Копирането е забранено извън редактора!');
+            }
 
             return false;
         }
@@ -654,7 +504,7 @@ function handleCopyAttempt(e) {
 }
 
 /**
- * Handle paste attempts
+ * Handle paste attempts (minor violation - warning only)
  */
 function handlePasteAttempt(e) {
     if (!window.ExamApp.antiCheatActive) return;
@@ -664,12 +514,14 @@ function handlePasteAttempt(e) {
         const editorArea = e.target.closest('#monaco-editor');
         if (!editorArea) {
             e.preventDefault();
-            violations.copyPaste++;
 
             reportSuspiciousActivity('paste_attempt', {
-                count: violations.copyPaste,
                 timestamp: Date.now()
             });
+
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Поставянето е забранено извън редактора!');
+            }
 
             return false;
         }
@@ -679,7 +531,7 @@ function handlePasteAttempt(e) {
 }
 
 /**
- * Handle cut attempts
+ * Handle cut attempts (minor violation - warning only)
  */
 function handleCutAttempt(e) {
     if (!window.ExamApp.antiCheatActive) return;
@@ -689,49 +541,19 @@ function handleCutAttempt(e) {
         const editorArea = e.target.closest('#monaco-editor');
         if (!editorArea) {
             e.preventDefault();
-            violations.copyPaste++;
 
             reportSuspiciousActivity('cut_attempt', {
-                count: violations.copyPaste,
                 timestamp: Date.now()
             });
+
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Изрязването е забранено извън редактора!');
+            }
 
             return false;
         }
     } catch (error) {
         console.error('❌ Error handling cut attempt:', error);
-    }
-}
-
-/**
- * Handle violation limit exceeded
- */
-function handleViolationLimitExceeded(violationType) {
-    try {
-        console.log(`🚫 Violation limit exceeded: ${violationType}`);
-
-        // Report to server
-        reportSuspiciousActivity('violation_limit_exceeded', {
-            violationType: violationType,
-            allViolations: violations,
-            timestamp: Date.now()
-        });
-
-        // Show termination screen
-        if (window.ExamApp.showViolationScreen) {
-            window.ExamApp.showViolationScreen('Превишен е лимитът от нарушения. Изпитът ще бъде прекратен.');
-        }
-
-        // Auto-terminate after 5 seconds
-        setTimeout(() => {
-            if (window.ExamApp.exitExam) {
-                window.ExamApp.exitExam('violations');
-            } else {
-                window.close();
-            }
-        }, 5000);
-    } catch (error) {
-        console.error('❌ Error handling violation limit exceeded:', error);
     }
 }
 
@@ -750,23 +572,6 @@ function updateFullscreenStatus(text) {
 }
 
 /**
- * Reset all violation counts
- */
-function resetViolations() {
-    violations = {
-        fullscreenExit: 0,
-        keyboardShortcuts: 0,
-        contextMenu: 0,
-        copyPaste: 0,
-        devTools: 0,
-        windowBlur: 0
-    };
-
-    window.ExamApp.violationCount = 0;
-    console.log('🔄 Violation counts reset');
-}
-
-/**
  * Clear all grace timeouts
  */
 function clearAllGraceTimeouts() {
@@ -777,41 +582,36 @@ function clearAllGraceTimeouts() {
 }
 
 /**
- * Get violation statistics
- */
-export function getViolationStats() {
-    return {
-        ...violations,
-        total: Object.values(violations).reduce((sum, count) => sum + count, 0),
-        limits: VIOLATION_LIMITS
-    };
-}
-
-/**
- * Check if student is in violation danger zone
- */
-export function isInDangerZone() {
-    return violations.fullscreenExit >= VIOLATION_LIMITS.fullscreenExit - 1 ||
-        violations.devTools >= VIOLATION_LIMITS.devTools - 1 ||
-        violations.keyboardShortcuts >= VIOLATION_LIMITS.keyboardShortcuts - 2;
-}
-
-/**
  * Emergency violation reset (admin function)
  */
 export function emergencyResetViolations() {
     try {
-        resetViolations();
+        // Reset fullscreen violation counter
+        fullscreenViolationCount = 0;
+
         clearAllGraceTimeouts();
 
         if (window.ExamApp.hideViolationScreen) {
             window.ExamApp.hideViolationScreen();
         }
 
-        console.log('🚨 Emergency violation reset performed');
+        console.log('🚨 Emergency violation reset - fullscreen violations reset to 0');
         return true;
     } catch (error) {
         console.error('❌ Error in emergency violation reset:', error);
         return false;
     }
+}
+
+/**
+ * Get current violation status (for debugging)
+ */
+export function getViolationStatus() {
+    return {
+        fullscreenViolationCount: fullscreenViolationCount,
+        maxViolationsAllowed: MAX_FULLSCREEN_VIOLATIONS,
+        nextViolationWillTerminate: fullscreenViolationCount >= MAX_FULLSCREEN_VIOLATIONS,
+        antiCheatActive: window.ExamApp.antiCheatActive,
+        isFullscreen: window.ExamApp.isFullscreen
+    };
 }
