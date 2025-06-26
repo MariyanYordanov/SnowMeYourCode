@@ -1,18 +1,21 @@
 /**
- * Student Login Module
- * Handles login form, validation, and student authentication
+ * Enhanced Login Module with Terms Agreement
+ * Handles login form, validation, terms agreement, and student authentication
  */
 
 /**
- * Setup login form event handlers
+ * Setup login form event handlers with terms agreement
  */
 export function setupLoginForm() {
     try {
         const loginBtn = document.getElementById('login-btn');
         const studentName = document.getElementById('student-name');
         const studentClass = document.getElementById('student-class');
+        const termsToggle = document.getElementById('terms-toggle');
+        const termsContent = document.getElementById('terms-content');
+        const termsAgreement = document.getElementById('terms-agreement');
 
-        if (!loginBtn || !studentName || !studentClass) {
+        if (!loginBtn || !studentName || !studentClass || !termsToggle || !termsContent || !termsAgreement) {
             console.error('Login form elements not found');
             return false;
         }
@@ -29,7 +32,22 @@ export function setupLoginForm() {
             });
         });
 
-        console.log('✅ Login form initialized');
+        // Terms toggle functionality
+        termsToggle.addEventListener('click', handleTermsToggle);
+
+        // Terms agreement checkbox
+        termsAgreement.addEventListener('change', handleTermsAgreement);
+
+        // Form validation on input changes
+        [studentName, studentClass, termsAgreement].forEach(input => {
+            input.addEventListener('change', validateLoginForm);
+            input.addEventListener('input', validateLoginForm);
+        });
+
+        // Initial validation
+        validateLoginForm();
+
+        console.log('✅ Enhanced login form with terms agreement initialized');
         return true;
     } catch (error) {
         console.error('❌ Failed to setup login form:', error);
@@ -38,15 +56,137 @@ export function setupLoginForm() {
 }
 
 /**
- * Handle login button click
+ * Handle terms toggle (expand/collapse)
+ */
+function handleTermsToggle() {
+    try {
+        const termsToggle = document.getElementById('terms-toggle');
+        const termsContent = document.getElementById('terms-content');
+
+        if (!termsToggle || !termsContent) return;
+
+        const isExpanded = termsContent.style.display !== 'none';
+
+        if (isExpanded) {
+            // Collapse terms
+            termsContent.style.display = 'none';
+            termsContent.classList.remove('expanded');
+            termsToggle.textContent = '📖 Покажи условията';
+            termsToggle.classList.remove('expanded');
+        } else {
+            // Expand terms
+            termsContent.style.display = 'block';
+            termsContent.classList.add('expanded');
+            termsToggle.textContent = '📖 Скрий условията';
+            termsToggle.classList.add('expanded');
+
+            // Scroll terms into view
+            setTimeout(() => {
+                termsContent.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }, 100);
+        }
+
+        console.log(`📋 Terms ${isExpanded ? 'collapsed' : 'expanded'}`);
+    } catch (error) {
+        console.error('❌ Error handling terms toggle:', error);
+    }
+}
+
+/**
+ * Handle terms agreement checkbox change
+ */
+function handleTermsAgreement() {
+    try {
+        const termsAgreement = document.getElementById('terms-agreement');
+        const isAgreed = termsAgreement?.checked;
+
+        console.log(`📋 Terms agreement: ${isAgreed ? 'accepted' : 'declined'}`);
+
+        // Validate form after agreement change
+        validateLoginForm();
+
+        // Auto-collapse terms after agreement (optional UX enhancement)
+        if (isAgreed) {
+            setTimeout(() => {
+                const termsContent = document.getElementById('terms-content');
+                const termsToggle = document.getElementById('terms-toggle');
+
+                if (termsContent && termsToggle && termsContent.classList.contains('expanded')) {
+                    // Auto-collapse with smooth animation
+                    termsContent.classList.remove('expanded');
+                    setTimeout(() => {
+                        termsContent.style.display = 'none';
+                        termsToggle.textContent = '📖 Покажи условията';
+                        termsToggle.classList.remove('expanded');
+                    }, 300);
+                }
+            }, 1000); // Wait 1 second after agreement
+        }
+
+    } catch (error) {
+        console.error('❌ Error handling terms agreement:', error);
+    }
+}
+
+/**
+ * Validate login form (enhanced with terms validation)
+ */
+function validateLoginForm() {
+    try {
+        const studentName = document.getElementById('student-name');
+        const studentClass = document.getElementById('student-class');
+        const termsAgreement = document.getElementById('terms-agreement');
+        const loginBtn = document.getElementById('login-btn');
+
+        if (!studentName || !studentClass || !termsAgreement || !loginBtn) {
+            return false;
+        }
+
+        const name = studentName.value.trim();
+        const selectedClass = studentClass.value;
+        const isAgreed = termsAgreement.checked;
+
+        // Validation criteria
+        const isNameValid = name.length >= 3;
+        const isClassValid = selectedClass !== '';
+        const isTermsAccepted = isAgreed;
+
+        const isFormValid = isNameValid && isClassValid && isTermsAccepted;
+
+        // Update button state
+        loginBtn.disabled = !isFormValid;
+
+        // Update button text based on validation
+        if (!isTermsAccepted) {
+            loginBtn.textContent = '📋 Моля приемете условията';
+        } else if (!isNameValid || !isClassValid) {
+            loginBtn.textContent = '📝 Попълнете данните';
+        } else {
+            loginBtn.textContent = '🚀 Влез в изпита';
+        }
+
+        return isFormValid;
+
+    } catch (error) {
+        console.error('❌ Error validating login form:', error);
+        return false;
+    }
+}
+
+/**
+ * Handle login button click (enhanced with terms validation)
  */
 export function handleLogin() {
     try {
         const name = document.getElementById('student-name').value.trim();
         const studentClass = document.getElementById('student-class').value;
+        const termsAgreement = document.getElementById('terms-agreement').checked;
 
-        // Validation
-        if (!validateLoginInput(name, studentClass)) {
+        // Enhanced validation including terms
+        if (!validateLoginInput(name, studentClass, termsAgreement)) {
             return;
         }
 
@@ -57,12 +197,16 @@ export function handleLogin() {
         // Store student info in global state
         window.ExamApp.studentName = name;
         window.ExamApp.studentClass = studentClass;
+        window.ExamApp.termsAccepted = true;
+        window.ExamApp.termsAcceptedAt = Date.now();
 
         // Send login request via WebSocket
         if (window.ExamApp.socket && window.ExamApp.socket.connected) {
             window.ExamApp.socket.emit('student-join', {
                 studentName: name,
-                studentClass: studentClass
+                studentClass: studentClass,
+                termsAccepted: true,
+                termsAcceptedAt: window.ExamApp.termsAcceptedAt
             });
         } else {
             showLoginStatus('Няма връзка със сървъра', 'error');
@@ -76,11 +220,22 @@ export function handleLogin() {
 }
 
 /**
- * Validate login input
+ * Validate login input (enhanced with terms validation)
  */
-function validateLoginInput(name, studentClass) {
+function validateLoginInput(name, studentClass, termsAccepted) {
     if (!name || !studentClass) {
         showLoginStatus('Моля въведете име и изберете клас', 'error');
+        return false;
+    }
+
+    if (!termsAccepted) {
+        showLoginStatus('Моля приемете условията на изпита', 'error');
+        // Auto-expand terms if not accepted
+        const termsContent = document.getElementById('terms-content');
+        const termsToggle = document.getElementById('terms-toggle');
+        if (termsContent && termsToggle && termsContent.style.display === 'none') {
+            handleTermsToggle();
+        }
         return false;
     }
 
@@ -142,7 +297,13 @@ function setLoginButtonState(disabled) {
         const loginBtn = document.getElementById('login-btn');
         if (loginBtn) {
             loginBtn.disabled = disabled;
-            loginBtn.textContent = disabled ? 'Влизане...' : '🚀 Влез в изпита';
+
+            if (disabled) {
+                loginBtn.textContent = 'Влизане...';
+            } else {
+                // Reset to appropriate text based on validation
+                validateLoginForm();
+            }
         }
     } catch (error) {
         console.error('❌ Failed to set login button state:', error);
@@ -218,6 +379,8 @@ export function handleLoginError(data) {
         // Clear stored data
         window.ExamApp.studentName = null;
         window.ExamApp.studentClass = null;
+        window.ExamApp.termsAccepted = false;
+        window.ExamApp.termsAcceptedAt = null;
     } catch (error) {
         console.error('❌ Failed to handle login error:', error);
     }
@@ -249,16 +412,19 @@ export function clearLoginForm() {
     try {
         const studentName = document.getElementById('student-name');
         const studentClass = document.getElementById('student-class');
+        const termsAgreement = document.getElementById('terms-agreement');
         const statusEl = document.getElementById('login-status');
 
         if (studentName) studentName.value = '';
         if (studentClass) studentClass.value = '';
+        if (termsAgreement) termsAgreement.checked = false;
         if (statusEl) {
             statusEl.textContent = '';
             statusEl.className = 'status-message';
         }
 
         setLoginButtonState(false);
+        validateLoginForm();
 
         console.log('🧹 Login form cleared');
     } catch (error) {
@@ -276,6 +442,8 @@ export function resetLoginState() {
         window.ExamApp.studentClass = null;
         window.ExamApp.sessionId = null;
         window.ExamApp.examStartTime = null;
+        window.ExamApp.termsAccepted = false;
+        window.ExamApp.termsAcceptedAt = null;
 
         // Clear form
         clearLoginForm();
@@ -302,7 +470,20 @@ export function getLoginState() {
         studentClass: window.ExamApp.studentClass,
         sessionId: window.ExamApp.sessionId,
         isLoggedIn: window.ExamApp.isLoggedIn,
-        examStartTime: window.ExamApp.examStartTime
+        examStartTime: window.ExamApp.examStartTime,
+        termsAccepted: window.ExamApp.termsAccepted,
+        termsAcceptedAt: window.ExamApp.termsAcceptedAt
+    };
+}
+
+/**
+ * Get terms acceptance info (for server logging)
+ */
+export function getTermsAcceptanceInfo() {
+    return {
+        accepted: window.ExamApp.termsAccepted || false,
+        acceptedAt: window.ExamApp.termsAcceptedAt || null,
+        timestamp: Date.now()
     };
 }
 
@@ -337,9 +518,14 @@ export function autoFillLoginForm(name, studentClass) {
     try {
         const nameInput = document.getElementById('student-name');
         const classSelect = document.getElementById('student-class');
+        const termsCheckbox = document.getElementById('terms-agreement');
 
         if (nameInput) nameInput.value = name;
         if (classSelect) classSelect.value = studentClass;
+        if (termsCheckbox) termsCheckbox.checked = true;
+
+        // Trigger validation
+        validateLoginForm();
 
         console.log(`🤖 Auto-filled login form: ${name} (${studentClass})`);
     } catch (error) {

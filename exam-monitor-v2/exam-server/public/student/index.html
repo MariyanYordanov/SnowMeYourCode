@@ -20,31 +20,155 @@
 </head>
 
 <body>
-    <!-- Login Container -->
-    <div id="login-container" class="login-container">
-        <div class="login-form">
-            <h2>🎓 Вход в изпита по програмиране</h2>
-
-            <div class="form-group">
-                <input type="text" id="student-name" placeholder="Име и фамилия" required>
-            </div>
-
-            <div class="form-group">
-                <select id="student-class" required>
-                    <option value="">Изберете клас</option>
-                    <option value="11А">11А</option>
-                    <option value="11Б">11Б</option>
-                    <option value="12А">12А</option>
-                    <option value="12Б">12Б</option>
-                </select>
-            </div>
-
-            <button id="login-btn" class="btn-primary">
-                🚀 Влез в изпита
-            </button>
-
-            <div id="login-status" class="status-message"></div>
+    
+    <div class="login-form">
+        <h2>🎓 Вход в изпита по програмиране</h2>
+    
+        <div class="form-group">
+            <input type="text" id="student-name" placeholder="Име и фамилия" required>
         </div>
+    
+        <div class="form-group">
+            <select id="student-class" required>
+                <option value="">Изберете клас</option>
+                <option value="11А">11А</option>
+                <option value="11Б">11Б</option>
+                <option value="12А">12А</option>
+                <option value="12Б">12Б</option>
+            </select>
+        </div>
+    
+        <!-- NEW: Terms Agreement Section -->
+        <div class="terms-section">
+            <div class="terms-header">
+                <h3>📋 Условия на изпита</h3>
+                <button type="button" id="terms-toggle" class="terms-toggle-btn">
+                    📖 Покажи условията
+                </button>
+            </div>
+    
+            <!-- Terms Content (Hidden by default) -->
+            <div id="terms-content" class="terms-content" style="display: none;">    
+                
+                <!-- Enhanced Terms with NO-TOUCH POLICY -->
+                <!-- Replace the existing terms-text section -->
+                
+                <div class="terms-text">
+                    <h4>🚫 АВТОМАТИЧНО ПРЕКРАТЯВАНЕ при:</h4>
+                    <ul class="violation-list">
+                        <li><strong>Излизане от fullscreen режим</strong></li>
+                        <li><strong>Скриване на прозореца</strong> на изпита</li>
+                        <li><strong>Превключване към други приложения</strong> или прозорци</li>
+                        <li><strong>Копиране/поставяне на код</strong> от външни источници</li>
+                        <li class="touch-violation"><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
+                    </ul>
+                
+                    <!-- CRITICAL: Touch Policy Section -->
+                    <div class="no-touch-policy">
+                        <h4>📱 ВАЖНО: TOUCH ВЗАИМОДЕЙСТВИЕ ЗАБРАНЕНО</h4>
+                        <div class="touch-policy-content">
+                            <p><strong>🚫 ВСЯКО ДОКОСВАНЕ = АВТОМАТИЧНО ИЗГОНВАНЕ</strong></p>
+                            <ul class="touch-rules">
+                                <li>Използвайте <strong>САМО мишка и клавиатура</strong></li>
+                                <li>Touch screens <strong>НЕ СА ПОЗВОЛЕНИ</strong></li>
+                                <li>Таблети и телефони <strong>НЕ СА ПОДХОДЯЩИ</strong> за изпита</li>
+                                <li>Всеки touch event се засича <strong>МОМЕНТАЛНО</strong></li>
+                            </ul>
+                
+                            <div class="device-requirement">
+                                <strong>💻 ЗАДЪЛЖИТЕЛНО:</strong> Използвайте настолен компютър или лаптоп
+                                с традиционни мишка и клавиатура. Никакви touch взаимодействия не са позволени.
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Platform-Specific Details -->
+                    <div class="platform-details">
+                        <h5>💻 Windows потребители - забранени клавиши:</h5>
+                        <ul class="platform-list">
+                            <li><strong>ESC</strong> - излизане от fullscreen</li>
+                            <li><strong>Alt+Tab</strong> - превключване между приложения</li>
+                            <li><strong>Windows клавиш</strong> - отваряне на Start menu</li>
+                            <li><strong>F11</strong> - toggle fullscreen</li>
+                            <li><strong>Ctrl+Alt+Delete</strong> - Task Manager</li>
+                        </ul>
+                
+                        <h5>🍎 Mac потребители - забранени клавиши/жестове:</h5>
+                        <ul class="platform-list">
+                            <li><strong>Cmd+Control+F</strong> - toggle fullscreen</li>
+                            <li><strong>Cmd+Tab</strong> - превключване между приложения</li>
+                            <li><strong>Green button</strong> (traffic light) - излизане от fullscreen</li>
+                            <li><strong>Trackpad gestures</strong> - swipe between spaces</li>
+                            <li><strong>Hot corners</strong> - активиране на Mission Control/Desktop</li>
+                        </ul>
+                
+                        <h5>🐧 Linux потребители - забранени клавиши:</h5>
+                        <ul class="platform-list">
+                            <li><strong>Super key</strong> (Windows equivalent) - отваряне на Activities</li>
+                            <li><strong>Alt+Tab</strong> - превключване между приложения</li>
+                            <li><strong>F11</strong> - toggle fullscreen</li>
+                            <li><strong>Workspace switching</strong> - Ctrl+Alt+Arrow</li>
+                        </ul>
+                    </div>
+                
+                    <h4>✅ РАЗРЕШЕНИ ДЕЙСТВИЯ:</h4>
+                    <ul class="allowed-list">
+                        <li><strong>Кодиране</strong> в предоставения редактор</li>
+                        <li><strong>Използване на console.log</strong> за тестване и debugging</li>
+                        <li><strong>Форматиране на кода</strong> с предоставените инструменти</li>
+                        <li><strong>Developer Tools</strong> в рамките на fullscreen режима</li>
+                        <li><strong>Мишка и клавиатура</strong> взаимодействие САМО</li>
+                    </ul>
+                
+                    <!-- Platform-Specific Allowed Actions -->
+                    <div class="platform-details allowed-details">
+                        <h5>✅ Разрешени клавиши за смяна на език:</h5>
+                        <ul class="platform-list allowed">
+                            <li><strong>Windows:</strong> Windows+Space, Alt+Shift</li>
+                            <li><strong>Mac:</strong> Cmd+Space (Spotlight), Control+Space</li>
+                            <li><strong>Linux:</strong> Super+Space, Alt+Shift (зависи от настройките)</li>
+                        </ul>
+                    </div>
+                
+                    <div class="warning-box">
+                        <strong>⚠️ ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>АВТОМАТИЧНО</strong>
+                        без възможност за връщане! Системата засича всички взаимодействия в реално време -
+                        включително touch events, излизане от fullscreen и превключване между приложения.
+                    </div>
+                
+                    <div class="info-box">
+                        <strong>ℹ️ ДОПЪЛНИТЕЛНО:</strong> Времето за изпита е <strong>3 часа</strong>.
+                        Кодът се запазва автоматично на всеки 2 секунди. След приключване на изпита
+                        няма възможност за връщане или промени. Използвайте настолен компютър за най-добър опит.
+                    </div>
+                
+                    <div class="tech-info">
+                        <strong>🔧 ТЕХНИЧЕСКА ИНФОРМАЦИЯ:</strong> Системата използва стандартни web APIs
+                        за детекция на fullscreen състоянието и touch events. Работи на всички modern browsers
+                        но изисква традиционни input devices (мишка + клавиатура).
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Agreement Checkbox -->
+            <div class="agreement-checkbox">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="terms-agreement" required>
+                    <span class="checkmark"></span>
+                    <span class="checkbox-text">
+                        Прочетох и се <strong>съгласявам с условията</strong> на изпита.
+                        Разбирам че при нарушение изпитът се прекратява автоматично.
+                    </span>
+                </label>
+            </div>
+        </div>
+    
+        <!-- Enhanced Login Button -->
+        <button id="login-btn" class="btn-primary" disabled>
+            🚀 Влез в изпита
+        </button>
+    
+        <div id="login-status" class="status-message"></div>
     </div>
 
     <!-- Fullscreen Exam Container -->
