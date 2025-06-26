@@ -1115,40 +1115,25 @@ body:fullscreen::before {
     color: white;
 }
 
-.violation-actions {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
+.violation-auto-close {
+    font-size: 14px;
+    opacity: 0.8;
+    color: #ffcccc;
+    margin-top: 15px;
+    font-weight: 500;
+    animation: pulse 2s infinite;
 }
 
-.btn-warning {
-    padding: 15px 30px;
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+@keyframes pulse {
 
-.btn-warning:hover {
-    background: #e0a800;
-    transform: translateY(-2px);
-}
+    0%,
+    100% {
+        opacity: 0.8;
+    }
 
-.violation-actions .btn-danger {
-    padding: 15px 30px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 2px solid white;
-    font-size: 16px;
-}
-
-.violation-actions .btn-danger:hover {
-    background: rgba(255, 255, 255, 0.3);
+    50% {
+        opacity: 1;
+    }
 }
 
 /* ================================
@@ -1909,4 +1894,279 @@ body:fullscreen::before {
 /* Ensure keyboard navigation works for scrolling */
 .mdn-content-area:focus {
     outline: none;
+}
+
+/* ================================
+   DOM PREVIEW PANEL STYLES
+   ================================ */
+
+/* DOM Preview Container */
+.dom-preview-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
+/* Preview Controls */
+.preview-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+
+.preview-btn {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.preview-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.preview-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.preview-btn[data-mode="refresh"] {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.preview-btn[data-mode="refresh"]:hover {
+    background: #218838;
+    border-color: #1e7e34;
+}
+
+.preview-info {
+    margin-left: auto;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+#preview-status {
+    padding: 4px 8px;
+    border-radius: 3px;
+    background: #e9ecef;
+}
+
+#preview-status.loading {
+    background: #fff3cd;
+    color: #856404;
+}
+
+#preview-status.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+#preview-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Preview Frame Container */
+.preview-frame-container {
+    flex: 1;
+    padding: 16px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    min-height: 300px;
+}
+
+/* Preview Placeholder */
+.preview-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    margin: 16px;
+}
+
+.placeholder-content {
+    text-align: center;
+    color: #6c757d;
+    max-width: 400px;
+    padding: 40px 20px;
+}
+
+.placeholder-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+.placeholder-content h3 {
+    margin: 0 0 12px 0;
+    color: #495057;
+    font-size: 20px;
+}
+
+.placeholder-content p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.placeholder-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.tip {
+    font-size: 12px;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
+}
+
+/* DOM Error Panel */
+.dom-error-panel {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 16px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.dom-error-panel .error-header {
+    font-weight: 600;
+    color: #721c24;
+    margin-bottom: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dom-error-panel .error-content {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 12px;
+    color: #721c24;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+/* Tab-specific adjustments */
+.output-tabs {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.tab-btn {
+    padding: 6px 12px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    background: #3c3c3c;
+    color: #ffffff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background: #4a4a4a;
+    border-color: #555;
+}
+
+.tab-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .preview-controls {
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 8px 12px;
+    }
+
+    .preview-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .placeholder-content {
+        padding: 20px 16px;
+    }
+
+    .placeholder-icon {
+        font-size: 36px;
+    }
+
+    .placeholder-tips {
+        gap: 6px;
+    }
+
+    .tip {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+}
+
+/* Loading animation for iframe */
+.preview-iframe.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.preview-iframe.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #ccc;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }

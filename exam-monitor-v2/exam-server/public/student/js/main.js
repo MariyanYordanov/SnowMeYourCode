@@ -77,7 +77,6 @@ function initializeAppSafely() {
         setupLoginForm();
         setupAntiCheat();
         setupExamControls();
-        setupViolationScreen();
         setupNotificationSystem();
 
         // Setup Socket.io with delay to ensure scripts are ready
@@ -117,32 +116,6 @@ function setupExamControls() {
 
     } catch (error) {
         console.error('❌ Failed to setup exam controls:', error);
-    }
-}
-
-// ================================
-// VIOLATION SCREEN SETUP
-// ================================
-function setupViolationScreen() {
-    try {
-        // Violation screen buttons
-        const continueBtn = document.getElementById('continue-exam-btn');
-        const exitBtn = document.getElementById('exit-violation-btn');
-
-        if (continueBtn) {
-            continueBtn.addEventListener('click', continueAfterViolation);
-        }
-
-        if (exitBtn) {
-            exitBtn.addEventListener('click', exitAfterViolation);
-        }
-
-        // Add functions to global scope for cross-module access
-        window.ExamApp.showViolationScreen = showViolationScreen;
-        window.ExamApp.hideViolationScreen = hideViolationScreen;
-
-    } catch (error) {
-        console.error('❌ Failed to setup violation screen:', error);
     }
 }
 
@@ -359,58 +332,15 @@ function showViolationScreen(reason) {
         if (violationScreen) violationScreen.style.display = 'flex';
         if (examContainer) examContainer.classList.add('violation-detected');
 
+        // Auto-close after 10 seconds and exit exam
+        setTimeout(() => {
+            exitExam('violation-auto-close');
+        }, 10000);
+
+        console.log(`⚠️ Violation shown: ${reason} - Auto-closing in 10 seconds`);
+
     } catch (error) {
         console.error('❌ Error showing violation screen:', error);
-    }
-}
-
-/**
- * Hide violation screen
- */
-function hideViolationScreen() {
-    try {
-        const violationScreen = document.getElementById('violation-screen');
-        const examContainer = document.getElementById('exam-container');
-
-        if (violationScreen) violationScreen.style.display = 'none';
-        if (examContainer) examContainer.classList.remove('violation-detected');
-
-    } catch (error) {
-        console.error('❌ Error hiding violation screen:', error);
-    }
-}
-
-/**
- * Continue after violation
- */
-function continueAfterViolation() {
-    try {
-        hideViolationScreen();
-
-        // Re-enter fullscreen if needed
-        if (!window.ExamApp.isFullscreen) {
-            enterFullscreenMode();
-        }
-    } catch (error) {
-        console.error('❌ Error continuing after violation:', error);
-    }
-}
-
-/**
- * Exit after violation
- */
-async function exitAfterViolation() {
-    try {
-        // Use custom dialog instead of browser confirm
-        const shouldExit = await showViolationExitDialog(
-            'Сигурен ли сте че искате да напуснете изпита поради нарушение?\n\nТова действие не може да бъде отменено.'
-        );
-
-        if (shouldExit) {
-            exitExam('violation');
-        }
-    } catch (error) {
-        console.error('❌ Error handling violation exit:', error);
     }
 }
 

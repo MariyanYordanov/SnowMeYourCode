@@ -6,6 +6,7 @@
 
 // Import socket functions
 import { sendCodeUpdate } from './socket.js';
+import { triggerDOMPreview, autoSwitchToDOMIfNeeded } from './tabs.js';
 
 // Auto-save timeout
 let autoSaveTimeout = null;
@@ -20,6 +21,9 @@ const consoleState = {
 
 /**
  * Initialize Monaco Editor
+ */
+/**
+ * Enhanced Monaco Editor initialization with additional features
  */
 export function initializeMonacoEditor(initialCode = '') {
     return new Promise((resolve, reject) => {
@@ -56,11 +60,42 @@ export function initializeMonacoEditor(initialCode = '') {
                             other: true,
                             comments: false,
                             strings: false
-                        }
+                        },
+                        // NEW: Enhanced editor features
+                        multiCursorModifier: 'ctrlCmd',
+                        formatOnPaste: true,
+                        formatOnType: true,
+                        autoIndent: 'advanced',
+                        tabCompletion: 'on',
+                        acceptSuggestionOnEnter: 'on',
+                        snippetSuggestions: 'top',
+                        wordBasedSuggestions: true,
+                        codeLens: true,
+                        folding: true,
+                        foldingStrategy: 'indentation',
+                        showFoldingControls: 'mouseover',
+                        matchBrackets: 'always',
+                        selectionHighlight: true,
+                        occurrencesHighlight: true,
+                        find: {
+                            seedSearchStringFromSelection: true,
+                            autoFindInSelection: 'never'
+                        },
+                        // NEW: Performance optimizations
+                        smoothScrolling: true,
+                        cursorSmoothCaretAnimation: true,
+                        cursorBlinking: 'blink',
+                        renderLineHighlight: 'line',
+                        // NEW: Accessibility improvements
+                        accessibilitySupport: 'auto',
+                        screenReaderAnnounceInlineSuggestion: true
                     });
 
                     // CRITICAL: Store editor in global state immediately
                     window.ExamApp.editor = editor;
+
+                    // NEW: Setup language features
+                    setupLanguageFeatures(editor);
 
                     // Setup auto-save
                     setupAutoSave(editor);
@@ -71,18 +106,207 @@ export function initializeMonacoEditor(initialCode = '') {
                     // Setup keyboard shortcuts
                     setupKeyboardShortcuts(editor);
 
-                    console.log('✅ Monaco Editor initialized');
+                    // NEW: Setup error detection and highlighting
+                    setupErrorDetection(editor);
+
+                    // NEW: Setup code quality hints
+                    setupCodeQualityHints(editor);
+
+                    // NEW: Setup DOM Preview integration
+                    setupDOMPreviewIntegration(editor);
+
+                    console.log('✅ Enhanced Monaco Editor initialized');
                     resolve(editor);
+
                 } catch (error) {
                     console.error('❌ Monaco Editor creation failed:', error);
                     reject(error);
                 }
             });
+
         } catch (error) {
             console.error('❌ Monaco Editor initialization failed:', error);
             reject(error);
         }
     });
+}
+
+/**
+ * NEW: Setup enhanced language features
+ */
+function setupLanguageFeatures(editor) {
+    try {
+        // Add HTML and CSS language support
+        monaco.languages.register({ id: 'html' });
+        monaco.languages.register({ id: 'css' });
+
+        // Auto-detect language based on content
+        editor.onDidChangeModelContent(() => {
+            const content = editor.getValue().trim().toLowerCase();
+            let newLanguage = 'javascript';
+
+            if (content.includes('<html') || content.includes('<div') || /^<[a-z]/.test(content)) {
+                newLanguage = 'html';
+            } else if (content.includes('{') && content.includes('}') &&
+                (content.includes('color') || content.includes('background'))) {
+                newLanguage = 'css';
+            }
+
+            const currentLanguage = editor.getModel().getLanguageId();
+            if (currentLanguage !== newLanguage) {
+                monaco.editor.setModelLanguage(editor.getModel(), newLanguage);
+                console.log(`🔄 Language auto-detected: ${newLanguage}`);
+            }
+        });
+
+        console.log('✅ Enhanced language features setup');
+
+    } catch (error) {
+        console.error('❌ Failed to setup language features:', error);
+    }
+}
+
+/**
+ * NEW: Setup error detection and highlighting
+ */
+function setupErrorDetection(editor) {
+    try {
+        let errorDecorations = [];
+
+        // Real-time syntax error detection for JavaScript
+        editor.onDidChangeModelContent(() => {
+            clearTimeout(window.errorCheckTimeout);
+            window.errorCheckTimeout = setTimeout(() => {
+                const content = editor.getValue();
+                const language = editor.getModel().getLanguageId();
+
+                if (language === 'javascript') {
+                    checkJavaScriptSyntax(editor, content);
+                }
+            }, 1000);
+        });
+
+        function checkJavaScriptSyntax(editor, code) {
+            try {
+                // Clear previous decorations
+                errorDecorations = editor.deltaDecorations(errorDecorations, []);
+
+                // Simple syntax check
+                new Function(code);
+
+            } catch (error) {
+                // Extract line number from error
+                const lineMatch = error.stack?.match(/Function:(\d+):/);
+                const lineNumber = lineMatch ? parseInt(lineMatch[1]) : 1;
+
+                // Add error decoration
+                errorDecorations = editor.deltaDecorations(errorDecorations, [{
+                    range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                    options: {
+                        isWholeLine: true,
+                        className: 'error-line',
+                        glyphMarginClassName: 'error-line-glyph',
+                        hoverMessage: { value: `**Syntax Error:** ${error.message}` }
+                    }
+                }]);
+            }
+        }
+
+        console.log('✅ Error detection setup');
+
+    } catch (error) {
+        console.error('❌ Failed to setup error detection:', error);
+    }
+}
+
+/**
+ * NEW: Setup code quality hints
+ */
+function setupCodeQualityHints(editor) {
+    try {
+        // Add code quality markers
+        editor.onDidChangeModelContent(() => {
+            clearTimeout(window.qualityCheckTimeout);
+            window.qualityCheckTimeout = setTimeout(() => {
+                const content = editor.getValue();
+                checkCodeQuality(editor, content);
+            }, 2000);
+        });
+
+        function checkCodeQuality(editor, code) {
+            const model = editor.getModel();
+            const markers = [];
+
+            // Check for console.log usage
+            const consoleLogMatches = code.match(/console\.log/g);
+            if (consoleLogMatches && consoleLogMatches.length > 5) {
+                markers.push({
+                    severity: monaco.MarkerSeverity.Info,
+                    message: 'Consider reducing console.log usage for cleaner code',
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: 1,
+                    endColumn: 1
+                });
+            }
+
+            // Check for missing semicolons (simple check)
+            const lines = code.split('\n');
+            lines.forEach((line, index) => {
+                const trimmed = line.trim();
+                if (trimmed &&
+                    !trimmed.endsWith(';') &&
+                    !trimmed.endsWith('{') &&
+                    !trimmed.endsWith('}') &&
+                    !trimmed.startsWith('//') &&
+                    !trimmed.startsWith('/*') &&
+                    trimmed.length > 10) {
+
+                    markers.push({
+                        severity: monaco.MarkerSeverity.Warning,
+                        message: 'Consider adding semicolon',
+                        startLineNumber: index + 1,
+                        startColumn: line.length,
+                        endLineNumber: index + 1,
+                        endColumn: line.length + 1
+                    });
+                }
+            });
+
+            monaco.editor.setModelMarkers(model, 'quality', markers);
+        }
+
+        console.log('✅ Code quality hints setup');
+
+    } catch (error) {
+        console.error('❌ Failed to setup code quality hints:', error);
+    }
+}
+
+/**
+ * NEW: Setup DOM Preview integration
+ */
+function setupDOMPreviewIntegration(editor) {
+    try {
+        // Real-time DOM preview for HTML/CSS
+        editor.onDidChangeModelContent(() => {
+            clearTimeout(window.domPreviewTimeout);
+            window.domPreviewTimeout = setTimeout(() => {
+                const code = editor.getValue();
+                const language = editor.getModel().getLanguageId();
+
+                if ((language === 'html' || language === 'css') &&
+                    typeof triggerDOMPreview === 'function') {
+                    triggerDOMPreview(code, language);
+                }
+            }, 1000);
+        });
+
+        console.log('✅ DOM Preview integration setup');
+
+    } catch (error) {
+        console.error('❌ Failed to setup DOM Preview integration:', error);
+    }
 }
 
 /**
@@ -177,7 +401,12 @@ export function setupEditorControls(actions) {
         // Run code button
         const runBtn = document.getElementById('run-code-btn');
         if (runBtn && actions.runCode) {
-            runBtn.addEventListener('click', actions.runCode);
+            runBtn.addEventListener('click', () => {
+                runCode();
+                // NEW: Auto-trigger DOM preview hint
+                const code = window.ExamApp.editor?.getValue() || '';
+                autoSwitchToDOMIfNeeded(code);
+            });
         }
 
         // Format code button
@@ -235,6 +464,7 @@ export function runCode() {
 
             // Show execution success info
             const executionTime = result.executionTime;
+            triggerDOMPreviewIfNeeded(code);
             showExecutionInfo(`Код изпълнен за ${executionTime}ms`);
         } else {
             showError(result.error);
@@ -246,7 +476,35 @@ export function runCode() {
         showError(`Грешка при изпълнение: ${error.message}`);
     }
 }
+function triggerDOMPreviewIfNeeded(code) {
+    try {
+        const trimmedCode = code.trim().toLowerCase();
 
+        // Detect code type
+        const isHTML = trimmedCode.includes('<html') ||
+            trimmedCode.includes('<!doctype') ||
+            trimmedCode.includes('<div') ||
+            trimmedCode.includes('<p>') ||
+            /^<[a-z][\s\S]*>/.test(trimmedCode);
+
+        const isCSS = trimmedCode.includes('{') && trimmedCode.includes('}') &&
+            (trimmedCode.includes(':') || trimmedCode.includes('color') ||
+                trimmedCode.includes('background') || trimmedCode.includes('margin'));
+
+        if (isHTML || isCSS) {
+            // Trigger DOM Preview update
+            triggerDOMPreview(code, isHTML ? 'html' : 'css');
+
+            // Show hint to switch to DOM tab if needed
+            autoSwitchToDOMIfNeeded(code);
+
+            console.log(`🌐 DOM Preview triggered for ${isHTML ? 'HTML' : 'CSS'} code`);
+        }
+
+    } catch (error) {
+        console.error('❌ Error triggering DOM preview:', error);
+    }
+}
 /**
  * Capture enhanced console output with all console methods
  */
