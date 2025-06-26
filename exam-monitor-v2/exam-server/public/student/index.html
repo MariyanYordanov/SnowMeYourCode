@@ -240,81 +240,45 @@
                     <!-- Execution Info Display -->
                     <div id="execution-info" style="display: none;"></div>
                 </div>
-            
-                <!-- NEW: Simple MDN Tab Content (Improved) -->
+
+                <!-- NEW: Simple MDN Tab Content (Original Working Version) -->
                 <div id="mdn-tab-content" class="tab-content" style="display: none;">
-                    <div class="mdn-simple-improved">
+                    <div class="mdn-simple">
                         <div class="mdn-header">
                             <h3>📚 JavaScript Reference</h3>
-                            <p>Quick access to essential APIs for SPA development</p>
+                            <p>Quick access to MDN documentation for SPA development</p>
                         </div>
                 
-                        <!-- API Navigation -->
-                        <div class="mdn-api-nav">
-                            <button class="api-nav-btn active" onclick="showAPI('overview')">📋 Overview</button>
-                            <button class="api-nav-btn" onclick="showAPI('fetch')">🌐 Fetch</button>
-                            <button class="api-nav-btn" onclick="showAPI('dom')">🏗️ DOM</button>
-                            <button class="api-nav-btn" onclick="showAPI('array')">📋 Arrays</button>
-                            <button class="api-nav-btn" onclick="showAPI('object')">🔧 Objects</button>
-                            <button class="api-nav-btn" onclick="showAPI('json')">📄 JSON</button>
-                            <button class="api-nav-btn" onclick="showAPI('storage')">💾 Storage</button>
-                            <button class="api-nav-btn" onclick="showAPI('promise')">⏳ Promises</button>
+                        <div class="mdn-quick-access">
+                            <h4>🚀 Quick Reference Links:</h4>
+                            <div class="mdn-buttons">
+                                <button class="mdn-btn" onclick="openMDN('fetch')">🌐 Fetch API</button>
+                                <button class="mdn-btn" onclick="openMDN('dom')">🏗️ DOM Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('array')">📋 Array Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('object')">🔧 Object Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('json')">📄 JSON API</button>
+                                <button class="mdn-btn" onclick="openMDN('storage')">💾 Storage API</button>
+                                <button class="mdn-btn" onclick="openMDN('promise')">⏳ Promises</button>
+                                <button class="mdn-btn" onclick="openMDN('classes')">🏭 Classes</button>
+                            </div>
                         </div>
                 
-                        <!-- Scrollable Content Area -->
-                        <div class="mdn-scrollable-content">
-                            <!-- Overview (default) -->
-                            <div id="api-overview" class="api-content active">
-                                <div class="overview-grid">
-                                    <div class="overview-card" onclick="showAPI('fetch')">
-                                        <div class="card-icon">🌐</div>
-                                        <div class="card-title">Fetch API</div>
-                                        <div class="card-desc">HTTP requests and responses</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('dom')">
-                                        <div class="card-icon">🏗️</div>
-                                        <div class="card-title">DOM API</div>
-                                        <div class="card-desc">Element manipulation</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('array')">
-                                        <div class="card-icon">📋</div>
-                                        <div class="card-title">Array Methods</div>
-                                        <div class="card-desc">Data processing & iteration</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('object')">
-                                        <div class="card-icon">🔧</div>
-                                        <div class="card-title">Object Methods</div>
-                                        <div class="card-desc">Object manipulation</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('json')">
-                                        <div class="card-icon">📄</div>
-                                        <div class="card-title">JSON</div>
-                                        <div class="card-desc">Data serialization</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('storage')">
-                                        <div class="card-icon">💾</div>
-                                        <div class="card-title">Storage</div>
-                                        <div class="card-desc">Browser storage APIs</div>
-                                    </div>
-                                    <div class="overview-card" onclick="showAPI('promise')">
-                                        <div class="card-icon">⏳</div>
-                                        <div class="card-title">Promises</div>
-                                        <div class="card-desc">Async operations</div>
-                                    </div>
-                                </div>
-                
-                                <div class="external-link-section">
-                                    <button class="external-btn" onclick="openFullMDN()">
-                                        🔗 Open Full MDN Reference
-                                    </button>
-                                    <p>For detailed documentation, use the full MDN website</p>
-                                </div>
+                        <div class="mdn-search-section">
+                            <h4>🔍 Search MDN:</h4>
+                            <div class="search-box">
+                                <input type="text" placeholder="Search JavaScript APIs..." id="mdn-search-simple">
+                                <button onclick="searchMDN()" class="search-btn">Search</button>
                             </div>
+                        </div>
                 
-                            <!-- Dynamic API Content -->
-                            <div id="api-dynamic" class="api-content">
-                                <!-- Content loaded dynamically -->
-                            </div>
+                        <div class="mdn-general">
+                            <button class="mdn-btn-full" onclick="openMDNGeneral()">
+                                📖 Open Full MDN JavaScript Reference
+                            </button>
+                        </div>
+                
+                        <div class="mdn-info">
+                            <p><strong>💡 Tip:</strong> Links open in new window so you can keep coding!</p>
                         </div>
                     </div>
                 </div>
