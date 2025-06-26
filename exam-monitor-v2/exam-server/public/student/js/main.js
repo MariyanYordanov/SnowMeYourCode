@@ -253,7 +253,7 @@ async function handleFinishExam() {
 }
 
 /**
- * Exit exam with specified reason
+ * Exit exam with specified reason - MODIFIED FOR RESULT DETECTION
  */
 function exitExam(reason) {
     try {
@@ -263,36 +263,85 @@ function exitExam(reason) {
         window.ExamApp.completionInProgress = true;
 
         // Different handling based on reason
-        if (reason === 'fullscreen_violation' || reason === 'document_hidden_violation') {
-            // For violations - don't save code (cheater penalty)
-            console.log(`🚫 ${reason} - code NOT saved`);
-        } else {
-            // For normal completion - auto-save handles final save
-            console.log('✅ Normal completion - auto-save active');
-        }
+        const isViolationTermination = reason.includes('violation');
+        const isVoluntaryExit = reason === 'completed';
 
-        // Send completion to server
-        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-            window.ExamApp.socket.emit('exam-complete', {
-                sessionId: window.ExamApp.sessionId,
-                reason: reason,
-                completed: reason === 'completed',
-                terminated: reason.includes('violation'),
-                timestamp: Date.now()
-            });
-        }
+        if (isViolationTermination) {
+            // AUTOMATIC TERMINATION - no screens, no saves, direct exit
+            console.log(`🚫 ${reason} - AUTOMATIC TERMINATION (no code save)`);
 
-        // Clean up
-        deactivateAntiCheat();
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
-        }
+            // Send completion to server immediately
+            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+                window.ExamApp.socket.emit('exam-complete', {
+                    sessionId: window.ExamApp.sessionId,
+                    reason: reason,
+                    completed: false,
+                    terminated: true,
+                    timestamp: Date.now()
+                });
+            }
 
-        // Close window after appropriate delay
-        const closeDelay = reason.includes('violation') ? 3000 : 1000;
-        setTimeout(() => {
+            // Clean up and close immediately
+            deactivateAntiCheat();
+            if (window.ExamApp.timerInterval) {
+                clearInterval(window.ExamApp.timerInterval);
+            }
+
+            // Close window immediately - no delays, no screens
             window.close();
-        }, closeDelay);
+
+        } else if (isVoluntaryExit) {
+            // VOLUNTARY EXIT - normal completion with auto-save
+            console.log('✅ Voluntary completion - auto-save active');
+
+            // Send completion to server
+            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+                window.ExamApp.socket.emit('exam-complete', {
+                    sessionId: window.ExamApp.sessionId,
+                    reason: reason,
+                    completed: true,
+                    terminated: false,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Clean up
+            deactivateAntiCheat();
+            if (window.ExamApp.timerInterval) {
+                clearInterval(window.ExamApp.timerInterval);
+            }
+
+            // Close window after short delay for save completion
+            setTimeout(() => {
+                window.close();
+            }, 1000);
+
+        } else {
+            // OTHER REASONS (expired, etc.) - normal handling
+            console.log(`⏰ ${reason} - normal termination`);
+
+            // Send completion to server
+            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+                window.ExamApp.socket.emit('exam-complete', {
+                    sessionId: window.ExamApp.sessionId,
+                    reason: reason,
+                    completed: false,
+                    terminated: false,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Clean up
+            deactivateAntiCheat();
+            if (window.ExamApp.timerInterval) {
+                clearInterval(window.ExamApp.timerInterval);
+            }
+
+            // Close window after delay
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        }
 
     } catch (error) {
         console.error('❌ Error exiting exam:', error);
