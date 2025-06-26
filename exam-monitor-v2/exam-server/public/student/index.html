@@ -240,45 +240,249 @@
                     <!-- Execution Info Display -->
                     <div id="execution-info" style="display: none;"></div>
                 </div>
-                
-                <!-- NEW: Simple MDN Tab Content -->
+                <!-- NEW: Offline MDN Tab Content -->
                 <div id="mdn-tab-content" class="tab-content" style="display: none;">
-                    <div class="mdn-simple">
+                    <div class="mdn-offline">
                         <div class="mdn-header">
-                            <h3>📚 JavaScript Reference</h3>
-                            <p>Quick access to MDN documentation for SPA development</p>
+                            <h3>📚 JavaScript Quick Reference</h3>
+                            <p>Essential APIs for SPA development (offline reference)</p>
                         </div>
                 
-                        <div class="mdn-quick-access">
-                            <h4>🚀 Quick Reference Links:</h4>
-                            <div class="mdn-buttons">
-                                <button class="mdn-btn" onclick="openMDN('fetch')">🌐 Fetch API</button>
-                                <button class="mdn-btn" onclick="openMDN('dom')">🏗️ DOM Methods</button>
-                                <button class="mdn-btn" onclick="openMDN('array')">📋 Array Methods</button>
-                                <button class="mdn-btn" onclick="openMDN('object')">🔧 Object Methods</button>
-                                <button class="mdn-btn" onclick="openMDN('json')">📄 JSON API</button>
-                                <button class="mdn-btn" onclick="openMDN('storage')">💾 Storage API</button>
-                                <button class="mdn-btn" onclick="openMDN('promise')">⏳ Promises</button>
-                                <button class="mdn-btn" onclick="openMDN('classes')">🏭 Classes</button>
+                        <div class="mdn-nav">
+                            <button class="mdn-nav-btn active" onclick="showMDNSection('overview')">📋 Overview</button>
+                            <button class="mdn-nav-btn" onclick="showMDNSection('fetch')">🌐 Fetch</button>
+                            <button class="mdn-nav-btn" onclick="showMDNSection('dom')">🏗️ DOM</button>
+                            <button class="mdn-nav-btn" onclick="showMDNSection('array')">📋 Arrays</button>
+                            <button class="mdn-nav-btn" onclick="showMDNSection('object')">🔧 Objects</button>
+                            <button class="mdn-nav-btn" onclick="showMDNSection('json')">📄 JSON</button>
+                        </div>
+                
+                        <div class="mdn-content-area">
+                            <!-- Overview -->
+                            <div id="mdn-overview" class="mdn-section active">
+                                <h4>🚀 JavaScript Quick Reference for SPA Development</h4>
+                                <p>Click on categories above to see syntax and examples</p>
+                
+                                <div class="quick-cards">
+                                    <div class="quick-card" onclick="showMDNSection('fetch')">
+                                        <strong>🌐 Fetch API</strong><br>
+                                        <code>fetch(url).then(r => r.json())</code>
+                                    </div>
+                                    <div class="quick-card" onclick="showMDNSection('dom')">
+                                        <strong>🏗️ DOM API</strong><br>
+                                        <code>document.querySelector('.class')</code>
+                                    </div>
+                                    <div class="quick-card" onclick="showMDNSection('array')">
+                                        <strong>📋 Arrays</strong><br>
+                                        <code>arr.map(x => x * 2)</code>
+                                    </div>
+                                    <div class="quick-card" onclick="showMDNSection('object')">
+                                        <strong>🔧 Objects</strong><br>
+                                        <code>Object.keys(obj)</code>
+                                    </div>
+                                    <div class="quick-card" onclick="showMDNSection('json')">
+                                        <strong>📄 JSON</strong><br>
+                                        <code>JSON.parse(string)</code>
+                                    </div>
+                                </div>
+                
+                                <div class="mdn-note">
+                                    <p><strong>💡 Note:</strong> This is a quick offline reference. For full documentation, search
+                                        online after the exam.</p>
+                                </div>
                             </div>
-                        </div>
                 
-                        <div class="mdn-search-section">
-                            <h4>🔍 Search MDN:</h4>
-                            <div class="search-box">
-                                <input type="text" placeholder="Search JavaScript APIs..." id="mdn-search-simple">
-                                <button onclick="searchMDN()" class="search-btn">Search</button>
+                            <!-- Fetch API -->
+                            <div id="mdn-fetch" class="mdn-section">
+                                <h4>🌐 Fetch API</h4>
+                                <div class="api-syntax">
+                                    <strong>Syntax:</strong> <code>fetch(url, options)</code>
+                                </div>
+                                <div class="api-description">
+                                    Modern way to make HTTP requests and handle responses
+                                </div>
+                
+                                <h5>Basic Examples:</h5>
+                                <div class="code-example">
+                                    <strong>GET Request:</strong>
+                                    <pre>fetch('/api/data')
+                  .then(response => response.json())
+                  .then(data => console.log(data))
+                  .catch(error => console.error(error));</pre>
+                                </div>
+                
+                                <div class="code-example">
+                                    <strong>POST Request:</strong>
+                                    <pre>fetch('/api/users', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: 'John', age: 30 })
+                })
+                .then(response => response.json())
+                .then(data => console.log(data));</pre>
+                                </div>
+                
+                                <h5>Common Methods:</h5>
+                                <ul>
+                                    <li><code>response.json()</code> - Parse as JSON</li>
+                                    <li><code>response.text()</code> - Parse as text</li>
+                                    <li><code>response.ok</code> - Check if successful (200-299)</li>
+                                    <li><code>response.status</code> - Get HTTP status code</li>
+                                </ul>
                             </div>
-                        </div>
                 
-                        <div class="mdn-general">
-                            <button class="mdn-btn-full" onclick="openMDNGeneral()">
-                                📖 Open Full MDN JavaScript Reference
-                            </button>
-                        </div>
+                            <!-- DOM API -->
+                            <div id="mdn-dom" class="mdn-section">
+                                <h4>🏗️ DOM API</h4>
+                                <div class="api-syntax">
+                                    <strong>Syntax:</strong> <code>document.method()</code>
+                                </div>
+                                <div class="api-description">
+                                    Document Object Model manipulation methods
+                                </div>
                 
-                        <div class="mdn-info">
-                            <p><strong>💡 Tip:</strong> Links open in new window so you can keep coding!</p>
+                                <h5>Selection Methods:</h5>
+                                <div class="code-example">
+                                    <pre>// Select elements
+                const el = document.querySelector('#id');
+                const els = document.querySelectorAll('.class');
+                const byId = document.getElementById('myId');</pre>
+                                </div>
+                
+                                <h5>Creation & Manipulation:</h5>
+                                <div class="code-example">
+                                    <pre>// Create and append
+                const div = document.createElement('div');
+                div.textContent = 'Hello World';
+                div.className = 'my-class';
+                document.body.appendChild(div);</pre>
+                                </div>
+                
+                                <h5>Event Handling:</h5>
+                                <div class="code-example">
+                                    <pre>// Add event listeners
+                button.addEventListener('click', function(event) {
+                  console.log('Button clicked!');
+                  event.preventDefault();
+                });</pre>
+                                </div>
+                            </div>
+                
+                            <!-- Array Methods -->
+                            <div id="mdn-array" class="mdn-section">
+                                <h4>📋 Array Methods</h4>
+                                <div class="api-syntax">
+                                    <strong>Syntax:</strong> <code>array.method(callback)</code>
+                                </div>
+                
+                                <h5>Transform & Filter:</h5>
+                                <div class="code-example">
+                                    <pre>const numbers = [1, 2, 3, 4, 5];
+                
+                // Transform each element
+                const doubled = numbers.map(x => x * 2);
+                
+                // Filter elements
+                const evens = numbers.filter(x => x % 2 === 0);
+                
+                // Find single element
+                const found = numbers.find(x => x > 3);</pre>
+                                </div>
+                
+                                <h5>Iteration:</h5>
+                                <div class="code-example">
+                                    <pre>// Execute for each element
+                numbers.forEach((num, index) => {
+                  console.log(`${index}: ${num}`);
+                });
+                
+                // Reduce to single value
+                const sum = numbers.reduce((total, num) => total + num, 0);</pre>
+                                </div>
+                
+                                <h5>Common Methods:</h5>
+                                <ul>
+                                    <li><code>map(fn)</code> - Transform each element</li>
+                                    <li><code>filter(fn)</code> - Select elements by condition</li>
+                                    <li><code>find(fn)</code> - Find first matching element</li>
+                                    <li><code>forEach(fn)</code> - Execute function for each</li>
+                                    <li><code>reduce(fn, initial)</code> - Reduce to single value</li>
+                                </ul>
+                            </div>
+                
+                            <!-- Object Methods -->
+                            <div id="mdn-object" class="mdn-section">
+                                <h4>🔧 Object Methods</h4>
+                                <div class="api-syntax">
+                                    <strong>Syntax:</strong> <code>Object.method(obj)</code>
+                                </div>
+                
+                                <h5>Object Inspection:</h5>
+                                <div class="code-example">
+                                    <pre>const user = { name: 'John', age: 30, city: 'Sofia' };
+                
+                // Get keys, values, entries
+                const keys = Object.keys(user);         // ['name', 'age', 'city']
+                const values = Object.values(user);     // ['John', 30, 'Sofia']
+                const entries = Object.entries(user);   // [['name', 'John'], ...]</pre>
+                                </div>
+                
+                                <h5>Object Manipulation:</h5>
+                                <div class="code-example">
+                                    <pre>// Merge objects
+                const defaults = { theme: 'light', lang: 'en' };
+                const userPrefs = { theme: 'dark' };
+                const config = Object.assign({}, defaults, userPrefs);
+                
+                // Modern spread syntax
+                const merged = { ...defaults, ...userPrefs };</pre>
+                                </div>
+                
+                                <h5>Common Methods:</h5>
+                                <ul>
+                                    <li><code>Object.keys(obj)</code> - Get property names</li>
+                                    <li><code>Object.values(obj)</code> - Get property values</li>
+                                    <li><code>Object.entries(obj)</code> - Get [key, value] pairs</li>
+                                    <li><code>Object.assign(target, ...sources)</code> - Copy properties</li>
+                                </ul>
+                            </div>
+                
+                            <!-- JSON -->
+                            <div id="mdn-json" class="mdn-section">
+                                <h4>📄 JSON API</h4>
+                                <div class="api-syntax">
+                                    <strong>Syntax:</strong> <code>JSON.method(data)</code>
+                                </div>
+                
+                                <h5>Parse & Stringify:</h5>
+                                <div class="code-example">
+                                    <pre>// String to Object
+                const jsonString = '{"name": "John", "age": 30}';
+                const obj = JSON.parse(jsonString);
+                
+                // Object to String
+                const user = { name: 'John', age: 30 };
+                const json = JSON.stringify(user);
+                
+                // Pretty print
+                const pretty = JSON.stringify(user, null, 2);</pre>
+                                </div>
+                
+                                <h5>Error Handling:</h5>
+                                <div class="code-example">
+                                    <pre>try {
+                  const data = JSON.parse(invalidJson);
+                } catch (error) {
+                  console.error('Invalid JSON:', error.message);
+                }</pre>
+                                </div>
+                
+                                <h5>Methods:</h5>
+                                <ul>
+                                    <li><code>JSON.parse(string)</code> - Parse JSON string to object</li>
+                                    <li><code>JSON.stringify(object)</code> - Convert object to JSON string</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
