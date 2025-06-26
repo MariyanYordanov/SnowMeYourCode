@@ -2,7 +2,8 @@
  * Output Panel Tabs Module
  * Handles Console/MDN tab switching and MDN content
  */
-
+// Import MDN data functions
+import { getMDNContentByCategory, getAPIData, searchMDNDatabase, generateAPIHTML } from './mdn-data.js';
 // Tab state
 let currentTab = 'console';
 let currentCategory = 'all';
