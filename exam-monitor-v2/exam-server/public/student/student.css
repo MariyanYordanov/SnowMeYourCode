@@ -1732,13 +1732,15 @@ body:fullscreen::before {
     border-color: #667eea;
 }
 
+/* Hide scrollbar for MDN content area but keep scrolling functionality */
 .mdn-content-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    height: 0;
-    padding-bottom: 60px;
-    max-height: calc(100vh - 200px);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.mdn-content-area::-webkit-scrollbar {
+    display: none;
 }
 
 .mdn-section {
