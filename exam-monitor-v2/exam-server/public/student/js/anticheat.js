@@ -2,10 +2,19 @@
  * Anti-Cheat Security Module
  * Focus-based monitoring - tracks fullscreen exits instead of blocking keys
  * FIRST violation: choice screen, SECOND violation: automatic termination
+ * Updated with Custom Dialog System for fullscreen-safe interactions
  */
 
 // Import socket functions for reporting
 import { reportSuspiciousActivity } from './socket.js';
+
+// Import custom dialog system
+import {
+    showViolationExitDialog,
+    showInfoDialog,
+    hideCustomDialogs,
+    isSecureDialogActive
+} from './dialogs.js';
 
 // Grace periods for accidental violations
 const GRACE_PERIODS = {
@@ -169,9 +178,13 @@ function handleFullscreenChange() {
             console.log('⚠️ Exited fullscreen mode - VIOLATION DETECTED');
             updateFullscreenStatus('⚠️ Fullscreen неактивен');
 
-            // Handle violation if exam is active
-            if (window.ExamApp.isLoggedIn && window.ExamApp.antiCheatActive) {
+            // Handle violation if exam is active AND not in completion process
+            if (window.ExamApp.isLoggedIn &&
+                window.ExamApp.antiCheatActive &&
+                !window.ExamApp.completionInProgress) {
                 handleFullscreenViolation();
+            } else if (window.ExamApp.completionInProgress) {
+                console.log('🔄 Fullscreen exit during completion process - allowed');
             }
         }
     } catch (error) {
@@ -259,20 +272,10 @@ function handleFullscreenViolation() {
         });
 
         if (fullscreenViolationCount === 1) {
-            // FIRST violation - show choice screen
-            console.log('🟡 First violation - showing choice screen');
+            // FIRST violation - show choice screen with custom dialogs
+            console.log('🟡 First violation - showing choice screen with custom dialogs');
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Излизане от fullscreen режим е забранено!\n\nТова е вашето единствено предупреждение.\nПри следващо нарушение изпитът ще бъде прекратен автоматично.');
-            }
-
-            // Force re-enter fullscreen after a short delay
-            setTimeout(() => {
-                if (!window.ExamApp.isFullscreen && window.ExamApp.antiCheatActive) {
-                    console.log('🔄 Auto re-entering fullscreen after first violation');
-                    enterFullscreenMode();
-                }
-            }, 500);
+            showFirstViolationScreen();
 
         } else {
             // SECOND+ violation - automatic termination
@@ -284,22 +287,7 @@ function handleFullscreenViolation() {
                 timestamp: Date.now()
             });
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('ПРЕКРАТЯВАНЕ НА ИЗПИТА!\n\nВторо излизане от fullscreen режим.\n\nИзпитът ще бъде прекратен автоматично след 5 секунди.');
-            }
-
-            // Disable anti-cheat to prevent further violations during termination
-            window.ExamApp.antiCheatActive = false;
-
-            // Auto-terminate after 5 seconds
-            setTimeout(() => {
-                console.log('🚫 TERMINATING EXAM: Second fullscreen violation');
-                if (window.ExamApp.exitExam) {
-                    window.ExamApp.exitExam('automatic_termination');
-                } else {
-                    window.close();
-                }
-            }, 5000);
+            showAutomaticTerminationScreen();
         }
 
     } catch (error) {
@@ -308,6 +296,69 @@ function handleFullscreenViolation() {
         if (fullscreenViolationCount >= 2) {
             window.close();
         }
+    }
+}
+
+/**
+ * Show first violation screen - REMOVE AUTO RE-ENTER
+ */
+function showFirstViolationScreen() {
+    try {
+        // Close any existing custom dialogs first
+        hideCustomDialogs();
+
+        // Show traditional violation screen first
+        if (window.ExamApp.showViolationScreen) {
+            window.ExamApp.showViolationScreen(
+                'Излизане от fullscreen режим е забранено!\n\n' +
+                'Това е вашето единствено предупреждение.\n' +
+                'При следващо нарушение изпитът ще бъде прекратен автоматично.\n\n' +
+                'Натиснете "Продължи изпита" за да се върнете в fullscreen режим.'
+            );
+        }
+
+        // REMOVED: Auto re-enter fullscreen (was causing errors)
+        // User must manually click "Continue" to re-enter fullscreen
+
+    } catch (error) {
+        console.error('❌ Error showing first violation screen:', error);
+    }
+}
+
+/**
+ * Show automatic termination screen with countdown
+ */
+function showAutomaticTerminationScreen() {
+    try {
+        // Close any existing custom dialogs
+        hideCustomDialogs();
+
+        // Show termination violation screen
+        if (window.ExamApp.showViolationScreen) {
+            window.ExamApp.showViolationScreen(
+                'ПРЕКРАТЯВАНЕ НА ИЗПИТА!\n\n' +
+                'Второ излизане от fullscreen режим.\n\n' +
+                'Изпитът ще бъде прекратен автоматично след 5 секунди.'
+            );
+        }
+
+        // Disable anti-cheat to prevent further violations during termination
+        window.ExamApp.antiCheatActive = false;
+
+        // Auto-terminate after 5 seconds
+        setTimeout(() => {
+            console.log('🚫 TERMINATING EXAM: Second fullscreen violation');
+            if (window.ExamApp.exitExam) {
+                window.ExamApp.exitExam('automatic_termination');
+            } else {
+                window.close();
+            }
+        }, 5000);
+
+    } catch (error) {
+        console.error('❌ Error showing termination screen:', error);
+        // Fallback - immediate termination
+        window.close();
     }
 }
 
@@ -333,6 +384,12 @@ function handleWindowBlur() {
     try {
         console.log('👁️ Window lost focus');
 
+        // Skip focus warnings if secure dialog is active
+        if (isSecureDialogActive()) {
+            console.log('🔒 Secure dialog active - skipping focus warning');
+            return;
+        }
+
         // Report to server (for monitoring, not violations)
         reportSuspiciousActivity('window_blur', {
             timestamp: Date.now()
@@ -340,17 +397,45 @@ function handleWindowBlur() {
 
         // Give grace period for accidental clicks
         const timeoutId = setTimeout(() => {
-            if (!document.hasFocus() && window.ExamApp.antiCheatActive) {
-                // Show warning (not counted as violation)
-                if (window.ExamApp.showViolationScreen) {
-                    window.ExamApp.showViolationScreen('Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.');
-                }
+            if (!document.hasFocus() &&
+                window.ExamApp.antiCheatActive &&
+                !isSecureDialogActive()) {
+                // Show warning using custom dialog (not counted as violation)
+                showFocusWarningDialog();
             }
         }, GRACE_PERIODS.windowBlur);
 
         graceTimeouts.set('windowBlur', timeoutId);
     } catch (error) {
         console.error('❌ Error handling window blur:', error);
+    }
+}
+
+/**
+ * Show focus warning using custom dialog
+ */
+function showFocusWarningDialog() {
+    try {
+        // Check if dialog system is available
+        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
+            showInfoDialog({
+                title: 'Внимание',
+                message: 'Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.',
+                confirmText: 'Разбрах',
+                type: 'warning'
+            }).then(() => {
+                console.log('💬 Focus warning acknowledged');
+            }).catch(error => {
+                console.error('❌ Error showing focus warning dialog:', error);
+            });
+        } else {
+            // Fallback to violation screen
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Излизане от прозореца на изпита е забранено!\n\nМоля фокусирайте се върху изпита.');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error showing focus warning:', error);
     }
 }
 
@@ -369,6 +454,12 @@ function handleWindowFocus() {
             clearTimeout(timeoutId);
             graceTimeouts.delete('windowBlur');
         }
+
+        // Hide any warning dialogs when focus is regained
+        if (window.ExamApp.dialogSystemActive) {
+            hideCustomDialogs();
+        }
+
     } catch (error) {
         console.error('❌ Error handling window focus:', error);
     }
@@ -395,16 +486,22 @@ function handleVisibilityChange() {
         if (document.hidden) {
             console.log('👁️ Document hidden');
 
+            // Skip warnings if secure dialog is active
+            if (isSecureDialogActive()) {
+                console.log('🔒 Secure dialog active - skipping visibility warning');
+                return;
+            }
+
             reportSuspiciousActivity('document_hidden', {
                 timestamp: Date.now()
             });
 
             // Show warning after grace period (not counted as violation)
             const timeoutId = setTimeout(() => {
-                if (document.hidden && window.ExamApp.antiCheatActive) {
-                    if (window.ExamApp.showViolationScreen) {
-                        window.ExamApp.showViolationScreen('Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.');
-                    }
+                if (document.hidden &&
+                    window.ExamApp.antiCheatActive &&
+                    !isSecureDialogActive()) {
+                    showVisibilityWarningDialog();
                 }
             }, GRACE_PERIODS.documentHidden);
 
@@ -416,9 +513,42 @@ function handleVisibilityChange() {
                 clearTimeout(timeoutId);
                 graceTimeouts.delete('documentHidden');
             }
+
+            // Hide warning dialogs when visibility is restored (but not secure dialogs)
+            if (window.ExamApp.dialogSystemActive && !isSecureDialogActive()) {
+                hideCustomDialogs();
+            }
         }
     } catch (error) {
         console.error('❌ Error handling visibility change:', error);
+    }
+}
+
+/**
+ * Show visibility warning using custom dialog
+ */
+function showVisibilityWarningDialog() {
+    try {
+        // Check if dialog system is available
+        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
+            showInfoDialog({
+                title: 'Внимание',
+                message: 'Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.',
+                confirmText: 'Разбрах',
+                type: 'warning'
+            }).then(() => {
+                console.log('💬 Visibility warning acknowledged');
+            }).catch(error => {
+                console.error('❌ Error showing visibility warning dialog:', error);
+            });
+        } else {
+            // Fallback to violation screen
+            if (window.ExamApp.showViolationScreen) {
+                window.ExamApp.showViolationScreen('Скриване на прозореца е забранено!\n\nМоля върнете се към изпита.');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error showing visibility warning:', error);
     }
 }
 
@@ -450,14 +580,33 @@ function handleContextMenu(e) {
                 timestamp: Date.now()
             });
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Десният клик е ограничен по време на изпита!');
-            }
+            // Show brief warning using custom dialog
+            showContextMenuWarning();
 
             return false;
         }
     } catch (error) {
         console.error('❌ Error handling context menu:', error);
+    }
+}
+
+/**
+ * Show context menu warning
+ */
+function showContextMenuWarning() {
+    try {
+        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
+            showInfoDialog({
+                title: 'Ограничение',
+                message: 'Десният клик е ограничен по време на изпита!',
+                confirmText: 'Разбрах',
+                type: 'warning'
+            }).catch(error => {
+                console.error('❌ Error showing context menu warning:', error);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error showing context menu warning:', error);
     }
 }
 
@@ -492,10 +641,7 @@ function handleCopyAttempt(e) {
                 timestamp: Date.now()
             });
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Копирането е забранено извън редактора!');
-            }
-
+            showCopyPasteWarning('copy');
             return false;
         }
     } catch (error) {
@@ -519,10 +665,7 @@ function handlePasteAttempt(e) {
                 timestamp: Date.now()
             });
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Поставянето е забранено извън редактора!');
-            }
-
+            showCopyPasteWarning('paste');
             return false;
         }
     } catch (error) {
@@ -546,14 +689,37 @@ function handleCutAttempt(e) {
                 timestamp: Date.now()
             });
 
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Изрязването е забранено извън редактора!');
-            }
-
+            showCopyPasteWarning('cut');
             return false;
         }
     } catch (error) {
         console.error('❌ Error handling cut attempt:', error);
+    }
+}
+
+/**
+ * Show copy/paste warning
+ */
+function showCopyPasteWarning(action) {
+    try {
+        if (window.ExamApp.dialogSystemActive && showInfoDialog) {
+            const messages = {
+                'copy': 'Копирането е забранено извън редактора!',
+                'paste': 'Поставянето е забранено извън редактора!',
+                'cut': 'Изрязването е забранено извън редактора!'
+            };
+
+            showInfoDialog({
+                title: 'Ограничение',
+                message: messages[action] || 'Действието е ограничено!',
+                confirmText: 'Разбрах',
+                type: 'warning'
+            }).catch(error => {
+                console.error('❌ Error showing copy/paste warning:', error);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error showing copy/paste warning:', error);
     }
 }
 
@@ -591,8 +757,13 @@ export function emergencyResetViolations() {
 
         clearAllGraceTimeouts();
 
+        // Hide both traditional violation screen and custom dialogs
         if (window.ExamApp.hideViolationScreen) {
             window.ExamApp.hideViolationScreen();
+        }
+
+        if (window.ExamApp.dialogSystemActive) {
+            hideCustomDialogs();
         }
 
         console.log('🚨 Emergency violation reset - fullscreen violations reset to 0');
@@ -612,6 +783,8 @@ export function getViolationStatus() {
         maxViolationsAllowed: MAX_FULLSCREEN_VIOLATIONS,
         nextViolationWillTerminate: fullscreenViolationCount >= MAX_FULLSCREEN_VIOLATIONS,
         antiCheatActive: window.ExamApp.antiCheatActive,
-        isFullscreen: window.ExamApp.isFullscreen
+        isFullscreen: window.ExamApp.isFullscreen,
+        dialogSystemActive: window.ExamApp.dialogSystemActive,
+        completionInProgress: window.ExamApp.completionInProgress
     };
 }

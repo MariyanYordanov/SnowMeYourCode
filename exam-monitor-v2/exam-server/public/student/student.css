@@ -499,6 +499,188 @@ body:fullscreen::before {
 }
 
 /* ================================
+   CUSTOM DIALOG SYSTEM
+   ================================ */
+
+/* Dialog Container */
+.custom-dialog-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999998;
+}
+
+/* Dialog Overlay */
+.custom-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    pointer-events: all;
+}
+
+/* Dialog Box */
+.custom-dialog {
+    background: #2d2d2d;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    color: white;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid #404040;
+}
+
+/* Dialog Header */
+.dialog-header {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.dialog-icon {
+    font-size: 48px;
+    line-height: 1;
+}
+
+.dialog-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+    color: white;
+}
+
+/* Dialog Message */
+.dialog-message {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 30px;
+    color: #e0e0e0;
+    white-space: pre-line;
+}
+
+/* Dialog Buttons */
+.dialog-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.dialog-btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.dialog-btn:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Dialog Button Types */
+.dialog-btn-confirm {
+    background: #ff4757;
+    color: white;
+}
+
+.dialog-btn-confirm:hover {
+    background: #ff3838;
+    transform: translateY(-2px);
+}
+
+.dialog-btn-cancel {
+    background: #ffc107;
+    color: #212529;
+}
+
+.dialog-btn-cancel:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+/* Dialog Blocked Feedback */
+.dialog-blocked {
+    border: 3px solid #ff4757 !important;
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.5) !important;
+}
+
+.blocked-message {
+    background: #ff4757;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 4px;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+/* Secure Dialog Styling */
+.custom-dialog-completion,
+.custom-dialog-violation {
+    border: 2px solid #ff4757;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Dialog Type Specific Styles */
+.custom-dialog-completion .dialog-icon {
+    color: #ff4757;
+}
+
+.custom-dialog-violation .dialog-icon {
+    color: #ffc107;
+}
+
+.custom-dialog-info .dialog-icon {
+    color: #2196F3;
+}
+
+.custom-dialog-error .dialog-icon {
+    color: #ff4757;
+}
+
+.custom-dialog-warning .dialog-icon {
+    color: #ffc107;
+}
+
+/* Dialog Button Type Specific */
+.dialog-btn-completion {
+    background: #ff4757;
+    color: white;
+}
+
+.dialog-btn-violation {
+    background: #ffc107;
+    color: #212529;
+}
+
+.dialog-btn-info {
+    background: #2196F3;
+    color: white;
+}
+
+/* ================================
    LOADING SCREEN
    ================================ */
 .loading-overlay {
@@ -603,12 +785,20 @@ body:fullscreen::before {
         gap: 10px;
     }
 
-    .violation-dialog {
+    .violation-dialog,
+    .custom-dialog {
         padding: 30px;
+        margin: 20px;
     }
 
-    .violation-actions {
+    .violation-actions,
+    .dialog-buttons {
         flex-direction: column;
+        gap: 15px;
+    }
+
+    .dialog-btn {
+        width: 100%;
     }
 }
 
