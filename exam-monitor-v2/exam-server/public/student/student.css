@@ -1668,3 +1668,142 @@ body:fullscreen::before {
     background-color: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid #ff6b6b !important;
 }
+
+/* ================================
+   SIMPLE MDN TAB STYLES
+   ================================ */
+.mdn-simple {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.mdn-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.mdn-header h3 {
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+.mdn-header p {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.mdn-quick-access {
+    margin-bottom: 24px;
+}
+
+.mdn-quick-access h4 {
+    color: #2c3e50;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.mdn-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.mdn-btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.mdn-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.mdn-search-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mdn-search-section h4 {
+    color: #2c3e50;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.search-box {
+    display: flex;
+    gap: 8px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background: #28a745;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.search-btn:hover {
+    background: #218838;
+}
+
+.mdn-general {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.mdn-btn-full {
+    padding: 16px 32px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.mdn-btn-full:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+}
+
+.mdn-info {
+    text-align: center;
+    padding: 12px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    border-left: 4px solid #2196f3;
+}
+
+.mdn-info p {
+    margin: 0;
+    color: #1565c0;
+    font-size: 13px;
+}

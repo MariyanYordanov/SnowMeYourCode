@@ -1,12 +1,10 @@
 /**
- * Output Panel Tabs Module
- * Handles Console/MDN tab switching and MDN content
+ * Simple Output Panel Tabs Module
+ * Handles Console/MDN tab switching with simple MDN links
  */
-// Import MDN data functions
-import { getMDNContentByCategory, getAPIData, searchMDNDatabase, generateAPIHTML } from './mdn-data.js';
+
 // Tab state
 let currentTab = 'console';
-let currentCategory = 'all';
 
 /**
  * Setup tabs functionality
@@ -16,16 +14,10 @@ export function setupTabs() {
         // Setup tab buttons
         setupTabButtons();
 
-        // Setup MDN search
-        setupMDNSearch();
+        // Setup MDN functions in global scope
+        setupMDNFunctions();
 
-        // Setup category buttons
-        setupCategoryButtons();
-
-        // Setup quick links
-        setupQuickLinks();
-
-        console.log('✅ Tabs system initialized');
+        console.log('✅ Simple tabs system initialized');
         return true;
     } catch (error) {
         console.error('❌ Failed to setup tabs:', error);
@@ -79,11 +71,6 @@ export function switchTab(tabName) {
         // Update current tab
         currentTab = tabName;
 
-        // Special handling for MDN tab
-        if (tabName === 'mdn') {
-            loadMDNContent();
-        }
-
         console.log(`📑 Switched to ${tabName} tab`);
 
     } catch (error) {
@@ -92,246 +79,66 @@ export function switchTab(tabName) {
 }
 
 /**
- * Setup MDN search functionality
+ * Setup MDN functions in global scope
  */
-function setupMDNSearch() {
-    const searchInput = document.getElementById('mdn-search');
-    if (!searchInput) return;
+function setupMDNFunctions() {
+    // MDN URL mappings
+    const mdnUrls = {
+        fetch: 'https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API',
+        dom: 'https://developer.mozilla.org/en-US/docs/Web/API/Document',
+        array: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array',
+        object: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object',
+        json: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON',
+        storage: 'https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage',
+        promise: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise',
+        classes: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'
+    };
 
-    let searchTimeout;
-
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-
-        // Clear previous timeout
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
+    // Open specific MDN page
+    window.openMDN = function (topic) {
+        const url = mdnUrls[topic];
+        if (url) {
+            window.open(url, 'mdn_reference', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+            console.log(`📖 Opened MDN: ${topic}`);
+        } else {
+            console.error(`Unknown MDN topic: ${topic}`);
         }
+    };
 
-        // Debounced search
-        searchTimeout = setTimeout(() => {
-            if (query.length >= 2) {
-                searchMDNContent(query);
-            } else {
-                clearSearchResults();
-                loadMDNContent(); // Show default content
-            }
-        }, 300);
-    });
+    // Open general MDN JavaScript reference
+    window.openMDNGeneral = function () {
+        window.open(
+            'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference',
+            'mdn_general',
+            'width=1200,height=800,scrollbars=yes,resizable=yes'
+        );
+        console.log('📖 Opened general MDN reference');
+    };
 
-    // Clear search on escape
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            searchInput.value = '';
-            clearSearchResults();
-            loadMDNContent();
+    // Search MDN
+    window.searchMDN = function () {
+        const searchInput = document.getElementById('mdn-search-simple');
+        if (!searchInput) return;
+
+        const query = searchInput.value.trim();
+        if (query) {
+            const searchUrl = `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(query + ' javascript')}`;
+            window.open(searchUrl, 'mdn_search', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+            console.log(`🔍 Searched MDN for: ${query}`);
         }
-    });
-}
+    };
 
-/**
- * Setup category button handlers
- */
-function setupCategoryButtons() {
-    const categoryBtns = document.querySelectorAll('.category-btn');
-
-    categoryBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const category = btn.getAttribute('data-category');
-            switchCategory(category);
-        });
-    });
-}
-
-/**
- * Switch MDN category
- */
-function switchCategory(category) {
-    try {
-        // Update category buttons
-        const allCategoryBtns = document.querySelectorAll('.category-btn');
-        allCategoryBtns.forEach(btn => btn.classList.remove('active'));
-
-        const targetBtn = document.querySelector(`[data-category="${category}"]`);
-        if (targetBtn) {
-            targetBtn.classList.add('active');
+    // Enter key support for search
+    setTimeout(() => {
+        const searchInput = document.getElementById('mdn-search-simple');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    window.searchMDN();
+                }
+            });
         }
-
-        // Update current category
-        currentCategory = category;
-
-        // Load category content
-        loadCategoryContent(category);
-
-        console.log(`📂 Switched to ${category} category`);
-
-    } catch (error) {
-        console.error('❌ Error switching category:', error);
-    }
-}
-
-/**
- * Setup quick links
- */
-function setupQuickLinks() {
-    const quickLinks = document.querySelectorAll('.quick-link');
-
-    quickLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            const api = link.getAttribute('data-api');
-            showAPIReference(api);
-        });
-    });
-}
-
-/**
- * Load MDN content based on current category
- */
-function loadMDNContent() {
-    loadCategoryContent(currentCategory);
-}
-
-/**
- * Load content for specific category
- */
-function loadCategoryContent(category) {
-    const contentContainer = document.getElementById('mdn-content');
-    if (!contentContainer) return;
-
-    // Get content based on category
-    const content = getMDNContentByCategory(category);
-    contentContainer.innerHTML = content;
-
-    // Setup click handlers for API items
-    setupAPIClickHandlers();
-}
-
-/**
- * Search MDN content
- */
-function searchMDNContent(query) {
-    const searchResults = document.getElementById('search-results');
-    if (!searchResults) return;
-
-    // Get search results
-    const results = searchMDNDatabase(query);
-
-    if (results.length > 0) {
-        const resultsHTML = results.map(result => `
-            <div class="search-result-item" data-api="${result.id}">
-                <strong>${result.name}</strong>
-                <span class="result-category">${result.category}</span>
-            </div>
-        `).join('');
-
-        searchResults.innerHTML = resultsHTML;
-        searchResults.style.display = 'block';
-
-        // Setup click handlers for search results
-        setupSearchResultHandlers();
-    } else {
-        searchResults.innerHTML = '<div class="no-results">No APIs found</div>';
-        searchResults.style.display = 'block';
-    }
-}
-
-/**
- * Clear search results
- */
-function clearSearchResults() {
-    const searchResults = document.getElementById('search-results');
-    if (searchResults) {
-        searchResults.innerHTML = '';
-        searchResults.style.display = 'none';
-    }
-}
-
-/**
- * Setup search result click handlers
- */
-function setupSearchResultHandlers() {
-    const resultItems = document.querySelectorAll('.search-result-item');
-
-    resultItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const apiId = item.getAttribute('data-api');
-            showAPIReference(apiId);
-            clearSearchResults();
-        });
-    });
-}
-
-/**
- * Setup API click handlers
- */
-function setupAPIClickHandlers() {
-    const apiItems = document.querySelectorAll('.api-item');
-
-    apiItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const apiId = item.getAttribute('data-api');
-            showAPIReference(apiId);
-        });
-    });
-}
-
-/**
- * Show specific API reference
- */
-function showAPIReference(apiId) {
-    const contentContainer = document.getElementById('mdn-content');
-    if (!contentContainer) return;
-
-    const apiData = getAPIData(apiId);
-    if (!apiData) {
-        contentContainer.innerHTML = '<div class="api-error">API reference not found</div>';
-        return;
-    }
-
-    const apiHTML = generateAPIHTML(apiData);
-    contentContainer.innerHTML = apiHTML;
-
-    // Setup copy code button handlers
-    setupCopyCodeHandlers();
-}
-
-/**
- * Setup copy code button handlers
- */
-function setupCopyCodeHandlers() {
-    const copyBtns = document.querySelectorAll('.copy-code-btn');
-
-    copyBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const codeBlock = btn.nextElementSibling;
-            if (codeBlock) {
-                copyToClipboard(codeBlock.textContent);
-
-                // Visual feedback
-                btn.textContent = '✅ Copied';
-                setTimeout(() => {
-                    btn.textContent = '📋 Copy';
-                }, 1500);
-            }
-        });
-    });
-}
-
-/**
- * Copy text to clipboard
- */
-function copyToClipboard(text) {
-    try {
-        navigator.clipboard.writeText(text);
-    } catch (error) {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-    }
+    }, 100);
 }
 
 /**
@@ -341,12 +148,9 @@ export function getCurrentTab() {
     return currentTab;
 }
 
-/**
- * Get current category
- */
-export function getCurrentCategory() {
-    return currentCategory;
-}
-
-// Export helper functions for other modules
-export { loadMDNContent, showAPIReference, switchCategory };
+// Export for debugging
+window.tabsDebug = {
+    switchTab,
+    getCurrentTab,
+    currentTab: () => currentTab
+};

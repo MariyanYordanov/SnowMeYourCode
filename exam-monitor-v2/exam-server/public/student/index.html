@@ -241,39 +241,44 @@
                     <div id="execution-info" style="display: none;"></div>
                 </div>
             
-                <!-- NEW: MDN Tab Content -->
+                <!-- NEW: Simple MDN Tab Content -->
                 <div id="mdn-tab-content" class="tab-content" style="display: none;">
-                    <div class="mdn-panel">
-                        <!-- MDN Search -->
-                        <div class="mdn-search">
-                            <input type="text" id="mdn-search" placeholder="🔍 Search JavaScript APIs..." autocomplete="off">
-                            <div class="search-results" id="search-results"></div>
+                    <div class="mdn-simple">
+                        <div class="mdn-header">
+                            <h3>📚 JavaScript Reference</h3>
+                            <p>Quick access to MDN documentation for SPA development</p>
                         </div>
-            
-                        <!-- MDN Categories -->
-                        <div class="mdn-categories">
-                            <div class="category-tabs">
-                                <button class="category-btn active" data-category="all">All APIs</button>
-                                <button class="category-btn" data-category="fetch">Fetch & AJAX</button>
-                                <button class="category-btn" data-category="dom">DOM API</button>
-                                <button class="category-btn" data-category="array">Arrays</button>
-                                <button class="category-btn" data-category="object">Objects</button>
-                                <button class="category-btn" data-category="storage">Storage</button>
+                
+                        <div class="mdn-quick-access">
+                            <h4>🚀 Quick Reference Links:</h4>
+                            <div class="mdn-buttons">
+                                <button class="mdn-btn" onclick="openMDN('fetch')">🌐 Fetch API</button>
+                                <button class="mdn-btn" onclick="openMDN('dom')">🏗️ DOM Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('array')">📋 Array Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('object')">🔧 Object Methods</button>
+                                <button class="mdn-btn" onclick="openMDN('json')">📄 JSON API</button>
+                                <button class="mdn-btn" onclick="openMDN('storage')">💾 Storage API</button>
+                                <button class="mdn-btn" onclick="openMDN('promise')">⏳ Promises</button>
+                                <button class="mdn-btn" onclick="openMDN('classes')">🏭 Classes</button>
                             </div>
                         </div>
-            
-                        <!-- MDN Content Display -->
-                        <div class="mdn-content" id="mdn-content">
-                            <div class="mdn-welcome">
-                                <h4>📚 JavaScript Reference for SPA Development</h4>
-                                <p>Search or browse APIs needed for Single Page Applications</p>
-                                <div class="quick-links">
-                                    <button class="quick-link" data-api="fetch">Fetch API</button>
-                                    <button class="quick-link" data-api="dom">DOM Methods</button>
-                                    <button class="quick-link" data-api="array">Array Methods</button>
-                                    <button class="quick-link" data-api="json">JSON API</button>
-                                </div>
+                
+                        <div class="mdn-search-section">
+                            <h4>🔍 Search MDN:</h4>
+                            <div class="search-box">
+                                <input type="text" placeholder="Search JavaScript APIs..." id="mdn-search-simple">
+                                <button onclick="searchMDN()" class="search-btn">Search</button>
                             </div>
+                        </div>
+                
+                        <div class="mdn-general">
+                            <button class="mdn-btn-full" onclick="openMDNGeneral()">
+                                📖 Open Full MDN JavaScript Reference
+                            </button>
+                        </div>
+                
+                        <div class="mdn-info">
+                            <p><strong>💡 Tip:</strong> Links open in new window so you can keep coding!</p>
                         </div>
                     </div>
                 </div>

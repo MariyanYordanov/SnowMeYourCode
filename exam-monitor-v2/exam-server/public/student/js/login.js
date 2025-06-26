@@ -11,12 +11,19 @@ export function setupLoginForm() {
         const loginBtn = document.getElementById('login-btn');
         const studentName = document.getElementById('student-name');
         const studentClass = document.getElementById('student-class');
-        const termsToggle = document.getElementById('terms-toggle');
         const termsContent = document.getElementById('terms-content');
         const termsAgreement = document.getElementById('terms-agreement');
 
-        if (!loginBtn || !studentName || !studentClass || !termsToggle || !termsContent || !termsAgreement) {
+        // REMOVED: termsToggle check - no longer needed
+        if (!loginBtn || !studentName || !studentClass || !termsContent || !termsAgreement) {
             console.error('Login form elements not found');
+            console.log('Found elements:', {
+                loginBtn: !!loginBtn,
+                studentName: !!studentName,
+                studentClass: !!studentClass,
+                termsContent: !!termsContent,
+                termsAgreement: !!termsAgreement
+            });
             return false;
         }
 
@@ -32,8 +39,7 @@ export function setupLoginForm() {
             });
         });
 
-        // Terms toggle functionality
-        termsToggle.addEventListener('click', handleTermsToggle);
+        // REMOVED: Terms toggle functionality - no longer needed
 
         // Terms agreement checkbox
         termsAgreement.addEventListener('change', handleTermsAgreement);
@@ -108,23 +114,7 @@ function handleTermsAgreement() {
         // Validate form after agreement change
         validateLoginForm();
 
-        // Auto-collapse terms after agreement (optional UX enhancement)
-        if (isAgreed) {
-            setTimeout(() => {
-                const termsContent = document.getElementById('terms-content');
-                const termsToggle = document.getElementById('terms-toggle');
-
-                if (termsContent && termsToggle && termsContent.classList.contains('expanded')) {
-                    // Auto-collapse with smooth animation
-                    termsContent.classList.remove('expanded');
-                    setTimeout(() => {
-                        termsContent.style.display = 'none';
-                        termsToggle.textContent = '📖 Покажи условията';
-                        termsToggle.classList.remove('expanded');
-                    }, 300);
-                }
-            }, 1000); // Wait 1 second after agreement
-        }
+        // REMOVED: Auto-collapse logic - terms are always visible now
 
     } catch (error) {
         console.error('❌ Error handling terms agreement:', error);
