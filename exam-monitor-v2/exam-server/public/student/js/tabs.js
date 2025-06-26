@@ -79,10 +79,9 @@ export function switchTab(tabName) {
 }
 
 /**
- * Setup MDN functions in global scope
+ * Setup MDN functions with iframe (no anti-cheat conflicts)
  */
 function setupMDNFunctions() {
-    // MDN URL mappings
     const mdnUrls = {
         fetch: 'https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API',
         dom: 'https://developer.mozilla.org/en-US/docs/Web/API/Document',
@@ -90,51 +89,75 @@ function setupMDNFunctions() {
         object: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object',
         json: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON',
         storage: 'https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage',
-        promise: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise',
-        classes: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes'
+        promise: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise'
     };
 
-    // Open specific MDN page
-    window.openMDN = function (topic) {
-        const url = mdnUrls[topic];
-        if (url) {
-            window.open(url, 'mdn_reference', 'width=1000,height=700,scrollbars=yes,resizable=yes');
-            console.log(`📖 Opened MDN: ${topic}`);
-        } else {
-            console.error(`Unknown MDN topic: ${topic}`);
+    // Load MDN content in iframe
+    window.loadMDN = function (topic) {
+        try {
+            // Update navigation buttons
+            const navBtns = document.querySelectorAll('.mdn-nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active'));
+
+            const targetBtn = document.querySelector(`[onclick="loadMDN('${topic}')"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+
+            if (topic === 'overview') {
+                // Show overview page
+                document.getElementById('mdn-overview-page').style.display = 'block';
+                document.getElementById('mdn-iframe').style.display = 'none';
+            } else {
+                // Load MDN page in iframe
+                const url = mdnUrls[topic];
+                if (url) {
+                    document.getElementById('mdn-overview-page').style.display = 'none';
+                    document.getElementById('mdn-iframe').style.display = 'block';
+                    document.getElementById('mdn-iframe').src = url;
+                    console.log(`📖 Loaded MDN: ${topic}`);
+                } else {
+                    console.error(`Unknown MDN topic: ${topic}`);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error loading MDN:', error);
         }
     };
 
-    // Open general MDN JavaScript reference
-    window.openMDNGeneral = function () {
-        window.open(
-            'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference',
-            'mdn_general',
-            'width=1200,height=800,scrollbars=yes,resizable=yes'
-        );
-        console.log('📖 Opened general MDN reference');
-    };
+    // Search MDN in iframe
+    window.searchMDNIframe = function () {
+        try {
+            const searchInput = document.getElementById('mdn-search-iframe');
+            if (!searchInput) return;
 
-    // Search MDN
-    window.searchMDN = function () {
-        const searchInput = document.getElementById('mdn-search-simple');
-        if (!searchInput) return;
+            const query = searchInput.value.trim();
+            if (query) {
+                const searchUrl = `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(query + ' javascript')}`;
 
-        const query = searchInput.value.trim();
-        if (query) {
-            const searchUrl = `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(query + ' javascript')}`;
-            window.open(searchUrl, 'mdn_search', 'width=1000,height=700,scrollbars=yes,resizable=yes');
-            console.log(`🔍 Searched MDN for: ${query}`);
+                document.getElementById('mdn-overview-page').style.display = 'none';
+                document.getElementById('mdn-iframe').style.display = 'block';
+                document.getElementById('mdn-iframe').src = searchUrl;
+
+                // Update nav buttons
+                const navBtns = document.querySelectorAll('.mdn-nav-btn');
+                navBtns.forEach(btn => btn.classList.remove('active'));
+
+                console.log(`🔍 Searched MDN for: ${query}`);
+                searchInput.value = ''; // Clear search
+            }
+        } catch (error) {
+            console.error('❌ Error searching MDN:', error);
         }
     };
 
     // Enter key support for search
     setTimeout(() => {
-        const searchInput = document.getElementById('mdn-search-simple');
+        const searchInput = document.getElementById('mdn-search-iframe');
         if (searchInput) {
             searchInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
-                    window.searchMDN();
+                    window.searchMDNIframe();
                 }
             });
         }

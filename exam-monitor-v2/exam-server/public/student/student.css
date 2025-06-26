@@ -1689,6 +1689,7 @@ body:fullscreen::before {
 .mdn-header h3 {
     color: #2c3e50;
     margin-bottom: 8px;
+    font-size: 20px;
 }
 
 .mdn-header p {
