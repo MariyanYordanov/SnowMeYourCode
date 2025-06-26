@@ -39,12 +39,14 @@ import {
     enterFullscreenMode
 } from './anticheat.js';
 
+// TODO: Create console.js module - Phase 1
 // import {
 //     initializeEnhancedConsole,
 //     overrideConsoleMethods,
 //     ENHANCED_CONSOLE_STYLES
 // } from './console.js';
 
+// TODO: Create preview.js module - Phase 1
 // import {
 //     initializeDOMPreview,
 //     DOM_PREVIEW_STYLES
@@ -76,7 +78,7 @@ window.ExamApp = {
     lastSaveTime: null,
     isConnected: false,
 
-    // Enhanced features
+    // Enhanced features (Phase 1 - TODO)
     enhancedConsoleActive: false,
     domPreviewActive: false
 };
@@ -108,9 +110,8 @@ function initializeAppSafely() {
     console.log('🎯 Starting safe initialization...');
 
     try {
-        // Inject CSS styles first
-        // TODO: restore injection
-        //injectModuleStyles();
+        // TODO: Restore when console.js and preview.js are created - Phase 1
+        // injectModuleStyles();
 
         // Setup core components
         setupLoginForm();
@@ -134,9 +135,9 @@ function initializeAppSafely() {
 }
 
 // ================================
-// STYLE INJECTION
+// STYLE INJECTION - TODO Phase 1
 // ================================
-// TODO: restore
+// TODO: Restore when console.js and preview.js are created
 // function injectModuleStyles() {
 //     try {
 //         // Create style element
@@ -147,7 +148,7 @@ function initializeAppSafely() {
 //         const combinedStyles = `
 //             /* Enhanced Console Styles */
 //             ${ENHANCED_CONSOLE_STYLES}
-            
+
 //             /* DOM Preview Styles */
 //             ${DOM_PREVIEW_STYLES}
 //         `;
@@ -220,10 +221,10 @@ function startExam(data) {
         // Start timer
         startExamTimer(data.timeLeft || window.ExamApp.examDuration);
 
-        // Initialize Monaco Editor (async)
+        // Initialize Monaco Editor (async) - FIXED Promise handling
         initializeMonacoEditor(data.lastCode || '')
             .then(editor => {
-                window.ExamApp.editor = editor;
+                // Editor is already stored in window.ExamApp.editor inside initializeMonacoEditor
                 console.log('✅ Monaco Editor ready for use');
             })
             .catch(error => {
@@ -231,9 +232,8 @@ function startExam(data) {
                 showError('Грешка при зареждане на редактора');
             });
 
-        // Initialize enhanced features
-        // TODO: restore
-        //initializeEnhancedFeatures();
+        // TODO: Restore when console.js and preview.js are created - Phase 1
+        // initializeEnhancedFeatures();
 
         // Enter fullscreen
         enterFullscreenMode();
@@ -252,26 +252,27 @@ function startExam(data) {
 }
 
 /**
- * Initialize enhanced features (console + preview)
+ * Initialize enhanced features (console + preview) - TODO Phase 1
  */
-function initializeEnhancedFeatures() {
-    try {
-        // Initialize enhanced console
-        if (initializeEnhancedConsole('code-output')) {
-            overrideConsoleMethods();
-            window.ExamApp.enhancedConsoleActive = true;
-            console.log('✅ Enhanced console activated');
-        }
+// TODO: Restore when console.js and preview.js are created
+// function initializeEnhancedFeatures() {
+//     try {
+//         // Initialize enhanced console
+//         if (initializeEnhancedConsole('code-output')) {
+//             overrideConsoleMethods();
+//             window.ExamApp.enhancedConsoleActive = true;
+//             console.log('✅ Enhanced console activated');
+//         }
 
-        // Initialize DOM preview
-        if (initializeDOMPreview('output-panel', 'code-output')) {
-            window.ExamApp.domPreviewActive = true;
-            console.log('✅ DOM preview activated');
-        }
-    } catch (error) {
-        console.error('❌ Failed to initialize enhanced features:', error);
-    }
-}
+//         // Initialize DOM preview
+//         if (initializeDOMPreview('output-panel', 'code-output')) {
+//             window.ExamApp.domPreviewActive = true;
+//             console.log('✅ DOM preview activated');
+//         }
+//     } catch (error) {
+//         console.error('❌ Failed to initialize enhanced features:', error);
+//     }
+// }
 
 /**
  * Finish exam gracefully
@@ -370,19 +371,46 @@ function exitAfterViolation() {
 function showViolationScreen(reason) {
     console.log(`🚫 Showing violation screen: ${reason}`);
 
-    document.getElementById('violation-reason').textContent = reason;
-    document.getElementById('violation-screen').style.display = 'flex';
+    try {
+        const violationScreen = document.getElementById('violation-screen');
+        const violationReason = document.getElementById('violation-reason');
+        const examContainer = document.getElementById('exam-container');
 
-    // Blur exam content
-    document.getElementById('exam-container').classList.add('violation-detected');
+        if (violationReason) {
+            violationReason.textContent = reason;
+        }
+
+        if (violationScreen) {
+            violationScreen.style.display = 'flex';
+        }
+
+        // Blur exam content
+        if (examContainer) {
+            examContainer.classList.add('violation-detected');
+        }
+    } catch (error) {
+        console.error('❌ Error showing violation screen:', error);
+    }
 }
 
 /**
  * Hide violation screen
  */
 function hideViolationScreen() {
-    document.getElementById('violation-screen').style.display = 'none';
-    document.getElementById('exam-container').classList.remove('violation-detected');
+    try {
+        const violationScreen = document.getElementById('violation-screen');
+        const examContainer = document.getElementById('exam-container');
+
+        if (violationScreen) {
+            violationScreen.style.display = 'none';
+        }
+
+        if (examContainer) {
+            examContainer.classList.remove('violation-detected');
+        }
+    } catch (error) {
+        console.error('❌ Error hiding violation screen:', error);
+    }
 }
 
 // ================================
@@ -465,7 +493,11 @@ function showNotification(message, type = 'info') {
         // Hide notification after 5 seconds
         setTimeout(() => {
             notification.style.transform = 'translateX(400px)';
-            setTimeout(() => notification.remove(), 300);
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
         }, 5000);
     } catch (error) {
         console.error('Failed to show notification:', error);

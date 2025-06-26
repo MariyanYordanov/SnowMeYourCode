@@ -71,8 +71,6 @@ export function activateAntiCheat() {
         setupVisibilityMonitoring();
         setupContextMenuBlocking();
         setupCopyPasteMonitoring();
-        // TODO: restore
-        //setupDevToolsDetection();
 
         console.log('✅ Anti-cheat protection activated');
         return true;
@@ -141,7 +139,7 @@ export function enterFullscreenMode() {
         const element = document.documentElement;
 
         if (element.requestFullscreen) {
-            element.requestFullscreen();
+            element.requestFullscreen({ navigationUI: "hide" });
         } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
         } else if (element.mozRequestFullScreen) {
@@ -177,6 +175,9 @@ function handleFullscreenChange() {
         if (isFullscreen) {
             console.log('✅ Entered fullscreen mode');
             updateFullscreenStatus('🔒 Fullscreen активен');
+
+            // Inject aggressive fullscreen protection CSS
+            injectFullscreenProtectionCSS();
         } else {
             console.log('⚠️ Exited fullscreen mode');
             updateFullscreenStatus('⚠️ Fullscreen неактивен');
@@ -188,6 +189,89 @@ function handleFullscreenChange() {
         }
     } catch (error) {
         console.error('❌ Error handling fullscreen change:', error);
+    }
+}
+
+/**
+ * Inject aggressive CSS to block fullscreen exits
+ */
+function injectFullscreenProtectionCSS() {
+    try {
+        // Remove existing protection CSS
+        const existingStyle = document.getElementById('fullscreen-protection');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+
+        // Create new protection CSS
+        const style = document.createElement('style');
+        style.id = 'fullscreen-protection';
+        style.innerHTML = `
+            /* AGGRESSIVE FULLSCREEN PROTECTION */
+            :fullscreen {
+                -webkit-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+                user-select: none !important;
+            }
+
+            /* Block ALL fullscreen browser controls */
+            ::-webkit-fullscreen-controls,
+            ::-webkit-media-controls-fullscreen-button,
+            ::-webkit-media-controls-toggle-closed-captions-button {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                width: 0 !important;
+                height: 0 !important;
+            }
+
+            /* Block Mozilla fullscreen UI */
+            :-moz-full-screen-ancestor,
+            :fullscreen::-moz-full-screen-ancestor {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* Create invisible overlay blocking top area */
+            body:fullscreen::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                z-index: 999999;
+                pointer-events: none;
+                background: transparent;
+                display: block;
+            }
+
+            /* Block any possible exit mechanisms */
+            :fullscreen button[title*="exit"],
+            :fullscreen button[title*="Exit"],
+            :fullscreen .exit-fullscreen,
+            :fullscreen [data-exit-fullscreen] {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                opacity: 0 !important;
+            }
+
+            /* Force hide browser navigation */
+            html:fullscreen,
+            body:fullscreen {
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+        `;
+
+        document.head.appendChild(style);
+        console.log('🔒 Fullscreen protection CSS injected');
+    } catch (error) {
+        console.error('❌ Failed to inject fullscreen protection CSS:', error);
     }
 }
 
@@ -207,10 +291,17 @@ function handleFullscreenViolation() {
             timestamp: Date.now()
         });
 
-        // Show violation screen
+        // Show violation screen immediately
         if (window.ExamApp.showViolationScreen) {
             window.ExamApp.showViolationScreen('Излизане от fullscreen режим е забранено!');
         }
+
+        // Force re-enter fullscreen immediately
+        setTimeout(() => {
+            if (!window.ExamApp.isFullscreen) {
+                enterFullscreenMode();
+            }
+        }, 100);
 
         // Check if limit exceeded
         if (violations.fullscreenExit >= VIOLATION_LIMITS.fullscreenExit) {
@@ -233,7 +324,7 @@ function removeKeyboardMonitoring() {
 }
 
 /**
- * Handle keyboard events
+ * Handle keyboard events - ENHANCED ESC BLOCKING
  */
 function handleKeyDown(e) {
     if (!window.ExamApp.antiCheatActive) return;
@@ -241,6 +332,8 @@ function handleKeyDown(e) {
     try {
         // Block dangerous key combinations
         const blocked = [
+            // ESC key (exits fullscreen) - CRITICAL BLOCK
+            e.code === 'Escape' || e.key === 'Escape',
             // Windows key
             e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight',
             // Alt+Tab
@@ -249,6 +342,8 @@ function handleKeyDown(e) {
             e.ctrlKey && e.shiftKey && e.code === 'KeyI',
             // F12 (Dev Tools)
             e.code === 'F12',
+            // F11 (Fullscreen toggle)
+            e.code === 'F11',
             // Ctrl+U (View Source)
             e.ctrlKey && e.code === 'KeyU',
             // Ctrl+Shift+C (Inspect Element)
@@ -262,12 +357,15 @@ function handleKeyDown(e) {
             // Alt+F4 (Close Window)
             e.altKey && e.code === 'F4',
             // Ctrl+Shift+J (Console)
-            e.ctrlKey && e.shiftKey && e.code === 'KeyJ'
+            e.ctrlKey && e.shiftKey && e.code === 'KeyJ',
+            // Ctrl+Shift+K (Console Firefox)
+            e.ctrlKey && e.shiftKey && e.code === 'KeyK'
         ];
 
         if (blocked.some(condition => condition)) {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
 
             const violationType = getViolationType(e);
             handleKeyboardViolation(violationType, e);
@@ -283,13 +381,19 @@ function handleKeyDown(e) {
  * Get violation type from keyboard event
  */
 function getViolationType(e) {
+    if (e.code === 'Escape' || e.key === 'Escape') {
+        return 'escape_fullscreen';
+    }
+    if (e.code === 'F11') {
+        return 'f11_fullscreen';
+    }
     if (e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight') {
         return 'windows_key';
     }
     if (e.altKey && e.code === 'Tab') {
         return 'alt_tab';
     }
-    if ((e.ctrlKey && e.shiftKey && e.code === 'KeyI') || e.code === 'F12' || (e.ctrlKey && e.shiftKey && e.code === 'KeyJ')) {
+    if ((e.ctrlKey && e.shiftKey && e.code === 'KeyI') || e.code === 'F12' || (e.ctrlKey && e.shiftKey && e.code === 'KeyJ') || (e.ctrlKey && e.shiftKey && e.code === 'KeyK')) {
         return 'dev_tools';
     }
     if (e.ctrlKey && e.code === 'KeyU') {
@@ -328,9 +432,11 @@ function handleKeyboardViolation(violationType, event) {
         });
 
         // Show violation screen for serious violations
-        const seriousViolations = ['windows_key', 'dev_tools', 'close_attempt'];
+        const seriousViolations = ['escape_fullscreen', 'f11_fullscreen', 'windows_key', 'dev_tools', 'close_attempt'];
         if (seriousViolations.includes(violationType)) {
             const messages = {
+                'escape_fullscreen': 'Натискане на ESC клавиша е забранено!',
+                'f11_fullscreen': 'Натискане на F11 е забранено!',
                 'windows_key': 'Натискане на Windows клавиша е забранено!',
                 'dev_tools': 'Опит за отваряне на Developer Tools!',
                 'close_attempt': 'Опит за затваряне на изпита!'
@@ -338,6 +444,15 @@ function handleKeyboardViolation(violationType, event) {
 
             if (window.ExamApp.showViolationScreen) {
                 window.ExamApp.showViolationScreen(messages[violationType] || 'Засечено нарушение!');
+            }
+
+            // Force re-enter fullscreen for fullscreen-related violations
+            if (['escape_fullscreen', 'f11_fullscreen'].includes(violationType)) {
+                setTimeout(() => {
+                    if (!window.ExamApp.isFullscreen) {
+                        enterFullscreenMode();
+                    }
+                }, 100);
             }
         }
 
@@ -585,62 +700,6 @@ function handleCutAttempt(e) {
         }
     } catch (error) {
         console.error('❌ Error handling cut attempt:', error);
-    }
-}
-
-/**
- * Setup developer tools detection
- */
-// TODO: restore
-// function setupDevToolsDetection() {
-//     try {
-//         // DevTools detection using console
-//         setInterval(() => {
-//             if (window.ExamApp.antiCheatActive) {
-//                 detectDevTools();
-//             }
-//         }, 1000);
-//     } catch (error) {
-//         console.error('❌ Error setting up dev tools detection:', error);
-//     }
-// }
-
-/**
- * Detect developer tools opening
- */
-function detectDevTools() {
-    try {
-        const threshold = 160;
-
-        if (window.outerHeight - window.innerHeight > threshold ||
-            window.outerWidth - window.innerWidth > threshold) {
-
-            violations.devTools++;
-
-            console.log(`🚫 Developer tools detected (${violations.devTools})`);
-
-            reportSuspiciousActivity('dev_tools_detected', {
-                count: violations.devTools,
-                windowDimensions: {
-                    outerWidth: window.outerWidth,
-                    outerHeight: window.outerHeight,
-                    innerWidth: window.innerWidth,
-                    innerHeight: window.innerHeight
-                },
-                timestamp: Date.now()
-            });
-
-            if (window.ExamApp.showViolationScreen) {
-                window.ExamApp.showViolationScreen('Developer Tools са забранени по време на изпита!');
-            }
-
-            // Check if limit exceeded
-            if (violations.devTools >= VIOLATION_LIMITS.devTools) {
-                handleViolationLimitExceeded('dev_tools_violations');
-            }
-        }
-    } catch (error) {
-        // Ignore errors in dev tools detection
     }
 }
 

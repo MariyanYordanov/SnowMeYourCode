@@ -53,11 +53,17 @@ export function initializeMonacoEditor(initialCode = '') {
                         }
                     });
 
+                    // CRITICAL: Store editor in global state immediately
+                    window.ExamApp.editor = editor;
+
                     // Setup auto-save
                     setupAutoSave(editor);
 
                     // Setup enhanced features integration
                     setupEditorIntegrations(editor);
+
+                    // Setup keyboard shortcuts
+                    setupKeyboardShortcuts(editor);
 
                     console.log('✅ Monaco Editor initialized successfully');
                     resolve(editor);
@@ -135,6 +141,32 @@ function setupEditorIntegrations(editor) {
 }
 
 /**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts(editor) {
+    try {
+        // Ctrl+S for save
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+            saveCode();
+        });
+
+        // Ctrl+Enter for run
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+            runCode();
+        });
+
+        // Ctrl+Shift+F for format
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
+            formatCode();
+        });
+
+        console.log('⌨️ Keyboard shortcuts setup completed');
+    } catch (error) {
+        console.error('❌ Failed to setup keyboard shortcuts:', error);
+    }
+}
+
+/**
  * Setup editor controls event handlers
  */
 export function setupEditorControls(actions) {
@@ -179,12 +211,13 @@ export function setupEditorControls(actions) {
  * Run code in editor
  */
 export function runCode() {
-    if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
-        return;
-    }
-
     try {
+        if (!window.ExamApp.editor) {
+            console.warn('⚠️ Editor not available');
+            showError('Редакторът не е готов. Моля изчакайте.');
+            return;
+        }
+
         console.log('▶️ Running code...');
 
         const code = window.ExamApp.editor.getValue();
@@ -314,16 +347,18 @@ function displayOutput(logs) {
  * Format code in editor
  */
 export function formatCode() {
-    if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
-        return;
-    }
-
     try {
+        if (!window.ExamApp.editor) {
+            console.warn('⚠️ Editor not available');
+            showError('Редакторът не е готов. Моля изчакайте.');
+            return;
+        }
+
         window.ExamApp.editor.getAction('editor.action.formatDocument').run();
         console.log('🎨 Code formatted');
     } catch (error) {
         console.error('❌ Code formatting failed:', error);
+        showError('Грешка при форматиране на кода');
     }
 }
 
@@ -331,12 +366,12 @@ export function formatCode() {
  * Save code to server
  */
 export function saveCode() {
-    if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
-        return false;
-    }
-
     try {
+        if (!window.ExamApp.editor) {
+            console.warn('⚠️ Editor not available');
+            return false;
+        }
+
         const code = window.ExamApp.editor.getValue();
 
         // Send to server via socket
@@ -375,12 +410,12 @@ export function clearOutput() {
  * Change editor theme
  */
 export function changeTheme(event) {
-    if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
-        return;
-    }
-
     try {
+        if (!window.ExamApp.editor) {
+            console.warn('⚠️ Editor not available');
+            return;
+        }
+
         const theme = event.target ? event.target.value : event;
         monaco.editor.setTheme(theme);
         console.log(`🎨 Theme changed to: ${theme}`);
@@ -484,50 +519,6 @@ export function setEditorContent(content) {
 }
 
 /**
- * Get editor selection
- */
-export function getEditorSelection() {
-    if (!window.ExamApp.editor) {
-        return null;
-    }
-
-    try {
-        return window.ExamApp.editor.getSelection();
-    } catch (error) {
-        console.error('❌ Failed to get editor selection:', error);
-        return null;
-    }
-}
-
-/**
- * Insert text at cursor position
- */
-export function insertTextAtCursor(text) {
-    if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
-        return false;
-    }
-
-    try {
-        const selection = window.ExamApp.editor.getSelection();
-        const range = new monaco.Range(
-            selection.startLineNumber,
-            selection.startColumn,
-            selection.endLineNumber,
-            selection.endColumn
-        );
-
-        const op = { range: range, text: text, forceMoveMarkers: true };
-        window.ExamApp.editor.executeEdits('insertText', [op]);
-
-        return true;
-    } catch (error) {
-        console.error('❌ Failed to insert text:', error);
-        return false;
-    }
-}
-
-/**
  * Focus editor
  */
 export function focusEditor() {
@@ -557,61 +548,6 @@ export function resizeEditor() {
         window.ExamApp.editor.layout();
     } catch (error) {
         console.error('❌ Failed to resize editor:', error);
-    }
-}
-
-/**
- * Get editor stats
- */
-export function getEditorStats() {
-    if (!window.ExamApp.editor) {
-        return null;
-    }
-
-    try {
-        const model = window.ExamApp.editor.getModel();
-        const content = model.getValue();
-
-        return {
-            lineCount: model.getLineCount(),
-            characterCount: content.length,
-            wordCount: content.split(/\s+/).filter(word => word.length > 0).length,
-            language: model.getLanguageId(),
-            theme: 'vs-dark' // Default theme
-        };
-    } catch (error) {
-        console.error('❌ Failed to get editor stats:', error);
-        return null;
-    }
-}
-
-/**
- * Setup keyboard shortcuts
- */
-export function setupKeyboardShortcuts() {
-    if (!window.ExamApp.editor) {
-        return;
-    }
-
-    try {
-        // Ctrl+S for save
-        window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-            saveCode();
-        });
-
-        // Ctrl+Enter for run
-        window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-            runCode();
-        });
-
-        // Ctrl+Shift+F for format
-        window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
-            formatCode();
-        });
-
-        console.log('⌨️ Keyboard shortcuts setup completed');
-    } catch (error) {
-        console.error('❌ Failed to setup keyboard shortcuts:', error);
     }
 }
 
