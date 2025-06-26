@@ -11,7 +11,7 @@ import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clear
 import { startExamTimer, handleTimeWarning, handleExamExpired } from './timer.js';
 import { setupAntiCheat, activateAntiCheat, enterFullscreenMode } from './anticheat.js';
 import { showCompletionDialog, showViolationExitDialog } from './dialogs.js';
-import { setupTabs } from './tabs.js';
+import { setupTabs, closeAllPopups } from './tabs.js';
 // ================================
 // GLOBAL STATE MANAGEMENT
 // ================================
@@ -233,6 +233,7 @@ function updateStudentDisplay() {
  */
 async function handleFinishExam() {
     try {
+        closeAllPopups();
         // Use custom dialog instead of browser confirm
         const shouldExit = await showCompletionDialog({
             title: 'Приключване на изпита',
