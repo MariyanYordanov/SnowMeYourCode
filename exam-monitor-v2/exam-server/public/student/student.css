@@ -1701,11 +1701,13 @@ body:fullscreen::before {
 .mdn-nav {
     display: flex;
     gap: 4px;
-    padding: 8px 12px;
+    padding: 12px;
     background: white;
     border-bottom: 1px solid #e9ecef;
     flex-shrink: 0;
     overflow-x: auto;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .mdn-nav-btn {
@@ -1734,6 +1736,9 @@ body:fullscreen::before {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
+    height: 0;
+    padding-bottom: 60px;
+    max-height: calc(100vh - 200px);
 }
 
 .mdn-section {
