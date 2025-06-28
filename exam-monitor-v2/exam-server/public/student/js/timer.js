@@ -41,10 +41,10 @@ export function startExamTimer(duration) {
         // Initial update
         updateTimerTick(endTime);
 
-        console.log('✅ Exam timer started');
+        console.log('Exam timer started');
         return true;
     } catch (error) {
-        console.error('❌ Failed to start exam timer:', error);
+        console.error('Failed to start exam timer:', error);
         return false;
     }
 }
@@ -68,7 +68,7 @@ function updateTimerTick(endTime) {
             handleExamExpired();
         }
     } catch (error) {
-        console.error('❌ Timer tick error:', error);
+        console.error('Timer tick error:', error);
     }
 }
 
@@ -94,7 +94,7 @@ export function updateTimerDisplay(timeLeft) {
         // Update global state
         window.ExamApp.timeLeft = timeLeft;
     } catch (error) {
-        console.error('❌ Failed to update timer display:', error);
+        console.error('Failed to update timer display:', error);
     }
 }
 
@@ -122,7 +122,7 @@ function updateTimerColor(timeLeft) {
             timerEl.style.animation = 'none';
         }
     } catch (error) {
-        console.error('❌ Failed to update timer color:', error);
+        console.error('Failed to update timer color:', error);
     }
 }
 
@@ -140,7 +140,7 @@ function checkTimeWarnings(timeLeft) {
             }
         });
     } catch (error) {
-        console.error('❌ Error checking time warnings:', error);
+        console.error('Error checking time warnings:', error);
     }
 }
 
@@ -149,7 +149,7 @@ function checkTimeWarnings(timeLeft) {
  */
 export function showTimeWarning(minutes) {
     try {
-        const message = `⚠️ Внимание! Остават ${minutes} минути до края на изпита!`;
+        const message = `Внимание! Остават ${minutes} минути до края на изпита!`;
 
         // Show notification
         if (window.ExamApp.showNotification) {
@@ -157,7 +157,7 @@ export function showTimeWarning(minutes) {
         }
 
         // Log warning (only when actually shown)
-        console.log(`⚠️ Time warning: ${minutes} minutes left`);
+        console.log(`Time warning: ${minutes} minutes left`);
 
         // Flash timer for attention
         flashTimer();
@@ -165,7 +165,7 @@ export function showTimeWarning(minutes) {
         // Play warning sound (if available)
         playWarningSound(minutes);
     } catch (error) {
-        console.error('❌ Error showing time warning:', error);
+        console.error('Error showing time warning:', error);
     }
 }
 
@@ -185,7 +185,7 @@ function flashTimer() {
             timerEl.classList.remove('timer-flash');
         }, 1000);
     } catch (error) {
-        console.error('❌ Error flashing timer:', error);
+        console.error('Error flashing timer:', error);
     }
 }
 
@@ -225,7 +225,7 @@ function playWarningSound(minutes) {
  */
 export function handleExamExpired() {
     try {
-        console.log('⏰ Exam time expired');
+        console.log('Exam time expired');
 
         // Clear timer interval
         if (window.ExamApp.timerInterval) {
@@ -260,7 +260,7 @@ export function handleExamExpired() {
         }, 10000);
 
     } catch (error) {
-        console.error('❌ Error handling exam expiration:', error);
+        console.error('Error handling exam expiration:', error);
     }
 }
 
@@ -278,7 +278,7 @@ export function handleTimeWarning(data) {
             updateTimerDisplay(data.timeLeft);
         }
     } catch (error) {
-        console.error('❌ Error handling server time warning:', error);
+        console.error('Error handling server time warning:', error);
     }
 }
 
@@ -294,7 +294,7 @@ export function getRemainingTime() {
         const now = Date.now();
         return Math.max(0, window.ExamApp.examEndTime - now);
     } catch (error) {
-        console.error('❌ Error getting remaining time:', error);
+        console.error('Error getting remaining time:', error);
         return 0;
     }
 }
@@ -324,7 +324,7 @@ export function getElapsedTime() {
         const now = Date.now();
         return Math.max(0, now - window.ExamApp.examStartTime);
     } catch (error) {
-        console.error('❌ Error getting elapsed time:', error);
+        console.error('Error getting elapsed time:', error);
         return 0;
     }
 }
@@ -342,7 +342,7 @@ export function getExamProgress() {
         const progress = (elapsed / window.ExamApp.examDuration) * 100;
         return Math.min(100, Math.max(0, progress));
     } catch (error) {
-        console.error('❌ Error calculating exam progress:', error);
+        console.error('Error calculating exam progress:', error);
         return 0;
     }
 }
@@ -371,7 +371,7 @@ export function isTimeWarning() {
 export function extendExamTime(additionalMinutes) {
     try {
         if (!window.ExamApp.examEndTime) {
-            console.error('❌ No exam in progress');
+            console.error('No exam in progress');
             return false;
         }
 
@@ -388,7 +388,7 @@ export function extendExamTime(additionalMinutes) {
 
         return true;
     } catch (error) {
-        console.error('❌ Error extending exam time:', error);
+        console.error('Error extending exam time:', error);
         return false;
     }
 }
@@ -403,12 +403,12 @@ export function pauseTimer() {
             window.ExamApp.timerInterval = null;
             window.ExamApp.timerPaused = true;
 
-            console.log('⏸️ Timer paused');
+            console.log('Timer paused');
             return true;
         }
         return false;
     } catch (error) {
-        console.error('❌ Error pausing timer:', error);
+        console.error('Error pausing timer:', error);
         return false;
     }
 }
@@ -424,12 +424,12 @@ export function resumeTimer() {
             }, 1000);
 
             window.ExamApp.timerPaused = false;
-            console.log('▶️ Timer resumed');
+            console.log('Timer resumed');
             return true;
         }
         return false;
     } catch (error) {
-        console.error('❌ Error resuming timer:', error);
+        console.error('Error resuming timer:', error);
         return false;
     }
 }
@@ -455,7 +455,7 @@ export function stopTimer() {
 
         return true;
     } catch (error) {
-        console.error('❌ Error stopping timer:', error);
+        console.error('Error stopping timer:', error);
         return false;
     }
 }
