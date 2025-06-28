@@ -1,0 +1,462 @@
+/* 
+   Login Page Layout
+   2-column design: Terms & Conditions | Login Form
+*/
+
+/* =================================
+   LOGIN CONTAINER - 2 COLUMN GRID
+   ================================= */
+
+.login-container {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--spacing-xxxl);
+    padding: var(--spacing-xxxl);
+    background: var(--primary-gradient);
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =================================
+   TERMS SECTION - LEFT COLUMN
+   ================================= */
+
+.terms-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--panel-border-radius);
+    padding: 0;
+    box-shadow: var(--shadow-xl);
+    backdrop-filter: blur(10px);
+    height: fit-content;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.terms-header {
+    padding: var(--spacing-xxl);
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: var(--panel-border-radius) var(--panel-border-radius) 0 0;
+    text-align: center;
+}
+
+.terms-header h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.5px;
+}
+
+/* Terms Content - Always Visible */
+.terms-content {
+    display: block !important;
+    max-height: none !important;
+    padding: var(--spacing-xxl);
+}
+
+.terms-text {
+    color: var(--text-primary);
+    line-height: var(--line-height-relaxed);
+    font-size: var(--font-base);
+}
+
+.terms-text h4 {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--font-md);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: var(--spacing-sm);
+}
+
+.terms-text p {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+.terms-text strong {
+    color: var(--text-primary);
+    font-weight: var(--font-semibold);
+}
+
+/* =================================
+   VIOLATION LISTS - ENHANCED STYLING
+   ================================= */
+
+.violation-list {
+    margin: 0 0 var(--spacing-xl) 0;
+    padding-left: var(--spacing-xl);
+    list-style: none;
+}
+
+.violation-list li {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+    font-size: var(--font-base);
+    background: #ebf8ff;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-left: 4px solid #3182ce;
+    border-radius: var(--input-border-radius);
+    position: relative;
+    padding-left: 35px;
+}
+
+.violation-list li::before {
+    content: '⚠️';
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-md);
+}
+
+.violation-list li strong {
+    color: #2c5282;
+    font-weight: var(--font-bold);
+}
+
+/* Enhanced Touch Violation */
+.violation-list .touch-violation {
+    background: linear-gradient(135deg, #667eea20, #764ba220);
+    border: 2px solid var(--primary-color);
+    font-weight: var(--font-bold);
+    animation: touchViolationPulse 2s infinite;
+}
+
+.violation-list .touch-violation::before {
+    content: '📱';
+}
+
+@keyframes touchViolationPulse {
+
+    0%,
+    100% {
+        background: linear-gradient(135deg, #667eea20, #764ba220);
+        border-color: var(--primary-color);
+    }
+
+    50% {
+        background: linear-gradient(135deg, #667eea30, #764ba230);
+        border-color: var(--secondary-color);
+    }
+}
+
+/* =================================
+   ALLOWED ACTIONS - GREEN THEME
+   ================================= */
+
+.allowed-list {
+    margin: 0 0 var(--spacing-xl) 0;
+    padding-left: var(--spacing-xl);
+    list-style: none;
+}
+
+.allowed-list li {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+    font-size: var(--font-base);
+    background: #f0fff4;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-left: 4px solid var(--success-color);
+    border-radius: var(--input-border-radius);
+    position: relative;
+    padding-left: 35px;
+}
+
+.allowed-list li::before {
+    content: '✅';
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-md);
+}
+
+.allowed-list li strong {
+    color: #2f855a;
+    font-weight: var(--font-semibold);
+}
+
+/* =================================
+   NO-TOUCH POLICY - PURPLE THEME
+   ================================= */
+
+.no-touch-policy {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 3px solid var(--primary-color);
+    border-radius: var(--panel-border-radius);
+    padding: var(--spacing-xl);
+    margin: var(--spacing-xl) 0;
+    position: relative;
+}
+
+.no-touch-policy::before {
+    content: '📱';
+    position: absolute;
+    top: -15px;
+    left: var(--spacing-xl);
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-xxl);
+}
+
+.no-touch-policy h4 {
+    margin: 0 0 var(--spacing-lg) 0;
+    color: var(--secondary-color);
+    font-size: var(--font-md);
+    font-weight: var(--font-bold);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.touch-policy-content p {
+    text-align: center;
+    font-size: var(--font-base);
+    margin-bottom: var(--spacing-md);
+    color: var(--text-secondary);
+    font-weight: var(--font-medium);
+}
+
+/* =================================
+   INFO BOXES
+   ================================= */
+
+.warning-box {
+    background: #fff5f5;
+    border: 1px solid #feb2b2;
+    border-left: 4px solid var(--danger-color);
+    padding: var(--spacing-lg);
+    border-radius: var(--input-border-radius);
+    margin: var(--spacing-lg) 0;
+    font-size: var(--font-base);
+    color: #742a2a;
+}
+
+.info-box {
+    background: #ebf8ff;
+    border: 1px solid #90cdf4;
+    border-left: 4px solid var(--info-color);
+    padding: var(--spacing-lg);
+    border-radius: var(--input-border-radius);
+    margin: var(--spacing-lg) 0;
+    font-size: var(--font-base);
+    color: #2a4365;
+}
+
+.device-requirement {
+    background: var(--primary-gradient);
+    color: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--card-border-radius);
+    text-align: center;
+    font-weight: var(--font-semibold);
+    margin-top: var(--spacing-lg);
+    box-shadow: var(--shadow-primary);
+}
+
+.device-requirement strong {
+    display: block;
+    font-size: var(--font-md);
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* =================================
+   AGREEMENT CHECKBOX
+   ================================= */
+
+.agreement-checkbox {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: #f8f9fa;
+    border-radius: var(--card-border-radius);
+    border: 2px solid var(--border-color);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checkbox-text {
+    font-size: var(--font-base);
+    line-height: var(--line-height-relaxed);
+    color: var(--text-primary);
+}
+
+.checkbox-text strong {
+    color: var(--primary-color);
+    font-weight: var(--font-semibold);
+}
+
+/* =================================
+   LOGIN FORM - RIGHT COLUMN
+   ================================= */
+
+.login-form {
+    background: rgba(255, 255, 255, 0.95);
+    padding: var(--spacing-xxxl);
+    border-radius: var(--panel-border-radius);
+    box-shadow: var(--shadow-xl);
+    backdrop-filter: blur(10px);
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-xxl);
+    color: var(--text-primary);
+    font-weight: var(--font-semibold);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    height: var(--input-height);
+    padding: 0 var(--spacing-lg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--input-border-radius);
+    font-size: var(--font-base);
+    background: var(--bg-white);
+    color: var(--text-primary);
+    transition: var(--transition-colors);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Enhanced Login Button */
+.btn-primary {
+    width: 100%;
+    height: var(--btn-height-lg);
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--card-border-radius);
+    font-size: var(--font-md);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    transition: var(--transition-all);
+    box-shadow: var(--shadow-primary);
+    margin-bottom: var(--spacing-xl);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary-hover);
+}
+
+.btn-primary:disabled {
+    background: linear-gradient(135deg, #a0aec0, #cbd5e0);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Status Messages */
+.status-message {
+    padding: var(--spacing-md);
+    border-radius: var(--input-border-radius);
+    font-size: var(--font-base);
+    font-weight: var(--font-medium);
+    text-align: center;
+}
+
+.status-message.error {
+    background: #fff5f5;
+    color: var(--danger-color);
+    border: 1px solid #fed7d7;
+}
+
+.status-message.success {
+    background: #f0fff4;
+    color: var(--success-color);
+    border: 1px solid #c6f6d5;
+}
+
+.status-message.info {
+    background: #ebf8ff;
+    color: var(--info-color);
+    border: 1px solid #bee3f8;
+}
+
+/* =================================
+   TOUCH DEVICE DETECTION WARNING
+   ================================= */
+
+.touch-device-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--danger-color);
+    color: white;
+    padding: var(--spacing-md);
+    text-align: center;
+    font-weight: var(--font-semibold);
+    z-index: var(--z-toast);
+    transform: translateY(-100%);
+    transition: transform var(--transition-normal);
+}
+
+.touch-device-warning.show {
+    transform: translateY(0);
+}
+
+/* =================================
+   RESPONSIVE ADJUSTMENTS
+   ================================= */
+
+@media (max-width: 1280px) {
+    .login-container {
+        grid-template-columns: 1fr 380px;
+        gap: var(--spacing-xxl);
+        padding: var(--spacing-xxl);
+    }
+
+    .login-form {
+        padding: var(--spacing-xxl);
+    }
+}
+
+@media (max-width: 1024px) {
+    .login-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: var(--spacing-xl);
+        padding: var(--spacing-xl);
+        max-width: 800px;
+    }
+
+    .terms-section {
+        max-height: 60vh;
+    }
+}

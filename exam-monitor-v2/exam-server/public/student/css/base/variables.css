@@ -1,0 +1,188 @@
+/* 
+   CSS Custom Properties (Variables)
+   Central color palette and layout definitions
+*/
+
+:root {
+    /* =================================
+       COLOR PALETTE
+       ================================= */
+
+    /* Primary Colors */
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    /* Status Colors */
+    --success-color: #4CAF50;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+
+    /* UI Colors */
+    --bg-light: #f5f5f5;
+    --bg-white: #ffffff;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #6c757d;
+    --border-color: #e2e8f0;
+    --border-light: #f0f0f0;
+
+    /* Editor Theme Colors */
+    --editor-bg: #1e1e1e;
+    --editor-text: #ffffff;
+    --editor-border: #404040;
+    --editor-panel-bg: #2d2d2d;
+    --console-bg: #1a1a1a;
+
+    /* Violation Colors */
+    --violation-bg: rgba(220, 53, 69, 0.95);
+    --violation-text: #ffffff;
+    --violation-accent: #ffcccc;
+
+    /* =================================
+       LAYOUT DIMENSIONS
+       ================================= */
+
+    /* Header & Footer */
+    --header-height: 50px;
+    --footer-height: 50px;
+    --panel-header-height: 48px;
+
+    /* Sidebar Widths - 3 Column Layout */
+    --sidebar-width: 400px;
+    --sidebar-collapsed: 0px;
+    --sidebar-narrow: 300px;
+
+    /* Grid Template Columns for 3-column layout */
+    --grid-collapsed: 0fr 1fr 0fr;
+    --grid-files-only: var(--sidebar-width) 1fr 0fr;
+    --grid-devtools-only: 0fr 1fr var(--sidebar-width);
+    --grid-both-panels: var(--sidebar-narrow) 1fr var(--sidebar-narrow);
+    --grid-full-devtools: 0fr 1fr calc(var(--sidebar-width) * 1.2);
+
+    /* =================================
+       SPACING SYSTEM
+       ================================= */
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --spacing-xxl: 24px;
+    --spacing-xxxl: 32px;
+
+    /* Component Spacing */
+    --padding-card: var(--spacing-lg);
+    --padding-panel: var(--spacing-md);
+    --margin-section: var(--spacing-xl);
+
+    /* =================================
+       TYPOGRAPHY
+       ================================= */
+
+    /* Font Families */
+    --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'Monaco', 'Consolas', 'Courier New', monospace;
+
+    /* Font Sizes */
+    --font-xs: 12px;
+    --font-sm: 13px;
+    --font-base: 14px;
+    --font-md: 16px;
+    --font-lg: 18px;
+    --font-xl: 20px;
+    --font-xxl: 24px;
+
+    /* Font Weights */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    /* Line Heights */
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.4;
+    --line-height-relaxed: 1.6;
+
+    /* =================================
+       COMPONENT DIMENSIONS
+       ================================= */
+
+    /* Buttons */
+    --btn-height: 36px;
+    --btn-height-sm: 32px;
+    --btn-height-lg: 44px;
+    --btn-border-radius: 6px;
+
+    /* Form Elements */
+    --input-height: 40px;
+    --input-border-radius: 4px;
+    --checkbox-size: 18px;
+
+    /* Cards & Panels */
+    --card-border-radius: 8px;
+    --panel-border-radius: 12px;
+    --modal-border-radius: 12px;
+
+    /* =================================
+       SHADOWS & EFFECTS
+       ================================= */
+
+    /* Box Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+    /* Primary Shadow */
+    --shadow-primary: 0 4px 12px rgba(102, 126, 234, 0.3);
+    --shadow-primary-hover: 0 6px 20px rgba(102, 126, 234, 0.4);
+
+    /* =================================
+       TRANSITIONS & ANIMATIONS
+       ================================= */
+
+    /* Transition Durations */
+    --transition-fast: 0.15s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
+
+    /* Transition Easings */
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+    /* Common Transitions */
+    --transition-all: all var(--transition-normal) var(--ease-in-out);
+    --transition-colors: color var(--transition-fast) var(--ease-in-out),
+        background-color var(--transition-fast) var(--ease-in-out),
+        border-color var(--transition-fast) var(--ease-in-out);
+    --transition-transform: transform var(--transition-normal) var(--ease-out);
+
+    /* =================================
+       Z-INDEX LAYERS
+       ================================= */
+
+    --z-base: 1;
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+    --z-violation-screen: 999999;
+
+    /* =================================
+       RESPONSIVE BREAKPOINTS
+       ================================= */
+
+    /* Note: Desktop-only exam environment */
+    --screen-md: 1024px;
+    --screen-lg: 1280px;
+    --screen-xl: 1440px;
+    --screen-xxl: 1920px;
+}

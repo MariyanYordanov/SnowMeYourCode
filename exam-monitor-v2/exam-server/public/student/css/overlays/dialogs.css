@@ -1,0 +1,577 @@
+/* 
+   Custom Dialog System
+   Fullscreen-safe dialogs that replace browser confirm/alert
+*/
+
+/* =================================
+   DIALOG OVERLAY
+   ================================= */
+
+.custom-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-modal);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal) var(--ease-in-out);
+    backdrop-filter: blur(3px);
+}
+
+.custom-dialog-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* =================================
+   DIALOG CONTAINER
+   ================================= */
+
+.custom-dialog {
+    background: white;
+    border-radius: var(--modal-border-radius);
+    box-shadow: var(--shadow-xl);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.9) translateY(20px);
+    transition: transform var(--transition-normal) var(--ease-out);
+}
+
+.custom-dialog-overlay.show .custom-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* =================================
+   DIALOG HEADER
+   ================================= */
+
+.dialog-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xxl) var(--spacing-xxl) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dialog-icon {
+    font-size: var(--font-xxl);
+    flex-shrink: 0;
+}
+
+.dialog-title {
+    font-size: var(--font-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin: 0;
+    line-height: var(--line-height-tight);
+}
+
+/* =================================
+   DIALOG CONTENT
+   ================================= */
+
+.dialog-message {
+    padding: var(--spacing-lg) var(--spacing-xxl);
+    font-size: var(--font-base);
+    line-height: var(--line-height-relaxed);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* =================================
+   DIALOG BUTTONS
+   ================================= */
+
+.dialog-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xxl) var(--spacing-xxl);
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-light);
+}
+
+.dialog-btn {
+    padding: var(--spacing-sm) var(--spacing-xl);
+    border: none;
+    border-radius: var(--btn-border-radius);
+    font-size: var(--font-base);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: var(--transition-all);
+    min-width: 100px;
+    position: relative;
+    user-select: none;
+}
+
+.dialog-btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* =================================
+   BUTTON VARIANTS
+   ================================= */
+
+/* Cancel button */
+.dialog-btn-cancel {
+    background: var(--bg-light);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.dialog-btn-cancel:hover {
+    background: #e9ecef;
+    border-color: var(--text-muted);
+    transform: translateY(-1px);
+}
+
+/* Confirm button - completion type */
+.dialog-btn-completion {
+    background: var(--danger-color);
+    color: white;
+    border: 1px solid var(--danger-color);
+}
+
+.dialog-btn-completion:hover {
+    background: #c82333;
+    border-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Confirm button - violation type */
+.dialog-btn-violation {
+    background: var(--warning-color);
+    color: var(--text-primary);
+    border: 1px solid var(--warning-color);
+}
+
+.dialog-btn-violation:hover {
+    background: #e0a800;
+    border-color: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+/* Confirm button - info type */
+.dialog-btn-info {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.dialog-btn-info:hover {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-primary-hover);
+}
+
+/* Confirm button - error type */
+.dialog-btn-error {
+    background: var(--danger-color);
+    color: white;
+    border: 1px solid var(--danger-color);
+}
+
+.dialog-btn-error:hover {
+    background: #c82333;
+    border-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* =================================
+   DIALOG TYPES
+   ================================= */
+
+/* Completion dialog */
+.custom-dialog-completion .dialog-header {
+    background: linear-gradient(135deg, #fff5f5, #fed7d7);
+}
+
+.custom-dialog-completion .dialog-icon {
+    color: var(--danger-color);
+}
+
+.custom-dialog-completion .dialog-title {
+    color: var(--danger-color);
+}
+
+/* Violation dialog */
+.custom-dialog-violation .dialog-header {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.custom-dialog-violation .dialog-icon {
+    color: var(--warning-color);
+}
+
+.custom-dialog-violation .dialog-title {
+    color: #92400e;
+}
+
+/* Info dialog */
+.custom-dialog-info .dialog-header {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.custom-dialog-info .dialog-icon {
+    color: var(--info-color);
+}
+
+.custom-dialog-info .dialog-title {
+    color: var(--info-color);
+}
+
+/* Error dialog */
+.custom-dialog-error .dialog-header {
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+}
+
+.custom-dialog-error .dialog-icon {
+    color: var(--danger-color);
+}
+
+.custom-dialog-error .dialog-title {
+    color: var(--danger-color);
+}
+
+/* =================================
+   LOADING DIALOG
+   ================================= */
+
+.dialog-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xxl);
+    justify-content: center;
+}
+
+.dialog-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-light);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: dialogSpin 1s linear infinite;
+}
+
+@keyframes dialogSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.dialog-loading-text {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+    font-weight: var(--font-medium);
+}
+
+/* =================================
+   DIALOG WITH INPUT
+   ================================= */
+
+.dialog-input-group {
+    padding: 0 var(--spacing-xxl) var(--spacing-lg);
+}
+
+.dialog-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--input-border-radius);
+    font-size: var(--font-base);
+    transition: var(--transition-colors);
+}
+
+.dialog-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.dialog-input-label {
+    display: block;
+    font-size: var(--font-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* =================================
+   DIALOG ANIMATIONS
+   ================================= */
+
+/* Shake animation for errors */
+.custom-dialog.shake {
+    animation: dialogShake 0.5s ease-in-out;
+}
+
+@keyframes dialogShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Bounce animation for success */
+.custom-dialog.bounce {
+    animation: dialogBounce 0.6s ease-out;
+}
+
+@keyframes dialogBounce {
+    0% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.05);
+    }
+
+    60% {
+        transform: scale(0.98);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* =================================
+   CONFIRMATION DIALOG STYLES
+   ================================= */
+
+.confirmation-dialog {
+    text-align: center;
+}
+
+.confirmation-dialog .dialog-message {
+    font-size: var(--font-lg);
+    font-weight: var(--font-medium);
+    padding: var(--spacing-xxl);
+}
+
+.confirmation-dialog .dialog-buttons {
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+/* =================================
+   TOAST NOTIFICATIONS
+   ================================= */
+
+.toast-container {
+    position: fixed;
+    top: var(--spacing-xl);
+    right: var(--spacing-xl);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--primary-color);
+    max-width: 400px;
+    transform: translateX(100%);
+    transition: transform var(--transition-normal) var(--ease-out);
+    pointer-events: all;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.toast.success {
+    border-left-color: var(--success-color);
+}
+
+.toast.error {
+    border-left-color: var(--danger-color);
+}
+
+.toast.warning {
+    border-left-color: var(--warning-color);
+}
+
+.toast.info {
+    border-left-color: var(--info-color);
+}
+
+.toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.toast-title {
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-sm);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--font-lg);
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-message {
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+    line-height: var(--line-height-relaxed);
+}
+
+/* =================================
+   KEYBOARD NAVIGATION
+   ================================= */
+
+.custom-dialog[data-focus="true"] {
+    /* Ensure dialog receives focus for keyboard navigation */
+}
+
+.dialog-btn:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* =================================
+   ACCESSIBILITY
+   ================================= */
+
+/* Screen reader announcements */
+.sr-announce {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .custom-dialog {
+        border: 3px solid var(--text-primary);
+    }
+
+    .dialog-btn {
+        border-width: 2px;
+    }
+
+    .dialog-btn-cancel {
+        background: white;
+        color: black;
+        border-color: black;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .custom-dialog-overlay,
+    .custom-dialog {
+        transition: none;
+    }
+
+    .dialog-btn {
+        transition: none;
+    }
+
+    .dialog-spinner {
+        animation: none;
+        border-top-color: var(--text-muted);
+    }
+
+    .custom-dialog.shake,
+    .custom-dialog.bounce {
+        animation: none;
+    }
+
+    .toast {
+        transition: none;
+    }
+}
+
+/* =================================
+   DARK THEME SUPPORT
+   ================================= */
+
+.exam-container .custom-dialog {
+    background: var(--editor-panel-bg);
+    color: var(--editor-text);
+}
+
+.exam-container .dialog-header {
+    border-bottom-color: var(--editor-border);
+}
+
+.exam-container .dialog-title {
+    color: var(--editor-text);
+}
+
+.exam-container .dialog-message {
+    color: #e0e0e0;
+}
+
+.exam-container .dialog-buttons {
+    border-top-color: var(--editor-border);
+}
+
+.exam-container .dialog-btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--editor-text);
+    border-color: var(--editor-border);
+}
+
+.exam-container .dialog-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
+}
+
+.exam-container .toast {
+    background: var(--editor-panel-bg);
+    color: var(--editor-text);
+}
+
+.exam-container .toast-title {
+    color: var(--editor-text);
+}
+
+.exam-container .toast-message {
+    color: #e0e0e0;
+}
