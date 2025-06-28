@@ -29,7 +29,7 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "http-proxy-middleware": "^3.0.0",
-    "multer": "^2.0.0-rc.4",
+    "multer": "^2.0.1",
     "socket.io": "^4.7.5",
     "unzipper": "^0.12.2"
   },

@@ -1,14 +1,14 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import session from 'express-session';
-
-// Import our modules
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { SessionManager } from './modules/SessionManager.mjs';
 import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
+// Project routes will be added later
+// import projectRoutes from './routes/project-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,24 +17,26 @@ const app = express();
 const server = createServer(app);
 
 const io = new Server(server, {
-    serveClient: true,      
-    path: '/socket.io',     
+    serveClient: true,
+    path: '/socket.io',
     pingTimeout: 60000,
     pingInterval: 25000,
     transports: ['websocket', 'polling']
 });
 
-const PORT = 8080;
+// Server configuration
+const PORT = process.env.PORT || 8080;
 const PRACTICE_SERVER_PORT = 3030;
 
-// Initialize modules
+// Initialize modules like the original
 const sessionManager = new SessionManager(__dirname);
-await sessionManager.loadExistingSessions(); // Ensure sessions are loaded
+await sessionManager.loadExistingSessions();
 const webSocketHandler = new WebSocketHandler(io, sessionManager);
 const proxyHandler = new ProxyHandler(PRACTICE_SERVER_PORT, sessionManager);
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(join(__dirname, 'public')));
 
 // Session middleware
@@ -59,17 +61,15 @@ app.use((req, res, next) => {
 // Routes
 app.get('/', (req, res) => {
     res.send(`
-        <h1>Exam Monitor System v2 - Fullscreen Mode</h1>
-        <p><a href="/teacher">Teacher Dashboard</a></p>
-        <p><a href="/student">Student Login & Fullscreen Exam</a></p>
-        <p><a href="/test-fullscreen">Test Fullscreen (Debug)</a></p>
-        <hr>
-        <h3>New Fullscreen Architecture:</h3>
+        <h1>Exam Monitor System v2.0</h1>
+        <h3>Enhanced Anti-Cheat Architecture:</h3>
         <ul>
             <li><strong>/student</strong> - Single page with fullscreen protection</li>
             <li><strong>Fullscreen API</strong> - Mandatory fullscreen exam mode</li>
             <li><strong>Focus Lock</strong> - Aggressive window focus control</li>
             <li><strong>Enhanced Security</strong> - Maximum anti-cheat protection</li>
+            <li><strong>Project Files</strong> - Multi-file project support</li>
+            <li><strong>Templates</strong> - Express & Vanilla JS starters</li>
         </ul>
     `);
 });
@@ -80,7 +80,7 @@ app.get('/teacher', (req, res) => {
 
 // Main student page - login and popup launcher
 app.get('/student', (req, res) => {
-    res.sendFile(join(__dirname, 'public/student/index.html'));
+    res.sendFile(join(__dirname, 'public/student/html/index.html'));
 });
 
 // Legacy popup endpoint - redirect to main student page
@@ -89,7 +89,10 @@ app.get('/student-exam-window', (req, res) => {
     res.redirect('/student?legacy=popup');
 });
 
-// API endpoints
+// Project files API routes - temporarily disabled
+// app.use('/api/project', projectRoutes);
+
+// Authentication API endpoints
 app.post('/api/student-login', async (req, res) => {
     try {
         const { studentName, studentClass } = req.body;
@@ -123,196 +126,200 @@ app.get('/api/session-status', (req, res) => {
         const session = sessionManager.sessions.get(sessionData.studentId);
         if (session) {
             sessionData.timeLeft = sessionManager.calculateRemainingTime(session);
-            sessionData.formattedTimeLeft = sessionManager.formatTimeLeft(sessionData.timeLeft);
-            sessionData.status = session.status;
-            sessionData.examEndTime = session.examEndTime;
+            sessionData.examStatus = session.status;
+            sessionData.violations = session.violations || [];
         }
     }
 
     res.json(sessionData);
 });
 
-// NEW: API endpoint for popup window session validation
-app.get('/api/validate-popup-session', (req, res) => {
-    const { sessionId, studentName, studentClass } = req.query;
-
-    if (!sessionId || !studentName || !studentClass) {
-        return res.status(400).json({
-            valid: false,
-            error: 'Missing required parameters'
-        });
-    }
-
-    const session = sessionManager.sessions.get(sessionId);
-
-    if (!session) {
-        return res.status(404).json({
-            valid: false,
-            error: 'Session not found'
-        });
-    }
-
-    if (session.studentName !== studentName || session.studentClass !== studentClass) {
-        return res.status(403).json({
-            valid: false,
-            error: 'Session does not belong to specified student'
-        });
-    }
-
-    const timeLeft = sessionManager.calculateRemainingTime(session);
-    if (timeLeft <= 0) {
-        return res.status(410).json({
-            valid: false,
-            error: 'Session expired'
-        });
-    }
-
-    res.json({
-        valid: true,
-        sessionId: session.sessionId,
-        timeLeft: timeLeft,
-        formattedTimeLeft: sessionManager.formatTimeLeft(timeLeft),
-        status: session.status,
-        lastCode: session.lastCode || ''
-    });
-});
-
-// NEW: API endpoint for cross-window communication
-app.post('/api/window-event', (req, res) => {
-    const { sessionId, event, data } = req.body;
-
-    if (!sessionId || !event) {
-        return res.status(400).json({ error: 'Missing sessionId or event' });
-    }
-
-    console.log(`Cross-window event: ${event} for session ${sessionId}`, data);
-
-    // Handle different window events
-    switch (event) {
-        case 'popup-opened':
-            console.log(`Popup opened for session ${sessionId}`);
-            break;
-        case 'popup-closed':
-            console.log(`Popup closed for session ${sessionId}`);
-            // Could trigger session cleanup or notification
-            break;
-        case 'focus-lost':
-            console.log(`Focus lost in popup for session ${sessionId}`);
-            // Could trigger anti-cheat logging
-            break;
-        default:
-            console.log(`Unknown window event: ${event}`);
-    }
-
-    res.json({ acknowledged: true });
-});
-
-// Proxy middleware for JSONStore with enhanced popup support
-app.use('/jsonstore',
-    // Custom middleware for popup session validation
-    (req, res, next) => {
-        // Check if request is from popup window
-        const referer = req.get('Referer');
-        const isFromPopup = referer && referer.includes('/student-exam-window');
-
-        if (isFromPopup) {
-            console.log(`JSONStore request from popup: ${req.method} ${req.url}`);
-            // Could add additional popup-specific validation here
+// Simplified endpoints using SessionManager methods
+app.post('/api/submit-code', async (req, res) => {
+    try {
+        const studentId = req.session?.studentId;
+        if (!studentId) {
+            return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
 
-        next();
-    },
-    proxyHandler.createRateLimitHandler(50, 60000), // 50 requests per minute
-    proxyHandler.createBlockedEndpointHandler(['/admin', '/system']), // Block admin endpoints
-    ...proxyHandler.middleware
-);
+        const { code, language, timestamp } = req.body;
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-    console.error('Express error:', error);
+        // Use SessionManager to record code
+        const session = sessionManager.sessions.get(studentId);
+        if (session) {
+            await sessionManager.recordCodeSubmission(session, {
+                code,
+                language,
+                timestamp: timestamp || Date.now()
+            });
+        }
+
+        console.log(`Code submission from ${studentId}: ${code?.length || 0} characters`);
+        res.json({ success: true, message: 'Code submitted successfully' });
+
+    } catch (error) {
+        console.error('Code submission error:', error);
+        res.status(500).json({ success: false, error: 'Failed to submit code' });
+    }
+});
+
+app.post('/api/finish-exam', async (req, res) => {
+    try {
+        const studentId = req.session?.studentId;
+        if (!studentId) {
+            return res.status(401).json({ success: false, error: 'Not authenticated' });
+        }
+
+        const session = sessionManager.sessions.get(studentId);
+        if (session) {
+            await sessionManager.completeSession(session, 'graceful');
+        }
+
+        req.session.destroy();
+        res.json({ success: true, message: 'Exam finished' });
+
+    } catch (error) {
+        console.error('Finish exam error:', error);
+        res.status(500).json({ success: false, error: 'Failed to finish exam' });
+    }
+});
+
+app.post('/api/report-violation', async (req, res) => {
+    try {
+        const studentId = req.session?.studentId;
+        if (!studentId) {
+            return res.status(401).json({ success: false, error: 'Not authenticated' });
+        }
+
+        const { violationType, details } = req.body;
+
+        const session = sessionManager.sessions.get(studentId);
+        if (session) {
+            await sessionManager.recordViolation(session, {
+                type: violationType,
+                details,
+                timestamp: Date.now()
+            });
+        }
+
+        console.log(`Violation reported for ${studentId}: ${violationType}`);
+        res.json({ success: true, message: 'Violation recorded' });
+
+    } catch (error) {
+        console.error('Violation report error:', error);
+        res.status(500).json({ success: false, error: 'Failed to report violation' });
+    }
+});
+
+// Teacher dashboard API
+app.get('/api/teacher/sessions', (req, res) => {
+    try {
+        const sessions = sessionManager.getAllSessionsData();
+        res.json({ success: true, sessions });
+    } catch (error) {
+        console.error('Get sessions error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get sessions' });
+    }
+});
+
+app.post('/api/teacher/session/:sessionId/action', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { action, data } = req.body;
+
+        let result;
+        switch (action) {
+            case 'warning':
+                result = sessionManager.sendWarning(sessionId, data.message);
+                break;
+            case 'terminate':
+                result = sessionManager.terminateSession(sessionId, data.reason);
+                break;
+            case 'extend-time':
+                result = sessionManager.extendTime(sessionId, data.minutes);
+                break;
+            default:
+                return res.status(400).json({ success: false, error: 'Invalid action' });
+        }
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('Teacher action error:', error);
+        res.status(500).json({ success: false, error: 'Failed to execute action' });
+    }
+});
+
+// Initialize WebSocket handlers
+webSocketHandler.initialize();
+
+// Use proxy for practice server - correct usage
+app.use('/jsonstore', ...proxyHandler.middleware);
+
+// Start cleanup timer
+sessionManager.startCleanupTimer();
+
+// Periodic cleanup - SessionManager handles expired sessions
+setInterval(() => {
+    // SessionManager already has startCleanupTimer() running
+    // but this provides additional safety cleanup
+    let expiredCount = 0;
+
+    for (const session of sessionManager.sessions.values()) {
+        const timeLeft = sessionManager.calculateRemainingTime(session);
+        if (timeLeft <= 0 && session.status === 'active') {
+            sessionManager.expireSession(session.sessionId);
+            expiredCount++;
+        }
+    }
+
+    if (expiredCount > 0) {
+        console.log(`Manual cleanup: expired ${expiredCount} sessions`);
+    }
+}, 30000); // Every 30 seconds
+
+// Error handling
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
     res.status(500).json({
-        error: 'Internal server error',
-        message: error.message
+        success: false,
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
     });
 });
 
 // 404 handler
-app.use((req, res) => {
-    res.status(404).send(`
-        <html>
-            <head><title>404 - Not Found</title></head>
-            <body style="font-family: Arial; padding: 40px; text-align: center;">
-                <h2>404 - Page Not Found</h2>
-                <p>The requested URL <code>${req.url}</code> was not found on this server.</p>
-                <p><a href="/">Go to Home Page</a></p>
-            </body>
-        </html>
-    `);
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Route not found'
+    });
 });
 
-// WebSocket handling
-webSocketHandler.initialize();
-
-// Enhanced WebSocket events for fullscreen support
-io.on('connection', (socket) => {
-    // Track fullscreen connections
-    socket.on('fullscreen-connection', (data) => {
-        socket.isFullscreenConnection = true;
-        socket.sessionId = data.sessionId;
-        console.log(`Fullscreen WebSocket connected: ${data.sessionId}`);
-    });
-
-    // Handle fullscreen-specific events
-    socket.on('fullscreen-entered', (data) => {
-        console.log(`Fullscreen entered: ${data.sessionId}`);
-        // Notify teacher dashboard of fullscreen status
-        io.to('teachers').emit('student-fullscreen-status', {
-            sessionId: data.sessionId,
-            status: 'entered',
-            timestamp: Date.now()
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Server closed');
+        sessionManager.saveAllSessions().then(() => {
+            process.exit(0);
         });
     });
+});
 
-    socket.on('fullscreen-exited', (data) => {
-        console.log(`Fullscreen exited: ${data.sessionId} - Attempt #${data.attempt}`);
-        // Notify teacher dashboard of security violation
-        io.to('teachers').emit('student-fullscreen-violation', {
-            sessionId: data.sessionId,
-            attempt: data.attempt,
-            reason: data.reason,
-            timestamp: Date.now()
-        });
-    });
-
-    socket.on('fullscreen-terminated', (data) => {
-        console.log(`Exam terminated for fullscreen violations: ${data.sessionId}`);
-        // Notify teacher dashboard of termination
-        io.to('teachers').emit('student-terminated', {
-            sessionId: data.sessionId,
-            reason: 'fullscreen_violations',
-            details: data.details,
-            timestamp: Date.now()
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Server closed');
+        sessionManager.saveAllSessions().then(() => {
+            process.exit(0);
         });
     });
 });
 
 // Start server
-server.listen(PORT, async () => {
-    console.log(`Exam Monitor v2 - Fullscreen Mode running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Exam Monitor Server v2.0 running on port ${PORT}`);
+    console.log(`Student interface: http://localhost:${PORT}/student`);
     console.log(`Teacher dashboard: http://localhost:${PORT}/teacher`);
-    console.log(`Student fullscreen exam: http://localhost:${PORT}/student`);
-    console.log(`Network: ExamNet hotspot on port ${PORT}`);
-
-    // Start cleanup timer for expired sessions
-    sessionManager.startCleanupTimer();
-
-    // Check practice server health
-    const health = await proxyHandler.healthCheck();
-    if (health.healthy) {
-        console.log(`Practice server is healthy`);
-    } else {
-        console.warn(`Practice server health check failed: ${health.error}`);
-    }
+    console.log(`Enhanced anti-cheat system active`);
 });
-
-export default app;
