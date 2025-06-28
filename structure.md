@@ -1,5 +1,18 @@
 # Exam Monitor v2 - Lightweight Refactoring Guide
-
+exam-server/public/student/
+├── templates/
+│   ├── layouts/main.html          # Base layout
+│   ├── components/
+│   │   ├── login-form.html        # Login component  
+│   │   ├── exam-workspace.html    # Editor workspace
+│   │   ├── console-panel.html     # Console output
+│   │   └── violation-screen.html  # Violation overlay
+│   └── pages/student.html         # Main page
+│
+├── js/core/
+│   ├── TemplateEngine.js          # Custom templating
+│   ├── ComponentLoader.js         # Component system
+│   └── EventBinder.js             # Event management
 ## 🎯 **Target Architecture - Local Development Optimized**
 
 ```

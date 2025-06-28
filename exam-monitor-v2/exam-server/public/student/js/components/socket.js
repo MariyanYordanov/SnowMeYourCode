@@ -98,16 +98,16 @@ export function handleSocketConnect(socket) {
     try {
         // Update global state
         window.ExamApp.isConnected = true;
-        
+
         // Update UI
         updateConnectionStatus(true);
-        
+
         // Show success notification if reconnected
         if (reconnectAttempts > 0) {
             if (window.ExamApp.showNotification) {
                 window.ExamApp.showNotification('Връзката е възстановена', 'success');
             }
-        
+
         }
         reconnectAttempts = 0;
     } catch (error) {
