@@ -19,9 +19,6 @@ const consoleState = {
 };
 
 /**
- * Initialize Monaco Editor
- */
-/**
  * Enhanced Monaco Editor initialization with additional features
  */
 export function initializeMonacoEditor(initialCode = '') {
@@ -60,7 +57,7 @@ export function initializeMonacoEditor(initialCode = '') {
                             comments: false,
                             strings: false
                         },
-                        // NEW: Enhanced editor features
+                        // Enhanced editor features
                         multiCursorModifier: 'ctrlCmd',
                         formatOnPaste: true,
                         formatOnType: true,
@@ -80,12 +77,12 @@ export function initializeMonacoEditor(initialCode = '') {
                             seedSearchStringFromSelection: true,
                             autoFindInSelection: 'never'
                         },
-                        // NEW: Performance optimizations
+                        // Performance optimizations
                         smoothScrolling: true,
                         cursorSmoothCaretAnimation: true,
                         cursorBlinking: 'blink',
                         renderLineHighlight: 'line',
-                        // NEW: Accessibility improvements
+                        // Accessibility improvements
                         accessibilitySupport: 'auto',
                         screenReaderAnnounceInlineSuggestion: true
                     });
@@ -93,7 +90,7 @@ export function initializeMonacoEditor(initialCode = '') {
                     // CRITICAL: Store editor in global state immediately
                     window.ExamApp.editor = editor;
 
-                    // NEW: Setup language features
+                    // Setup language features
                     setupLanguageFeatures(editor);
 
                     // Setup auto-save
@@ -105,10 +102,10 @@ export function initializeMonacoEditor(initialCode = '') {
                     // Setup keyboard shortcuts
                     setupKeyboardShortcuts(editor);
 
-                    // NEW: Setup error detection and highlighting
+                    // Setup error detection and highlighting
                     setupErrorDetection(editor);
 
-                    // NEW: Setup code quality hints
+                    // Setup code quality hints
                     setupCodeQualityHints(editor);
 
                     console.log('Enhanced Monaco Editor initialized');
@@ -128,7 +125,7 @@ export function initializeMonacoEditor(initialCode = '') {
 }
 
 /**
- * NEW: Setup enhanced language features
+ * Setup enhanced language features
  */
 function setupLanguageFeatures(editor) {
     try {
@@ -163,7 +160,7 @@ function setupLanguageFeatures(editor) {
 }
 
 /**
- * NEW: Setup error detection and highlighting
+ * Setup error detection and highlighting
  */
 function setupErrorDetection(editor) {
     try {
@@ -216,7 +213,7 @@ function setupErrorDetection(editor) {
 }
 
 /**
- * NEW: Setup code quality hints
+ * Setup code quality hints
  */
 function setupCodeQualityHints(editor) {
     try {
@@ -561,7 +558,6 @@ function captureEnhancedConsoleOutput(code) {
                 content: 'Console cleared',
                 timestamp: Date.now()
             });
-            // Don't actually clear in exam environment
             originalConsole.clear.apply(console, arguments);
         };
 
@@ -595,6 +591,16 @@ function captureEnhancedConsoleOutput(code) {
 
     } catch (error) {
         // Restore console methods in case of error
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            table: console.table,
+            time: console.time,
+            timeEnd: console.timeEnd,
+            clear: console.clear,
+            info: console.info
+        };
         Object.assign(console, originalConsole);
 
         // Try to extract line number from error
@@ -629,7 +635,6 @@ function formatEnhancedValue(arg) {
 
     if (typeof arg === 'object') {
         try {
-            // Better JSON formatting with indentation
             return JSON.stringify(arg, null, 2);
         } catch (e) {
             return '[Circular Object]';

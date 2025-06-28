@@ -6,9 +6,9 @@
 // Import all required modules
 import { setupLoginForm, handleLoginSuccess, handleSessionRestore, handleLoginError } from './login.js';
 import { setupSocket } from './socket.js';
-import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clearOutput, changeTheme } from './editor.js';
+import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clearOutput, changeTheme, saveCode } from './editor.js';
 import { startExamTimer, handleTimeWarning, handleExamExpired } from './timer.js';
-import { setupAntiCheat, activateAntiCheat, enterFullscreenMode } from './anticheat.js';
+import { setupAntiCheat, activateAntiCheat, enterFullscreenMode, deactivateAntiCheat } from './anticheat.js';
 import { showCompletionDialog, hideCustomDialogs } from './dialogs.js';
 import { setupTabs } from './tabs.js';
 
@@ -105,7 +105,7 @@ function setupExamControls() {
             clearOutput: clearOutput,
             changeTheme: changeTheme
             // saveCode removed - auto-save only
-            
+
         });
 
         // Finish exam button
@@ -429,6 +429,7 @@ function showError(message) {
 // Make main functions available globally for module access
 window.ExamApp.startExam = startExam;
 window.ExamApp.exitExam = exitExam;
+window.ExamApp.showViolationScreen = showViolationScreen;
 
 // Socket event handlers for login responses
 window.ExamApp.handleLoginSuccess = handleLoginSuccess;

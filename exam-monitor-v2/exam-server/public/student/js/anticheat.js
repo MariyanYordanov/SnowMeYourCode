@@ -4,9 +4,6 @@
  * LOGIC: Exit fullscreen OR hide document → instant termination (no warnings)
  */
 
-// Import socket functions for reporting
-import { reportSuspiciousActivity } from './socket.js';
-
 /**
  * Setup anti-cheat monitoring (result detection only)
  */
@@ -270,6 +267,31 @@ function terminateExamDirectly(violationType) {
         console.error('Error terminating exam:', error);
         // Force close on error
         window.close();
+    }
+}
+
+/**
+ * Report suspicious activity to server
+ */
+function reportSuspiciousActivity(activityType, details = {}) {
+    try {
+        // Send to server via socket if available
+        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+            window.ExamApp.socket.emit('suspicious-activity', {
+                sessionId: window.ExamApp.sessionId,
+                activityType: activityType,
+                details: details,
+                timestamp: Date.now(),
+                userAgent: navigator.userAgent,
+                platform: navigator.platform
+            });
+        }
+
+        // Also log locally
+        console.warn('Suspicious activity reported:', activityType, details);
+
+    } catch (error) {
+        console.error('Failed to report suspicious activity:', error);
     }
 }
 

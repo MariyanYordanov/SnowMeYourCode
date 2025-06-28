@@ -122,7 +122,7 @@ function createDialogHTML(config) {
         title.className = 'dialog-title';
         title.textContent = config.title;
 
-        header.appendChild(icon);
+        // Add only title to header (no icon)
         header.appendChild(title);
 
         // Dialog message
@@ -166,7 +166,6 @@ function createDialogHTML(config) {
         return null;
     }
 }
-
 
 /**
  * Show dialog and setup event handlers

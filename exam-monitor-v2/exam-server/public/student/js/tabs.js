@@ -142,11 +142,6 @@ export function getCurrentTab() {
     return currentTab;
 }
 
-// Add pulse animation on load
-if (typeof document !== 'undefined') {
-    addPulseAnimation();
-}
-
 // Export for debugging
 window.tabsDebug = {
     switchTab,

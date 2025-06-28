@@ -89,11 +89,6 @@
     flex-direction: column;
 }
 
-/* Console tab content */
-#console-tab-content {
-    /* Styles handled in console.css */
-}
-
 /* =================================
    MDN REFERENCE TAB
    ================================= */

@@ -461,10 +461,6 @@
    KEYBOARD NAVIGATION
    ================================= */
 
-.custom-dialog[data-focus="true"] {
-    /* Ensure dialog receives focus for keyboard navigation */
-}
-
 .dialog-btn:focus-visible {
     outline: 3px solid var(--primary-color);
     outline-offset: 2px;
