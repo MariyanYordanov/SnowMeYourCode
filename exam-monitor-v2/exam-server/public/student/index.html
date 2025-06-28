@@ -13,7 +13,8 @@
     <!-- Monaco Editor (CDN) -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js">
+    </script>
 
 </head>
 
@@ -242,57 +243,6 @@
                     <div id="execution-info" style="display: none;"></div>
                 </div>
 
-                <!-- NEW: DOM Preview Tab Content -->
-                <div id="dom-tab-content" class="tab-content" style="display: none;">
-                    <div class="dom-preview-container">
-                        <!-- Preview Controls -->
-                        <div class="preview-controls">
-                            <button class="preview-btn active" data-mode="html" id="html-mode-btn">
-                                📄 HTML
-                            </button>
-                            <button class="preview-btn" data-mode="css" id="css-mode-btn">
-                                🎨 CSS
-                            </button>
-                            <button class="preview-btn" data-mode="combined" id="combined-mode-btn">
-                                🔗 Combined
-                            </button>
-                            <button class="preview-btn" data-mode="refresh" id="refresh-preview-btn">
-                                🔄 Refresh
-                            </button>
-                            <div class="preview-info">
-                                <span id="preview-status">Ready</span>
-                            </div>
-                        </div>
-                
-                        <!-- Preview iframe -->
-                        <div class="preview-frame-container">
-                            <iframe id="preview-frame" class="preview-iframe" sandbox="allow-scripts allow-same-origin"
-                                title="DOM Preview">
-                            </iframe>
-                        </div>
-                
-                        <!-- Preview placeholder (when no content) -->
-                        <div id="preview-placeholder" class="preview-placeholder">
-                            <div class="placeholder-content">
-                                <div class="placeholder-icon">🌐</div>
-                                <h3>DOM Preview</h3>
-                                <p>Напишете HTML/CSS код в редактора за да видите резултата тук</p>
-                                <div class="placeholder-tips">
-                                    <div class="tip">💡 Използвайте HTML mode за структура</div>
-                                    <div class="tip">🎨 Използвайте CSS mode за стилизиране</div>
-                                    <div class="tip">🔗 Combined mode показва HTML + CSS заедно</div>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <!-- Error display for DOM -->
-                        <div id="dom-error-panel" class="dom-error-panel" style="display: none;">
-                            <div class="error-header">⚠️ DOM грешка</div>
-                            <div id="dom-error-content" class="error-content"></div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- NEW: Offline MDN Tab Content -->
                 <div id="mdn-tab-content" class="tab-content" style="display: none;">
                     <div class="mdn-offline">
@@ -388,7 +338,7 @@ fetch('/api/users', {
 
                             <!-- DOM API -->
                             <div id="mdn-dom" class="mdn-section">
-                                <h4>🏗️ DOM API</h4>
+                                <h4>DOM API</h4>
                                 <div class="api-syntax">
                                     <strong>Syntax:</strong> <code>document.method()</code>
                                 </div>

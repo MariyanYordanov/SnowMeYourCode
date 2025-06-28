@@ -3,8 +3,6 @@
  * Handles Console/DOM Preview/MDN tab switching
  */
 
-import { setupDOMPreview, updatePreview } from './domPreview.js';
-
 // Tab state
 let currentTab = 'console';
 
@@ -105,12 +103,6 @@ function handleTabSwitch(tabName) {
                 // Console tab - no special handling needed
                 break;
 
-            case 'dom':
-                // DOM Preview tab - trigger preview update
-                updatePreview();
-                console.log('🌐 DOM Preview tab activated');
-                break;
-
             case 'mdn':
                 // MDN tab - ensure proper section is shown
                 console.log('📚 MDN Reference tab activated');
@@ -161,87 +153,6 @@ function setupMDNFunctions() {
  */
 export function getCurrentTab() {
     return currentTab;
-}
-
-/**
- * Trigger DOM preview update from external modules
- */
-export function triggerDOMPreview(code = null, codeType = 'javascript') {
-    try {
-        if (currentTab === 'dom') {
-            updatePreview(code, codeType);
-        }
-
-        // Also trigger if we detect HTML/CSS code even when not on DOM tab
-        if (code && (code.includes('<') || code.includes('{'))) {
-            updatePreview(code, codeType);
-        }
-    } catch (error) {
-        console.error('❌ Error triggering DOM preview:', error);
-    }
-}
-
-/**
- * Auto-switch to DOM tab if HTML/CSS code is detected
- */
-export function autoSwitchToDOMIfNeeded(code) {
-    try {
-        const trimmedCode = code.trim().toLowerCase();
-
-        // Check if code looks like HTML or CSS
-        const isHTML = trimmedCode.includes('<html') ||
-            trimmedCode.includes('<div') ||
-            trimmedCode.includes('<p>') ||
-            /^<[a-z][\s\S]*>/.test(trimmedCode);
-
-        const isCSS = trimmedCode.includes('{') && trimmedCode.includes('}') &&
-            (trimmedCode.includes('color') || trimmedCode.includes('background'));
-
-        if ((isHTML || isCSS) && currentTab !== 'dom') {
-            // Show a subtle hint to switch to DOM tab
-            showDOMSwitchHint();
-        }
-
-    } catch (error) {
-        console.error('❌ Error in auto-switch logic:', error);
-    }
-}
-
-/**
- * Show hint to switch to DOM tab
- */
-function showDOMSwitchHint() {
-    try {
-        const domTab = document.getElementById('dom-tab');
-        if (domTab) {
-            // Add visual hint
-            domTab.style.animation = 'pulse 2s infinite';
-            domTab.title = 'Изглежда че пишете HTML/CSS - превключете към DOM Preview!';
-
-            // Remove hint after 5 seconds
-            setTimeout(() => {
-                domTab.style.animation = '';
-                domTab.title = '';
-            }, 5000);
-        }
-    } catch (error) {
-        console.error('❌ Error showing DOM switch hint:', error);
-    }
-}
-
-/**
- * Add pulse animation for hints
- */
-function addPulseAnimation() {
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
-        }
-    `;
-    document.head.appendChild(style);
 }
 
 // Add pulse animation on load
