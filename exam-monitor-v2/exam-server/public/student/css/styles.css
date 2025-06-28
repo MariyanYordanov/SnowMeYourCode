@@ -1,0 +1,34 @@
+/* 
+   Main Student Styles
+   Single import file for all student interface CSS
+*/
+
+/* =================================
+   BASE STYLES - Foundation
+   ================================= */
+@import url('./base/variables.css');
+@import url('./base/reset.css');
+@import url('./base/typography.css');
+
+/* =================================
+      LAYOUT - Page Structure
+      ================================= */
+@import url('./layout/login.css');
+@import url('./layout/exam.css');
+@import url('./layout/responsive.css');
+
+/* =================================
+      COMPONENTS - UI Elements
+      ================================= */
+@import url('./components/editor.css');
+@import url('./components/console.css');
+@import url('./components/tabs.css');
+@import url('./components/devtools.css');
+@import url('./components/file-explorer.css');
+
+/* =================================
+      OVERLAYS - Modals & Popups
+      ================================= */
+@import url('./overlays/violation.css');
+@import url('./overlays/dialogs.css');
+@import url('./overlays/animations.css');
