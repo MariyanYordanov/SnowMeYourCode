@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const sessionId = req.body.sessionId;
         const uploadDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
-
+        
         // Ensure directory exists
         fs.mkdir(uploadDir, { recursive: true })
             .then(() => cb(null, uploadDir))
@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
+const upload = multer({ 
     storage,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit per file
@@ -48,10 +48,10 @@ const upload = multer({
             'text/plain',
             'text/markdown'
         ];
-
+        
         const allowedExtensions = ['.js', '.html', '.css', '.json', '.txt', '.md'];
         const fileExt = path.extname(file.originalname).toLowerCase();
-
+        
         if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExt)) {
             cb(null, true);
         } else {
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });`
         }
     },
-
+    
     express: {
         name: 'Express API Server',
         files: {
@@ -354,13 +354,13 @@ Complete the following tasks:
 router.get('/files', async (req, res) => {
     try {
         const { sessionId } = req.query;
-
+        
         if (!sessionId) {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
-
+        
         // Check if project directory exists
         try {
             await fs.access(projectDir);
@@ -391,14 +391,14 @@ router.get('/file/:filename', async (req, res) => {
     try {
         const { sessionId } = req.query;
         const { filename } = req.params;
-
+        
         if (!sessionId) {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
-
+        
         // Security check - ensure file is within project directory
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
@@ -426,14 +426,14 @@ router.get('/file/:filename', async (req, res) => {
 router.post('/file/create', async (req, res) => {
     try {
         const { sessionId, fileName, content = '' } = req.body;
-
+        
         if (!sessionId || !fileName) {
             return res.status(400).json({ success: false, error: 'Session ID and filename required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
         const filePath = path.join(projectDir, fileName);
-
+        
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
@@ -441,7 +441,7 @@ router.post('/file/create', async (req, res) => {
 
         // Ensure project directory exists
         await fs.mkdir(projectDir, { recursive: true });
-
+        
         // Check if file already exists
         try {
             await fs.access(filePath);
@@ -472,14 +472,14 @@ router.put('/file/:filename', async (req, res) => {
     try {
         const { sessionId, content } = req.body;
         const { filename } = req.params;
-
+        
         if (!sessionId || content === undefined) {
             return res.status(400).json({ success: false, error: 'Session ID and content required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
-
+        
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
@@ -506,14 +506,14 @@ router.delete('/file/:filename', async (req, res) => {
     try {
         const { sessionId } = req.query;
         const { filename } = req.params;
-
+        
         if (!sessionId) {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
-
+        
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
@@ -538,7 +538,7 @@ router.delete('/file/:filename', async (req, res) => {
 router.post('/upload', upload.array('file'), async (req, res) => {
     try {
         const { sessionId } = req.body;
-
+        
         if (!sessionId) {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
@@ -572,7 +572,7 @@ router.post('/upload', upload.array('file'), async (req, res) => {
 router.post('/create-from-template', async (req, res) => {
     try {
         const { sessionId, templateType } = req.body;
-
+        
         if (!sessionId || !templateType) {
             return res.status(400).json({ success: false, error: 'Session ID and template type required' });
         }
@@ -583,7 +583,7 @@ router.post('/create-from-template', async (req, res) => {
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
-
+        
         // Ensure project directory exists
         await fs.mkdir(projectDir, { recursive: true });
 
@@ -591,10 +591,10 @@ router.post('/create-from-template', async (req, res) => {
         for (const [fileName, content] of Object.entries(template.files)) {
             const filePath = path.join(projectDir, fileName);
             const fileDir = path.dirname(filePath);
-
+            
             // Create subdirectory if needed
             await fs.mkdir(fileDir, { recursive: true });
-
+            
             // Write file
             await fs.writeFile(filePath, content, 'utf8');
         }
@@ -618,15 +618,15 @@ router.post('/create-from-template', async (req, res) => {
 
 async function getFileStructure(dirPath, relativePath = '') {
     const files = [];
-
+    
     try {
         const items = await fs.readdir(dirPath);
-
+        
         for (const item of items) {
             const fullPath = path.join(dirPath, item);
             const stats = await fs.stat(fullPath);
             const relativeItemPath = path.posix.join(relativePath, item);
-
+            
             if (stats.isDirectory()) {
                 // Recursively get subdirectory contents
                 const subFiles = await getFileStructure(fullPath, relativeItemPath);
@@ -645,7 +645,7 @@ async function getFileStructure(dirPath, relativePath = '') {
     } catch (error) {
         console.error('Error reading directory:', error);
     }
-
+    
     return files;
 }
 
@@ -661,3 +661,73 @@ async function getProjectType(projectDir) {
 }
 
 export default router;
+
+/*
+OLD FILE
+/**
+ * Main Application Entry Point
+ * Initializes Template Engine system and coordinates all modules
+ 
+
+// Import Template Engine system
+import { TemplateEngine } from './core/TemplateEngine.js';
+import { ComponentLoader } from './core/ComponentLoader.js';
+import { EventBinder } from './core/EventBinder.js';
+import { initializeAdaptiveLayout } from './core/layout.js';
+
+// Import existing components
+import './components/main.js';
+
+/**
+ * Initialize Template Engine system
+ 
+async function initializeTemplateSystem() {
+    try {
+        console.log('Initializing Template Engine system...');
+
+        // Initialize standard event handlers
+        EventBinder.initializeStandardHandlers();
+
+        // Load all templates
+        await TemplateEngine.preloadStandardTemplates();
+
+        // Initialize components
+        await ComponentLoader.initializeAll();
+
+        // Initialize adaptive layout manager
+        initializeAdaptiveLayout();
+
+        console.log('Template Engine system initialized successfully');
+
+    } catch (error) {
+        console.error('Failed to initialize Template Engine system:', error);
+
+        // Fallback: show error message
+        document.getElementById('app-container').innerHTML = `
+            <div style="padding: 40px; text-align: center; color: red;">
+                <h2>Failed to load exam system</h2>
+                <p>Error: ${error.message}</p>
+                <button onclick="location.reload()">Reload Page</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Start initialization when DOM is ready
+ 
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTemplateSystem);
+} else {
+    initializeTemplateSystem();
+}
+
+/**
+ * Expose Template System for main.js integration
+ 
+window.TemplateSystem = {
+    TemplateEngine,
+    ComponentLoader,
+    EventBinder
+};
+*/
