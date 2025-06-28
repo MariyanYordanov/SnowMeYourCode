@@ -399,56 +399,49 @@ router.get('/file/:filename', async (req, res) => {
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
-        // Security check - ensure file is within project directory
+        // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         const content = await fs.readFile(filePath, 'utf8');
-        const stats = await fs.stat(filePath);
 
         res.json({
             success: true,
             content,
-            size: stats.size,
-            modified: stats.mtime.getTime()
+            filename
         });
 
     } catch (error) {
+        if (error.code === 'ENOENT') {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
         console.error('Error reading file:', error);
         res.status(500).json({ success: false, error: 'Failed to read file' });
     }
 });
 
 /**
- * POST /api/project/file/create - Create new file
+ * POST /api/project/file - Create new file
  */
-router.post('/file/create', async (req, res) => {
+router.post('/file', async (req, res) => {
     try {
-        const { sessionId, fileName, content = '' } = req.body;
+        const { sessionId, filename, content = '' } = req.body;
 
-        if (!sessionId || !fileName) {
+        if (!sessionId || !filename) {
             return res.status(400).json({ success: false, error: 'Session ID and filename required' });
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
-        const filePath = path.join(projectDir, fileName);
+        const filePath = path.join(projectDir, filename);
 
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
-        // Ensure project directory exists
-        await fs.mkdir(projectDir, { recursive: true });
-
-        // Check if file already exists
-        try {
-            await fs.access(filePath);
-            return res.status(409).json({ success: false, error: 'File already exists' });
-        } catch {
-            // File doesn't exist, proceed with creation
-        }
+        // Ensure directory exists
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
 
         // Create file
         await fs.writeFile(filePath, content, 'utf8');
@@ -456,7 +449,7 @@ router.post('/file/create', async (req, res) => {
         res.json({
             success: true,
             message: 'File created successfully',
-            fileName
+            filename
         });
 
     } catch (error) {

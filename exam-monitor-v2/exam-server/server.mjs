@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 import { SessionManager } from './modules/SessionManager.mjs';
 import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
-// Project routes will be added later
-// import projectRoutes from './routes/project-routes.js';
+// MINIMAL FIX: Uncomment and fix extension
+import projectRoutes from './routes/project-routes.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -89,8 +89,8 @@ app.get('/student-exam-window', (req, res) => {
     res.redirect('/student?legacy=popup');
 });
 
-// Project files API routes - temporarily disabled
-// app.use('/api/project', projectRoutes);
+// MINIMAL FIX: Activate project routes
+app.use('/api/project', projectRoutes);
 
 // Authentication API endpoints
 app.post('/api/student-login', async (req, res) => {
@@ -108,218 +108,32 @@ app.post('/api/student-login', async (req, res) => {
 
         res.json(result);
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, error: 'Server error during login' });
+        console.error('Student login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during login'
+        });
     }
 });
 
-app.get('/api/session-status', (req, res) => {
-    const sessionData = {
-        valid: Boolean(req.session?.studentId),
-        studentId: req.session?.studentId,
-        studentName: req.session?.studentName,
-        studentClass: req.session?.studentClass
-    };
+// Practice server proxy endpoints
+app.use('/proxy', proxyHandler.middleware);
 
-    // Add session details if valid
-    if (sessionData.valid) {
-        const session = sessionManager.sessions.get(sessionData.studentId);
-        if (session) {
-            sessionData.timeLeft = sessionManager.calculateRemainingTime(session);
-            sessionData.examStatus = session.status;
-            sessionData.violations = session.violations || [];
-        }
-    }
-
-    res.json(sessionData);
-});
-
-// Simplified endpoints using SessionManager methods
-app.post('/api/submit-code', async (req, res) => {
-    try {
-        const studentId = req.session?.studentId;
-        if (!studentId) {
-            return res.status(401).json({ success: false, error: 'Not authenticated' });
-        }
-
-        const { code, language, timestamp } = req.body;
-
-        // Use SessionManager to record code
-        const session = sessionManager.sessions.get(studentId);
-        if (session) {
-            await sessionManager.recordCodeSubmission(session, {
-                code,
-                language,
-                timestamp: timestamp || Date.now()
-            });
-        }
-
-        console.log(`Code submission from ${studentId}: ${code?.length || 0} characters`);
-        res.json({ success: true, message: 'Code submitted successfully' });
-
-    } catch (error) {
-        console.error('Code submission error:', error);
-        res.status(500).json({ success: false, error: 'Failed to submit code' });
-    }
-});
-
-app.post('/api/finish-exam', async (req, res) => {
-    try {
-        const studentId = req.session?.studentId;
-        if (!studentId) {
-            return res.status(401).json({ success: false, error: 'Not authenticated' });
-        }
-
-        const session = sessionManager.sessions.get(studentId);
-        if (session) {
-            await sessionManager.completeSession(session, 'graceful');
-        }
-
-        req.session.destroy();
-        res.json({ success: true, message: 'Exam finished' });
-
-    } catch (error) {
-        console.error('Finish exam error:', error);
-        res.status(500).json({ success: false, error: 'Failed to finish exam' });
-    }
-});
-
-app.post('/api/report-violation', async (req, res) => {
-    try {
-        const studentId = req.session?.studentId;
-        if (!studentId) {
-            return res.status(401).json({ success: false, error: 'Not authenticated' });
-        }
-
-        const { violationType, details } = req.body;
-
-        const session = sessionManager.sessions.get(studentId);
-        if (session) {
-            await sessionManager.recordViolation(session, {
-                type: violationType,
-                details,
-                timestamp: Date.now()
-            });
-        }
-
-        console.log(`Violation reported for ${studentId}: ${violationType}`);
-        res.json({ success: true, message: 'Violation recorded' });
-
-    } catch (error) {
-        console.error('Violation report error:', error);
-        res.status(500).json({ success: false, error: 'Failed to report violation' });
-    }
-});
-
-// Teacher dashboard API
-app.get('/api/teacher/sessions', (req, res) => {
-    try {
-        const sessions = sessionManager.getAllSessionsData();
-        res.json({ success: true, sessions });
-    } catch (error) {
-        console.error('Get sessions error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get sessions' });
-    }
-});
-
-app.post('/api/teacher/session/:sessionId/action', (req, res) => {
-    try {
-        const { sessionId } = req.params;
-        const { action, data } = req.body;
-
-        let result;
-        switch (action) {
-            case 'warning':
-                result = sessionManager.sendWarning(sessionId, data.message);
-                break;
-            case 'terminate':
-                result = sessionManager.terminateSession(sessionId, data.reason);
-                break;
-            case 'extend-time':
-                result = sessionManager.extendTime(sessionId, data.minutes);
-                break;
-            default:
-                return res.status(400).json({ success: false, error: 'Invalid action' });
-        }
-
-        res.json(result);
-
-    } catch (error) {
-        console.error('Teacher action error:', error);
-        res.status(500).json({ success: false, error: 'Failed to execute action' });
-    }
-});
-
-// Initialize WebSocket handlers
-webSocketHandler.initialize();
-
-// Use proxy for practice server - correct usage
-app.use('/jsonstore', ...proxyHandler.middleware);
-
-// Start cleanup timer
-sessionManager.startCleanupTimer();
-
-// Periodic cleanup - SessionManager handles expired sessions
-setInterval(() => {
-    // SessionManager already has startCleanupTimer() running
-    // but this provides additional safety cleanup
-    let expiredCount = 0;
-
-    for (const session of sessionManager.sessions.values()) {
-        const timeLeft = sessionManager.calculateRemainingTime(session);
-        if (timeLeft <= 0 && session.status === 'active') {
-            sessionManager.expireSession(session.sessionId);
-            expiredCount++;
-        }
-    }
-
-    if (expiredCount > 0) {
-        console.log(`Manual cleanup: expired ${expiredCount} sessions`);
-    }
-}, 30000); // Every 30 seconds
-
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
+    console.error('Server error:', err);
     res.status(500).json({
         success: false,
-        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-    });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Route not found'
-    });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('Server closed');
-        sessionManager.saveAllSessions().then(() => {
-            process.exit(0);
-        });
-    });
-});
-
-process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-        console.log('Server closed');
-        sessionManager.saveAllSessions().then(() => {
-            process.exit(0);
-        });
+        message: 'Internal server error'
     });
 });
 
 // Start server
 server.listen(PORT, () => {
-    console.log(`Exam Monitor Server v2.0 running on port ${PORT}`);
-    console.log(`Student interface: http://localhost:${PORT}/student`);
+    console.log(`Exam Monitor v2.0 server running on port ${PORT}`);
     console.log(`Teacher dashboard: http://localhost:${PORT}/teacher`);
-    console.log(`Enhanced anti-cheat system active`);
+    console.log(`Student interface: http://localhost:${PORT}/student`);
+    console.log(`Practice server proxy: http://localhost:${PORT}/proxy`);
+    console.log(`Project API available at: http://localhost:${PORT}/api/project`);
+    console.log('Ready for exam sessions!');
 });

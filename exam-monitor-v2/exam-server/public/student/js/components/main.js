@@ -5,12 +5,12 @@
 
 // Import all required modules
 import { setupLoginForm, handleLoginSuccess, handleSessionRestore, handleLoginError } from './login.js';
-import { setupSocket } from '../socket.js';
+import { setupSocket } from './socket.js';
 import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clearOutput, changeTheme, saveCode } from './editor.js';
-import { startExamTimer, handleTimeWarning, handleExamExpired } from '../timer.js';
+import { startExamTimer, handleTimeWarning, handleExamExpired } from './timer.js';
 import { setupAntiCheat, activateAntiCheat, enterFullscreenMode, deactivateAntiCheat } from './anticheat.js';
 import { showCompletionDialog, hideCustomDialogs } from './dialogs.js';
-import { setupTabs } from '../tabs.js';
+import { setupTabs } from './tabs.js';
 
 // ================================
 // GLOBAL STATE MANAGEMENT
