@@ -5,563 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Exam Monitor</title>
-    <!-- Socket.io -->
+    <title>Exam Monitor - Student Interface</title>
+
+    <!-- External Dependencies -->
     <script src="/socket.io/socket.io.js"></script>
-    <!-- CSS -->
+
+    <!-- CSS - Modular Import System -->
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Monaco Editor (CDN) -->
+
+    <!-- Monaco Editor CDN -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js">
-    </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 </head>
 
 <body>
+    <!-- Main Application Container -->
+    <div id="app-container" class="app-container">
 
-    <div id="login-container" class="login-container">
-        <!-- NEW: Terms Agreement Section - Left Column -->
-        <div class="terms-section">
-            <div class="terms-header">
-                <h3>📋 Условия на изпита</h3>
-            </div>
-
-            <!-- Terms Content (Always visible) -->
-            <div id="terms-content" class="terms-content">
-
-                <!-- Enhanced Terms with NO-TOUCH POLICY -->
-
-                <div class="terms-text">
-                    <h4>🚫 АВТОМАТИЧНО ПРЕКРАТЯВАНЕ при:</h4>
-                    <ul class="violation-list">
-                        <li><strong>Излизане от fullscreen режим</strong></li>
-                        <li><strong>Скриване на прозореца</strong> на изпита</li>
-                        <li><strong>Превключване към други приложения</strong> или прозорци</li>
-                        <li><strong>Копиране/поставяне на код</strong> от външни источници</li>
-                        <li class="touch-violation"><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
-                    </ul>
-
-                    <!-- CRITICAL: Touch Policy Section -->
-                    <div class="no-touch-policy">
-                        <h4>📱 ВАЖНО: TOUCH ВЗАИМОДЕЙСТВИЕ ЗАБРАНЕНО</h4>
-                        <div class="touch-policy-content">
-                            <p><strong>🚫 ВСЯКО ДОКОСВАНЕ = АВТОМАТИЧНО ИЗГОНВАНЕ</strong></p>
-                            <ul class="touch-rules">
-                                <li>Използвайте <strong>САМО мишка и клавиатура</strong></li>
-                                <li>Touch screens <strong>НЕ СА ПОЗВОЛЕНИ</strong></li>
-                                <li>Таблети и телефони <strong>НЕ СА ПОДХОДЯЩИ</strong> за изпита</li>
-                                <li>Всеки touch event се засича <strong>МОМЕНТАЛНО</strong></li>
-                            </ul>
-
-                            <div class="device-requirement">
-                                <strong>💻 ЗАДЪЛЖИТЕЛНО:</strong> Използвайте настолен компютър или лаптоп
-                                с традиционни мишка и клавиатура. Никакви touch взаимодействия не са позволени.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Platform-Specific Details -->
-                    <div class="platform-details">
-                        <h5>💻 Windows потребители - забранени клавиши:</h5>
-                        <ul class="platform-list">
-                            <li><strong>ESC</strong> - излизане от fullscreen</li>
-                            <li><strong>Alt+Tab</strong> - превключване между приложения</li>
-                            <li><strong>Windows клавиш</strong> - отваряне на Start menu</li>
-                            <li><strong>F11</strong> - toggle fullscreen</li>
-                            <li><strong>Ctrl+Alt+Delete</strong> - Task Manager</li>
-                        </ul>
-
-                        <h5>🍎 Mac потребители - забранени клавиши/жестове:</h5>
-                        <ul class="platform-list">
-                            <li><strong>Cmd+Control+F</strong> - toggle fullscreen</li>
-                            <li><strong>Cmd+Tab</strong> - превключване между приложения</li>
-                            <li><strong>Green button</strong> (traffic light) - излизане от fullscreen</li>
-                            <li><strong>Trackpad gestures</strong> - swipe between spaces</li>
-                            <li><strong>Hot corners</strong> - активиране на Mission Control/Desktop</li>
-                        </ul>
-
-                        <h5>🐧 Linux потребители - забранени клавиши:</h5>
-                        <ul class="platform-list">
-                            <li><strong>Super key</strong> (Windows equivalent) - отваряне на Activities</li>
-                            <li><strong>Alt+Tab</strong> - превключване между приложения</li>
-                            <li><strong>F11</strong> - toggle fullscreen</li>
-                            <li><strong>Workspace switching</strong> - Ctrl+Alt+Arrow</li>
-                        </ul>
-                    </div>
-
-                    <h4>✅ РАЗРЕШЕНИ ДЕЙСТВИЯ:</h4>
-                    <ul class="allowed-list">
-                        <li><strong>Кодиране</strong> в предоставения редактор</li>
-                        <li><strong>Използване на console.log</strong> за тестване и debugging</li>
-                        <li><strong>Форматиране на кода</strong> с предоставените инструменти</li>
-                        <li><strong>Developer Tools</strong> в рамките на fullscreen режима</li>
-                        <li><strong>Мишка и клавиатура</strong> взаимодействие САМО</li>
-                    </ul>
-
-                    <!-- Platform-Specific Allowed Actions -->
-                    <div class="platform-details allowed-details">
-                        <h5>✅ Разрешени клавиши за смяна на език:</h5>
-                        <ul class="platform-list allowed">
-                            <li><strong>Windows:</strong> Windows+Space, Alt+Shift</li>
-                            <li><strong>Mac:</strong> Cmd+Space (Spotlight), Control+Space</li>
-                            <li><strong>Linux:</strong> Super+Space, Alt+Shift (зависи от настройките)</li>
-                        </ul>
-                    </div>
-
-                    <div class="warning-box">
-                        <strong>⚠️ ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>АВТОМАТИЧНО</strong>
-                        без възможност за връщане! Системата засича всички взаимодействия в реално време -
-                        включително touch events, излизане от fullscreen и превключване между приложения.
-                    </div>
-
-                    <div class="info-box">
-                        <strong>ℹ️ ДОПЪЛНИТЕЛНО:</strong> Времето за изпита е <strong>3 часа</strong>.
-                        Кодът се запазва автоматично на всеки 2 секунди. След приключване на изпита
-                        няма възможност за връщане или промени. Използвайте настолен компютър за най-добър опит.
-                    </div>
-
-                    <div class="tech-info">
-                        <strong>🔧 ТЕХНИЧЕСКА ИНФОРМАЦИЯ:</strong> Системата използва стандартни web APIs
-                        за детекция на fullscreen състоянието и touch events. Работи на всички modern browsers
-                        но изисква традиционни input devices (мишка + клавиатура).
-                    </div>
-                </div>
-            </div>
-
-            <!-- Agreement Checkbox -->
-            <div class="agreement-checkbox">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="terms-agreement" required>
-                    <span class="checkmark"></span>
-                    <span class="checkbox-text">
-                        Прочетох и се <strong>съгласявам с условията</strong> на изпита.
-                        Разбирам че при нарушение изпитът се прекратява автоматично.
-                    </span>
-                </label>
-            </div>
+        <!-- Login Component Container -->
+        <div id="login-component" class="component-container">
+            <!-- Login form will be loaded here by TemplateEngine -->
         </div>
 
-        <!-- Login Form - Right Column -->
-        <div class="login-form">
-            <h2>🎓 Вход в изпита по програмиране</h2>
-
-            <div class="form-group">
-                <input type="text" id="student-name" placeholder="Име и фамилия" required>
-            </div>
-
-            <div class="form-group">
-                <select id="student-class" required>
-                    <option value="">Изберете клас</option>
-                    <option value="11А">11А</option>
-                    <option value="11Б">11Б</option>
-                    <option value="12А">12А</option>
-                    <option value="12Б">12Б</option>
-                </select>
-            </div>
-
-            <!-- Enhanced Login Button -->
-            <button id="login-btn" class="btn-primary" disabled>
-                🚀 Влез в изпита
-            </button>
-
-            <div id="login-status" class="status-message"></div>
-        </div>
-    </div>
-
-    <!-- Fullscreen Exam Container -->
-    <div id="exam-container" class="exam-container" style="display: none;">
-        <!-- Header -->
-        <div class="exam-header">
-            <div class="student-info">
-                <span>Студент: <strong id="student-name-display"></strong></span>
-                <span>Клас: <strong id="student-class-display"></strong></span>
-                <span>ID: <strong id="session-id-display"></strong></span>
-            </div>
-
-            <div class="exam-timer">
-                <span class="timer-icon">⏱️</span>
-                <span id="timer-display">03:00:00</span>
-            </div>
+        <!-- Exam Workspace Container -->
+        <div id="exam-component" class="component-container" style="display: none;">
+            <!-- Exam workspace will be loaded here by TemplateEngine -->
         </div>
 
-        <!-- Main Content -->
-        <div class="exam-content">
-            <!-- Code Editor Panel -->
-            <div class="editor-panel">
-                <div class="panel-header">
-                    <h3>📝 Код Редактор</h3>
-                    <div class="editor-controls">
-                        <button id="run-code-btn" class="btn-success">▶️ Стартирай</button>
-                        <button id="format-code-btn" class="btn-primary">🎨 Форматирай</button>
-                        <button id="clear-output-btn" class="btn-secondary">🗑️ Изчисти</button>
-                        <select id="theme-selector">
-                            <option value="vs-dark">Dark</option>
-                            <option value="vs">Light</option>
-                            <option value="hc-black">High Contrast</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Monaco Editor -->
-                <div id="monaco-editor" class="monaco-container"></div>
-            </div>
-
-            <!-- Output Panel -->
-            <div class="output-panel">
-                <div class="panel-header">
-                    <h3>🖥️ Резултат</h3>
-                    <!-- NEW: Tab Navigation -->
-                    <div class="output-tabs">
-                        <button class="tab-btn active" data-tab="console" id="console-tab">
-                            🖥️ Console
-                        </button>
-                        <button class="tab-btn" data-tab="dom" id="dom-tab">
-                            🌐 DOM Preview
-                        </button>
-                        <button class="tab-btn" data-tab="mdn" id="mdn-tab">
-                            📚 MDN Reference
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Console Tab Content -->
-                <div id="console-tab-content" class="tab-content active">
-                    <div id="code-output" class="code-output">
-                        <div class="output-placeholder">
-                            Резултатът от вашия код ще се покаже тук...
-                        </div>
-                    </div>
-
-                    <!-- Error Panel -->
-                    <div id="error-panel" class="error-panel" style="display: none;">
-                        <div class="error-header">❌ Грешка в кода</div>
-                        <div id="error-content" class="error-content"></div>
-                    </div>
-
-                    <!-- Execution Info Display -->
-                    <div id="execution-info" style="display: none;"></div>
-                </div>
-
-                <!-- NEW: Offline MDN Tab Content -->
-                <div id="mdn-tab-content" class="tab-content" style="display: none;">
-                    <div class="mdn-offline">
-                        <div class="mdn-header">
-                            <h3>📚 JavaScript Quick Reference</h3>
-                        </div>
-
-                        <div class="mdn-nav">
-                            <button class="mdn-nav-btn active" onclick="showMDNSection('overview')">📋 Overview</button>
-                            <button class="mdn-nav-btn" onclick="showMDNSection('fetch')">🌐 Fetch</button>
-                            <button class="mdn-nav-btn" onclick="showMDNSection('dom')">🏗️ DOM</button>
-                            <button class="mdn-nav-btn" onclick="showMDNSection('array')">📋 Arrays</button>
-                            <button class="mdn-nav-btn" onclick="showMDNSection('object')">🔧 Objects</button>
-                            <button class="mdn-nav-btn" onclick="showMDNSection('json')">📄 JSON</button>
-                        </div>
-
-                        <div class="mdn-content-area">
-                            <!-- Overview -->
-                            <div id="mdn-overview" class="mdn-section active">
-
-                                <div class="quick-cards">
-                                    <div class="quick-card" onclick="showMDNSection('fetch')">
-                                        <strong>🌐 Fetch API</strong><br>
-                                        <code>fetch(url).then(r => r.json())</code>
-                                    </div>
-                                    <div class="quick-card" onclick="showMDNSection('dom')">
-                                        <strong>🏗️ DOM API</strong><br>
-                                        <code>document.querySelector('.class')</code>
-                                    </div>
-                                    <div class="quick-card" onclick="showMDNSection('array')">
-                                        <strong>📋 Arrays</strong><br>
-                                        <code>arr.map(x => x * 2)</code>
-                                    </div>
-                                    <div class="quick-card" onclick="showMDNSection('object')">
-                                        <strong>🔧 Objects</strong><br>
-                                        <code>Object.keys(obj)</code>
-                                    </div>
-                                    <div class="quick-card" onclick="showMDNSection('json')">
-                                        <strong>📄 JSON</strong><br>
-                                        <code>JSON.parse(string)</code>
-                                    </div>
-                                </div>
-
-                                <div class="mdn-note">
-                                    <p><strong>💡 Note:</strong> This is a quick offline reference. For full
-                                        documentation, search
-                                        online after the exam.</p>
-                                </div>
-                            </div>
-
-                            <!-- Fetch API -->
-                            <div id="mdn-fetch" class="mdn-section">
-                                <h4>🌐 Fetch API</h4>
-                                <div class="api-syntax">
-                                    <strong>Syntax:</strong> <code>fetch(url, options)</code>
-                                </div>
-                                <div class="api-description">
-                                    Modern way to make HTTP requests and handle responses
-                                </div>
-
-                                <h5>Basic Examples:</h5>
-                                <div class="code-example">
-                                    <strong>GET Request:</strong>
-                                    <pre>
-fetch('/api/data')
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch(error => console.error(error));
-                                    </pre>
-                                </div>
-
-                                <div class="code-example">
-                                    <strong>POST Request:</strong>
-                                    <pre>
-fetch('/api/users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'John', age: 30 })
-})
-.then(response => response.json())
-.then(data => console.log(data));
-                                    </pre>
-                                </div>
-
-                                <h5>Common Methods:</h5>
-                                <ul>
-                                    <li><code>response.json()</code> - Parse as JSON</li>
-                                    <li><code>response.text()</code> - Parse as text</li>
-                                    <li><code>response.ok</code> - Check if successful (200-299)</li>
-                                    <li><code>response.status</code> - Get HTTP status code</li>
-                                </ul>
-                            </div>
-
-                            <!-- DOM API -->
-                            <div id="mdn-dom" class="mdn-section">
-                                <h4>DOM API</h4>
-                                <div class="api-syntax">
-                                    <strong>Syntax:</strong> <code>document.method()</code>
-                                </div>
-                                <div class="api-description">
-                                    Document Object Model manipulation methods
-                                </div>
-
-                                <h5>Selection Methods:</h5>
-                                <div class="code-example">
-                                    <pre>
-// Select elements
-const el = document.querySelector('#id');
-const els = document.querySelectorAll('.class');
-const byId = document.getElementById('myId');
-                                    </pre>
-                                </div>
-
-                                <h5>Creation & Manipulation:</h5>
-                                <div class="code-example">
-                                    <pre>
-// Create and append
-const div = document.createElement('div');
-div.textContent = 'Hello World';
-div.className = 'my-class';
-document.body.appendChild(div);
-                                    </pre>
-                                </div>
-
-                                <h5>Event Handling:</h5>
-                                <div class="code-example">
-                                    <pre>
-// Add event listeners
-button.addEventListener('click', function(event) {
-    console.log('Button clicked!');
-    event.preventDefault();
-});
-                                    </pre>
-                                </div>
-                            </div>
-
-                            <!-- Array Methods -->
-                            <div id="mdn-array" class="mdn-section">
-                                <h4>📋 Array Methods</h4>
-                                <div class="api-syntax">
-                                    <strong>Syntax:</strong> <code>array.method(callback)</code>
-                                </div>
-
-                                <h5>Transform & Filter:</h5>
-                                <div class="code-example">
-                                    <pre>
-const numbers = [1, 2, 3, 4, 5];
-                
-// Transform each element
-const doubled = numbers.map(x => x * 2);
-                
-// Filter elements
-const evens = numbers.filter(x => x % 2 === 0);
-                
-// Find single element
-const found = numbers.find(x => x > 3);
-                                    </pre>
-                                </div>
-
-                                <h5>Iteration:</h5>
-                                <div class="code-example">
-                                    <pre>
-// Execute for each element
-numbers.forEach((num, index) => {
-    console.log(`${index}: ${num}`);
-});
-                
-// Reduce to single value
-const sum = numbers.reduce((total, num) => total + num, 0);
-                                    </pre>
-                                </div>
-
-                                <h5>Common Methods:</h5>
-                                <ul>
-                                    <li><code>map(fn)</code> - Transform each element</li>
-                                    <li><code>filter(fn)</code> - Select elements by condition</li>
-                                    <li><code>find(fn)</code> - Find first matching element</li>
-                                    <li><code>forEach(fn)</code> - Execute function for each</li>
-                                    <li><code>reduce(fn, initial)</code> - Reduce to single value</li>
-                                </ul>
-                            </div>
-
-                            <!-- Object Methods -->
-                            <div id="mdn-object" class="mdn-section">
-                                <h4>🔧 Object Methods</h4>
-                                <div class="api-syntax">
-                                    <strong>Syntax:</strong> <code>Object.method(obj)</code>
-                                </div>
-
-                                <h5>Object Inspection:</h5>
-                                <div class="code-example">
-                                    <pre>
-const user = { name: 'John', age: 30, city: 'Sofia' };
-// Get keys, values, entries
-const keys = Object.keys(user);         // ['name', 'age', 'city']
-const values = Object.values(user);     // ['John', 30, 'Sofia']
-const entries = Object.entries(user);   // [['name', 'John'], ...]
-                                    </pre>
-                                </div>
-
-                                <h5>Object Manipulation:</h5>
-                                <div class="code-example">
-                                    <pre>
-// Merge objects
-const defaults = { theme: 'light', lang: 'en' };
-const userPrefs = { theme: 'dark' };
-const config = Object.assign({}, defaults, userPrefs);
-                
-// Modern spread syntax
-const merged = { ...defaults, ...userPrefs };</pre>
-                                </div>
-
-                                <h5>Common Methods:</h5>
-                                <ul>
-                                    <li><code>Object.keys(obj)</code> - Get property names</li>
-                                    <li><code>Object.values(obj)</code> - Get property values</li>
-                                    <li><code>Object.entries(obj)</code> - Get [key, value] pairs</li>
-                                    <li><code>Object.assign(target, ...sources)</code> - Copy properties</li>
-                                </ul>
-                            </div>
-
-                            <!-- JSON -->
-                            <div id="mdn-json" class="mdn-section">
-                                <h4>📄 JSON API</h4>
-                                <div class="api-syntax">
-                                    <strong>Syntax:</strong> <code>JSON.method(data)</code>
-                                </div>
-
-                                <h5>Parse & Stringify:</h5>
-                                <div class="code-example">
-                                    <pre>
-// String to Object
-const jsonString = '{"name": "John", "age": 30}';
-const obj = JSON.parse(jsonString);
-                
-// Object to String
-const user = { name: 'John', age: 30 };
-const json = JSON.stringify(user);
-                
-// Pretty print
-const pretty = JSON.stringify(user, null, 2);
-                                    </pre>
-                                </div>
-
-                                <h5>Error Handling:</h5>
-                                <div class="code-example">
-                                    <pre>
-try {
-    const data = JSON.parse(invalidJson);
-} catch (error) {
-    console.error('Invalid JSON:', error.message);
-}
-                                    </pre>
-                                </div>
-
-                                <h5>Methods:</h5>
-                                <ul>
-                                    <li><code>JSON.parse(string)</code> - Parse JSON string to object</li>
-                                    <li><code>JSON.stringify(object)</code> - Convert object to JSON string</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+        <!-- Console Panel Container -->
+        <div id="console-component" class="component-container" style="display: none;">
+            <!-- Console panel will be loaded here by TemplateEngine -->
         </div>
 
-        <!-- Footer -->
-        <div class="exam-footer">
-            <div class="exam-status">
-                <span id="last-saved">Автоматично запазване активно</span>
-                <span id="connection-status" class="status-connected">● Свързан</span>
-                <span id="fullscreen-status">🔒 Fullscreen активен</span>
-            </div>
-
-            <button id="finish-exam-btn" class="btn-danger">
-                🏁 Приключи изпита
-            </button>
+        <!-- Violation Screen Container -->
+        <div id="violation-component" class="component-container">
+            <!-- Violation screen will be loaded here by TemplateEngine -->
         </div>
+
     </div>
 
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-overlay" style="display: none;">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <p>Зареждане на изпита...</p>
+            <div class="loading-text">Зареждане на изпита...</div>
         </div>
     </div>
 
-    <!-- Violation Screen - AUTO CLOSE ONLY -->
-    <div id="violation-screen" class="violation-overlay" style="display: none;">
-        <div class="violation-dialog">
-            <div class="violation-header">
-                <span class="violation-icon">⚠️</span>
-                <h2>Нарушение на сигурността</h2>
-            </div>
-    
-            <div class="violation-body">
-                <div id="violation-reason" class="violation-message">
-                    Изпитът се прекратява поради нарушение на правилата.
-                </div>
-                <div class="violation-warning">
-                    Изпитът се затваря автоматично.
-                </div>
-                <div class="violation-auto-close">
-                    Автоматично затваряне след <span id="violation-countdown">10</span> секунди...
-                </div>
-            </div>
-    
-            <!-- NO BUTTONS - Auto close only -->
-        </div>
-    </div>
-    
     <!-- Custom Dialog Container -->
-    <div id="custom-dialog-container"></div>
+    <div id="custom-dialog-container" class="dialog-container"></div>
 
-    <!-- Main JavaScript -->
-    <script type="module" src="js/main.js"></script>
+    <!-- Core Application JavaScript - ES6 Modules -->
+    <script type="module" src="js/app.js"></script>
+
 </body>
 
 </html>

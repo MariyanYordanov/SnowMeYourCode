@@ -1,0 +1,144 @@
+<!-- Security Violation Screen - Auto-close Only, No User Interaction -->
+<div id="violation-screen" class="violation-overlay" style="display: none;">
+    <div class="violation-dialog">
+        <!-- Violation Header -->
+        <div class="violation-header">
+            <span class="violation-icon">Warning</span>
+            <h2 id="violation-title">Нарушение на сигурността</h2>
+        </div>
+
+        <!-- Violation Body Content -->
+        <div class="violation-body">
+            <!-- Main violation message -->
+            <div id="violation-reason" class="violation-message">
+                Изпитът се прекратява поради нарушение на правилата.
+            </div>
+
+            <!-- Detailed violation explanation -->
+            <div class="violation-reason" id="violation-details" style="display: none;">
+                <div class="violation-reason-title">Детайли за нарушението:</div>
+                <div class="violation-reason-text" id="violation-details-text">
+                    <!-- Detailed explanation will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- General warning -->
+            <div class="violation-warning">
+                Изпитът се затваря автоматично. Няма възможност за връщане.
+            </div>
+
+            <!-- Auto-close countdown -->
+            <div class="violation-auto-close">
+                Автоматично затваряне след <span id="violation-countdown">10</span> секунди...
+            </div>
+        </div>
+
+        <!-- NO BUTTONS - Auto close only per security requirements -->
+        <!-- This ensures students cannot interact or delay the violation -->
+    </div>
+</div>
+
+<!-- Touch Device Warning (for touch violations) -->
+<div id="touch-device-warning" class="touch-device-warning" style="display: none;">
+    <div class="touch-warning-content">
+        <strong>TOUCH УСТРОЙСТВО ЗАСЕЧЕНО!</strong>
+        Използването на touch екрани е строго забранено по време на изпита.
+        Изпитът се прекратява автоматично.
+    </div>
+</div>
+
+<!-- Developer Tools Detection Warning -->
+<div id="devtools-detection-warning" class="devtools-detection-warning" style="display: none;">
+    <div class="devtools-warning-content">
+        Developer Tools са забранени по време на изпита.
+        Моля затворете ги незабавно.
+    </div>
+</div>
+
+<!-- Network Violation Warning -->
+<div id="network-violation-warning" class="network-violation-warning" style="display: none;">
+    <div class="network-warning-content">
+        <strong>МРЕЖОВО НАРУШЕНИЕ!</strong>
+        Засечено е подозрително мрежово поведение.
+        Изпитът се прекратява поради нарушение на сигурността.
+    </div>
+</div>
+
+<!-- Loading Overlay (shown during violation processing) -->
+<div id="violation-loading" class="violation-loading-overlay" style="display: none;">
+    <div class="violation-loading-content">
+        <div class="violation-loading-spinner"></div>
+        <div class="violation-loading-text">Обработване на нарушението...</div>
+    </div>
+</div>
+
+<!-- Background Blur Effect Container -->
+<div id="violation-backdrop" class="violation-backdrop" style="display: none;"></div>
+
+<!-- Violation Templates (Hidden, used by JS for different violation types) -->
+<div id="violation-templates" style="display: none;">
+    <!-- Fullscreen Violation -->
+    <div class="violation-template" data-type="fullscreen">
+        <div class="template-title">Fullscreen нарушение</div>
+        <div class="template-message">Излязохте от fullscreen режим. Изпитът се прекратява автоматично.</div>
+        <div class="template-details">Fullscreen режимът е задължителен по време на цялия изпит. Всяко излизане води до
+            автоматично прекратяване.</div>
+    </div>
+
+    <!-- Tab Switch Violation -->
+    <div class="violation-template" data-type="tab-switch">
+        <div class="template-title">Превключване между приложения</div>
+        <div class="template-message">Засечено е превключване към друго приложение. Изпитът се прекратява.</div>
+        <div class="template-details">Превключването между приложения или прозорци е строго забранено по време на
+            изпита.</div>
+    </div>
+
+    <!-- Copy/Paste Violation -->
+    <div class="violation-template" data-type="copy-paste">
+        <div class="template-title">Копиране/Поставяне забранено</div>
+        <div class="template-message">Опит за копиране или поставяне на код. Изпитът се прекратява.</div>
+        <div class="template-details">Копирането и поставянето на код от външни источници е строго забранено.</div>
+    </div>
+
+    <!-- Developer Tools Violation -->
+    <div class="violation-template" data-type="devtools">
+        <div class="template-title">Developer Tools нарушение</div>
+        <div class="template-message">Опит за отваряне на Developer Tools. Изпитът се прекратява.</div>
+        <div class="template-details">Developer Tools са забранени по време на изпита за осигуряване на честност.</div>
+    </div>
+
+    <!-- Touch Event Violation -->
+    <div class="violation-template" data-type="touch">
+        <div class="template-title">Touch взаимодействие забранено</div>
+        <div class="template-message">Засечено е докосване на екрана. Изпитът се прекратява автоматично.</div>
+        <div class="template-details">Touch устройствата не са позволени. Използвайте само мишка и клавиатура.</div>
+    </div>
+
+    <!-- Right Click Violation -->
+    <div class="violation-template" data-type="right-click">
+        <div class="template-title">Десен клик ограничен</div>
+        <div class="template-message">Десният клик е ограничен по време на изпита.</div>
+        <div class="template-details">Context меню функциите са деактивирани за сигурност на изпита.</div>
+    </div>
+
+    <!-- Network Violation -->
+    <div class="violation-template" data-type="network">
+        <div class="template-title">Мрежово нарушение</div>
+        <div class="template-message">Засечена е подозрителна мрежова активност. Изпитът се прекратява.</div>
+        <div class="template-details">Неразрешени мрежови заявки или опити за заобикаляне на сигурността.</div>
+    </div>
+
+    <!-- Multiple Sessions Violation -->
+    <div class="violation-template" data-type="multiple-sessions">
+        <div class="template-title">Множество сесии</div>
+        <div class="template-message">Засечени са множество активни сесии. Изпитът се прекратява.</div>
+        <div class="template-details">Разрешена е само една активна сесия на студент по време на изпита.</div>
+    </div>
+
+    <!-- Time Violation -->
+    <div class="violation-template" data-type="time-expired">
+        <div class="template-title">Времето изтече</div>
+        <div class="template-message">Времето за изпита изтече. Изпитът се затваря автоматично.</div>
+        <div class="template-details">Времето за изпита беше 3 часа. Всички промени са запазени автоматично.</div>
+    </div>
+</div>

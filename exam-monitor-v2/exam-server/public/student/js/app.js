@@ -1,0 +1,62 @@
+/**
+ * Main Application Entry Point
+ * Initializes Template Engine system and coordinates all modules
+ */
+
+// Import Template Engine system
+import { TemplateEngine } from './core/TemplateEngine.js';
+import { ComponentLoader } from './core/ComponentLoader.js';
+import { EventBinder } from './core/EventBinder.js';
+
+// Import existing components
+import './components/main.js';
+
+/**
+ * Initialize Template Engine system
+ */
+async function initializeTemplateSystem() {
+    try {
+        console.log('Initializing Template Engine system...');
+
+        // Initialize standard event handlers
+        EventBinder.initializeStandardHandlers();
+
+        // Load all templates
+        await TemplateEngine.preloadStandardTemplates();
+
+        // Initialize components
+        await ComponentLoader.initializeAll();
+
+        console.log('Template Engine system initialized successfully');
+
+    } catch (error) {
+        console.error('Failed to initialize Template Engine system:', error);
+
+        // Fallback: show error message
+        document.getElementById('app-container').innerHTML = `
+            <div style="padding: 40px; text-align: center; color: red;">
+                <h2>Failed to load exam system</h2>
+                <p>Error: ${error.message}</p>
+                <button onclick="location.reload()">Reload Page</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Start initialization when DOM is ready
+ */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTemplateSystem);
+} else {
+    initializeTemplateSystem();
+}
+
+/**
+ * Expose Template System for main.js integration
+ */
+window.TemplateSystem = {
+    TemplateEngine,
+    ComponentLoader,
+    EventBinder
+};

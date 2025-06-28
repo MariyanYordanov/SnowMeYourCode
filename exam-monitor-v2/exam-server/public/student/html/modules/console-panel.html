@@ -1,0 +1,174 @@
+<!-- Console Panel Template - Enhanced Code Output and Error Display -->
+<div class="console-area">
+    <!-- Console Header -->
+    <div class="console-header">
+        <h4>Console Output</h4>
+        <div class="console-controls">
+            <button class="console-btn" id="console-clear-btn" title="Clear Console" data-event="click"
+                data-handler="clearOutput">Clear</button>
+            <button class="console-btn" id="console-filter-btn" title="Filter Messages" data-event="click"
+                data-handler="toggleConsoleFilter">Filter</button>
+            <button class="console-btn" id="console-settings-btn" title="Console Settings" data-event="click"
+                data-handler="toggleConsoleSettings">Settings</button>
+        </div>
+    </div>
+
+    <!-- Main Output Area -->
+    <div id="code-output" class="code-output">
+        <div class="output-placeholder">
+            Резултатът от вашия код ще се покаже тук...
+        </div>
+    </div>
+
+    <!-- Error Panel (Hidden by default) -->
+    <div id="error-panel" class="error-panel" style="display: none;">
+        <div class="error-header">
+            <span class="error-icon">Error</span>
+            <button class="error-close-btn" id="error-close-btn" data-event="click" data-handler="closeError">×</button>
+        </div>
+        <div id="error-content" class="error-content">
+            <!-- Error details will be populated by JS -->
+        </div>
+        <div class="error-actions">
+            <button class="error-action-btn" id="error-goto-line">Go to Line</button>
+            <button class="error-action-btn" id="error-copy">Copy Error</button>
+        </div>
+    </div>
+
+    <!-- Execution Info Panel (Hidden by default) -->
+    <div id="execution-info" class="execution-info" style="display: none;">
+        <div class="execution-status">
+            <span class="execution-icon">Status</span>
+            <span id="execution-text">Code executed successfully</span>
+        </div>
+        <div class="execution-details">
+            <span id="execution-time">Execution time: 0ms</span>
+            <span id="execution-memory">Memory usage: -</span>
+        </div>
+    </div>
+
+    <!-- Console Filter Options (Hidden by default) -->
+    <div id="console-filter-panel" class="console-filter-panel" style="display: none;">
+        <div class="filter-options">
+            <label class="filter-option">
+                <input type="checkbox" id="filter-log" checked>
+                <span class="filter-label">console.log</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" id="filter-error" checked>
+                <span class="filter-label">console.error</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" id="filter-warn" checked>
+                <span class="filter-label">console.warn</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" id="filter-info" checked>
+                <span class="filter-label">console.info</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" id="filter-table" checked>
+                <span class="filter-label">console.table</span>
+            </label>
+            <label class="filter-option">
+                <input type="checkbox" id="filter-time" checked>
+                <span class="filter-label">console.time</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Console Settings Panel (Hidden by default) -->
+    <div id="console-settings-panel" class="console-settings-panel" style="display: none;">
+        <div class="settings-group">
+            <label class="setting-label">Font Size:</label>
+            <select id="console-font-size">
+                <option value="12">12px</option>
+                <option value="13" selected>13px</option>
+                <option value="14">14px</option>
+                <option value="16">16px</option>
+            </select>
+        </div>
+        <div class="settings-group">
+            <label class="setting-label">Line Numbers:</label>
+            <input type="checkbox" id="console-line-numbers">
+        </div>
+        <div class="settings-group">
+            <label class="setting-label">Timestamps:</label>
+            <input type="checkbox" id="console-timestamps">
+        </div>
+        <div class="settings-group">
+            <label class="setting-label">Auto Scroll:</label>
+            <input type="checkbox" id="console-auto-scroll" checked>
+        </div>
+        <div class="settings-group">
+            <label class="setting-label">Max Lines:</label>
+            <select id="console-max-lines">
+                <option value="100">100</option>
+                <option value="500" selected>500</option>
+                <option value="1000">1000</option>
+                <option value="-1">Unlimited</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Console Output Templates (Hidden, used by JS) -->
+<div id="console-templates" style="display: none;">
+    <!-- Log Line Template -->
+    <div class="output-line output-log template" data-template="log">
+        <span class="output-timestamp"></span>
+        <span class="output-content"></span>
+    </div>
+
+    <!-- Error Line Template -->
+    <div class="output-line output-error template" data-template="error">
+        <span class="output-timestamp"></span>
+        <span class="output-content"></span>
+        <div class="error-stack"></div>
+    </div>
+
+    <!-- Warning Line Template -->
+    <div class="output-line output-warn template" data-template="warn">
+        <span class="output-timestamp"></span>
+        <span class="output-content"></span>
+    </div>
+
+    <!-- Info Line Template -->
+    <div class="output-line output-info template" data-template="info">
+        <span class="output-timestamp"></span>
+        <span class="output-content"></span>
+    </div>
+
+    <!-- Table Template -->
+    <div class="output-line output-table template" data-template="table">
+        <span class="output-timestamp"></span>
+        <div class="output-table-wrapper">
+            <table class="console-table">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Time Start Template -->
+    <div class="output-line output-time-start template" data-template="time-start">
+        <span class="output-timestamp"></span>
+        <span class="time-label">Timer Start</span>
+        <span class="output-content"></span>
+    </div>
+
+    <!-- Time End Template -->
+    <div class="output-line output-time-end template" data-template="time-end">
+        <span class="output-timestamp"></span>
+        <span class="time-label">Timer End</span>
+        <span class="output-content"></span>
+        <span class="time-duration"></span>
+    </div>
+
+    <!-- Clear Template -->
+    <div class="output-line output-clear template" data-template="clear">
+        <span class="output-timestamp"></span>
+        <span class="clear-label">Console Cleared</span>
+        <span class="output-content"></span>
+    </div>
+</div>
