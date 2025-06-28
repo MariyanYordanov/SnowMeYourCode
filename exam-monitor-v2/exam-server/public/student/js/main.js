@@ -9,7 +9,7 @@ import { setupSocket } from './socket.js';
 import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clearOutput, changeTheme } from './editor.js';
 import { startExamTimer, handleTimeWarning, handleExamExpired } from './timer.js';
 import { setupAntiCheat, activateAntiCheat, enterFullscreenMode } from './anticheat.js';
-import { showCompletionDialog, showViolationExitDialog } from './dialogs.js';
+import { showCompletionDialog, showViolationExitDialog, hideCustomDialogs } from './dialogs.js';
 import { setupTabs } from './tabs.js';  // No more mdn-data import needed
 // ================================
 // GLOBAL STATE MANAGEMENT
@@ -205,7 +205,8 @@ function updateStudentDisplay() {
  */
 async function handleFinishExam() {
     try {
-        closeAllPopups();
+        hideCustomDialogs();
+
         // Use custom dialog instead of browser confirm
         const shouldExit = await showCompletionDialog({
             title: 'Приключване на изпита',
