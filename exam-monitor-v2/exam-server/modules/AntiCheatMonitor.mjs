@@ -52,7 +52,7 @@ export class AntiCheatMonitor {
         // Activity tracking
         this.studentActivity = new Map(); // sessionId -> activity data
         this.suspicionScores = new Map(); // sessionId -> score
-        this.activityTimelines = new Map(); // sessionId -> timeline
+        this.activityTimelines = new Map(); // sessionId -> activity timeline
 
         // Configuration
         this.config = {
@@ -77,7 +77,7 @@ export class AntiCheatMonitor {
         };
 
         this.setupMonitoring();
-        console.log('🛡️ Anti-cheat monitor initialized');
+        console.log('Anti-cheat monitor initialized');
     }
 
     /**
@@ -132,7 +132,7 @@ export class AntiCheatMonitor {
             await this.executeAction(sessionId, action, activity);
 
             // Log activity
-            console.log(`🚨 Suspicious activity: ${session.studentName} - ${activityType} (severity: ${activity.severity})`);
+            console.log(`Suspicious activity: ${session.studentName} - ${activityType} (severity: ${activity.severity})`);
 
         } catch (error) {
             console.error('Error tracking suspicious activity:', error);
@@ -360,7 +360,7 @@ export class AntiCheatMonitor {
             timestamp: Date.now()
         });
 
-        console.log(`🚨 Force disconnected: ${session.studentName} - ${activity.type}`);
+        console.log(`Force disconnected: ${session.studentName} - ${activity.type}`);
     }
 
     /**
@@ -511,7 +511,7 @@ export class AntiCheatMonitor {
         // Send to teachers
         this.webSocketHandler.notifyTeachers('activity-report', report);
 
-        console.log(`📊 Activity report: ${report.suspiciousStudents}/${report.totalStudents} students flagged`);
+        console.log(`Activity report: ${report.suspiciousStudents}/${report.totalStudents} students flagged`);
     }
 
     /**
@@ -534,7 +534,7 @@ export class AntiCheatMonitor {
         if (activity) {
             activity.suspicionScore = 0;
         }
-        console.log(`🔄 Reset suspicion score for session ${sessionId}`);
+        console.log(`Reset suspicion score for session ${sessionId}`);
     }
 
     /**
@@ -542,6 +542,6 @@ export class AntiCheatMonitor {
      */
     updateConfig(newConfig) {
         this.config = { ...this.config, ...newConfig };
-        console.log('⚙️ Anti-cheat configuration updated');
+        console.log('Anti-cheat configuration updated');
     }
 }

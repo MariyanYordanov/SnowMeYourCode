@@ -126,7 +126,7 @@ export class SessionManager {
         session.lastActivity = new Date().toISOString();
         this.updateSession(session);
 
-        console.log(`🔄 Session restored: ${session.studentName} - ${this.formatTimeLeft(timeLeft)} remaining`);
+        console.log(`Session restored: ${session.studentName} - ${this.formatTimeLeft(timeLeft)} remaining`);
 
         return {
             success: true,
@@ -223,7 +223,7 @@ export class SessionManager {
             class: studentClass
         });
 
-        console.log(`✅ New session created: ${sessionId} for ${studentName} (${studentClass})`);
+        console.log(`New session created: ${sessionId} for ${studentName} (${studentClass})`);
 
         return {
             success: true,
@@ -298,7 +298,7 @@ export class SessionManager {
         session.lastActivity = new Date().toISOString();
 
         await this.dataStore.saveSession(session);
-        console.log(`📴 Session disconnected: ${sessionId}`);
+        console.log(`Session disconnected: ${sessionId}`);
     }
 
     /**
@@ -313,7 +313,7 @@ export class SessionManager {
         session.endTime = new Date().toISOString();
 
         await this.dataStore.saveSession(session);
-        console.log(`✅ Session completed: ${sessionId} (${terminationType})`);
+        console.log(`Session completed: ${sessionId} (${terminationType})`);
         return true;
     }
 
@@ -329,7 +329,7 @@ export class SessionManager {
         session.terminationType = 'timeout';
 
         await this.dataStore.saveSession(session);
-        console.log(`⏰ Session expired: ${sessionId}`);
+        console.log(`Session expired: ${sessionId}`);
     }
 
     /**
@@ -428,7 +428,7 @@ export class SessionManager {
             for (const session of sessions) {
                 this.sessions.set(session.sessionId, session);
             }
-            console.log(`📋 Loaded ${sessions.length} existing sessions`);
+            console.log(`Loaded ${sessions.length} existing sessions`);
         } catch (error) {
             console.error('Error loading sessions:', error);
         }
@@ -463,6 +463,6 @@ export class SessionManager {
             }
         }, 60000); // Check every minute
 
-        console.log('🔄 Session cleanup timer started');
+        console.log('Session cleanup timer started');
     }
 }

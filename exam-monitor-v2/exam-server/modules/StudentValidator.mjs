@@ -20,7 +20,7 @@ export class StudentValidator {
     async loadClasses() {
         try {
             this.classes = await this.dataStore.loadClasses();
-            console.log(`📚 Loaded classes: ${this.classes.validClasses.join(', ')}`);
+            console.log(`Loaded classes: ${this.classes.validClasses.join(', ')}`);
         } catch (error) {
             console.error('Error loading classes:', error);
             this.classes = null;
@@ -197,7 +197,7 @@ export class StudentValidator {
         this.classes.students[className].push(normalizedName);
         await this.dataStore.saveClasses(this.classes);
 
-        console.log(`✅ Added student ${normalizedName} to class ${className}`);
+        console.log(`Added student ${normalizedName} to class ${className}`);
         return true;
     }
 
@@ -225,7 +225,7 @@ export class StudentValidator {
         this.classes.students[className].splice(studentIndex, 1);
         await this.dataStore.saveClasses(this.classes);
 
-        console.log(`❌ Removed student ${studentName} from class ${className}`);
+        console.log(`Removed student ${studentName} from class ${className}`);
         return true;
     }
 
@@ -246,7 +246,7 @@ export class StudentValidator {
 
         await this.dataStore.saveClasses(this.classes);
 
-        console.log(`➕ Added new class: ${className}`);
+        console.log(`Added new class: ${className}`);
         return true;
     }
 
@@ -271,7 +271,7 @@ export class StudentValidator {
 
         await this.dataStore.saveClasses(this.classes);
 
-        console.log(`🗑️ Removed class: ${className}`);
+        console.log(`Removed class: ${className}`);
         return true;
     }
 
@@ -374,12 +374,12 @@ export class StudentValidator {
             this.classes = importData;
             await this.dataStore.saveClasses(this.classes);
 
-            console.log('📥 Successfully imported class data');
-            console.log(`📊 Classes: ${this.classes.validClasses.length}`);
-            console.log(`👥 Total students: ${Object.values(this.classes.students).flat().length}`);
+            console.log('Successfully imported class data');
+            console.log(`Classes: ${this.classes.validClasses.length}`);
+            console.log(`Total students: ${Object.values(this.classes.students).flat().length}`);
 
             if (validation.warnings.length > 0) {
-                console.warn('⚠️ Import warnings:', validation.warnings);
+                console.warn('Import warnings:', validation.warnings);
             }
 
             return {
@@ -390,7 +390,7 @@ export class StudentValidator {
         } catch (error) {
             // Restore backup on error
             this.classes = backup;
-            console.error('❌ Import failed, restored backup');
+            console.error('Import failed, restored backup');
             throw error;
         }
     }

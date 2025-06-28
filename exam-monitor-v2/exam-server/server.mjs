@@ -64,7 +64,7 @@ app.get('/', (req, res) => {
         <p><a href="/student">Student Login & Fullscreen Exam</a></p>
         <p><a href="/test-fullscreen">Test Fullscreen (Debug)</a></p>
         <hr>
-        <h3>🔒 New Fullscreen Architecture:</h3>
+        <h3>New Fullscreen Architecture:</h3>
         <ul>
             <li><strong>/student</strong> - Single page with fullscreen protection</li>
             <li><strong>Fullscreen API</strong> - Mandatory fullscreen exam mode</li>
@@ -85,7 +85,7 @@ app.get('/student', (req, res) => {
 
 // Legacy popup endpoint - redirect to main student page
 app.get('/student-exam-window', (req, res) => {
-    console.log('⚠️ Legacy popup endpoint accessed - redirecting to fullscreen mode');
+    console.log('Legacy popup endpoint accessed - redirecting to fullscreen mode');
     res.redirect('/student?legacy=popup');
 });
 
@@ -100,7 +100,7 @@ app.post('/api/student-login', async (req, res) => {
             req.session.studentName = studentName;
             req.session.studentClass = studentClass;
 
-            console.log(`✅ Student login successful: ${studentName} (${studentClass}) - Session: ${result.sessionId}`);
+            console.log(`Student login successful: ${studentName} (${studentClass}) - Session: ${result.sessionId}`);
         }
 
         res.json(result);
@@ -185,23 +185,23 @@ app.post('/api/window-event', (req, res) => {
         return res.status(400).json({ error: 'Missing sessionId or event' });
     }
 
-    console.log(`📡 Cross-window event: ${event} for session ${sessionId}`, data);
+    console.log(`Cross-window event: ${event} for session ${sessionId}`, data);
 
     // Handle different window events
     switch (event) {
         case 'popup-opened':
-            console.log(`🪟 Popup opened for session ${sessionId}`);
+            console.log(`Popup opened for session ${sessionId}`);
             break;
         case 'popup-closed':
-            console.log(`🚫 Popup closed for session ${sessionId}`);
+            console.log(`Popup closed for session ${sessionId}`);
             // Could trigger session cleanup or notification
             break;
         case 'focus-lost':
-            console.log(`👁️ Focus lost in popup for session ${sessionId}`);
+            console.log(`Focus lost in popup for session ${sessionId}`);
             // Could trigger anti-cheat logging
             break;
         default:
-            console.log(`❓ Unknown window event: ${event}`);
+            console.log(`Unknown window event: ${event}`);
     }
 
     res.json({ acknowledged: true });
@@ -216,7 +216,7 @@ app.use('/jsonstore',
         const isFromPopup = referer && referer.includes('/student-exam-window');
 
         if (isFromPopup) {
-            console.log(`📡 JSONStore request from popup: ${req.method} ${req.url}`);
+            console.log(`JSONStore request from popup: ${req.method} ${req.url}`);
             // Could add additional popup-specific validation here
         }
 
@@ -259,12 +259,12 @@ io.on('connection', (socket) => {
     socket.on('fullscreen-connection', (data) => {
         socket.isFullscreenConnection = true;
         socket.sessionId = data.sessionId;
-        console.log(`🔒 Fullscreen WebSocket connected: ${data.sessionId}`);
+        console.log(`Fullscreen WebSocket connected: ${data.sessionId}`);
     });
 
     // Handle fullscreen-specific events
     socket.on('fullscreen-entered', (data) => {
-        console.log(`✅ Fullscreen entered: ${data.sessionId}`);
+        console.log(`Fullscreen entered: ${data.sessionId}`);
         // Notify teacher dashboard of fullscreen status
         io.to('teachers').emit('student-fullscreen-status', {
             sessionId: data.sessionId,
@@ -274,7 +274,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('fullscreen-exited', (data) => {
-        console.log(`⚠️ Fullscreen exited: ${data.sessionId} - Attempt #${data.attempt}`);
+        console.log(`Fullscreen exited: ${data.sessionId} - Attempt #${data.attempt}`);
         // Notify teacher dashboard of security violation
         io.to('teachers').emit('student-fullscreen-violation', {
             sessionId: data.sessionId,
@@ -285,7 +285,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('fullscreen-terminated', (data) => {
-        console.log(`🚫 Exam terminated for fullscreen violations: ${data.sessionId}`);
+        console.log(`Exam terminated for fullscreen violations: ${data.sessionId}`);
         // Notify teacher dashboard of termination
         io.to('teachers').emit('student-terminated', {
             sessionId: data.sessionId,
@@ -298,10 +298,10 @@ io.on('connection', (socket) => {
 
 // Start server
 server.listen(PORT, async () => {
-    console.log(`🚀 Exam Monitor v2 - Fullscreen Mode running on http://localhost:${PORT}`);
-    console.log(`📊 Teacher dashboard: http://localhost:${PORT}/teacher`);
-    console.log(`👨‍🎓 Student fullscreen exam: http://localhost:${PORT}/student`);
-    console.log(`🌐 Network: ExamNet hotspot on port ${PORT}`);
+    console.log(`Exam Monitor v2 - Fullscreen Mode running on http://localhost:${PORT}`);
+    console.log(`Teacher dashboard: http://localhost:${PORT}/teacher`);
+    console.log(`Student fullscreen exam: http://localhost:${PORT}/student`);
+    console.log(`Network: ExamNet hotspot on port ${PORT}`);
 
     // Start cleanup timer for expired sessions
     sessionManager.startCleanupTimer();
@@ -309,9 +309,9 @@ server.listen(PORT, async () => {
     // Check practice server health
     const health = await proxyHandler.healthCheck();
     if (health.healthy) {
-        console.log(`✅ Practice server is healthy`);
+        console.log(`Practice server is healthy`);
     } else {
-        console.warn(`⚠️ Practice server health check failed: ${health.error}`);
+        console.warn(`Practice server health check failed: ${health.error}`);
     }
 });
 

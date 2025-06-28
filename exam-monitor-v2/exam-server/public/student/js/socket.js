@@ -54,10 +54,10 @@ export function setupSocket() {
         // Setup event handlers
         setupSocketEventHandlers(socket);
 
-        console.log('✅ Socket.io connected');
+        console.log('Socket.io connected');
         return true;
     } catch (error) {
-        console.error('❌ Socket setup failed:', error);
+        console.error('Socket setup failed:', error);
         setTimeout(setupSocket, 1000);
         return false;
     }
@@ -87,7 +87,7 @@ function setupSocketEventHandlers(socket) {
         socket.on('anti-cheat-warning', handleAntiCheatWarning);
 
     } catch (error) {
-        console.error('❌ Failed to setup socket handlers:', error);
+        console.error('Failed to setup socket handlers:', error);
     }
 }
 
@@ -110,7 +110,7 @@ export function handleSocketConnect(socket) {
             }
         }
     } catch (error) {
-        console.error('❌ Error handling socket connect:', error);
+        console.error('Error handling socket connect:', error);
     }
 }
 
@@ -119,7 +119,7 @@ export function handleSocketConnect(socket) {
  */
 export function handleSocketDisconnect(socket, reason) {
     try {
-        console.warn('❌ Disconnected from server:', reason);
+        console.warn('Disconnected from server:', reason);
 
         // Update global state
         window.ExamApp.isConnected = false;
@@ -142,7 +142,7 @@ export function handleSocketDisconnect(socket, reason) {
         // Auto-reconnect for network issues
         attemptReconnection();
     } catch (error) {
-        console.error('❌ Error handling socket disconnect:', error);
+        console.error('Error handling socket disconnect:', error);
     }
 }
 
@@ -151,7 +151,7 @@ export function handleSocketDisconnect(socket, reason) {
  */
 export function handleSocketError(socket, error) {
     try {
-        console.error('❌ Socket connection error:', error);
+        console.error('Socket connection error:', error);
 
         // Update UI
         updateConnectionStatus(false);
@@ -159,7 +159,7 @@ export function handleSocketError(socket, error) {
         // Attempt reconnection
         attemptReconnection();
     } catch (err) {
-        console.error('❌ Error handling socket error:', err);
+        console.error('Error handling socket error:', err);
     }
 }
 
@@ -168,7 +168,7 @@ export function handleSocketError(socket, error) {
  */
 function attemptReconnection() {
     if (reconnectAttempts >= maxReconnectAttempts) {
-        console.error('❌ Max reconnection attempts reached');
+        console.error('Max reconnection attempts reached');
         if (window.ExamApp.showNotification) {
             window.ExamApp.showNotification('Неуспешно свързване. Моля рефрешнете страницата.', 'error');
         }
@@ -206,7 +206,7 @@ export function updateConnectionStatus(connected) {
             statusEl.textContent = '● Изключен';
         }
     } catch (error) {
-        console.error('❌ Failed to update connection status:', error);
+        console.error('Failed to update connection status:', error);
     }
 }
 
@@ -217,11 +217,11 @@ function handleTimeWarning(data) {
     try {
         // Show time warning notification
         if (window.ExamApp.showNotification) {
-            const message = `⚠️ Внимание! Остават ${data.minutesLeft} минути до края на изпита!`;
+            const message = `Внимание! Остават ${data.minutesLeft} минути до края на изпита!`;
             window.ExamApp.showNotification(message, 'warning');
         }
     } catch (error) {
-        console.error('❌ Error handling time warning:', error);
+        console.error('Error handling time warning:', error);
     }
 }
 
@@ -240,7 +240,7 @@ function handleExamExpired(data) {
             window.close();
         }, 10000);
     } catch (error) {
-        console.error('❌ Error handling exam expiration:', error);
+        console.error('Error handling exam expiration:', error);
     }
 }
 
@@ -259,7 +259,7 @@ function handleForceDisconnect(data) {
             window.close();
         }, 5000);
     } catch (error) {
-        console.error('❌ Error handling force disconnect:', error);
+        console.error('Error handling force disconnect:', error);
     }
 }
 
@@ -273,7 +273,7 @@ function handleAntiCheatWarning(data) {
             window.ExamApp.showNotification(data.message, 'warning');
         }
     } catch (error) {
-        console.error('❌ Error handling anti-cheat warning:', error);
+        console.error('Error handling anti-cheat warning:', error);
     }
 }
 
@@ -294,7 +294,7 @@ export function sendCodeUpdate(code, filename = 'main.js') {
 
         return true;
     } catch (error) {
-        console.error('❌ Error sending code update:', error);
+        console.error('Error sending code update:', error);
         return false;
     }
 }
@@ -315,10 +315,10 @@ export function reportSuspiciousActivity(activity, data = {}) {
             timestamp: Date.now()
         });
 
-        console.log(`📤 Reported suspicious activity: ${activity}`);
+        console.log(`Reported suspicious activity: ${activity}`);
         return true;
     } catch (error) {
-        console.error('❌ Error reporting suspicious activity:', error);
+        console.error('Error reporting suspicious activity:', error);
         return false;
     }
 }
@@ -341,7 +341,7 @@ export function sendExamCompletion(reason = 'completed') {
 
         return true;
     } catch (error) {
-        console.error('❌ Error sending exam completion:', error);
+        console.error('Error sending exam completion:', error);
         return false;
     }
 }
@@ -360,7 +360,7 @@ export function sendHeartbeat() {
         }
         return false;
     } catch (error) {
-        console.error('❌ Error sending heartbeat:', error);
+        console.error('Error sending heartbeat:', error);
         return false;
     }
 }
@@ -402,7 +402,7 @@ export function manualReconnect() {
             setupSocket();
         }
     } catch (error) {
-        console.error('❌ Error during manual reconnect:', error);
+        console.error('Error during manual reconnect:', error);
     }
 }
 
@@ -420,7 +420,7 @@ export function disconnectSocket() {
         updateConnectionStatus(false);
 
     } catch (error) {
-        console.error('❌ Error disconnecting socket:', error);
+        console.error('Error disconnecting socket:', error);
     }
 }
 
@@ -440,7 +440,7 @@ export function setupHeartbeat(interval = 30000) {
         }, interval);
 
     } catch (error) {
-        console.error('❌ Error setting up heartbeat:', error);
+        console.error('Error setting up heartbeat:', error);
     }
 }
 
@@ -454,6 +454,6 @@ export function clearHeartbeat() {
             window.ExamApp.heartbeatInterval = null;
         }
     } catch (error) {
-        console.error('❌ Error clearing heartbeat:', error);
+        console.error('Error clearing heartbeat:', error);
     }
 }

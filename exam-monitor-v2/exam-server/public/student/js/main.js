@@ -57,7 +57,7 @@ window.ExamApp = {
 // APPLICATION INITIALIZATION
 // ================================
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Student Exam System initializing...');
+    console.log('Student Exam System initializing...');
 
     // Wait for all scripts to load
     if (document.readyState === 'loading') {
@@ -85,10 +85,10 @@ function initializeAppSafely() {
             setupSocket();
         }, 100);
 
-        console.log('✅ Student Exam System initialized');
+        console.log('Student Exam System initialized');
 
     } catch (error) {
-        console.error('❌ Failed to initialize app:', error);
+        console.error('Failed to initialize app:', error);
         showError('Грешка при зареждане на системата');
     }
 }
@@ -116,7 +116,7 @@ function setupExamControls() {
         setupTabs();
 
     } catch (error) {
-        console.error('❌ Failed to setup exam controls:', error);
+        console.error('Failed to setup exam controls:', error);
     }
 }
 
@@ -130,7 +130,7 @@ function setupNotificationSystem() {
         window.ExamApp.showError = showError;
 
     } catch (error) {
-        console.error('❌ Failed to setup notification system:', error);
+        console.error('Failed to setup notification system:', error);
     }
 }
 
@@ -176,9 +176,9 @@ async function startExam(data) {
         // Mark as logged in
         window.ExamApp.isLoggedIn = true;
 
-        console.log('✅ Exam started successfully');
+        console.log('Exam started successfully');
     } catch (error) {
-        console.error('❌ Failed to start exam:', error);
+        console.error('Failed to start exam:', error);
         showError('Грешка при стартиране на изпита');
     }
 }
@@ -197,7 +197,7 @@ function updateStudentDisplay() {
         if (sessionEl) sessionEl.textContent = window.ExamApp.sessionId || 'Неизвестен';
 
     } catch (error) {
-        console.error('❌ Failed to update student display:', error);
+        console.error('Failed to update student display:', error);
     }
 }
 
@@ -220,7 +220,7 @@ async function handleFinishExam() {
             exitExam('completed');
         }
     } catch (error) {
-        console.error('❌ Error handling finish exam:', error);
+        console.error('Error handling finish exam:', error);
     }
 }
 
@@ -311,7 +311,7 @@ function exitExam(reason) {
         }
 
     } catch (error) {
-        console.error('❌ Error exiting exam:', error);
+        console.error('Error exiting exam:', error);
         // Force close on error
         window.close();
     }
@@ -339,10 +339,10 @@ function showViolationScreen(reason) {
             exitExam('violation-auto-close');
         }, 10000);
 
-        console.log(`⚠️ Violation shown: ${reason} - Auto-closing in 10 seconds`);
+        console.log(`Violation shown: ${reason} - Auto-closing in 10 seconds`);
 
     } catch (error) {
-        console.error('❌ Error showing violation screen:', error);
+        console.error('Error showing violation screen:', error);
     }
 }
 
@@ -399,7 +399,7 @@ function showNotification(message, type = 'info') {
         }, 5000);
 
     } catch (error) {
-        console.error('❌ Error showing notification:', error);
+        console.error('Error showing notification:', error);
     }
 }
 
@@ -418,7 +418,7 @@ function showError(message) {
 
         console.error('Error shown to user:', message);
     } catch (error) {
-        console.error('❌ Failed to show error:', error);
+        console.error('Failed to show error:', error);
     }
 }
 
@@ -459,4 +459,4 @@ if (window.location.hostname === 'localhost') {
     };
 }
 
-console.log('🎯 Student Exam System loaded successfully!');
+console.log('Student Exam System loaded successfully!');

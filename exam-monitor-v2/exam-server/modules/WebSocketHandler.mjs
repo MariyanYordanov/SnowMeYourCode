@@ -47,7 +47,7 @@ export class WebSocketHandler {
      */
     initialize() {
         this.io.on('connection', (socket) => {
-            console.log(`🔌 New connection: ${socket.id}`);
+            console.log(`New connection: ${socket.id}`);
 
             // Set up common event handlers
             this.setupCommonHandlers(socket);
@@ -65,7 +65,7 @@ export class WebSocketHandler {
             });
         });
 
-        console.log('🚀 WebSocket handler initialized');
+        console.log('WebSocket handler initialized');
     }
 
     /**
@@ -177,7 +177,7 @@ export class WebSocketHandler {
                 timeLeft: loginResult.timeLeft
             });
 
-            console.log(`👨‍🎓 Student joined: ${studentName} (${studentClass}) - ${loginResult.sessionId}`);
+            console.log(`Student joined: ${studentName} (${studentClass}) - ${loginResult.sessionId}`);
 
         } catch (error) {
             console.error('Error handling student join:', error);
@@ -253,7 +253,7 @@ export class WebSocketHandler {
                 severity: data.severity || 'medium'
             });
 
-            console.log(`⚠️ Suspicious activity: ${socket.studentInfo.name} - ${data.activity}`);
+            console.log(`Suspicious activity: ${socket.studentInfo.name} - ${data.activity}`);
 
         } catch (error) {
             console.error('Error handling suspicious activity:', error);
@@ -287,7 +287,7 @@ export class WebSocketHandler {
                 completedAt: Date.now()
             });
 
-            console.log(`✅ Exam completed: ${socket.studentInfo.name}`);
+            console.log(`Exam completed: ${socket.studentInfo.name}`);
 
             // Disconnect socket after short delay
             setTimeout(() => {
@@ -325,7 +325,7 @@ export class WebSocketHandler {
         // Send exam statistics
         this.sendExamStatistics(socket);
 
-        console.log(`👨‍🏫 Teacher joined dashboard: ${socket.id}`);
+        console.log(`Teacher joined dashboard: ${socket.id}`);
     }
 
     /**
@@ -354,13 +354,13 @@ export class WebSocketHandler {
                 disconnectedAt: Date.now()
             });
 
-            console.log(`📴 Student disconnected: ${name} (${studentClass}) - ${reason}`);
+            console.log(`Student disconnected: ${name} (${studentClass}) - ${reason}`);
         }
 
         // Handle teacher disconnection
         if (this.teacherSockets.has(socket)) {
             this.teacherSockets.delete(socket);
-            console.log(`📴 Teacher disconnected: ${socket.id}`);
+            console.log(`Teacher disconnected: ${socket.id}`);
         }
     }
 
@@ -497,7 +497,7 @@ export class WebSocketHandler {
                     });
 
                     // Only log actual warnings sent
-                    console.log(`⚠️ Time warning sent: ${socket.studentInfo?.name} - ${minutesLeft}min left`);
+                    console.log(`Time warning sent: ${socket.studentInfo?.name} - ${minutesLeft}min left`);
 
                     // Notify teachers about time warning
                     this.notifyTeachers('student-time-warning', {
@@ -567,7 +567,7 @@ export class WebSocketHandler {
      * Emergency disconnect all students (admin function)
      */
     emergencyDisconnectAll(reason = 'emergency') {
-        console.log('🚨 Emergency disconnect all students');
+        console.log('Emergency disconnect all students');
 
         for (const socket of this.studentSockets.values()) {
             this.forceDisconnectStudent(socket, reason);

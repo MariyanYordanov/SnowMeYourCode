@@ -118,7 +118,6 @@ function createDialogHTML(config) {
         const header = document.createElement('div');
         header.className = 'dialog-header';
 
-        const icon = getDialogIcon(config.type);
         const title = document.createElement('h2');
         title.className = 'dialog-title';
         title.textContent = config.title;
@@ -163,31 +162,11 @@ function createDialogHTML(config) {
         return overlay;
 
     } catch (error) {
-        console.error('❌ Error creating dialog HTML:', error);
+        console.error('Error creating dialog HTML:', error);
         return null;
     }
 }
 
-/**
- * Get appropriate icon for dialog type
- * @param {string} type - Dialog type
- * @returns {HTMLElement} - Icon element
- */
-function getDialogIcon(type) {
-    const iconEl = document.createElement('div');
-    iconEl.className = 'dialog-icon';
-
-    const icons = {
-        'completion': '🏁',
-        'violation': '⚠️',
-        'info': 'ℹ️',
-        'error': '❌',
-        'warning': '⚠️'
-    };
-
-    iconEl.textContent = icons[type] || 'ℹ️';
-    return iconEl;
-}
 
 /**
  * Show dialog and setup event handlers
@@ -197,7 +176,7 @@ function getDialogIcon(type) {
 function showDialog(dialogElement, callback) {
     try {
         if (!dialogElement) {
-            console.error('❌ Cannot show dialog: invalid element');
+            console.error('Cannot show dialog: invalid element');
             callback(false);
             return;
         }
@@ -225,10 +204,10 @@ function showDialog(dialogElement, callback) {
             firstButton.focus();
         }
 
-        console.log('💬 Custom dialog shown');
+        console.log('Custom dialog shown');
 
     } catch (error) {
-        console.error('❌ Error showing dialog:', error);
+        console.error('Error showing dialog:', error);
         callback(false);
     }
 }
@@ -254,7 +233,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
                 const action = button.getAttribute('data-action');
                 const result = action === 'confirm';
 
-                console.log(`💬 Dialog action: ${action} (result: ${result})`);
+                console.log(`Dialog action: ${action} (result: ${result})`);
                 callback(result);
             });
         });
@@ -266,7 +245,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
                     // Enter = confirm
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('💬 Dialog confirmed via Enter key');
+                    console.log('Dialog confirmed via Enter key');
                     callback(true);
                     break;
 
@@ -275,7 +254,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
                     if (isSecureDialog) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🚫 Escape blocked for secure dialog');
+                        console.log('Escape blocked for secure dialog');
                         showBlockedFeedback(dialogElement);
                         return false;
                     }
@@ -285,7 +264,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
                     if (cancelBtn) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('💬 Dialog cancelled via Escape key');
+                        console.log('Dialog cancelled via Escape key');
                         callback(false);
                     }
                     break;
@@ -300,7 +279,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
                     if (isSecureDialog && (e.ctrlKey || e.altKey || e.metaKey)) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log(`🚫 Blocked key combination: ${e.key}`);
+                        console.log(`Blocked key combination: ${e.key}`);
                         return false;
                     }
                     break;
@@ -356,7 +335,7 @@ function setupDialogEventHandlers(dialogElement, callback) {
         }
 
     } catch (error) {
-        console.error('❌ Error setting up dialog handlers:', error);
+        console.error('Error setting up dialog handlers:', error);
     }
 }
 
@@ -388,7 +367,7 @@ function handleTabNavigation(e, dialogElement) {
             buttons[nextIndex].focus();
         }
     } catch (error) {
-        console.error('❌ Error handling tab navigation:', error);
+        console.error('Error handling tab navigation:', error);
     }
 }
 
@@ -409,7 +388,7 @@ function getDialogContainer() {
 
         return container;
     } catch (error) {
-        console.error('❌ Error getting dialog container:', error);
+        console.error('Error getting dialog container:', error);
         return document.body; // Fallback
     }
 }
@@ -438,7 +417,7 @@ export function hideCustomDialogs() {
         }
 
     } catch (error) {
-        console.error('❌ Error hiding dialogs:', error);
+        console.error('Error hiding dialogs:', error);
     }
 }
 
@@ -461,7 +440,7 @@ export function isSecureDialogActive() {
         const dialogType = getDialogType(activeDialog);
         return ['completion', 'violation'].includes(dialogType);
     } catch (error) {
-        console.error('❌ Error checking secure dialog status:', error);
+        console.error('Error checking secure dialog status:', error);
         return false;
     }
 }
@@ -484,7 +463,7 @@ function getDialogType(dialogElement) {
         }
         return 'info';
     } catch (error) {
-        console.error('❌ Error getting dialog type:', error);
+        console.error('Error getting dialog type:', error);
         return 'info';
     }
 }
@@ -509,7 +488,7 @@ function showBlockedFeedback(dialogElement) {
             showBlockedMessage(dialog);
         }
     } catch (error) {
-        console.error('❌ Error showing blocked feedback:', error);
+        console.error('Error showing blocked feedback:', error);
     }
 }
 
@@ -546,6 +525,6 @@ function showBlockedMessage(dialog) {
         }, 2000);
 
     } catch (error) {
-        console.error('❌ Error showing blocked message:', error);
+        console.error('Error showing blocked message:', error);
     }
 }

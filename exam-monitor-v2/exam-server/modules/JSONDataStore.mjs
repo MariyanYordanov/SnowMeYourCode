@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 export class JSONDataStore {
     constructor(baseDir) {
@@ -54,7 +53,7 @@ export class JSONDataStore {
             const filePath = path.join(sessionDir, filename);
 
             await fs.writeFile(filePath, JSON.stringify(session, null, 2));
-            console.log(`💾 Session saved: ${filename}`);
+            console.log(`Session saved: ${filename}`);
 
         } catch (error) {
             console.error('Error saving session:', error);
@@ -153,7 +152,7 @@ export class JSONDataStore {
             // Copy practice server data for this student
             await this.copyPracticeData(studentDir);
 
-            console.log(`📁 Initialized directory: ${normalizedClass}/${studentDirName}`);
+            console.log(`Initialized directory: ${normalizedClass}/${studentDirName}`);
             return studentDir;
 
         } catch (error) {
@@ -190,7 +189,7 @@ export class JSONDataStore {
                 }
             }
 
-            console.log(`📄 Copied practice data to student directory`);
+            console.log(`Copied practice data to student directory`);
 
         } catch (error) {
             console.error('Error copying practice data:', error);
@@ -222,7 +221,7 @@ export class JSONDataStore {
 
             await fs.writeFile(backupPath, codeData.code || '');
 
-            console.log(`💾 Code saved: ${filename} for session ${sessionId}`);
+            console.log(`Code saved: ${filename} for session ${sessionId}`);
 
         } catch (error) {
             console.error('Error saving student code:', error);
@@ -281,7 +280,7 @@ export class JSONDataStore {
                         const sessionInfo = JSON.parse(data);
 
                         if (sessionInfo.sessionId === sessionId) {
-                            console.log(`📁 Found student directory: ${studentPath}`);
+                            console.log(`Found student directory: ${studentPath}`);
                             return studentPath;
                         }
                     } catch {

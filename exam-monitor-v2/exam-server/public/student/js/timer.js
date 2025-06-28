@@ -512,6 +512,6 @@ export function injectTimerStyles() {
 
         document.head.appendChild(style);
     } catch (error) {
-        console.error('❌ Failed to inject timer styles:', error);
+        console.error('Failed to inject timer styles:', error);
     }
 }

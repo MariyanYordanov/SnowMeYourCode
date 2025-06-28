@@ -13,14 +13,11 @@ export function setupTabs() {
     try {
         // Setup tab buttons
         setupTabButtons();
-
-        // Setup DOM Preview
-        setupDOMPreview();
-
-        console.log('✅ Enhanced tabs system initialized');
+        setupMDNFunctions();
+        console.log('Enhanced tabs system initialized');
         return true;
     } catch (error) {
-        console.error('❌ Failed to setup tabs:', error);
+        console.error('Failed to setup tabs:', error);
         return false;
     }
 }
@@ -76,10 +73,10 @@ export function switchTab(tabName) {
         // Update current tab
         currentTab = tabName;
 
-        console.log(`📑 Switched to ${tabName} tab`);
+        console.log(`Switched to ${tabName} tab`);
 
     } catch (error) {
-        console.error('❌ Error switching tabs:', error);
+        console.error('Error switching tabs:', error);
     }
 }
 
@@ -95,11 +92,11 @@ function handleTabSwitch(tabName) {
 
             case 'mdn':
                 // MDN tab - ensure proper section is shown
-                console.log('📚 MDN Reference tab activated');
+                console.log('MDN Reference tab activated');
                 break;
         }
     } catch (error) {
-        console.error('❌ Error in tab switch handler:', error);
+        console.error('Error in tab switch handler:', error);
     }
 }
 
@@ -128,14 +125,14 @@ function setupMDNFunctions() {
                 targetSection.classList.add('active');
             }
 
-            console.log(`📖 Showing MDN section: ${sectionName}`);
+            console.log(`Showing MDN section: ${sectionName}`);
 
         } catch (error) {
-            console.error('❌ Error showing MDN section:', error);
+            console.error('Error showing MDN section:', error);
         }
     };
 
-    console.log('✅ Offline MDN functions initialized');
+    console.log('Offline MDN functions initialized');
 }
 
 /**

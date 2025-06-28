@@ -15,10 +15,10 @@ export function setupAntiCheat() {
         // Setup fullscreen monitoring (always active)
         setupFullscreenMonitoring();
 
-        console.log('✅ Anti-cheat initialized');
+        console.log('Anti-cheat initialized');
         return true;
     } catch (error) {
-        console.error('❌ Failed to setup anti-cheat:', error);
+        console.error('Failed to setup anti-cheat:', error);
         return false;
     }
 }
@@ -35,10 +35,10 @@ export function activateAntiCheat() {
         setupVisibilityDetection(); // Document hidden detection
         setupActiveFullscreenMonitoring(); // Enhanced fullscreen monitoring
 
-        console.log('✅ Anti-cheat activated');
+        console.log('Anti-cheat activated');
         return true;
     } catch (error) {
-        console.error('❌ Failed to activate anti-cheat:', error);
+        console.error('Failed to activate anti-cheat:', error);
         return false;
     }
 }
@@ -56,7 +56,7 @@ export function deactivateAntiCheat() {
         removeActiveFullscreenMonitoring();
 
     } catch (error) {
-        console.error('❌ Error deactivating anti-cheat:', error);
+        console.error('Error deactivating anti-cheat:', error);
     }
 }
 
@@ -78,7 +78,7 @@ export function setupFullscreenMonitoring() {
         });
 
     } catch (error) {
-        console.error('❌ Failed to setup fullscreen monitoring:', error);
+        console.error('Failed to setup fullscreen monitoring:', error);
     }
 }
 
@@ -98,13 +98,13 @@ export function enterFullscreenMode() {
         } else if (element.msRequestFullscreen) {
             element.msRequestFullscreen();
         } else {
-            console.warn('⚠️ Fullscreen API not supported');
+            console.warn('Fullscreen API not supported');
             return false;
         }
 
         return true;
     } catch (error) {
-        console.error('❌ Failed to enter fullscreen:', error);
+        console.error('Failed to enter fullscreen:', error);
         return false;
     }
 }
@@ -125,21 +125,21 @@ function handleFullscreenChange() {
         window.ExamApp.isFullscreen = isFullscreen;
 
         if (isFullscreen) {
-            updateFullscreenStatus('🔒 Fullscreen активен');
+            updateFullscreenStatus('Fullscreen активен');
         } else {
-            updateFullscreenStatus('⚠️ Fullscreen неактивен');
+            updateFullscreenStatus('Fullscreen неактивен');
 
             // Handle violation if exam is active AND not in completion process
             if (window.ExamApp.isLoggedIn &&
                 window.ExamApp.antiCheatActive &&
                 !window.ExamApp.completionInProgress) {
 
-                console.log('🚫 FULLSCREEN EXIT DETECTED - TERMINATING EXAM');
+                console.log('FULLSCREEN EXIT DETECTED - TERMINATING EXAM');
                 handleFullscreenViolation();
             }
         }
     } catch (error) {
-        console.error('❌ Error handling fullscreen change:', error);
+        console.error('Error handling fullscreen change:', error);
     }
 }
 
@@ -159,7 +159,7 @@ function handleFullscreenViolation() {
         terminateExamDirectly('fullscreen_violation');
 
     } catch (error) {
-        console.error('❌ Error handling fullscreen violation:', error);
+        console.error('Error handling fullscreen violation:', error);
         // Fallback - force close
         window.close();
     }
@@ -184,7 +184,7 @@ function handleVisibilityChange() {
 
     try {
         if (document.hidden) {
-            console.log('🚫 DOCUMENT HIDDEN DETECTED - TERMINATING EXAM');
+            console.log('DOCUMENT HIDDEN DETECTED - TERMINATING EXAM');
 
             // Report and terminate immediately
             reportSuspiciousActivity('document_hidden_violation', {
@@ -196,7 +196,7 @@ function handleVisibilityChange() {
             terminateExamDirectly('document_hidden_violation');
         }
     } catch (error) {
-        console.error('❌ Error handling visibility change:', error);
+        console.error('Error handling visibility change:', error);
     }
 }
 
@@ -234,7 +234,7 @@ function setupActiveFullscreenMonitoring() {
         }, 500); // Check every 500ms (balanced performance)
 
     } catch (error) {
-        console.error('❌ Failed to setup active fullscreen monitoring:', error);
+        console.error('Failed to setup active fullscreen monitoring:', error);
     }
 }
 
@@ -245,7 +245,7 @@ function removeActiveFullscreenMonitoring() {
             window.ExamApp.fullscreenMonitorInterval = null;
         }
     } catch (error) {
-        console.error('❌ Failed to remove active fullscreen monitoring:', error);
+        console.error('Failed to remove active fullscreen monitoring:', error);
     }
 }
 
@@ -267,7 +267,7 @@ function terminateExamDirectly(violationType) {
         }
 
     } catch (error) {
-        console.error('❌ Error terminating exam:', error);
+        console.error('Error terminating exam:', error);
         // Force close on error
         window.close();
     }
@@ -303,7 +303,7 @@ function updateFullscreenStatus(text) {
             statusEl.textContent = text;
         }
     } catch (error) {
-        console.error('❌ Failed to update fullscreen status:', error);
+        console.error('Failed to update fullscreen status:', error);
     }
 }
 
@@ -320,10 +320,10 @@ export function emergencyResetViolations() {
             window.ExamApp.hideViolationScreen();
         }
 
-        console.log('🚨 Emergency violation reset');
+        console.log('Emergency violation reset');
         return true;
     } catch (error) {
-        console.error('❌ Error in emergency violation reset:', error);
+        console.error('Error in emergency violation reset:', error);
         return false;
     }
 }
@@ -358,6 +358,6 @@ export function checkFullscreenStatus() {
         )
     };
 
-    console.log('🔍 Fullscreen status check:', fullscreenStatus);
+    console.log('Fullscreen status check:', fullscreenStatus);
     return fullscreenStatus;
 }

@@ -6,7 +6,6 @@
 
 // Import socket functions
 import { sendCodeUpdate } from './socket.js';
-import { triggerDOMPreview, autoSwitchToDOMIfNeeded } from './tabs.js';
 
 // Auto-save timeout
 let autoSaveTimeout = null;
@@ -112,17 +111,17 @@ export function initializeMonacoEditor(initialCode = '') {
                     // NEW: Setup code quality hints
                     setupCodeQualityHints(editor);
 
-                    console.log('✅ Enhanced Monaco Editor initialized');
+                    console.log('Enhanced Monaco Editor initialized');
                     resolve(editor);
 
                 } catch (error) {
-                    console.error('❌ Monaco Editor creation failed:', error);
+                    console.error('Monaco Editor creation failed:', error);
                     reject(error);
                 }
             });
 
         } catch (error) {
-            console.error('❌ Monaco Editor initialization failed:', error);
+            console.error('Monaco Editor initialization failed:', error);
             reject(error);
         }
     });
@@ -152,14 +151,14 @@ function setupLanguageFeatures(editor) {
             const currentLanguage = editor.getModel().getLanguageId();
             if (currentLanguage !== newLanguage) {
                 monaco.editor.setModelLanguage(editor.getModel(), newLanguage);
-                console.log(`🔄 Language auto-detected: ${newLanguage}`);
+                console.log(`Language auto-detected: ${newLanguage}`);
             }
         });
 
-        console.log('✅ Enhanced language features setup');
+        console.log('Enhanced language features setup');
 
     } catch (error) {
-        console.error('❌ Failed to setup language features:', error);
+        console.error('Failed to setup language features:', error);
     }
 }
 
@@ -209,10 +208,10 @@ function setupErrorDetection(editor) {
             }
         }
 
-        console.log('✅ Error detection setup');
+        console.log('Error detection setup');
 
     } catch (error) {
-        console.error('❌ Failed to setup error detection:', error);
+        console.error('Failed to setup error detection:', error);
     }
 }
 
@@ -273,10 +272,10 @@ function setupCodeQualityHints(editor) {
             monaco.editor.setModelMarkers(model, 'quality', markers);
         }
 
-        console.log('✅ Code quality hints setup');
+        console.log('Code quality hints setup');
 
     } catch (error) {
-        console.error('❌ Failed to setup code quality hints:', error);
+        console.error('Failed to setup code quality hints:', error);
     }
 }
 
@@ -320,7 +319,7 @@ function setupAutoSave(editor) {
         });
 
     } catch (error) {
-        console.error('❌ Failed to setup auto-save:', error);
+        console.error('Failed to setup auto-save:', error);
     }
 }
 
@@ -336,7 +335,7 @@ function setupEditorIntegrations(editor) {
             }
         });
     } catch (error) {
-        console.error('❌ Failed to setup editor integrations:', error);
+        console.error('Failed to setup editor integrations:', error);
     }
 }
 
@@ -356,7 +355,7 @@ function setupKeyboardShortcuts(editor) {
         });
 
     } catch (error) {
-        console.error('❌ Failed to setup keyboard shortcuts:', error);
+        console.error('Failed to setup keyboard shortcuts:', error);
     }
 }
 
@@ -370,9 +369,6 @@ export function setupEditorControls(actions) {
         if (runBtn && actions.runCode) {
             runBtn.addEventListener('click', () => {
                 runCode();
-                // NEW: Auto-trigger DOM preview hint
-                const code = window.ExamApp.editor?.getValue() || '';
-                autoSwitchToDOMIfNeeded(code);
             });
         }
 
@@ -395,7 +391,7 @@ export function setupEditorControls(actions) {
         }
 
     } catch (error) {
-        console.error('❌ Failed to setup editor controls:', error);
+        console.error('Failed to setup editor controls:', error);
     }
 }
 
@@ -405,7 +401,7 @@ export function setupEditorControls(actions) {
 export function runCode() {
     try {
         if (!window.ExamApp.editor) {
-            console.warn('⚠️ Editor not available');
+            console.warn('Editor not available');
             showError('Редакторът не е готов. Моля изчакайте.');
             return;
         }
@@ -414,7 +410,7 @@ export function runCode() {
         const outputEl = document.getElementById('code-output');
 
         if (!outputEl) {
-            console.error('❌ Output element not found');
+            console.error('Output element not found');
             return;
         }
 
@@ -438,7 +434,7 @@ export function runCode() {
         }
 
     } catch (error) {
-        console.error('❌ Code execution failed:', error);
+        console.error('Code execution failed:', error);
         showError(`Грешка при изпълнение: ${error.message}`);
     }
 }
@@ -854,7 +850,7 @@ function highlightErrorLine(lineNumber) {
         window.ExamApp.editor.revealLineInCenter(lineNumber);
 
     } catch (error) {
-        console.error('❌ Failed to highlight error line:', error);
+        console.error('Failed to highlight error line:', error);
     }
 }
 
@@ -874,7 +870,7 @@ function showExecutionInfo(message) {
             }, 3000);
         }
     } catch (error) {
-        console.error('❌ Failed to show execution info:', error);
+        console.error('Failed to show execution info:', error);
     }
 }
 
@@ -884,14 +880,14 @@ function showExecutionInfo(message) {
 export function formatCode() {
     try {
         if (!window.ExamApp.editor) {
-            console.warn('⚠️ Editor not available');
+            console.warn('Editor not available');
             showError('Редакторът не е готов. Моля изчакайте.');
             return;
         }
 
         window.ExamApp.editor.getAction('editor.action.formatDocument').run();
     } catch (error) {
-        console.error('❌ Code formatting failed:', error);
+        console.error('Code formatting failed:', error);
         showError('Грешка при форматиране на кода');
     }
 }
@@ -916,7 +912,7 @@ export function saveCode() {
 
         return success;
     } catch (error) {
-        console.error('❌ Code save failed:', error);
+        console.error('Code save failed:', error);
         return false;
     }
 }
@@ -946,7 +942,7 @@ export function clearOutput() {
         }
 
     } catch (error) {
-        console.error('❌ Failed to clear output:', error);
+        console.error('Failed to clear output:', error);
     }
 }
 
@@ -956,14 +952,14 @@ export function clearOutput() {
 export function changeTheme(event) {
     try {
         if (!window.ExamApp.editor) {
-            console.warn('⚠️ Editor not available');
+            console.warn('Editor not available');
             return;
         }
 
         const theme = event.target ? event.target.value : event;
         monaco.editor.setTheme(theme);
     } catch (error) {
-        console.error('❌ Theme change failed:', error);
+        console.error('Theme change failed:', error);
     }
 }
 
@@ -981,7 +977,7 @@ function updateLastSaved() {
 
         window.ExamApp.lastSaveTime = Date.now();
     } catch (error) {
-        console.error('❌ Failed to update last saved:', error);
+        console.error('Failed to update last saved:', error);
     }
 }
 
@@ -1000,7 +996,7 @@ function showError(message) {
 
         console.error('Error shown to user:', message);
     } catch (error) {
-        console.error('❌ Failed to show error:', error);
+        console.error('Failed to show error:', error);
     }
 }
 
@@ -1014,7 +1010,7 @@ function hideError() {
             errorPanel.style.display = 'none';
         }
     } catch (error) {
-        console.error('❌ Failed to hide error:', error);
+        console.error('Failed to hide error:', error);
     }
 }
 
@@ -1038,7 +1034,7 @@ export function getEditorContent() {
     try {
         return window.ExamApp.editor.getValue();
     } catch (error) {
-        console.error('❌ Failed to get editor content:', error);
+        console.error('Failed to get editor content:', error);
         return '';
     }
 }
@@ -1048,7 +1044,7 @@ export function getEditorContent() {
  */
 export function setEditorContent(content) {
     if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
+        console.warn('Editor not available');
         return false;
     }
 
@@ -1056,7 +1052,7 @@ export function setEditorContent(content) {
         window.ExamApp.editor.setValue(content || '');
         return true;
     } catch (error) {
-        console.error('❌ Failed to set editor content:', error);
+        console.error('Failed to set editor content:', error);
         return false;
     }
 }
@@ -1066,7 +1062,7 @@ export function setEditorContent(content) {
  */
 export function focusEditor() {
     if (!window.ExamApp.editor) {
-        console.warn('⚠️ Editor not available');
+        console.warn('Editor not available');
         return false;
     }
 
@@ -1074,7 +1070,7 @@ export function focusEditor() {
         window.ExamApp.editor.focus();
         return true;
     } catch (error) {
-        console.error('❌ Failed to focus editor:', error);
+        console.error('Failed to focus editor:', error);
         return false;
     }
 }
@@ -1090,7 +1086,7 @@ export function resizeEditor() {
     try {
         window.ExamApp.editor.layout();
     } catch (error) {
-        console.error('❌ Failed to resize editor:', error);
+        console.error('Failed to resize editor:', error);
     }
 }
 
@@ -1128,6 +1124,6 @@ export function destroyEditor() {
         }
 
     } catch (error) {
-        console.error('❌ Error destroying editor:', error);
+        console.error('Error destroying editor:', error);
     }
 }

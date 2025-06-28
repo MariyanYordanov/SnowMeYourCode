@@ -14,7 +14,6 @@ export function setupLoginForm() {
         const termsContent = document.getElementById('terms-content');
         const termsAgreement = document.getElementById('terms-agreement');
 
-        // REMOVED: termsToggle check - no longer needed
         if (!loginBtn || !studentName || !studentClass || !termsContent || !termsAgreement) {
             console.error('Login form elements not found');
             console.log('Found elements:', {
@@ -53,51 +52,11 @@ export function setupLoginForm() {
         // Initial validation
         validateLoginForm();
 
-        console.log('✅ Enhanced login form with terms agreement initialized');
+        console.log('Enhanced login form with terms agreement initialized');
         return true;
     } catch (error) {
-        console.error('❌ Failed to setup login form:', error);
+        console.error('Failed to setup login form:', error);
         return false;
-    }
-}
-
-/**
- * Handle terms toggle (expand/collapse)
- */
-function handleTermsToggle() {
-    try {
-        const termsToggle = document.getElementById('terms-toggle');
-        const termsContent = document.getElementById('terms-content');
-
-        if (!termsToggle || !termsContent) return;
-
-        const isExpanded = termsContent.style.display !== 'none';
-
-        if (isExpanded) {
-            // Collapse terms
-            termsContent.style.display = 'none';
-            termsContent.classList.remove('expanded');
-            termsToggle.textContent = '📖 Покажи условията';
-            termsToggle.classList.remove('expanded');
-        } else {
-            // Expand terms
-            termsContent.style.display = 'block';
-            termsContent.classList.add('expanded');
-            termsToggle.textContent = '📖 Скрий условията';
-            termsToggle.classList.add('expanded');
-
-            // Scroll terms into view
-            setTimeout(() => {
-                termsContent.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest'
-                });
-            }, 100);
-        }
-
-        console.log(`📋 Terms ${isExpanded ? 'collapsed' : 'expanded'}`);
-    } catch (error) {
-        console.error('❌ Error handling terms toggle:', error);
     }
 }
 
@@ -109,7 +68,7 @@ function handleTermsAgreement() {
         const termsAgreement = document.getElementById('terms-agreement');
         const isAgreed = termsAgreement?.checked;
 
-        console.log(`📋 Terms agreement: ${isAgreed ? 'accepted' : 'declined'}`);
+        console.log(`Terms agreement: ${isAgreed ? 'accepted' : 'declined'}`);
 
         // Validate form after agreement change
         validateLoginForm();
@@ -117,7 +76,7 @@ function handleTermsAgreement() {
         // REMOVED: Auto-collapse logic - terms are always visible now
 
     } catch (error) {
-        console.error('❌ Error handling terms agreement:', error);
+        console.error('Error handling terms agreement:', error);
     }
 }
 
@@ -151,17 +110,17 @@ function validateLoginForm() {
 
         // Update button text based on validation
         if (!isTermsAccepted) {
-            loginBtn.textContent = '📋 Моля приемете условията';
+            loginBtn.textContent = 'Моля приемете условията';
         } else if (!isNameValid || !isClassValid) {
-            loginBtn.textContent = '📝 Попълнете данните';
+            loginBtn.textContent = 'Попълнете данните';
         } else {
-            loginBtn.textContent = '🚀 Влез в изпита';
+            loginBtn.textContent = 'Влез в изпита';
         }
 
         return isFormValid;
 
     } catch (error) {
-        console.error('❌ Error validating login form:', error);
+        console.error('Error validating login form:', error);
         return false;
     }
 }
@@ -203,7 +162,7 @@ export function handleLogin() {
             setLoginButtonState(false); // Re-enable button
         }
     } catch (error) {
-        console.error('❌ Login error:', error);
+        console.error('Login error:', error);
         showLoginStatus('Грешка при влизане', 'error');
         setLoginButtonState(false);
     }
@@ -220,12 +179,6 @@ function validateLoginInput(name, studentClass, termsAccepted) {
 
     if (!termsAccepted) {
         showLoginStatus('Моля приемете условията на изпита', 'error');
-        // Auto-expand terms if not accepted
-        const termsContent = document.getElementById('terms-content');
-        const termsToggle = document.getElementById('terms-toggle');
-        if (termsContent && termsToggle && termsContent.style.display === 'none') {
-            handleTermsToggle();
-        }
         return false;
     }
 
@@ -275,7 +228,7 @@ export function showLoginStatus(message, type) {
 
         console.log(`Login status: ${type} - ${message}`);
     } catch (error) {
-        console.error('❌ Failed to show login status:', error);
+        console.error('Failed to show login status:', error);
     }
 }
 
@@ -296,7 +249,7 @@ function setLoginButtonState(disabled) {
             }
         }
     } catch (error) {
-        console.error('❌ Failed to set login button state:', error);
+        console.error('Failed to set login button state:', error);
     }
 }
 
@@ -305,7 +258,7 @@ function setLoginButtonState(disabled) {
  */
 export function handleLoginSuccess(data) {
     try {
-        console.log('✅ Login successful:', data);
+        console.log('Login successful:', data);
 
         // Update global state
         window.ExamApp.sessionId = data.sessionId;
@@ -321,7 +274,7 @@ export function handleLoginSuccess(data) {
             }
         }, 1500);
     } catch (error) {
-        console.error('❌ Failed to handle login success:', error);
+        console.error('Failed to handle login success:', error);
         showLoginStatus('Грешка при стартиране на изпита', 'error');
         setLoginButtonState(false);
     }
@@ -332,7 +285,7 @@ export function handleLoginSuccess(data) {
  */
 export function handleSessionRestore(data) {
     try {
-        console.log('🔄 Session restored:', data);
+        console.log('Session restored:', data);
 
         // Update global state
         window.ExamApp.sessionId = data.sessionId;
@@ -347,7 +300,7 @@ export function handleSessionRestore(data) {
             }
         }, 1500);
     } catch (error) {
-        console.error('❌ Failed to handle session restore:', error);
+        console.error('Failed to handle session restore:', error);
         showLoginStatus('Грешка при възстановяване на сесията', 'error');
         setLoginButtonState(false);
     }
@@ -358,7 +311,7 @@ export function handleSessionRestore(data) {
  */
 export function handleLoginError(data) {
     try {
-        console.error('❌ Login error:', data);
+        console.error('Login error:', data);
 
         // Show error message
         showLoginStatus(data.message, 'error');
@@ -372,7 +325,7 @@ export function handleLoginError(data) {
         window.ExamApp.termsAccepted = false;
         window.ExamApp.termsAcceptedAt = null;
     } catch (error) {
-        console.error('❌ Failed to handle login error:', error);
+        console.error('Failed to handle login error:', error);
     }
 }
 
@@ -389,9 +342,9 @@ export function updateStudentDisplay(studentName, studentClass, sessionId) {
         if (classEl) classEl.textContent = studentClass || 'Неизвестен';
         if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
 
-        console.log(`📋 Student display updated: ${studentName} (${studentClass}) - ${sessionId}`);
+        console.log(`Student display updated: ${studentName} (${studentClass}) - ${sessionId}`);
     } catch (error) {
-        console.error('❌ Failed to update student display:', error);
+        console.error('Failed to update student display:', error);
     }
 }
 
@@ -416,9 +369,9 @@ export function clearLoginForm() {
         setLoginButtonState(false);
         validateLoginForm();
 
-        console.log('🧹 Login form cleared');
+        console.log('Login form cleared');
     } catch (error) {
-        console.error('❌ Failed to clear login form:', error);
+        console.error('Failed to clear login form:', error);
     }
 }
 
@@ -445,9 +398,9 @@ export function resetLoginState() {
         if (loginContainer) loginContainer.style.display = 'flex';
         if (examContainer) examContainer.style.display = 'none';
 
-        console.log('🔄 Login state reset');
+        console.log('Login state reset');
     } catch (error) {
-        console.error('❌ Failed to reset login state:', error);
+        console.error('Failed to reset login state:', error);
     }
 }
 
@@ -499,26 +452,4 @@ export function formatStudentName(name) {
 export function validateStudentClass(studentClass) {
     const validClasses = ['11А', '11Б', '12А', '12Б'];
     return validClasses.includes(studentClass);
-}
-
-/**
- * Auto-fill login form (for testing)
- */
-export function autoFillLoginForm(name, studentClass) {
-    try {
-        const nameInput = document.getElementById('student-name');
-        const classSelect = document.getElementById('student-class');
-        const termsCheckbox = document.getElementById('terms-agreement');
-
-        if (nameInput) nameInput.value = name;
-        if (classSelect) classSelect.value = studentClass;
-        if (termsCheckbox) termsCheckbox.checked = true;
-
-        // Trigger validation
-        validateLoginForm();
-
-        console.log(`🤖 Auto-filled login form: ${name} (${studentClass})`);
-    } catch (error) {
-        console.error('❌ Failed to auto-fill login form:', error);
-    }
 }

@@ -9,7 +9,7 @@ export class ProxyHandler {
         // Create the proxy middleware
         this.middleware = this.createMiddleware();
 
-        console.log(`🔗 Proxy handler initialized for practice server on port ${practiceServerPort}`);
+        console.log(`Proxy handler initialized for practice server on port ${practiceServerPort}`);
     }
 
     /**
@@ -107,7 +107,7 @@ export class ProxyHandler {
             };
 
             // Log API call
-            console.log(`📡 API Call: ${studentName} (${studentClass}) - ${req.method} ${req.url}`);
+            console.log(`API Call: ${studentName} (${studentClass}) - ${req.method} ${req.url}`);
 
             next();
 
@@ -180,9 +180,9 @@ export class ProxyHandler {
             };
 
             if (proxyRes.statusCode >= 400) {
-                console.warn(`⚠️ Proxy error response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+                console.warn(`Proxy error response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
             } else {
-                console.log(`✅ Proxy success: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+                console.log(`Proxy success: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
             }
 
         } catch (error) {
@@ -194,7 +194,7 @@ export class ProxyHandler {
      * Handle proxy errors
      */
     onProxyError(err, req, res) {
-        console.error(`❌ Proxy error for ${req.method} ${req.url}:`, err.message);
+        console.error(`Proxy error for ${req.method} ${req.url}:`, err.message);
 
         // Don't send response if already sent
         if (res.headersSent) {
@@ -325,7 +325,7 @@ export class ProxyHandler {
             const isBlocked = blockedPaths.some(path => req.url.startsWith(path));
 
             if (isBlocked) {
-                console.warn(`🚫 Blocked API access: ${req.studentInfo?.name} tried to access ${req.url}`);
+                console.warn(`Blocked API access: ${req.studentInfo?.name} tried to access ${req.url}`);
 
                 // Log suspicious activity if SessionManager is available
                 if (this.sessionManager && req.studentInfo?.sessionId) {
@@ -366,7 +366,7 @@ export class ProxyHandler {
 
             // Check if limit exceeded
             if (requests.length >= maxRequests) {
-                console.warn(`🚫 Rate limit exceeded: ${req.studentInfo.name} (${requests.length} requests)`);
+                console.warn(`Rate limit exceeded: ${req.studentInfo.name} (${requests.length} requests)`);
 
                 return res.status(429).json({
                     error: 'Too Many Requests',
