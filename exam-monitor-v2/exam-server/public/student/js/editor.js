@@ -112,9 +112,6 @@ export function initializeMonacoEditor(initialCode = '') {
                     // NEW: Setup code quality hints
                     setupCodeQualityHints(editor);
 
-                    // NEW: Setup DOM Preview integration
-                    setupDOMPreviewIntegration(editor);
-
                     console.log('✅ Enhanced Monaco Editor initialized');
                     resolve(editor);
 
@@ -284,32 +281,6 @@ function setupCodeQualityHints(editor) {
 }
 
 /**
- * NEW: Setup DOM Preview integration
- */
-function setupDOMPreviewIntegration(editor) {
-    try {
-        // Real-time DOM preview for HTML/CSS
-        editor.onDidChangeModelContent(() => {
-            clearTimeout(window.domPreviewTimeout);
-            window.domPreviewTimeout = setTimeout(() => {
-                const code = editor.getValue();
-                const language = editor.getModel().getLanguageId();
-
-                if ((language === 'html' || language === 'css') &&
-                    typeof triggerDOMPreview === 'function') {
-                    triggerDOMPreview(code, language);
-                }
-            }, 1000);
-        });
-
-        console.log('✅ DOM Preview integration setup');
-
-    } catch (error) {
-        console.error('❌ Failed to setup DOM Preview integration:', error);
-    }
-}
-
-/**
  * Get default code template with enhanced console examples
  */
 function getDefaultCode() {
@@ -358,16 +329,12 @@ function setupAutoSave(editor) {
  */
 function setupEditorIntegrations(editor) {
     try {
-        // Integration with DOM Preview (if available)
-        if (window.ExamApp.domPreviewActive) {
-            editor.onDidChangeModelContent(() => {
-                // Trigger preview update with debouncing
-                if (window.getCurrentTab && window.getCurrentTab() === 'preview') {
-                    // Preview will auto-update via its own debouncing
-                }
-            });
-        }
-
+        editor.onDidChangeModelContent(() => {
+            // Trigger preview update with debouncing
+            if (window.getCurrentTab && window.getCurrentTab() === 'preview') {
+                // Preview will auto-update via its own debouncing
+            }
+        });
     } catch (error) {
         console.error('❌ Failed to setup editor integrations:', error);
     }
@@ -464,7 +431,6 @@ export function runCode() {
 
             // Show execution success info
             const executionTime = result.executionTime;
-            triggerDOMPreviewIfNeeded(code);
             showExecutionInfo(`Код изпълнен за ${executionTime}ms`);
         } else {
             showError(result.error);
@@ -476,35 +442,7 @@ export function runCode() {
         showError(`Грешка при изпълнение: ${error.message}`);
     }
 }
-function triggerDOMPreviewIfNeeded(code) {
-    try {
-        const trimmedCode = code.trim().toLowerCase();
 
-        // Detect code type
-        const isHTML = trimmedCode.includes('<html') ||
-            trimmedCode.includes('<!doctype') ||
-            trimmedCode.includes('<div') ||
-            trimmedCode.includes('<p>') ||
-            /^<[a-z][\s\S]*>/.test(trimmedCode);
-
-        const isCSS = trimmedCode.includes('{') && trimmedCode.includes('}') &&
-            (trimmedCode.includes(':') || trimmedCode.includes('color') ||
-                trimmedCode.includes('background') || trimmedCode.includes('margin'));
-
-        if (isHTML || isCSS) {
-            // Trigger DOM Preview update
-            triggerDOMPreview(code, isHTML ? 'html' : 'css');
-
-            // Show hint to switch to DOM tab if needed
-            autoSwitchToDOMIfNeeded(code);
-
-            console.log(`🌐 DOM Preview triggered for ${isHTML ? 'HTML' : 'CSS'} code`);
-        }
-
-    } catch (error) {
-        console.error('❌ Error triggering DOM preview:', error);
-    }
-}
 /**
  * Capture enhanced console output with all console methods
  */

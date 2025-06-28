@@ -17,9 +17,6 @@ export function setupTabs() {
         // Setup DOM Preview
         setupDOMPreview();
 
-        // Setup MDN functions in global scope
-        setupMDNFunctions();
-
         console.log('✅ Enhanced tabs system initialized');
         return true;
     } catch (error) {
@@ -33,16 +30,9 @@ export function setupTabs() {
  */
 function setupTabButtons() {
     const consoleTab = document.getElementById('console-tab');
-    const domTab = document.getElementById('dom-tab');
     const mdnTab = document.getElementById('mdn-tab');
 
-    if (!consoleTab || !domTab || !mdnTab) {
-        console.error('Tab buttons not found');
-        return;
-    }
-
     consoleTab.addEventListener('click', () => switchTab('console'));
-    domTab.addEventListener('click', () => switchTab('dom'));
     mdnTab.addEventListener('click', () => switchTab('mdn'));
 }
 
@@ -52,7 +42,7 @@ function setupTabButtons() {
 export function switchTab(tabName) {
     try {
         // Validate tab name
-        const validTabs = ['console', 'dom', 'mdn'];
+        const validTabs = ['console', 'mdn'];
         if (!validTabs.includes(tabName)) {
             console.error('Invalid tab name:', tabName);
             return;
@@ -164,7 +154,5 @@ if (typeof document !== 'undefined') {
 window.tabsDebug = {
     switchTab,
     getCurrentTab,
-    triggerDOMPreview,
-    autoSwitchToDOMIfNeeded,
     currentTab: () => currentTab
 };
