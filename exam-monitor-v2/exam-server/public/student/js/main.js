@@ -119,8 +119,8 @@ function setupNotificationSystem() {
 
 async function startExam(data) {
     try {
-        const loginContainer = document.getElementById('login-container');
-        const examContainer = document.getElementById('exam-container');
+        const loginContainer = document.getElementById('login-component');
+        const examContainer = document.getElementById('exam-component');
 
         if (!loginContainer || !examContainer) {
             throw new Error('Required containers not found in DOM');
@@ -173,8 +173,8 @@ function exitExam(reason = 'manual') {
             document.exitFullscreen().catch(console.error);
         }
 
-        const loginContainer = document.getElementById('login-container');
-        const examContainer = document.getElementById('exam-container');
+        const loginContainer = document.getElementById('login-component');
+        const examContainer = document.getElementById('exam-component');
 
         if (examContainer) examContainer.style.display = 'none';
         if (loginContainer) loginContainer.style.display = 'flex';
@@ -303,8 +303,8 @@ if (window.location.hostname === 'localhost') {
         runCode: () => runCode(),
         resetState: () => {
             window.ExamApp.isLoggedIn = false;
-            const loginContainer = document.getElementById('login-container');
-            const examContainer = document.getElementById('exam-container');
+            const loginContainer = document.getElementById('login-component');
+            const examContainer = document.getElementById('exam-component');
             if (loginContainer) loginContainer.style.display = 'flex';
             if (examContainer) examContainer.style.display = 'none';
         }

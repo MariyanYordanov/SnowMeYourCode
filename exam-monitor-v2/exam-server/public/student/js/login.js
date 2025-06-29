@@ -393,7 +393,7 @@ export function resetLoginState() {
 
         // Show login container, hide exam container
         const loginContainer = document.getElementById('login-container');
-        const examContainer = document.getElementById('exam-container');
+        const examContainer = document.getElementById('exam-component');
 
         if (loginContainer) loginContainer.style.display = 'flex';
         if (examContainer) examContainer.style.display = 'none';
