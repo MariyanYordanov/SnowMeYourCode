@@ -2,7 +2,25 @@
  * Student Exam System - Main Entry Point
  * Coordinates all modules and initializes the exam system
  */
+// Simple template loader
+async function loadTemplates() {
+    const templates = {
+        'login-form': 'html/modules/login-form.html',
+        'exam-workspace': 'html/modules/exam-workspace.html',
+        'console-panel': 'html/modules/console-panel.html',
+        'violation-screen': 'html/modules/violation-screen.html'
+    };
 
+    for (const [name, path] of Object.entries(templates)) {
+        try {
+            const response = await fetch(`/student/${path}`);
+            const html = await response.text();
+            document.body.innerHTML = document.body.innerHTML.replace(`{{${name}}}`, html);
+        } catch (error) {
+            console.error(`Failed to load template ${name}:`, error);
+        }
+    }
+}
 // Import all required modules
 import { setupLoginForm, handleLoginSuccess, handleSessionRestore, handleLoginError } from './login.js';
 import { setupSocket } from './socket.js';
@@ -56,7 +74,8 @@ window.ExamApp = {
 // ================================
 // APPLICATION INITIALIZATION
 // ================================
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+    await loadTemplates();
     console.log('Student Exam System initializing...');
 
     // Wait for all scripts to load

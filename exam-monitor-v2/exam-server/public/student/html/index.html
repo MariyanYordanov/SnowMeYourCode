@@ -22,25 +22,24 @@
 <body>
     <!-- Main Application Container -->
     <div id="app-container" class="app-container">
-
         <!-- Login Component Container -->
         <div id="login-component" class="component-container">
-            <!-- Login form will be loaded here by TemplateEngine -->
+            {{login-form}}
         </div>
 
         <!-- Exam Workspace Container -->
         <div id="exam-component" class="component-container" style="display: none;">
-            <!-- Exam workspace will be loaded here by TemplateEngine -->
+            {{exam-workspace}}
         </div>
 
         <!-- Console Panel Container -->
         <div id="console-component" class="component-container" style="display: none;">
-            <!-- Console panel will be loaded here by TemplateEngine -->
+            {{console-panel}}
         </div>
 
         <!-- Violation Screen Container -->
         <div id="violation-component" class="component-container">
-            <!-- Violation screen will be loaded here by TemplateEngine -->
+            {{violation-screen}}
         </div>
 
     </div>
@@ -57,7 +56,7 @@
     <div id="custom-dialog-container" class="dialog-container"></div>
 
     <!-- Core Application JavaScript - ES6 Modules -->
-    <script type="module" src="student/js/main.js"></script>
+    <script type="module" src="/student/js/main.js"></script>
 
 </body>
 
