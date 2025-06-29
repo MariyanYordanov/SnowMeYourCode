@@ -127,7 +127,8 @@ async function startExam(data) {
         }
 
         loginContainer.style.display = 'none';
-        examContainer.style.display = 'flex';
+        examContainer.classList.add('active');
+        examContainer.style.display = 'block'; 
 
         window.ExamApp.isLoggedIn = true;
         window.ExamApp.examStartTime = Date.now();
