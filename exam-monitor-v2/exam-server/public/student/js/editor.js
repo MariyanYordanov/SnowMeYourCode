@@ -5,7 +5,7 @@
  */
 
 // Import socket functions
-import { sendCodeUpdate } from '../socket.js';
+import { sendCodeUpdate } from './socket.js';
 
 // Auto-save timeout
 let autoSaveTimeout = null;

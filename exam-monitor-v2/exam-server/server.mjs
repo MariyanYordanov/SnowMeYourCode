@@ -23,33 +23,28 @@ const io = new Server(server, {
     transports: ['websocket', 'polling']
 });
 
-// Server configuration
 const PORT = process.env.PORT || 8080;
 const PRACTICE_SERVER_PORT = 3030;
 
-// Initialize modules like the original
 const sessionManager = new SessionManager(__dirname);
 await sessionManager.loadExistingSessions();
 const webSocketHandler = new WebSocketHandler(io, sessionManager);
 const proxyHandler = new ProxyHandler(PRACTICE_SERVER_PORT, sessionManager);
 
-// Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(join(__dirname, 'public')));
 
-// Session middleware
 app.use(session({
     secret: 'exam-monitor-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 4 // 4 hours
+        maxAge: 1000 * 60 * 60 * 4
     }
 }));
 
-// CORS headers for cross-window communication
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -57,8 +52,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Routes
-// Routes
 app.get('/', (req, res) => {
     res.send(`
         <h1>Exam Monitor System v2.0</h1>
@@ -78,15 +71,11 @@ app.get('/teacher', (req, res) => {
     res.sendFile(join(__dirname, 'public/teacher/index.html'));
 });
 
+app.get('/student', (req, res) => {
+    res.sendFile(join(__dirname, 'public/student/html/index.html'));
+});
+
 app.use('/student', express.static(join(__dirname, 'public/student')));
-
-app.get('/student', (req, res) => {
-    res.sendFile(join(__dirname, 'public/student/html/index.html'));
-});
-
-app.get('/student', (req, res) => {
-    res.sendFile(join(__dirname, 'public/student/html/index.html'));
-});
 
 app.use('/api/project', projectRoutes);
 
@@ -113,10 +102,8 @@ app.post('/api/student-login', async (req, res) => {
     }
 });
 
-// Practice server proxy endpoints
 app.use('/proxy', proxyHandler.middleware);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
     res.status(500).json({
@@ -125,7 +112,8 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
+webSocketHandler.initialize();
+
 server.listen(PORT, () => {
     console.log(`Exam Monitor v2.0 server running on port ${PORT}`);
     console.log(`Teacher dashboard: http://localhost:${PORT}/teacher`);
