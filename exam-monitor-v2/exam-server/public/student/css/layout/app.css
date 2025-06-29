@@ -1,0 +1,52 @@
+/* App & Component Container Styles */
+
+/* =================================
+   APP CONTAINER - Main Application
+   ================================= */
+
+.app-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-light);
+}
+
+/* =================================
+   COMPONENT CONTAINERS - Template Wrappers
+   ================================= */
+
+.component-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+/* Show/Hide logic */
+.component-container[style*="display: none"] {
+    display: none !important;
+}
+
+.component-container:not([style*="display: none"]) {
+    display: block;
+}
+
+/* Ensure proper layering */
+#login-component {
+    z-index: 1;
+}
+
+#exam-component {
+    z-index: 2;
+}
+
+#console-component {
+    z-index: 3;
+}
+
+#violation-component {
+    z-index: 9999;
+}

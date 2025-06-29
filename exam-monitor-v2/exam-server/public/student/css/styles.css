@@ -13,6 +13,7 @@
 /* =================================
       LAYOUT - Page Structure
       ================================= */
+@import url('./layout/app.css');
 @import url('./layout/login.css');
 @import url('./layout/exam.css');
 
