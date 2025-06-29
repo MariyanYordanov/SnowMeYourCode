@@ -7,7 +7,6 @@
 import { TemplateEngine } from './core/TemplateEngine.js';
 import { ComponentLoader } from './core/ComponentLoader.js';
 import { EventBinder } from './core/EventBinder.js';
-import { initializeAdaptiveLayout } from './core/layout.js';
 
 // Import existing components
 import './components/main.js';
@@ -19,7 +18,7 @@ async function initializeTemplateSystem() {
     try {
         console.log('Initializing Template Engine system...');
 
-        // Set correct base path for templates
+        // Set correct base path for templates (relative to student/html/)
         TemplateEngine.setBasePath('modules/');
 
         // Initialize standard event handlers
@@ -31,8 +30,14 @@ async function initializeTemplateSystem() {
         // Initialize components
         await ComponentLoader.initializeAll();
 
-        // Initialize adaptive layout manager
-        initializeAdaptiveLayout();
+        // Initialize adaptive layout manager if available
+        try {
+            const { initializeAdaptiveLayout } = await import('./core/layout.js');
+            initializeAdaptiveLayout();
+            console.log('Adaptive layout initialized');
+        } catch (error) {
+            console.warn('Layout module not available, skipping:', error.message);
+        }
 
         console.log('Template Engine system initialized successfully');
 
@@ -52,6 +57,9 @@ async function initializeTemplateSystem() {
                         <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px;">
 Error: ${error.message}
 Stack: ${error.stack}
+
+Template base path: ${TemplateEngine.basePath}
+Loaded templates: ${TemplateEngine.getLoadedTemplates().join(', ')}
                         </pre>
                     </details>
                 </div>

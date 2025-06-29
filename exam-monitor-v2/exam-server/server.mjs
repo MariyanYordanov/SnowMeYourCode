@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 import { SessionManager } from './modules/SessionManager.mjs';
 import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
-// MINIMAL FIX: Uncomment and fix extension
 import projectRoutes from './routes/project-routes.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,6 +58,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+// Routes
 app.get('/', (req, res) => {
     res.send(`
         <h1>Exam Monitor System v2.0</h1>
@@ -78,21 +78,18 @@ app.get('/teacher', (req, res) => {
     res.sendFile(join(__dirname, 'public/teacher/index.html'));
 });
 
-// Main student page - login and popup launcher
+app.use('/student', express.static(join(__dirname, 'public/student')));
+
 app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/html/index.html'));
 });
 
-// Legacy popup endpoint - redirect to main student page
-app.get('/student-exam-window', (req, res) => {
-    console.log('Legacy popup endpoint accessed - redirecting to fullscreen mode');
-    res.redirect('/student?legacy=popup');
+app.get('/student', (req, res) => {
+    res.sendFile(join(__dirname, 'public/student/html/index.html'));
 });
 
-// MINIMAL FIX: Activate project routes
 app.use('/api/project', projectRoutes);
 
-// Authentication API endpoints
 app.post('/api/student-login', async (req, res) => {
     try {
         const { studentName, studentClass } = req.body;
