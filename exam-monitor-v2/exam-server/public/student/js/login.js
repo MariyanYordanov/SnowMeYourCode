@@ -11,7 +11,7 @@ export function setupLoginForm() {
         const loginBtn = document.getElementById('login-btn');
         const studentName = document.getElementById('student-name');
         const studentClass = document.getElementById('student-class');
-        const termsContent = document.getElementById('terms-content');
+        const termsContent = document.querySelector('.terms-content');
         const termsAgreement = document.getElementById('terms-agreement');
 
         if (!loginBtn || !studentName || !studentClass || !termsContent || !termsAgreement) {

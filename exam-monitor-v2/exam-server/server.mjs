@@ -33,7 +33,6 @@ const proxyHandler = new ProxyHandler(PRACTICE_SERVER_PORT, sessionManager);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(join(__dirname, 'public')));
 
 app.use(session({
     secret: 'exam-monitor-secret-key',
@@ -51,6 +50,28 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     next();
 });
+
+app.use('/student', express.static(join(__dirname, 'public/student'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
+
+app.use(express.static(join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
 
 app.get('/', (req, res) => {
     res.send(`
@@ -74,8 +95,6 @@ app.get('/teacher', (req, res) => {
 app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/html/index.html'));
 });
-
-app.use('/student', express.static(join(__dirname, 'public/student')));
 
 app.use('/api/project', projectRoutes);
 

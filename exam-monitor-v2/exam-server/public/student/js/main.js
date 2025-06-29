@@ -2,13 +2,13 @@
  * Student Exam System - Main Entry Point
  * Coordinates all modules and initializes the exam system
  */
-// Simple template loader
+
 async function loadTemplates() {
     const templates = {
-        'login-form': 'html/modules/login-form.html',
-        'exam-workspace': 'html/modules/exam-workspace.html',
-        'console-panel': 'html/modules/console-panel.html',
-        'violation-screen': 'html/modules/violation-screen.html'
+        'login-form': 'html/login-form.html',
+        'exam-workspace': 'html/exam-workspace.html',
+        'console-panel': 'html/console-panel.html',
+        'violation-screen': 'html/violation-screen.html'
     };
 
     for (const [name, path] of Object.entries(templates)) {
@@ -21,7 +21,7 @@ async function loadTemplates() {
         }
     }
 }
-// Import all required modules
+
 import { setupLoginForm, handleLoginSuccess, handleSessionRestore, handleLoginError } from './login.js';
 import { setupSocket } from './socket.js';
 import { initializeMonacoEditor, setupEditorControls, runCode, formatCode, clearOutput, changeTheme, saveCode } from './editor.js';
@@ -30,39 +30,25 @@ import { setupAntiCheat, activateAntiCheat, enterFullscreenMode, deactivateAntiC
 import { showCompletionDialog, hideCustomDialogs } from './dialogs.js';
 import { setupTabs } from './tabs.js';
 
-// ================================
-// GLOBAL STATE MANAGEMENT
-// ================================
 window.ExamApp = {
-    // Core state
     socket: null,
     editor: null,
     sessionId: null,
     studentName: null,
     studentClass: null,
-
-    // Exam timing
     examStartTime: null,
-    examDuration: 3 * 60 * 60 * 1000, // 3 hours
+    examDuration: 3 * 60 * 60 * 1000,
     examEndTime: null,
     timeLeft: 0,
     timerInterval: null,
-
-    // Security state
     isFullscreen: false,
     violationCount: 0,
     antiCheatActive: false,
-
-    // UI state
     isLoggedIn: false,
     lastSaveTime: null,
     isConnected: false,
     completionInProgress: false,
-
-    // Dialog system
     dialogSystemActive: true,
-
-    // Function references for cross-module access
     startExam: null,
     exitExam: null,
     showViolationScreen: null,
@@ -71,14 +57,10 @@ window.ExamApp = {
     showError: null
 };
 
-// ================================
-// APPLICATION INITIALIZATION
-// ================================
 document.addEventListener('DOMContentLoaded', async function () {
     await loadTemplates();
     console.log('Student Exam System initializing...');
 
-    // Wait for all scripts to load
     if (document.readyState === 'loading') {
         document.addEventListener('readystatechange', function () {
             if (document.readyState === 'interactive' || document.readyState === 'complete') {
@@ -90,16 +72,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 
-// Safe initialization with proper timing
 function initializeAppSafely() {
     try {
-        // Setup core components first
         setupLoginForm();
         setupAntiCheat();
         setupExamControls();
         setupNotificationSystem();
 
-        // Setup Socket.io with delay to ensure scripts are ready
         setTimeout(() => {
             setupSocket();
         }, 100);
@@ -112,57 +91,34 @@ function initializeAppSafely() {
     }
 }
 
-// ================================
-// EXAM CONTROLS SETUP
-// ================================
 function setupExamControls() {
     try {
-        // Setup editor controls with proper action handlers (NO SAVE BUTTON)
-        setupEditorControls({
-            runCode: runCode,
-            formatCode: formatCode,
-            clearOutput: clearOutput,
-            changeTheme: changeTheme
-            // saveCode removed - auto-save only
-
-        });
+        // Setup tabs only - editor controls will be setup after Monaco loads
+        setupTabs();
 
         // Finish exam button
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
             finishBtn.addEventListener('click', handleFinishExam);
         }
-        setupTabs();
 
+        console.log('Exam controls setup completed');
     } catch (error) {
         console.error('Failed to setup exam controls:', error);
     }
 }
 
-// ================================
-// NOTIFICATION SYSTEM
-// ================================
 function setupNotificationSystem() {
     try {
-        // Add notification functions to global scope
         window.ExamApp.showNotification = showNotification;
         window.ExamApp.showError = showError;
-
     } catch (error) {
         console.error('Failed to setup notification system:', error);
     }
 }
 
-// ================================
-// EXAM LIFECYCLE FUNCTIONS
-// ================================
-
-/**
- * Start exam after successful login
- */
 async function startExam(data) {
     try {
-        // Hide login, show exam
         const loginContainer = document.getElementById('login-container');
         const examContainer = document.getElementById('exam-container');
 
@@ -173,258 +129,144 @@ async function startExam(data) {
         loginContainer.style.display = 'none';
         examContainer.style.display = 'flex';
 
-        // Update student info display
-        updateStudentDisplay();
-
-        // Start timer
-        if (data.timeLeft) {
-            startExamTimer(data.timeLeft);
-        } else {
-            startExamTimer(window.ExamApp.examDuration);
-        }
-
-        // Initialize Monaco Editor
-        await initializeMonacoEditor(data.lastCode || '');
-
-        // Enter fullscreen
-        enterFullscreenMode();
-
-        // Activate anti-cheat
-        activateAntiCheat();
-
-        // Mark as logged in
         window.ExamApp.isLoggedIn = true;
+        window.ExamApp.examStartTime = Date.now();
+
+        // Initialize Monaco Editor first
+        await initializeMonacoEditor();
+
+        // NOW setup editor controls after Monaco is ready
+        setupEditorControls({
+            runCode: runCode,
+            formatCode: formatCode,
+            clearOutput: clearOutput,
+            changeTheme: changeTheme
+        });
+
+        activateAntiCheat();
+        enterFullscreenMode();
+        startExamTimer(window.ExamApp.examDuration);
 
         console.log('Exam started successfully');
+
     } catch (error) {
         console.error('Failed to start exam:', error);
         showError('Грешка при стартиране на изпита');
     }
 }
 
-/**
- * Update student display in exam interface
- */
-function updateStudentDisplay() {
+function exitExam(reason = 'manual') {
     try {
-        const nameEl = document.getElementById('student-name-display');
-        const classEl = document.getElementById('student-class-display');
-        const sessionEl = document.getElementById('session-id-display');
+        console.log(`Exiting exam. Reason: ${reason}`);
 
-        if (nameEl) nameEl.textContent = window.ExamApp.studentName || 'Неизвестен';
-        if (classEl) classEl.textContent = window.ExamApp.studentClass || 'Неизвестен';
-        if (sessionEl) sessionEl.textContent = window.ExamApp.sessionId || 'Неизвестен';
+        window.ExamApp.isLoggedIn = false;
+        window.ExamApp.antiCheatActive = false;
+
+        if (window.ExamApp.timerInterval) {
+            clearInterval(window.ExamApp.timerInterval);
+            window.ExamApp.timerInterval = null;
+        }
+
+        deactivateAntiCheat();
+
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(console.error);
+        }
+
+        const loginContainer = document.getElementById('login-container');
+        const examContainer = document.getElementById('exam-container');
+
+        if (examContainer) examContainer.style.display = 'none';
+        if (loginContainer) loginContainer.style.display = 'flex';
+
+        if (window.ExamApp.socket) {
+            window.ExamApp.socket.emit('student-exit', {
+                sessionId: window.ExamApp.sessionId,
+                reason: reason,
+                timestamp: Date.now()
+            });
+        }
+
+        console.log('Exam exited successfully');
 
     } catch (error) {
-        console.error('Failed to update student display:', error);
+        console.error('Failed to exit exam:', error);
     }
 }
 
-/**
- * Handle finish exam button
- */
+function showViolationScreen(reason = 'Нарушение на правилата на изпита') {
+    try {
+        console.warn('Violation detected:', reason);
+
+        window.ExamApp.completionInProgress = true;
+
+        const violationContainer = document.getElementById('violation-component');
+        if (violationContainer) {
+            violationContainer.style.display = 'flex';
+            violationContainer.style.position = 'fixed';
+            violationContainer.style.top = '0';
+            violationContainer.style.left = '0';
+            violationContainer.style.width = '100vw';
+            violationContainer.style.height = '100vh';
+            violationContainer.style.zIndex = '9999';
+        }
+
+        deactivateAntiCheat();
+
+        if (window.ExamApp.socket) {
+            window.ExamApp.socket.emit('violation-detected', {
+                sessionId: window.ExamApp.sessionId,
+                reason: reason,
+                timestamp: Date.now()
+            });
+        }
+
+        setTimeout(() => {
+            exitExam('violation');
+        }, 3000);
+
+        console.log('Violation screen shown');
+
+    } catch (error) {
+        console.error('Failed to show violation screen:', error);
+    }
+}
+
 async function handleFinishExam() {
     try {
-        hideCustomDialogs();
+        window.ExamApp.completionInProgress = true;
 
-        // Use custom dialog instead of browser confirm
-        const shouldExit = await showCompletionDialog({
+        const shouldFinish = await showCompletionDialog({
             title: 'Приключване на изпита',
-            message: 'Сигурен ли сте че искате да приключите изпита?\n\nВашият код ще бъде автоматично запазен.',
+            message: 'Сигурни ли сте, че искате да приключите изпита?',
             confirmText: 'Да, приключвам',
             cancelText: 'Не, продължавам'
         });
 
-        if (shouldExit) {
+        if (shouldFinish) {
+            if (window.ExamApp.editor) {
+                saveCode();
+            }
+
             exitExam('completed');
-        }
-    } catch (error) {
-        console.error('Error handling finish exam:', error);
-    }
-}
-
-/**
- * Exit exam with specified reason - MODIFIED FOR RESULT DETECTION
- */
-function exitExam(reason) {
-    try {
-        // Mark completion in progress to prevent violations
-        window.ExamApp.completionInProgress = true;
-
-        // Different handling based on reason
-        const isViolationTermination = reason.includes('violation');
-        const isVoluntaryExit = reason === 'completed';
-
-        if (isViolationTermination) {
-            // AUTOMATIC TERMINATION - no screens, no saves, direct exit
-
-            // Send completion to server immediately
-            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-                window.ExamApp.socket.emit('exam-complete', {
-                    sessionId: window.ExamApp.sessionId,
-                    reason: reason,
-                    completed: false,
-                    terminated: true,
-                    timestamp: Date.now()
-                });
-            }
-
-            // Clean up and close immediately
-            deactivateAntiCheat();
-            if (window.ExamApp.timerInterval) {
-                clearInterval(window.ExamApp.timerInterval);
-            }
-
-            // Close window immediately - no delays, no screens
-            window.close();
-
-        } else if (isVoluntaryExit) {
-            // VOLUNTARY EXIT - normal completion with auto-save
-
-            // Send completion to server
-            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-                window.ExamApp.socket.emit('exam-complete', {
-                    sessionId: window.ExamApp.sessionId,
-                    reason: reason,
-                    completed: true,
-                    terminated: false,
-                    timestamp: Date.now()
-                });
-            }
-
-            // Clean up
-            deactivateAntiCheat();
-            if (window.ExamApp.timerInterval) {
-                clearInterval(window.ExamApp.timerInterval);
-            }
-
-            // Close window after short delay for save completion
-            setTimeout(() => {
-                window.close();
-            }, 1000);
-
         } else {
-            // OTHER REASONS (expired, etc.) - normal handling
-
-            // Send completion to server
-            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-                window.ExamApp.socket.emit('exam-complete', {
-                    sessionId: window.ExamApp.sessionId,
-                    reason: reason,
-                    completed: false,
-                    terminated: false,
-                    timestamp: Date.now()
-                });
-            }
-
-            // Clean up
-            deactivateAntiCheat();
-            if (window.ExamApp.timerInterval) {
-                clearInterval(window.ExamApp.timerInterval);
-            }
-
-            // Close window after delay
-            setTimeout(() => {
-                window.close();
-            }, 2000);
+            window.ExamApp.completionInProgress = false;
         }
 
     } catch (error) {
-        console.error('Error exiting exam:', error);
-        // Force close on error
-        window.close();
+        console.error('Error finishing exam:', error);
+        window.ExamApp.completionInProgress = false;
     }
 }
 
-// ================================
-// VIOLATION SCREEN HANDLERS
-// ================================
-
-/**
- * Show violation screen
- */
-function showViolationScreen(reason) {
-    try {
-        const violationScreen = document.getElementById('violation-screen');
-        const violationReason = document.getElementById('violation-reason');
-        const examContainer = document.getElementById('exam-container');
-
-        if (violationReason) violationReason.textContent = reason;
-        if (violationScreen) violationScreen.style.display = 'flex';
-        if (examContainer) examContainer.classList.add('violation-detected');
-
-        // Auto-close after 10 seconds and exit exam
-        setTimeout(() => {
-            exitExam('violation-auto-close');
-        }, 10000);
-
-        console.log(`Violation shown: ${reason} - Auto-closing in 10 seconds`);
-
-    } catch (error) {
-        console.error('Error showing violation screen:', error);
-    }
-}
-
-// ================================
-// NOTIFICATION FUNCTIONS
-// ================================
-
-/**
- * Show notification to user
- */
 function showNotification(message, type = 'info') {
     try {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 6px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        `;
-
-        // Set background color based on type
-        const colors = {
-            'success': '#4CAF50',
-            'error': '#ff4757',
-            'warning': '#ffc107',
-            'info': '#2196F3'
-        };
-        notification.style.backgroundColor = colors[type] || colors.info;
-
-        document.body.appendChild(notification);
-
-        // Show notification
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-
-        // Hide notification after 5 seconds
-        setTimeout(() => {
-            notification.style.transform = 'translateX(400px)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
-        }, 5000);
-
+        console.log(`Notification (${type}): ${message}`);
     } catch (error) {
-        console.error('Error showing notification:', error);
+        console.error('Failed to show notification:', error);
     }
 }
 
-/**
- * Show error message
- */
 function showError(message) {
     try {
         const errorPanel = document.getElementById('error-panel');
@@ -441,27 +283,17 @@ function showError(message) {
     }
 }
 
-// ================================
-// ASSIGN GLOBAL FUNCTIONS
-// ================================
-
-// Make main functions available globally for module access
 window.ExamApp.startExam = startExam;
 window.ExamApp.exitExam = exitExam;
 window.ExamApp.showViolationScreen = showViolationScreen;
 
-// Socket event handlers for login responses
 window.ExamApp.handleLoginSuccess = handleLoginSuccess;
 window.ExamApp.handleSessionRestore = handleSessionRestore;
 window.ExamApp.handleLoginError = handleLoginError;
 
-// Timer event handlers
 window.ExamApp.handleTimeWarning = handleTimeWarning;
 window.ExamApp.handleExamExpired = handleExamExpired;
 
-// ================================
-// DEBUGGING FUNCTIONS (DEVELOPMENT ONLY)
-// ================================
 if (window.location.hostname === 'localhost') {
     window.examDebug = {
         getState: () => window.ExamApp,
