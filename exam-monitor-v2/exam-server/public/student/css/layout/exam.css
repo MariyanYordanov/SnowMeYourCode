@@ -8,25 +8,41 @@
    MAIN EXAM CONTAINER - ADAPTIVE GRID
    ================================= */
 
+/* КРИТИЧНА ПОПРАВКА за exam.css - заменете съществуващия .exam-container блок с това: */
+
 .exam-container {
-    display: none;
-    /* Hidden until login */
+    display: grid;
+    /* ВИНАГИ показвай като grid */
     grid-template-areas:
         "header header header"
         "files editor devtools"
         "footer footer footer";
-    grid-template-columns: var(--grid-collapsed);
+
+    /* ПОПРАВЕНИ grid-template-columns - покажи всички панели */
+    grid-template-columns: 250px 1fr 350px;
+    /* Files | Editor | DevTools */
+
     grid-template-rows:
-        var(--header-height) 1fr var(--footer-height);
+        50px 1fr 40px;
+    /* Header | Content | Footer */
+
     height: 100vh;
     background: var(--editor-bg);
     color: var(--editor-text);
     overflow: hidden;
-    transition: grid-template-columns var(--transition-normal) var(--ease-in-out);
 }
 
-.exam-container.active {
-    display: grid;
+/* Ако искаш да скриеш панели, използвай тези класове */
+.exam-container.hide-files {
+    grid-template-columns: 0px 1fr 350px;
+}
+
+.exam-container.hide-devtools {
+    grid-template-columns: 250px 1fr 0px;
+}
+
+.exam-container.editor-only {
+    grid-template-columns: 0px 1fr 0px;
 }
 
 /* =================================
@@ -538,4 +554,67 @@
     .layout-btn {
         transition: none;
     }
+}
+
+/* ДОБАВИ В КРАЯ НА exam.css - липсващи класове */
+
+/* Monaco Editor специфични стилове */
+.monaco-container {
+    height: 100%;
+    width: 100%;
+    min-height: 400px;
+}
+
+.editor-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Exam Footer */
+.exam-footer {
+    grid-area: footer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--spacing-lg);
+    background: var(--editor-panel-bg);
+    border-top: 1px solid var(--editor-border);
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+.footer-info {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.footer-actions {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+/* Tab content visibility */
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Button improvements */
+.btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
 }
