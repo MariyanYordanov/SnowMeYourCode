@@ -29,8 +29,27 @@ function setupTabButtons() {
     const consoleTab = document.getElementById('console-tab');
     const mdnTab = document.getElementById('mdn-tab');
 
-    consoleTab.addEventListener('click', () => switchTab('console'));
-    mdnTab.addEventListener('click', () => switchTab('mdn'));
+    // Check if elements exist before adding listeners
+    if (consoleTab) {
+        consoleTab.addEventListener('click', () => switchTab('console'));
+    } else {
+        console.warn('Console tab button not found in DOM');
+    }
+
+    if (mdnTab) {
+        mdnTab.addEventListener('click', () => switchTab('mdn'));
+    } else {
+        console.warn('MDN tab button not found in DOM');
+    }
+
+    // Setup DevTools tabs if they exist
+    const devtoolsTabs = document.querySelectorAll('.devtool-tab');
+    devtoolsTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = e.target.getAttribute('data-tab');
+            switchDevToolsTab(tabName);
+        });
+    });
 }
 
 /**
@@ -136,6 +155,36 @@ function setupMDNFunctions() {
 }
 
 /**
+ * Switch between DevTools tabs
+ */
+function switchDevToolsTab(tabName) {
+    try {
+        // Update tab buttons
+        const devtoolsTabs = document.querySelectorAll('.devtool-tab');
+        devtoolsTabs.forEach(tab => tab.classList.remove('active'));
+
+        const activeTab = document.querySelector(`.devtool-tab[data-tab="${tabName}"]`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+        }
+
+        // Update tab panels
+        const devtoolPanels = document.querySelectorAll('.devtool-panel');
+        devtoolPanels.forEach(panel => panel.classList.remove('active'));
+
+        const activePanel = document.getElementById(`${tabName}-panel`);
+        if (activePanel) {
+            activePanel.classList.add('active');
+        }
+
+        console.log(`Switched to ${tabName} devtools tab`);
+
+    } catch (error) {
+        console.error('Error switching devtools tab:', error);
+    }
+}
+
+/**
  * Get current tab
  */
 export function getCurrentTab() {
@@ -145,6 +194,7 @@ export function getCurrentTab() {
 // Export for debugging
 window.tabsDebug = {
     switchTab,
+    switchDevToolsTab,
     getCurrentTab,
     currentTab: () => currentTab
 };

@@ -90,33 +90,6 @@ window.ExamApp = {
 };
 
 // ===================================
-// TEMPLATE LOADING
-// ===================================
-
-/**
- * Load HTML templates into the page
- * @returns {Promise<void>}
- */
-async function loadTemplates() {
-    const templates = {
-        'login-form': 'html/login-form.html',
-        'exam-workspace': 'html/exam-workspace.html',
-        'console-panel': 'html/console-panel.html',
-        'violation-screen': 'html/violation-screen.html'
-    };
-
-    for (const [name, path] of Object.entries(templates)) {
-        try {
-            const response = await fetch(`/student/${path}`);
-            const html = await response.text();
-            document.body.innerHTML = document.body.innerHTML.replace(`{{${name}}}`, html);
-        } catch (error) {
-            console.error(`Failed to load template ${name}:`, error);
-        }
-    }
-}
-
-// ===================================
 // INITIALIZATION
 // ===================================
 
@@ -429,9 +402,6 @@ if (window.location.hostname === 'localhost') {
  */
 document.addEventListener('DOMContentLoaded', async function () {
     console.log('Student Exam System initializing...');
-
-    // Load HTML templates first
-    await loadTemplates();
 
     // Check if DOM is ready
     if (document.readyState === 'loading') {
