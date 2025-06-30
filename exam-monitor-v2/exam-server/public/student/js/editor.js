@@ -354,34 +354,52 @@ function setupKeyboardShortcuts(editor) {
 
 /**
  * Setup editor controls event handlers
+ * FIXED VERSION - не изисква actions параметър
  */
-export function setupEditorControls(actions) {
+export function setupEditorControls() {
     try {
-        // Run code button
-        const runBtn = document.getElementById('run-code-btn');
-        if (runBtn && actions.runCode) {
+        // Run code button - търси по различни ID-та
+        const runBtn = document.getElementById('run-btn') ||
+            document.getElementById('run-code-btn') ||
+            document.querySelector('button[id*="run"]');
+        if (runBtn) {
             runBtn.addEventListener('click', () => {
                 runCode();
             });
+            console.log('Run button setup complete');
+        } else {
+            console.warn('Run button not found');
         }
 
         // Format code button
-        const formatBtn = document.getElementById('format-code-btn');
-        if (formatBtn && actions.formatCode) {
-            formatBtn.addEventListener('click', actions.formatCode);
+        const formatBtn = document.getElementById('format-btn') ||
+            document.getElementById('format-code-btn') ||
+            document.querySelector('button[id*="format"]');
+        if (formatBtn) {
+            formatBtn.addEventListener('click', () => {
+                formatCode();
+            });
         }
 
         // Clear output button
-        const clearBtn = document.getElementById('clear-output-btn');
-        if (clearBtn && actions.clearOutput) {
-            clearBtn.addEventListener('click', actions.clearOutput);
+        const clearBtn = document.getElementById('clear-btn') ||
+            document.getElementById('clear-output-btn') ||
+            document.querySelector('button[id*="clear"]');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                clearOutput();
+            });
         }
 
         // Theme selector
         const themeSelector = document.getElementById('theme-selector');
-        if (themeSelector && actions.changeTheme) {
-            themeSelector.addEventListener('change', actions.changeTheme);
+        if (themeSelector) {
+            themeSelector.addEventListener('change', (e) => {
+                changeTheme(e);
+            });
         }
+
+        console.log('Editor controls setup completed');
 
     } catch (error) {
         console.error('Failed to setup editor controls:', error);

@@ -435,3 +435,49 @@ a:focus {
     border-color: var(--editor-border);
     color: var(--editor-text);
 }
+
+/* Student info visibility fix */
+.exam-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 5px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.student-name {
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.student-class {
+    color: #e0e0e0 !important;
+    font-size: 14px;
+}
+
+.session-id {
+    color: #a0a0a0 !important;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+/* Timer visibility fix */
+.exam-timer {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 15px;
+    border-radius: 4px;
+}
+
+.timer-label {
+    color: #e0e0e0 !important;
+    margin-right: 10px;
+}
+
+.timer-value {
+    color: #4CAF50 !important;
+    font-weight: 600;
+    font-size: 18px;
+    font-family: monospace;
+}

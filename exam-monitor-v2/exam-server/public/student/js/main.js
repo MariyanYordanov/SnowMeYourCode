@@ -44,7 +44,9 @@ import {
 
 import {
     showCompletionDialog,
-    hideCustomDialogs
+    hideCustomDialogs,
+    prompt,
+    confirm
 } from './dialogs.js';
 
 import { setupTabs } from './tabs.js';
@@ -164,6 +166,9 @@ function assignPublicMethods() {
 
     window.ExamApp.handleTimeWarning = handleTimeWarning;
     window.ExamApp.handleExamExpired = handleExamExpired;
+
+    // Expose functions globally for easier access
+    window.updateStudentInfoDisplay = updateStudentInfoDisplay;
 }
 
 /**
@@ -224,26 +229,35 @@ function startExam(sessionData) {
             window.ExamApp.sessionId
         );
 
-        // Initialize components in order
-        initializeMonacoEditor();
-        setupEditorControls();
-        setupTabs();
+        // Initialize Monaco Editor and setup controls after it's ready
+        initializeMonacoEditor().then(() => {
+            // Setup editor controls WITHOUT parameters
+            setupEditorControls();
+
+            // Setup tabs after editor is ready
+            setupTabs();
+        }).catch(error => {
+            console.error('Failed to initialize Monaco editor:', error);
+            showError('Грешка при зареждане на редактора');
+        });
+
+        // Initialize File Explorer
         initializeFileExplorer();
 
-        // Enter fullscreen and activate anti-cheat
+        // Enter fullscreen first
         enterFullscreenMode();
+
+        // Activate anti-cheat with delay to avoid immediate trigger
         setTimeout(() => {
+            window.ExamApp.completionInProgress = false; // Ensure we're not in completion mode
             activateAntiCheat();
-        }, 1000);
+        }, 2000); // 2 second delay
 
         // Start exam timer
         startExamTimer(window.ExamApp.examEndTime);
 
         // Setup default button
         setupDefaultButton();
-
-        // Fix styles
-        fixHeaderStyles();
 
         // Show success notification
         showNotification('Изпитът започна успешно!', 'success');
@@ -264,7 +278,10 @@ function startExam(sessionData) {
  * Setup default button functionality
  */
 function setupDefaultButton() {
-    const defaultBtn = document.querySelector('[title*="Default"]');
+    // Find button by multiple possible selectors
+    const defaultBtn = document.querySelector('[title*="Default"]') ||
+        document.querySelector('#layout-mode') ||
+        document.querySelector('.layout-btn');
 
     if (defaultBtn) {
         defaultBtn.addEventListener('click', () => {
@@ -277,8 +294,11 @@ function решиЗадача() {
     return "Готово!";
 }
 
-// Тестване на функцията
-console.log(решиЗадача());`;
+// Тествайте кода си
+console.log(решиЗадача());
+
+// Enhanced Console Examples:
+console.table([{име: "Иван", възраст: 17}, {име: "Мария", възраст: 18}]);`;
 
             if (window.ExamApp?.editor) {
                 window.ExamApp.editor.setValue(sampleCode);
@@ -286,62 +306,6 @@ console.log(решиЗадача());`;
             }
         });
     }
-}
-
-/**
- * Fix header styles for better visibility
- */
-function fixHeaderStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        /* Fix student info visibility */
-        .exam-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            padding: 5px 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        
-        .student-name {
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .student-class {
-            color: #e0e0e0 !important;
-            font-size: 14px;
-        }
-        
-        .session-id {
-            color: #a0a0a0 !important;
-            font-size: 12px;
-            font-family: monospace;
-        }
-        
-        /* Fix timer visibility */
-        .exam-timer {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 5px 15px;
-            border-radius: 4px;
-        }
-        
-        .timer-label {
-            color: #e0e0e0 !important;
-            margin-right: 10px;
-        }
-        
-        .timer-value {
-            color: #4CAF50 !important;
-            font-weight: 600;
-            font-size: 18px;
-            font-family: monospace;
-        }
-    `;
-
-    document.head.appendChild(style);
 }
 
 /**
@@ -435,15 +399,28 @@ function showNotification(message, type = 'info') {
         const notificationEl = document.createElement('div');
         notificationEl.className = `notification notification-${type}`;
         notificationEl.textContent = message;
+        notificationEl.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
 
         document.body.appendChild(notificationEl);
 
         setTimeout(() => {
-            notificationEl.classList.add('show');
+            notificationEl.style.opacity = '1';
         }, 100);
 
         setTimeout(() => {
-            notificationEl.classList.remove('show');
+            notificationEl.style.opacity = '0';
             setTimeout(() => {
                 notificationEl.remove();
             }, 300);
@@ -504,6 +481,16 @@ function showViolationScreen(reason) {
     }
 }
 
+/**
+ * Hide violation screen
+ */
+window.ExamApp.hideViolationScreen = function () {
+    const violationOverlay = document.getElementById('violation-overlay');
+    if (violationOverlay) {
+        violationOverlay.style.display = 'none';
+    }
+};
+
 // ===================================
 // DEVELOPMENT HELPERS
 // ===================================
@@ -522,7 +509,12 @@ if (window.location.hostname === 'localhost') {
             const examContainer = document.getElementById('exam-component');
             if (loginContainer) loginContainer.style.display = 'flex';
             if (examContainer) examContainer.style.display = 'none';
-        }
+        },
+        fixDisplay: () => updateStudentInfoDisplay(
+            window.ExamApp.studentName,
+            window.ExamApp.studentClass,
+            window.ExamApp.sessionId
+        )
     };
 }
 
