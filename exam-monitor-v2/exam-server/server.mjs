@@ -93,7 +93,7 @@ app.get('/teacher', (req, res) => {
 });
 
 app.get('/student', (req, res) => {
-    res.sendFile(join(__dirname, 'public/student/html/index.html'));
+    res.sendFile(join(__dirname, 'public/student/index.html'));
 });
 
 app.use('/api/project', projectRoutes);

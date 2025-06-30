@@ -414,3 +414,66 @@
         box-shadow: 0 0 0 2px var(--primary-color);
     }
 }
+
+/* file-tabs.css */
+.file-tabs-container {
+    display: flex;
+    background: var(--editor-panel-bg);
+    border-bottom: 1px solid var(--editor-border);
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.file-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border-right: 1px solid var(--editor-border);
+    cursor: pointer;
+    user-select: none;
+    min-width: 120px;
+    max-width: 200px;
+}
+
+.file-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.file-tab.active {
+    background: var(--editor-bg);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.file-tab.modified .tab-name::after {
+    content: " •";
+    color: var(--warning-color);
+}
+
+.tab-icon {
+    font-size: 14px;
+}
+
+.tab-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tab-close {
+    opacity: 0;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+}
+
+.file-tab:hover .tab-close {
+    opacity: 0.7;
+}
+
+.tab-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
