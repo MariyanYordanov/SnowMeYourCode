@@ -193,16 +193,6 @@
     position: relative;
 }
 
-.no-touch-policy::before {
-    content: '📱';
-    position: absolute;
-    top: -15px;
-    left: var(--spacing-xl);
-    background: linear-gradient(135deg, #667eea15, #764ba215);
-    padding: 0 var(--spacing-md);
-    font-size: var(--font-xxl);
-}
-
 .no-touch-policy h4 {
     margin: 0 0 var(--spacing-lg) 0;
     color: var(--secondary-color);
@@ -245,6 +235,17 @@
     margin: var(--spacing-lg) 0;
     font-size: var(--font-base);
     color: #2a4365;
+}
+
+.tech-info {
+    background: #f0f4ff;
+    border: 1px solid #a8b5ff;
+    border-left: 4px solid var(--primary-color);
+    padding: var(--spacing-lg);
+    border-radius: var(--input-border-radius);
+    margin: var(--spacing-lg) 0;
+    font-size: var(--font-base);
+    color: #2d3748;
 }
 
 .device-requirement {

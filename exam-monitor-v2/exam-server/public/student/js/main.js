@@ -9,7 +9,7 @@
 // ===================================
 // IMPORTS - All module dependencies
 // ===================================
-
+import { initializeFileExplorer } from './file-explorer.js';
 import {
     setupLoginForm,
     handleLoginSuccess,
@@ -204,7 +204,10 @@ async function startExam(data) {
             changeTheme
         });
 
-        // Initialize tabs now that DOM is ready
+        // Initialize File Explorer HERE - след Monaco Editor
+        initializeFileExplorer();
+
+        // Setup tabs after DOM is ready
         setupTabs();
 
         // Load layout toggle system

@@ -39,15 +39,10 @@ export class FileExplorer {
     bindEvents() {
         // File action buttons
         const newFileBtn = this.container.querySelector('.file-action-btn.new-file');
-        const uploadBtn = this.container.querySelector('.file-action-btn.upload');
         const refreshBtn = this.container.querySelector('.file-action-btn.refresh');
 
         if (newFileBtn) {
             newFileBtn.addEventListener('click', () => this.createNewFile());
-        }
-
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', () => this.uploadFile());
         }
 
         if (refreshBtn) {
@@ -505,6 +500,31 @@ export class FileExplorer {
         return data;
     }
 
+    // Добави този метод в класа FileExplorer
+
+    async deleteFile(filePath) {
+        if (!confirm(`Сигурни ли сте, че искате да изтриете "${filePath}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/project/file/${encodeURIComponent(filePath)}?sessionId=${window.ExamApp?.sessionId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                await this.loadProjectStructure();
+                this.showNotification('Файлът е изтрит', 'success');
+            } else {
+                throw new Error(data.error || 'Failed to delete file');
+            }
+        } catch (error) {
+            console.erro
+            r('Delete failed:', error);
+            this.showNotification('Грешка при изтриване: ' + error.message, 'error');
+        }
+    }
     /**
      * Refresh file tree from server
      */

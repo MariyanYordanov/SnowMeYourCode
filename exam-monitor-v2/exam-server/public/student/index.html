@@ -35,45 +35,40 @@
                     <!-- Terms Content -->
                     <div class="terms-content">
                         <div class="terms-text">
-                            <h4>АВТОМАТИЧНО ПРЕКРАТЯВАНЕ при:</h4>
+                            <h4>АВТОМАТИЧНО ПРЕКРАТЯВАНЕ ПРИ:</h4>
                             <ul class="violation-list">
                                 <li><strong>Излизане от fullscreen режим</strong></li>
                                 <li><strong>Скриване на прозореца</strong> на изпита</li>
                                 <li><strong>Превключване към други приложения</strong> или прозорци</li>
-                                <li><strong>Копиране/поставяне на код</strong> от външни источници</li>
-                                <li class="touch-violation"><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
+                                <li><strong>Копиране/поставяне на код</strong> от външни източници</li>
+                                <li><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
                             </ul>
             
                             <!-- CRITICAL: Touch Policy Section -->
                             <div class="no-touch-policy">
                                 <h4>ВАЖНО: TOUCH ВЗАИМОДЕЙСТВИЕ ЗАБРАНЕНО</h4>
                                 <div class="touch-policy-content">
-                                    <p><strong>ВСЯКО ДОКОСВАНЕ = АВТОМАТИЧНО ИЗГОНВАНЕ</strong></p>
+                                    <p><strong>ВСЯКО ДОКОСВАНЕ === АВТОМАТИЧНО ИЗГОНВАНЕ</strong></p>
                                     <ul class="touch-rules">
-                                        <li>Използвайте <strong>САМО мишка и клавиатура</strong></li>
+                                        <li>Използвайте <strong>САМО МИШКА И КЛАВИАТУРА</strong></li>
                                         <li>Touch screens <strong>НЕ СА ПОЗВОЛЕНИ</strong></li>
                                         <li>Таблети и телефони <strong>НЕ СА ПОДХОДЯЩИ</strong> за изпита</li>
                                         <li>Всеки touch event се засича <strong>МОМЕНТАЛНО</strong></li>
                                     </ul>
-            
-                                    <div class="device-requirement">
-                                        <strong>ЗАДЪЛЖИТЕЛНО:</strong> Използвайте настолен компютър или лаптоп
-                                        с традиционни мишка и клавиатура. Никакви touch взаимодействия не са позволени.
-                                    </div>
                                 </div>
                             </div>
             
-                            <h4>РАЗРЕШЕНИ действия:</h4>
+                            <h4>Разрешени действия:</h4>
                             <ul class="allowed-list">
                                 <li><strong>Писане на код</strong> в редактора</li>
                                 <li><strong>Изпълнение на код</strong> и преглед на резултатите</li>
                                 <li><strong>Форматиране на кода</strong> с предоставените инструменти</li>
                                 <li><strong>Developer Tools</strong> в рамките на fullscreen режима</li>
-                                <li><strong>Мишка и клавиатура</strong> взаимодействие САМО</li>
+                                <li><strong>Мишка и клавиатура</strong> взаимодействия</li>
                             </ul>
             
                             <!-- Platform-Specific Allowed Actions -->
-                            <div class="platform-details allowed-details">
+                            <div class="tech-info">
                                 <h5>Разрешени клавиши за смяна на език:</h5>
                                 <ul class="platform-list allowed">
                                     <li><strong>Windows:</strong> Windows+Space, Alt+Shift</li>
@@ -83,21 +78,20 @@
                             </div>
             
                             <div class="warning-box">
-                                <strong>ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>АВТОМАТИЧНО</strong>
+                                <strong>ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>Автоматично</strong>
                                 без възможност за връщане! Системата засича всички взаимодействия в реално време -
-                                включително touch events, излизане от fullscreen и превключване между приложения.
+                                включително <strong>touch events</strong>, излизане от <strong>fullscreen</strong> и превключване между приложения.
                             </div>
             
                             <div class="info-box">
                                 <strong>ДОПЪЛНИТЕЛНО:</strong> Времето за изпита е <strong>3 часа</strong>.
                                 Кодът се запазва автоматично на всеки 2 секунди. След приключване на изпита
-                                няма възможност за връщане или промени. Използвайте настолен компютър за най-добър опит.
+                                няма възможност за връщане или промени.
                             </div>
             
                             <div class="tech-info">
                                 <strong>ТЕХНИЧЕСКА ИНФОРМАЦИЯ:</strong> Системата използва стандартни web APIs
-                                за детекция на fullscreen състоянието и touch events. Работи на всички modern browsers
-                                но изисква традиционни input devices (мишка + клавиатура).
+                                за детекция на <strong>fullscreen</strong> състоянието и <strong>touch events</strong>. Работи на всички модерни браузъри.
                             </div>
                         </div>
                     </div>
@@ -109,7 +103,7 @@
                             <span class="checkmark"></span>
                             <span class="checkbox-text">
                                 Прочетох и се <strong>съгласявам с условията</strong> на изпита.
-                                Разбирам че при нарушение изпитът се прекратява автоматично.
+                                Разбирам, че при нарушение изпитът се прекратява автоматично.
                             </span>
                         </label>
                     </div>
@@ -156,25 +150,22 @@
                     </div>
             
                     <div class="exam-timer">
-                        <span class="timer-label">Оставащо време:</span>
+                        <span class="timer-label">Time left:</span>
                         <span id="exam-timer" class="timer-value">03:00:00</span>
                     </div>
             
                     <div class="layout-controls">
-                        <button id="toggle-files" class="layout-btn active" title="Toggle Files Panel (Ctrl+1)">
-                            📁 Files
+                        <button id="toggle-files" class="layout-btn active" title="Toggle Files Panel (Ctrl+1)">Files
                         </button>
-                        <button id="toggle-devtools" class="layout-btn active" title="Toggle DevTools (Ctrl+2)">
-                            🛠️ DevTools
+                        <button id="toggle-devtools" class="layout-btn active" title="Toggle DevTools (Ctrl+2)">DevTools
                         </button>
-                        <button id="layout-mode" class="layout-btn" title="Change Layout Mode (Ctrl+3)">
-                            ⚙️ Default
+                        <button id="layout-mode" class="layout-btn" title="Change Layout Mode (Ctrl+3)">Default
                         </button>
                     </div>
             
                     <div class="exam-actions">
                         <button id="finish-exam-btn" class="btn btn-danger">
-                            Предай изпита
+                            Send
                         </button>
                     </div>
                 </header>
@@ -184,9 +175,9 @@
                     <div class="files-header">
                         <h3>Project Files</h3>
                         <div class="file-toolbar">
-                            <button class="file-action-btn new-file" title="New File">📄</button>
-                            <button class="file-action-btn upload" title="Upload Files">⬆️</button>
-                            <button class="file-action-btn refresh" title="Refresh">🔄</button>
+                            <button class="file-action-btn new-file" title="New File">📄 New File</button>
+                            <button class="file-action-btn upload" title="Upload Files">⬆️ Upload Files</button>
+                            <button class="file-action-btn refresh" title="Refresh">🔄 Refresh</button>
                         </div>
                     </div>
                     <div class="files-content">
@@ -205,13 +196,13 @@
                         <h3>Код Редактор</h3>
                         <div class="editor-controls">
                             <button id="run-code-btn" class="btn btn-primary">
-                                ▶️ Изпълни
+                                ▶️ Run
                             </button>
                             <button id="format-code-btn" class="btn btn-secondary">
-                                🎨 Форматирай
+                                🎨 Format Code
                             </button>
                             <button id="clear-output-btn" class="btn btn-secondary">
-                                🗑️ Изчисти
+                                🗑️ Clear
                             </button>
                             <select id="theme-selector" class="theme-select">
                                 <option value="vs-dark">Dark Theme</option>
@@ -230,7 +221,7 @@
                         <!-- Console Output -->
                         <div class="console-container">
                             <div class="console-header">
-                                <h4>Конзола</h4>
+                                <h4>Console</h4>
                             </div>
                             <div id="console-output" class="console-output"></div>
                         </div>

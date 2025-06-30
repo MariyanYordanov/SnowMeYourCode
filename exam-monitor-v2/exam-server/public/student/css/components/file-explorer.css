@@ -84,9 +84,6 @@
     content: '📁';
 }
 
-.file-action-btn.upload::before {
-    content: '⬆️';
-}
 
 .file-action-btn.download::before {
     content: '⬇️';

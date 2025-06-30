@@ -7,17 +7,43 @@
    MONACO EDITOR CONTAINER
    ================================= */
 
-.monaco-editor-container {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    background: var(--editor-bg);
-}
+   .monaco-editor-container {
+       position: relative;
+       flex: 1;
+       min-height: 300px;
+       background: var(--editor-bg);
+       overflow: hidden;
+   }
 
-#monaco-editor {
-    height: 100% !important;
-    width: 100% !important;
-}
+   #monaco-editor {
+       position: absolute !important;
+       top: 0;
+       left: 0;
+       right: 0;
+       bottom: 0;
+       height: 100% !important;
+       width: 100% !important;
+   }
+
+   .editor-content {
+       display: flex;
+       flex-direction: column;
+       flex: 1;
+       min-height: 0;
+       overflow: hidden;
+   }
+
+   .console-container {
+       height: 200px;
+       min-height: 100px;
+       max-height: 50%;
+       border-top: 1px solid var(--editor-border);
+       background: var(--console-bg);
+       display: flex;
+       flex-direction: column;
+       overflow: hidden;
+       flex-shrink: 0;
+   }
 
 /* =================================
    EDITOR CONTROLS
@@ -78,6 +104,59 @@
 .btn-secondary:hover {
     background: #5a6268;
     border-color: #5a6268;
+}
+/* САМО тези стилове, които липсват в editor.css */
+
+/* Липсващи бутон класове */
+.btn-primary {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+}
+
+.btn-danger {
+    background: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+    color: white !important;
+}
+
+.btn-danger:hover {
+    background: #c82333 !important;
+    border-color: #c82333 !important;
+}
+
+/* Поправка за специфични проблеми */
+.layout-btn {
+    background-color: var(--editor-panel-bg) !important;
+}
+
+.layout-btn.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* DevTools поправка */
+.devtools-tabs {
+    height: auto !important;
+}
+
+.devtool-tab {
+    min-height: 32px !important;
+    display: block !important;
+}
+
+/* File buttons - само икони */
+.file-action-btn {
+    font-size: 0 !important;
+}
+
+.file-action-btn::before {
+    font-size: 14px !important;
 }
 
 /* =================================

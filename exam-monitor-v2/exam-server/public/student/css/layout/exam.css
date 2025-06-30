@@ -121,8 +121,9 @@
     flex-direction: column;
     background: var(--editor-bg);
     min-width: 0;
-    /* Important for grid flexibility */
     position: relative;
+    height: 100%;
+    overflow: hidden;
 }
 
 .devtools-panel {
