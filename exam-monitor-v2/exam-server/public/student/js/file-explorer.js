@@ -1,8 +1,4 @@
-/**
- * File Explorer Component
- * Project files management with tree structure and multi-file editing
- * UPDATED: Removed upload functionality, added security restrictions
- */
+import { prompt, confirm } from './dialogs.js';
 
 export class FileExplorer {
     constructor() {
@@ -17,9 +13,6 @@ export class FileExplorer {
         this.init();
     }
 
-    /**
-     * Initialize file explorer
-     */
     init() {
         this.container = document.querySelector('.files-panel');
         if (!this.container) {
@@ -33,11 +26,6 @@ export class FileExplorer {
         console.log('File Explorer initialized');
     }
 
-    /**
-     * Check if file creation is allowed in given path
-     * @param {string} path - Path to folder
-     * @returns {boolean}
-     */
     canCreateFile(path) {
         const allowedPaths = ['src/', 'components/', 'utils/', 'styles/', 'public/'];
 
@@ -46,11 +34,6 @@ export class FileExplorer {
         return allowedPaths.some(allowed => path.startsWith(allowed));
     }
 
-    /**
-     * Check if file is read-only
-     * @param {string} filePath - Path to file
-     * @returns {boolean}
-     */
     isReadOnly(filePath) {
         const readOnlyFiles = [
             'package.json',
@@ -67,9 +50,6 @@ export class FileExplorer {
         return readOnlyFiles.includes(fileName);
     }
 
-    /**
-     * Bind event listeners
-     */
     bindEvents() {
         const newFileBtn = this.container.querySelector('.file-action-btn.new-file');
         const refreshBtn = this.container.querySelector('.file-action-btn.refresh');
@@ -109,55 +89,42 @@ export class FileExplorer {
         });
     }
 
-    /**
-     * Load project file structure
-     */
     async loadProjectStructure() {
+        if (this.isLoading) return;
+
         this.setLoading(true);
 
         try {
-            const sessionId = window.ExamApp?.sessionId;
-            if (!sessionId) {
-                this.showEmptyState();
-                return;
-            }
-
-            const response = await fetch(`/api/project/files?sessionId=${sessionId}`);
+            const response = await fetch(`/api/project/files?sessionId=${window.ExamApp?.sessionId}`);
             const data = await response.json();
 
-            if (data.success && data.files && data.files.length > 0) {
+            if (data.success && data.files) {
                 this.projectType = data.projectType || 'vanilla';
                 this.projectRoot = data.projectRoot || '';
-                this.fileTree.clear();
-
                 this.buildFileTree(data.files);
                 this.renderFileTree();
-
-                console.log('Project structure loaded:', this.projectType);
             } else {
-                this.showEmptyState('Няма файлове в проекта');
+                this.showEmptyState('Няма проект. Създайте нов файл за да започнете.');
             }
 
         } catch (error) {
             console.error('Failed to load project structure:', error);
-            this.showEmptyState('Грешка при зареждане на файловете');
+            this.showEmptyState('Грешка при зареждане на проекта');
         } finally {
             this.setLoading(false);
         }
     }
 
-    /**
-     * Build file tree from server data
-     * @param {Array} files - Array of file objects from server
-     */
     buildFileTree(files) {
+        this.fileTree.clear();
+
         files.forEach(file => {
             const pathParts = file.path.split('/');
             let currentLevel = this.fileTree;
 
             pathParts.forEach((part, index) => {
                 if (!currentLevel.has(part)) {
-                    const isFile = index === pathParts.length - 1;
+                    const isFile = index === pathParts.length - 1 && file.type === 'file';
                     currentLevel.set(part, {
                         name: part,
                         type: isFile ? 'file' : 'folder',
@@ -177,9 +144,6 @@ export class FileExplorer {
         });
     }
 
-    /**
-     * Render file tree in UI
-     */
     renderFileTree() {
         const filesContent = this.container.querySelector('.files-content');
         if (!filesContent) return;
@@ -188,12 +152,6 @@ export class FileExplorer {
         filesContent.innerHTML = `<div class="file-tree">${treeHTML}</div>`;
     }
 
-    /**
-     * Render tree level recursively
-     * @param {Map} level - Current tree level
-     * @param {number} depth - Current depth
-     * @returns {string} HTML string
-     */
     renderTreeLevel(level, depth = 0) {
         let html = '';
 
@@ -209,12 +167,6 @@ export class FileExplorer {
         return html;
     }
 
-    /**
-     * Render single file/folder item
-     * @param {Object} item - File/folder object
-     * @param {number} depth - Nesting depth
-     * @returns {string} HTML string
-     */
     renderFileItem(item, depth) {
         const indent = depth * 20;
         const isReadOnly = item.type === 'file' && this.isReadOnly(item.path);
@@ -231,136 +183,129 @@ export class FileExplorer {
         if (item.type === 'folder' && item.children && item.children.size > 0) {
             expandIcon.className += item.isOpen ? ' expanded' : ' collapsed';
             expandIcon.innerHTML = item.isOpen ? '▼' : '▶';
-        } else {
-            expandIcon.className += ' no-children';
+        } else if (item.type === 'folder') {
+            expandIcon.innerHTML = '▶';
+            expandIcon.className += ' empty';
         }
 
-        const fileIcon = document.createElement('span');
-        fileIcon.className = `file-icon ${this.getIconClass(item)}`;
+        const icon = document.createElement('span');
+        icon.className = `file-icon ${this.getIconClass(item)}`;
 
-        const fileName = document.createElement('span');
-        fileName.className = 'file-name';
-        fileName.textContent = item.name;
+        const name = document.createElement('span');
+        name.className = 'file-name';
+        name.textContent = item.name;
 
-        if (this.openFiles.has(item.path) && this.openFiles.get(item.path).modified) {
-            fileName.classList.add('unsaved');
+        if (isReadOnly) {
+            const readOnlyBadge = document.createElement('span');
+            readOnlyBadge.className = 'read-only-badge';
+            readOnlyBadge.textContent = 'read-only';
+            name.appendChild(readOnlyBadge);
         }
 
-        const fileActions = document.createElement('div');
-        fileActions.className = 'file-actions';
-
-        if (item.type === 'file' && !isReadOnly) {
-            fileActions.innerHTML = `
-                <button class="file-action rename" title="Rename" data-action="rename"></button>
-                <button class="file-action duplicate" title="Duplicate" data-action="duplicate"></button>
-                <button class="file-action delete" title="Delete" data-action="delete"></button>
-            `;
+        if (item.type === 'folder') {
+            itemElement.appendChild(expandIcon);
         }
+        itemElement.appendChild(icon);
+        itemElement.appendChild(name);
 
-        const metadata = document.createElement('div');
-        metadata.className = 'file-metadata';
-
-        if (item.type === 'file') {
-            metadata.innerHTML = `
-                <span class="file-size">${this.formatFileSize(item.size)}</span>
-                ${isReadOnly ? '<span class="read-only-badge">READ ONLY</span>' : ''}
-            `;
-        }
-
-        return `
-            <div class="file-tree-item ${item.type} ${isReadOnly ? 'read-only' : ''}" 
-                 data-path="${item.path}" 
-                 data-type="${item.type}" 
-                 style="padding-left: ${indent}px">
-                ${expandIcon.outerHTML}
-                ${fileIcon.outerHTML}
-                ${fileName.outerHTML}
-                ${fileActions.outerHTML}
-                ${metadata.outerHTML}
-            </div>
-        `;
+        return itemElement.outerHTML;
     }
 
-    /**
-     * Handle file tree click events
-     * @param {Event} e - Click event
-     */
-    handleFileTreeClick(e) {
-        const treeItem = e.target.closest('.file-tree-item');
-        if (!treeItem) return;
+    async handleFileTreeClick(e) {
+        const item = e.target.closest('.file-tree-item');
+        if (!item) return;
 
-        const path = treeItem.getAttribute('data-path');
-        const type = treeItem.getAttribute('data-type');
-        const action = e.target.getAttribute('data-action');
+        const path = item.getAttribute('data-path');
+        const type = item.getAttribute('data-type');
 
-        if (action) {
-            e.stopPropagation();
-            switch (action) {
-                case 'rename':
-                    this.renameFile(path);
-                    break;
-                case 'duplicate':
-                    this.duplicateFile(path);
-                    break;
-                case 'delete':
-                    this.deleteFile(path);
-                    break;
-            }
-            return;
-        }
-
-        if (e.target.classList.contains('expand-icon') && type === 'folder') {
+        if (type === 'folder') {
             this.toggleFolder(path);
         } else if (type === 'file') {
-            this.openFile(path);
+            await this.openFile(path);
         }
     }
 
-    /**
-     * Handle context menu
-     * @param {Event} e - Context menu event
-     */
-    handleContextMenu(e) {
+    async handleContextMenu(e) {
         e.preventDefault();
+
+        const item = e.target.closest('.file-tree-item');
+        if (!item) return;
+
+        const path = item.getAttribute('data-path');
+        const type = item.getAttribute('data-type');
+
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.left = `${e.pageX}px`;
+        menu.style.top = `${e.pageY}px`;
+
+        const actions = [];
+
+        if (type === 'file' && !this.isReadOnly(path)) {
+            actions.push(
+                { label: 'Изтрий', action: () => this.deleteFile(path) },
+                { label: 'Преименувай', action: () => this.renameFile(path) },
+                { label: 'Дублирай', action: () => this.duplicateFile(path) }
+            );
+        }
+
+        if (type === 'folder') {
+            actions.push(
+                { label: 'Нов файл', action: () => this.createNewFileInFolder(path) }
+            );
+        }
+
+        actions.forEach(action => {
+            const item = document.createElement('div');
+            item.className = 'context-menu-item';
+            item.textContent = action.label;
+            item.onclick = () => {
+                action.action();
+                menu.remove();
+            };
+            menu.appendChild(item);
+        });
+
+        document.body.appendChild(menu);
+
+        const removeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', removeMenu);
+            }
+        };
+
+        setTimeout(() => {
+            document.addEventListener('click', removeMenu);
+        }, 0);
     }
 
-    /**
-     * Handle double click
-     * @param {Event} e - Double click event
-     */
-    handleFileDoubleClick(e) {
-        const treeItem = e.target.closest('.file-tree-item');
-        if (!treeItem) return;
+    async handleFileDoubleClick(e) {
+        const item = e.target.closest('.file-tree-item');
+        if (!item) return;
 
-        const type = treeItem.getAttribute('data-type');
+        const type = item.getAttribute('data-type');
         if (type === 'folder') {
-            const path = treeItem.getAttribute('data-path');
-            this.toggleFolder(path);
+            e.preventDefault();
         }
     }
 
-    /**
-     * Toggle folder open/closed
-     * @param {string} folderPath - Path to folder
-     */
-    toggleFolder(folderPath) {
-        const item = this.findItemByPath(folderPath);
-        if (item && item.type === 'folder') {
-            item.isOpen = !item.isOpen;
+    toggleFolder(path) {
+        const folder = this.findItemByPath(path);
+        if (folder && folder.type === 'folder') {
+            folder.isOpen = !folder.isOpen;
             this.renderFileTree();
         }
     }
 
-    /**
-     * Open file in editor
-     * @param {string} filePath - Path to file
-     */
     async openFile(filePath) {
-        try {
-            if (this.isReadOnly(filePath)) {
-                this.showNotification('Този файл е само за четене', 'warning');
-            }
+        if (this.activeFile === filePath) return;
 
+        if (this.isReadOnly(filePath) && !await confirm('Този файл е read-only. Сигурни ли сте, че искате да го отворите?')) {
+            return;
+        }
+
+        try {
             const response = await fetch(`/api/project/file/${encodeURIComponent(filePath)}?sessionId=${window.ExamApp?.sessionId}`);
             const data = await response.json();
 
@@ -373,18 +318,13 @@ export class FileExplorer {
 
                 if (window.ExamApp?.editor) {
                     window.ExamApp.editor.setValue(data.content);
-
-                    const language = this.getLanguageFromExtension(this.getFileExtension(filePath));
-                    monaco.editor.setModelLanguage(window.ExamApp.editor.getModel(), language);
-
-                    if (this.isReadOnly(filePath)) {
-                        window.ExamApp.editor.updateOptions({ readOnly: true });
-                    } else {
-                        window.ExamApp.editor.updateOptions({ readOnly: false });
-                    }
+                    const ext = this.getFileExtension(filePath);
+                    const language = this.getLanguageFromExtension(ext);
+                    window.monaco.editor.setModelLanguage(window.ExamApp.editor.getModel(), language);
                 }
 
                 this.updateActiveFileIndicator();
+                this.showNotification(`Отворен файл: ${filePath}`, 'success');
             } else {
                 throw new Error(data.error || 'Failed to load file');
             }
@@ -395,9 +335,6 @@ export class FileExplorer {
         }
     }
 
-    /**
-     * Save current file
-     */
     async saveFile() {
         if (!this.activeFile || !window.ExamApp?.editor) return;
 
@@ -437,11 +374,8 @@ export class FileExplorer {
         }
     }
 
-    /**
-     * Create new file
-     */
     async createNewFile() {
-        const fileName = prompt('Име на файла (например: src/utils.js):');
+        const fileName = await prompt('Име на файла (например: src/utils.js):');
         if (!fileName) return;
 
         const folderPath = fileName.includes('/') ?
@@ -478,17 +412,13 @@ export class FileExplorer {
         }
     }
 
-    /**
-     * Delete file
-     * @param {string} filePath - Path to file
-     */
     async deleteFile(filePath) {
         if (this.isReadOnly(filePath)) {
             this.showNotification('Не можете да изтриете системен файл', 'error');
             return;
         }
 
-        if (!confirm(`Сигурни ли сте, че искате да изтриете "${filePath}"?`)) {
+        if (!await confirm(`Сигурни ли сте, че искате да изтриете "${filePath}"?`)) {
             return;
         }
 
@@ -517,98 +447,85 @@ export class FileExplorer {
         }
     }
 
-    /**
-     * Rename file
-     * @param {string} oldPath - Current file path
-     */
     async renameFile(oldPath) {
         if (this.isReadOnly(oldPath)) {
             this.showNotification('Не можете да преименувате системен файл', 'error');
             return;
         }
 
-        const newName = prompt('Ново име на файла:', oldPath);
+        const newName = await prompt('Ново име на файла:', oldPath);
         if (!newName || newName === oldPath) return;
 
         const newFolderPath = newName.includes('/') ?
             newName.substring(0, newName.lastIndexOf('/') + 1) : '';
 
         if (!this.canCreateFile(newFolderPath)) {
-            this.showNotification('Не можете да местите файлове в тази папка', 'error');
+            this.showNotification('Не можете да преместите файла в тази папка', 'error');
             return;
         }
 
         try {
-            const response = await fetch(`/api/project/file/${encodeURIComponent(oldPath)}/rename`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: window.ExamApp?.sessionId,
-                    newPath: newName
-                })
+            const response = await fetch(`/api/project/file/${encodeURIComponent(oldPath)}?sessionId=${window.ExamApp?.sessionId}`, {
+                method: 'DELETE'
             });
 
-            const data = await response.json();
-            if (data.success) {
-                await this.refreshFileTree();
-                if (this.activeFile === oldPath) {
-                    this.activeFile = newName;
-                }
-                this.showNotification('Файлът е преименуван', 'success');
-            } else {
-                throw new Error(data.error || 'Failed to rename file');
-            }
+            if (response.ok) {
+                const createResponse = await fetch('/api/project/file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: window.ExamApp?.sessionId,
+                        filename: newName,
+                        content: this.openFiles.get(oldPath)?.content || ''
+                    })
+                });
 
+                if (createResponse.ok) {
+                    await this.loadProjectStructure();
+                    this.showNotification('Файлът е преименуван', 'success');
+
+                    if (this.activeFile === oldPath) {
+                        await this.openFile(newName);
+                    }
+                }
+            }
         } catch (error) {
             console.error('Rename failed:', error);
             this.showNotification('Грешка при преименуване', 'error');
         }
     }
 
-    /**
-     * Duplicate file
-     * @param {string} filePath - Path to file
-     */
     async duplicateFile(filePath) {
-        const pathParts = filePath.split('/');
-        const fileName = pathParts.pop();
-        const folderPath = pathParts.length > 0 ? pathParts.join('/') + '/' : '';
-
-        const newName = prompt('Име на копието:', folderPath + 'copy_' + fileName);
-        if (!newName) return;
-
-        const newFolderPath = newName.includes('/') ?
-            newName.substring(0, newName.lastIndexOf('/') + 1) : '';
-
-        if (!this.canCreateFile(newFolderPath)) {
-            this.showNotification('Не можете да създавате файлове в тази папка', 'error');
+        if (this.isReadOnly(filePath)) {
+            this.showNotification('Не можете да дублирате системен файл', 'error');
             return;
         }
 
+        const ext = this.getFileExtension(filePath);
+        const baseName = filePath.replace(`.${ext}`, '');
+        const newName = await prompt('Име на копието:', `${baseName}-copy.${ext}`);
+
+        if (!newName || newName === filePath) return;
+
         try {
-            const getResponse = await fetch(`/api/project/file/${encodeURIComponent(filePath)}?sessionId=${window.ExamApp?.sessionId}`);
-            const getData = await getResponse.json();
+            const fileContent = this.openFiles.get(filePath)?.content || '';
 
-            if (!getData.success) {
-                throw new Error('Failed to read original file');
-            }
-
-            const createResponse = await fetch('/api/project/file', {
+            const response = await fetch('/api/project/file', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sessionId: window.ExamApp?.sessionId,
                     filename: newName,
-                    content: getData.content
+                    content: fileContent
                 })
             });
 
-            const createData = await createResponse.json();
-            if (createData.success) {
+            const data = await response.json();
+            if (data.success) {
                 await this.refreshFileTree();
                 this.showNotification('Файлът е дублиран', 'success');
             } else {
-                throw new Error(createData.error || 'Failed to create duplicate');
+                throw new Error(data.error || 'Failed to duplicate file');
             }
 
         } catch (error) {
@@ -617,17 +534,18 @@ export class FileExplorer {
         }
     }
 
-    /**
-     * Refresh file tree from server
-     */
-    async refreshFileTree() {
-        await this.loadProjectStructure();
-        this.showNotification('Файловете са обновени', 'info');
+    async createNewFileInFolder(folderPath) {
+        const fileName = await prompt(`Създай файл в ${folderPath}/:`);
+        if (!fileName) return;
+
+        const fullPath = `${folderPath}/${fileName}`;
+        await this.createNewFile(fullPath);
     }
 
-    /**
-     * Update active file indicator
-     */
+    async refreshFileTree() {
+        await this.loadProjectStructure();
+    }
+
     updateActiveFileIndicator() {
         document.querySelectorAll('.file-tree-item').forEach(item => {
             item.classList.remove('active');
@@ -635,13 +553,7 @@ export class FileExplorer {
                 item.classList.add('active');
             }
         });
-
-        this.renderFileTree();
     }
-
-    /**
-     * Utility functions
-     */
 
     getFileExtension(fileName) {
         const parts = fileName.split('.');
@@ -754,7 +666,6 @@ export class FileExplorer {
     }
 }
 
-// Initialize file explorer
 let fileExplorer;
 
 export function initializeFileExplorer() {

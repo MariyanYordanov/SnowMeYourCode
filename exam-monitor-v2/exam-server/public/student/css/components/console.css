@@ -603,3 +603,90 @@
     opacity: 1;
     transform: translateY(0);
 }
+
+/* Add these styles to exam-server/public/student/css/components/console.css */
+
+/* Console message types */
+.console-message {
+    padding: 4px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.console-log {
+    color: var(--editor-text);
+}
+
+.console-error {
+    color: #ff6b6b;
+    font-weight: 500;
+}
+
+.console-warn {
+    color: #ffa94d;
+}
+
+.console-info {
+    color: #74c0fc;
+}
+
+/* Console table styling */
+.console-table {
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 12px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.console-table th {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    color: #90cdf4;
+}
+
+.console-table td {
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--editor-text);
+}
+
+.console-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Execution info bar */
+#execution-info {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 16px;
+    background: rgba(76, 175, 80, 0.1);
+    border-top: 1px solid var(--success-color);
+    color: var(--success-color);
+    font-size: 12px;
+    font-family: var(--font-mono);
+}
+
+/* Clear console output styling */
+#console-output {
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--editor-text);
+    overflow-y: auto;
+    height: 100%;
+}
+
+#console-output:empty::before {
+    content: 'Конзолата е празна. Натиснете Run за да изпълните кода.';
+    color: var(--text-muted);
+    font-style: italic;
+}

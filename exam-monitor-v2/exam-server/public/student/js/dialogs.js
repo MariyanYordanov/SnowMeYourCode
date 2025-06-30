@@ -24,13 +24,10 @@ export function showCompletionDialog(options = {}) {
     const config = { ...defaultOptions, ...options };
 
     return new Promise((resolve) => {
-        // Close any existing dialog
         hideCustomDialogs();
 
-        // Create dialog HTML
         const dialogHTML = createDialogHTML(config);
 
-        // Show dialog
         showDialog(dialogHTML, (result) => {
             hideCustomDialogs();
             resolve(result);
@@ -53,13 +50,10 @@ export function showViolationExitDialog(violationMessage = 'Искате ли д
     };
 
     return new Promise((resolve) => {
-        // Close any existing dialog
         hideCustomDialogs();
 
-        // Create dialog HTML
         const dialogHTML = createDialogHTML(options);
 
-        // Show dialog
         showDialog(dialogHTML, (result) => {
             hideCustomDialogs();
             resolve(result);
@@ -84,17 +78,153 @@ export function showInfoDialog(options = {}) {
     const config = { ...defaultOptions, ...options };
 
     return new Promise((resolve) => {
-        // Close any existing dialog
         hideCustomDialogs();
 
-        // Create dialog HTML
         const dialogHTML = createDialogHTML(config);
 
-        // Show dialog
         showDialog(dialogHTML, () => {
             hideCustomDialogs();
             resolve();
         });
+    });
+}
+
+/**
+ * Custom prompt dialog for text input
+ * @param {string} message - Prompt message
+ * @param {string} defaultValue - Default input value
+ * @returns {Promise<string|null>} - User input or null
+ */
+export function prompt(message, defaultValue = '') {
+    return new Promise((resolve) => {
+        hideCustomDialogs();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-dialog-overlay';
+        overlay.id = 'custom-dialog-overlay';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'custom-dialog custom-dialog-prompt';
+
+        dialog.innerHTML = `
+            <div class="dialog-header">
+                <h2 class="dialog-title">Въведете данни</h2>
+            </div>
+            <p class="dialog-message">${message}</p>
+            <input type="text" class="dialog-input" value="${defaultValue}" />
+            <div class="dialog-buttons">
+                <button class="dialog-btn dialog-btn-cancel" data-action="cancel">Отказ</button>
+                <button class="dialog-btn dialog-btn-confirm dialog-btn-info" data-action="confirm">OK</button>
+            </div>
+        `;
+
+        overlay.appendChild(dialog);
+
+        const input = dialog.querySelector('.dialog-input');
+        const confirmBtn = dialog.querySelector('[data-action="confirm"]');
+        const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+
+        const cleanup = () => {
+            hideCustomDialogs();
+        };
+
+        const handleConfirm = () => {
+            const value = input.value.trim();
+            cleanup();
+            resolve(value || null);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(null);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleConfirm();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                handleCancel();
+            }
+        });
+
+        activeDialog = overlay;
+        getDialogContainer().appendChild(overlay);
+
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 100);
+    });
+}
+
+/**
+ * Custom confirm dialog
+ * @param {string} message - Confirmation message
+ * @returns {Promise<boolean>} - User choice
+ */
+export function confirm(message) {
+    return new Promise((resolve) => {
+        hideCustomDialogs();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-dialog-overlay';
+        overlay.id = 'custom-dialog-overlay';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'custom-dialog custom-dialog-confirm';
+
+        dialog.innerHTML = `
+            <div class="dialog-header">
+                <h2 class="dialog-title">Потвърдете действието</h2>
+            </div>
+            <p class="dialog-message">${message}</p>
+            <div class="dialog-buttons">
+                <button class="dialog-btn dialog-btn-cancel" data-action="cancel">Не</button>
+                <button class="dialog-btn dialog-btn-confirm dialog-btn-info" data-action="confirm">Да</button>
+            </div>
+        `;
+
+        overlay.appendChild(dialog);
+
+        const confirmBtn = dialog.querySelector('[data-action="confirm"]');
+        const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+
+        const cleanup = () => {
+            hideCustomDialogs();
+        };
+
+        const handleConfirm = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+
+        document.addEventListener('keydown', function handleKey(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKey);
+                handleCancel();
+            }
+        });
+
+        activeDialog = overlay;
+        getDialogContainer().appendChild(overlay);
+
+        setTimeout(() => {
+            confirmBtn.focus();
+        }, 100);
     });
 }
 
@@ -105,16 +235,13 @@ export function showInfoDialog(options = {}) {
  */
 function createDialogHTML(config) {
     try {
-        // Create overlay
         const overlay = document.createElement('div');
         overlay.className = 'custom-dialog-overlay';
         overlay.id = 'custom-dialog-overlay';
 
-        // Create dialog box
         const dialog = document.createElement('div');
         dialog.className = `custom-dialog custom-dialog-${config.type}`;
 
-        // Dialog header
         const header = document.createElement('div');
         header.className = 'dialog-header';
 
@@ -122,19 +249,15 @@ function createDialogHTML(config) {
         title.className = 'dialog-title';
         title.textContent = config.title;
 
-        // Add only title to header (no icon)
         header.appendChild(title);
 
-        // Dialog message
         const messageEl = document.createElement('p');
         messageEl.className = 'dialog-message';
         messageEl.textContent = config.message;
 
-        // Dialog buttons
         const buttonsContainer = document.createElement('div');
         buttonsContainer.className = 'dialog-buttons';
 
-        // Confirm button
         const confirmBtn = document.createElement('button');
         confirmBtn.className = `dialog-btn dialog-btn-confirm dialog-btn-${config.type}`;
         confirmBtn.textContent = config.confirmText;
@@ -142,7 +265,6 @@ function createDialogHTML(config) {
 
         buttonsContainer.appendChild(confirmBtn);
 
-        // Cancel button (if needed)
         if (config.showCancel !== false && config.cancelText) {
             const cancelBtn = document.createElement('button');
             cancelBtn.className = 'dialog-btn dialog-btn-cancel';
@@ -152,7 +274,6 @@ function createDialogHTML(config) {
             buttonsContainer.appendChild(cancelBtn);
         }
 
-        // Assemble dialog
         dialog.appendChild(header);
         dialog.appendChild(messageEl);
         dialog.appendChild(buttonsContainer);
@@ -180,30 +301,19 @@ function showDialog(dialogElement, callback) {
             return;
         }
 
-        // Get container
         const container = getDialogContainer();
-
-        // Add dialog to container
+        activeDialog = dialogElement;
         container.appendChild(dialogElement);
 
-        // Store reference
-        activeDialog = dialogElement;
-
-        // Setup event handlers
         setupDialogEventHandlers(dialogElement, callback);
 
-        // Show with animation
         setTimeout(() => {
-            dialogElement.classList.add('dialog-visible');
-        }, 10);
-
-        // Focus first button for keyboard navigation
-        const firstButton = dialogElement.querySelector('.dialog-btn');
-        if (firstButton) {
-            firstButton.focus();
-        }
-
-        console.log('Custom dialog shown');
+            const focusTarget = dialogElement.querySelector('.dialog-btn-confirm') ||
+                dialogElement.querySelector('.dialog-btn');
+            if (focusTarget) {
+                focusTarget.focus();
+            }
+        }, 100);
 
     } catch (error) {
         console.error('Error showing dialog:', error);
@@ -213,17 +323,13 @@ function showDialog(dialogElement, callback) {
 
 /**
  * Setup event handlers for dialog
- * @param {HTMLElement} dialogElement - Dialog element
+ * @param {HTMLElement} dialogElement - The dialog element
  * @param {Function} callback - Callback function
  */
 function setupDialogEventHandlers(dialogElement, callback) {
     try {
-        // Get dialog type for security level
-        const dialogType = getDialogType(dialogElement);
-        const isSecureDialog = ['completion', 'violation'].includes(dialogType);
-
-        // Button click handlers
         const buttons = dialogElement.querySelectorAll('.dialog-btn');
+
         buttons.forEach(button => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -231,139 +337,57 @@ function setupDialogEventHandlers(dialogElement, callback) {
 
                 const action = button.getAttribute('data-action');
                 const result = action === 'confirm';
-
-                console.log(`Dialog action: ${action} (result: ${result})`);
                 callback(result);
             });
         });
 
-        // Keyboard handlers - AGGRESSIVE BLOCKING
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleEscape);
+                callback(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+
         dialogElement.addEventListener('keydown', (e) => {
-            switch (e.key) {
-                case 'Enter':
-                    // Enter = confirm
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Dialog confirmed via Enter key');
-                    callback(true);
-                    break;
-
-                case 'Escape':
-                    // BLOCK Escape for secure dialogs
-                    if (isSecureDialog) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Escape blocked for secure dialog');
-                        showBlockedFeedback(dialogElement);
-                        return false;
-                    }
-
-                    // Allow Escape for info dialogs
-                    const cancelBtn = dialogElement.querySelector('[data-action="cancel"]');
-                    if (cancelBtn) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Dialog cancelled via Escape key');
-                        callback(false);
-                    }
-                    break;
-
-                case 'Tab':
-                    // Handle tab navigation between buttons
-                    handleTabNavigation(e, dialogElement);
-                    break;
-
-                default:
-                    // Block all other keys for secure dialogs
-                    if (isSecureDialog && (e.ctrlKey || e.altKey || e.metaKey)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log(`Blocked key combination: ${e.key}`);
-                        return false;
-                    }
-                    break;
+            if (e.key === 'Tab') {
+                handleTabNavigation(e, dialogElement);
             }
         });
-
-        // AGGRESSIVE click outside blocking
-        dialogElement.addEventListener('click', (e) => {
-            if (e.target === dialogElement) {
-                // Clicked on overlay, not dialog content
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Show aggressive feedback for secure dialogs
-                if (isSecureDialog) {
-                    showBlockedFeedback(dialogElement);
-                } else {
-                    // Gentle shake for info dialogs
-                    const dialog = dialogElement.querySelector('.custom-dialog');
-                    if (dialog) {
-                        dialog.classList.add('dialog-shake');
-                        setTimeout(() => {
-                            dialog.classList.remove('dialog-shake');
-                        }, 500);
-                    }
-                }
-
-                return false;
-            }
-        });
-
-        // Block context menu on dialog
-        dialogElement.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (isSecureDialog) {
-                showBlockedFeedback(dialogElement);
-            }
-            return false;
-        });
-
-        // Block text selection for secure dialogs
-        if (isSecureDialog) {
-            dialogElement.addEventListener('selectstart', (e) => {
-                e.preventDefault();
-                return false;
-            });
-
-            dialogElement.addEventListener('dragstart', (e) => {
-                e.preventDefault();
-                return false;
-            });
-        }
 
     } catch (error) {
-        console.error('Error setting up dialog handlers:', error);
+        console.error('Error setting up dialog event handlers:', error);
     }
 }
 
 /**
  * Handle tab navigation within dialog
- * @param {KeyboardEvent} e - Keyboard event
- * @param {HTMLElement} dialogElement - Dialog element
+ * @param {KeyboardEvent} e - The keyboard event
+ * @param {HTMLElement} dialogElement - The dialog element
  */
 function handleTabNavigation(e, dialogElement) {
     try {
-        const buttons = dialogElement.querySelectorAll('.dialog-btn');
-        if (buttons.length <= 1) return;
+        const buttons = Array.from(dialogElement.querySelectorAll('.dialog-btn'));
+        const inputs = Array.from(dialogElement.querySelectorAll('.dialog-input'));
+        const focusableElements = [...inputs, ...buttons];
 
-        const focusedElement = document.activeElement;
-        const currentIndex = Array.from(buttons).indexOf(focusedElement);
+        if (focusableElements.length === 0) return;
+
+        const currentIndex = focusableElements.indexOf(document.activeElement);
 
         if (currentIndex !== -1) {
             e.preventDefault();
 
             let nextIndex;
             if (e.shiftKey) {
-                // Shift+Tab - go backwards
-                nextIndex = currentIndex === 0 ? buttons.length - 1 : currentIndex - 1;
+                nextIndex = currentIndex === 0 ? focusableElements.length - 1 : currentIndex - 1;
             } else {
-                // Tab - go forwards
-                nextIndex = currentIndex === buttons.length - 1 ? 0 : currentIndex + 1;
+                nextIndex = currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1;
             }
 
-            buttons[nextIndex].focus();
+            focusableElements[nextIndex].focus();
         }
     } catch (error) {
         console.error('Error handling tab navigation:', error);
@@ -388,7 +412,7 @@ function getDialogContainer() {
         return container;
     } catch (error) {
         console.error('Error getting dialog container:', error);
-        return document.body; // Fallback
+        return document.body;
     }
 }
 
@@ -398,7 +422,6 @@ function getDialogContainer() {
 export function hideCustomDialogs() {
     try {
         if (activeDialog) {
-            // Add fade out animation
             activeDialog.classList.add('dialog-hiding');
 
             setTimeout(() => {
@@ -409,7 +432,6 @@ export function hideCustomDialogs() {
             }, 200);
         }
 
-        // Clean up container
         const container = document.getElementById('custom-dialog-container');
         if (container) {
             container.innerHTML = '';
@@ -460,70 +482,9 @@ function getDialogType(dialogElement) {
                 }
             }
         }
-        return 'info';
+        return 'unknown';
     } catch (error) {
         console.error('Error getting dialog type:', error);
-        return 'info';
-    }
-}
-
-/**
- * Show blocked feedback for aggressive dialogs
- * @param {HTMLElement} dialogElement - Dialog element
- */
-function showBlockedFeedback(dialogElement) {
-    try {
-        const dialog = dialogElement.querySelector('.custom-dialog');
-        if (dialog) {
-            // Add strong visual feedback
-            dialog.classList.add('dialog-blocked');
-
-            // Flash red border
-            setTimeout(() => {
-                dialog.classList.remove('dialog-blocked');
-            }, 800);
-
-            // Show temporary message
-            showBlockedMessage(dialog);
-        }
-    } catch (error) {
-        console.error('Error showing blocked feedback:', error);
-    }
-}
-
-/**
- * Show temporary blocked message
- * @param {HTMLElement} dialog - Dialog element
- */
-function showBlockedMessage(dialog) {
-    try {
-        // Remove existing blocked message
-        const existingMessage = dialog.querySelector('.blocked-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-
-        // Create blocked message
-        const message = document.createElement('div');
-        message.className = 'blocked-message';
-        message.textContent = 'Моля използвайте бутоните!';
-
-        // Insert after dialog header
-        const header = dialog.querySelector('.dialog-header');
-        if (header) {
-            header.insertAdjacentElement('afterend', message);
-        } else {
-            dialog.insertBefore(message, dialog.firstChild);
-        }
-
-        // Remove message after 2 seconds
-        setTimeout(() => {
-            if (message.parentNode) {
-                message.remove();
-            }
-        }, 2000);
-
-    } catch (error) {
-        console.error('Error showing blocked message:', error);
+        return 'unknown';
     }
 }

@@ -47,42 +47,59 @@ export function initializeMonacoEditor(initialCode = '') {
                         renderWhitespace: 'selection',
                         wordWrap: 'on',
                         bracketPairColorization: { enabled: true },
-                        suggest: {
-                            enableExtendedKeywords: true,
-                            showWords: true,
-                            showSnippets: true
-                        },
-                        quickSuggestions: {
-                            other: true,
-                            comments: false,
-                            strings: false
-                        },
-                        // Enhanced editor features
-                        multiCursorModifier: 'ctrlCmd',
-                        formatOnPaste: true,
-                        formatOnType: true,
-                        autoIndent: 'advanced',
-                        tabCompletion: 'on',
-                        acceptSuggestionOnEnter: 'on',
-                        snippetSuggestions: 'top',
-                        wordBasedSuggestions: true,
-                        codeLens: true,
+                        suggestOnTriggerCharacters: true,
+                        quickSuggestions: true,
+                        parameterHints: { enabled: true },
                         folding: true,
-                        foldingStrategy: 'indentation',
-                        showFoldingControls: 'mouseover',
-                        matchBrackets: 'always',
-                        selectionHighlight: true,
-                        occurrencesHighlight: true,
-                        find: {
-                            seedSearchStringFromSelection: true,
-                            autoFindInSelection: 'never'
-                        },
-                        // Performance optimizations
+                        formatOnPaste: false,
+                        formatOnType: false,
+                        autoClosingBrackets: 'languageDefined',
+                        autoClosingQuotes: 'languageDefined',
+                        autoSurround: 'languageDefined',
+                        autoIndent: 'advanced',
+                        dragAndDrop: true,
                         smoothScrolling: true,
+                        cursorBlinking: 'smooth',
                         cursorSmoothCaretAnimation: true,
-                        cursorBlinking: 'blink',
-                        renderLineHighlight: 'line',
-                        // Accessibility improvements
+                        contextmenu: true,
+                        links: true,
+                        colorDecorators: true,
+                        inlineSuggest: { enabled: true },
+                        suggest: {
+                            showWords: true,
+                            showVariables: true,
+                            showFunctions: true,
+                            showConstants: true,
+                            showClasses: true,
+                            showInterfaces: true,
+                            insertMode: 'replace',
+                            filterGraceful: true,
+                            localityBonus: true,
+                            shareSuggestSelections: true,
+                            showIcons: true,
+                            maxVisibleSuggestions: 12
+                        },
+                        acceptSuggestionOnCommitCharacter: true,
+                        acceptSuggestionOnEnter: 'on',
+                        tabCompletion: 'on',
+                        wordBasedSuggestions: true,
+                        semanticHighlighting: { enabled: true },
+                        occurrencesHighlight: true,
+                        codeLens: true,
+                        inlayHints: { enabled: true },
+                        hover: { enabled: true, delay: 300 },
+                        definitionLinkOpensInPeek: true,
+                        quickSuggestionsDelay: 10,
+                        suggestSelection: 'first',
+                        suggestFontSize: 14,
+                        suggestLineHeight: 20,
+                        tabSize: 2,
+                        insertSpaces: true,
+                        detectIndentation: true,
+                        trimAutoWhitespace: true,
+                        largeFileOptimizations: true,
+                        renderValidationDecorations: 'on',
+                        diffEditorCodeComparison: false,
                         accessibilitySupport: 'auto',
                         screenReaderAnnounceInlineSuggestion: true
                     });
@@ -140,19 +157,15 @@ function setupLanguageFeatures(editor) {
 
             if (content.includes('<html') || content.includes('<div') || /^<[a-z]/.test(content)) {
                 newLanguage = 'html';
-            } else if (content.includes('{') && content.includes('}') &&
-                (content.includes('color') || content.includes('background'))) {
+            } else if (content.includes('body {') || content.includes('.class') || /^[.#]/.test(content)) {
                 newLanguage = 'css';
             }
 
             const currentLanguage = editor.getModel().getLanguageId();
             if (currentLanguage !== newLanguage) {
                 monaco.editor.setModelLanguage(editor.getModel(), newLanguage);
-                console.log(`Language auto-detected: ${newLanguage}`);
             }
         });
-
-        console.log('Enhanced language features setup');
 
     } catch (error) {
         console.error('Failed to setup language features:', error);
@@ -164,48 +177,30 @@ function setupLanguageFeatures(editor) {
  */
 function setupErrorDetection(editor) {
     try {
-        let errorDecorations = [];
+        // This will be triggered after code execution
+        window.highlightErrorLine = (lineNumber) => {
+            if (!editor || lineNumber < 1) return;
 
-        // Real-time syntax error detection for JavaScript
-        editor.onDidChangeModelContent(() => {
-            clearTimeout(window.errorCheckTimeout);
-            window.errorCheckTimeout = setTimeout(() => {
-                const content = editor.getValue();
-                const language = editor.getModel().getLanguageId();
+            // Remove previous error decorations
+            if (window.ExamApp.errorDecorations) {
+                editor.deltaDecorations(window.ExamApp.errorDecorations, []);
+            }
 
-                if (language === 'javascript') {
-                    checkJavaScriptSyntax(editor, content);
-                }
-            }, 1000);
-        });
-
-        function checkJavaScriptSyntax(editor, code) {
-            try {
-                // Clear previous decorations
-                errorDecorations = editor.deltaDecorations(errorDecorations, []);
-
-                // Simple syntax check
-                new Function(code);
-
-            } catch (error) {
-                // Extract line number from error
-                const lineMatch = error.stack?.match(/Function:(\d+):/);
-                const lineNumber = lineMatch ? parseInt(lineMatch[1]) : 1;
-
-                // Add error decoration
-                errorDecorations = editor.deltaDecorations(errorDecorations, [{
+            // Add new error decoration
+            window.ExamApp.errorDecorations = editor.deltaDecorations([], [
+                {
                     range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                     options: {
                         isWholeLine: true,
                         className: 'error-line',
-                        glyphMarginClassName: 'error-line-glyph',
-                        hoverMessage: { value: `**Syntax Error:** ${error.message}` }
+                        glyphMarginClassName: 'error-glyph'
                     }
-                }]);
-            }
-        }
+                }
+            ]);
 
-        console.log('Error detection setup');
+            // Scroll to error line
+            editor.revealLineInCenter(lineNumber);
+        };
 
     } catch (error) {
         console.error('Failed to setup error detection:', error);
@@ -217,10 +212,11 @@ function setupErrorDetection(editor) {
  */
 function setupCodeQualityHints(editor) {
     try {
-        // Add code quality markers
+        let qualityCheckTimeout;
+
         editor.onDidChangeModelContent(() => {
-            clearTimeout(window.qualityCheckTimeout);
-            window.qualityCheckTimeout = setTimeout(() => {
+            clearTimeout(qualityCheckTimeout);
+            qualityCheckTimeout = setTimeout(() => {
                 const content = editor.getValue();
                 checkCodeQuality(editor, content);
             }, 2000);
@@ -393,490 +389,178 @@ export function setupEditorControls(actions) {
 }
 
 /**
- * Run code in editor - ENHANCED VERSION
+ * Run code in editor - FIXED VERSION WITH SESSION HANDLING
  */
-export function runCode() {
+export async function runCode() {
     try {
-        if (!window.ExamApp.editor) {
-            console.warn('Editor not available');
-            showError('Редакторът не е готов. Моля изчакайте.');
+        const editor = window.ExamApp?.editor;
+        if (!editor) {
+            console.error('Editor not initialized');
+            showError('Редакторът не е готов');
             return;
         }
 
-        const code = window.ExamApp.editor.getValue();
-        const outputEl = document.getElementById('code-output');
+        const code = editor.getValue();
+        const sessionId = window.ExamApp?.sessionId;
 
-        if (!outputEl) {
-            console.error('Output element not found');
+        if (!sessionId) {
+            console.error('No valid session ID');
+            showError('Няма валидна сесия. Моля влезте отново.');
             return;
         }
 
-        // Clear previous output
+        // Clear console before execution
         clearOutput();
-        hideError();
 
-        // Capture enhanced console output
-        const result = captureEnhancedConsoleOutput(code);
-
-        // Display results
-        if (result.success) {
-            displayEnhancedOutput(result.logs);
-
-            // Show execution success info
-            const executionTime = result.executionTime;
-            showExecutionInfo(`Код изпълнен за ${executionTime}ms`);
-        } else {
-            showError(result.error);
-            highlightErrorLine(result.lineNumber);
+        // Show loading state
+        const runBtn = document.getElementById('run-btn');
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.innerHTML = '⏳ Running...';
         }
 
-    } catch (error) {
-        console.error('Code execution failed:', error);
-        showError(`Грешка при изпълнение: ${error.message}`);
-    }
-}
-
-/**
- * Capture enhanced console output with all console methods
- */
-function captureEnhancedConsoleOutput(code) {
-    try {
-        const startTime = performance.now();
-        const output = [];
-
-        // Store original console methods
-        const originalConsole = {
-            log: console.log,
-            error: console.error,
-            warn: console.warn,
-            table: console.table,
-            time: console.time,
-            timeEnd: console.timeEnd,
-            clear: console.clear,
-            info: console.info
-        };
-
-        // Enhanced console.log
-        console.log = function (...args) {
-            output.push({
-                type: 'log',
-                content: args.map(arg => formatEnhancedValue(arg)).join(' '),
-                timestamp: Date.now(),
-                args: args
-            });
-            originalConsole.log.apply(console, arguments);
-        };
-
-        // Enhanced console.error
-        console.error = function (...args) {
-            output.push({
-                type: 'error',
-                content: args.map(arg => formatEnhancedValue(arg)).join(' '),
-                timestamp: Date.now(),
-                args: args
-            });
-            originalConsole.error.apply(console, arguments);
-        };
-
-        // Enhanced console.warn
-        console.warn = function (...args) {
-            output.push({
-                type: 'warn',
-                content: args.map(arg => formatEnhancedValue(arg)).join(' '),
-                timestamp: Date.now(),
-                args: args
-            });
-            originalConsole.warn.apply(console, arguments);
-        };
-
-        // Enhanced console.info
-        console.info = function (...args) {
-            output.push({
-                type: 'info',
-                content: args.map(arg => formatEnhancedValue(arg)).join(' '),
-                timestamp: Date.now(),
-                args: args
-            });
-            originalConsole.info.apply(console, arguments);
-        };
-
-        // Enhanced console.table
-        console.table = function (data, columns) {
-            const tableHtml = formatTableData(data, columns);
-            output.push({
-                type: 'table',
-                content: tableHtml,
-                timestamp: Date.now(),
-                data: data,
-                columns: columns
-            });
-            originalConsole.table.apply(console, arguments);
-        };
-
-        // Enhanced console.time
-        console.time = function (label = 'default') {
-            const timestamp = performance.now();
-            consoleState.timers.set(label, timestamp);
-            output.push({
-                type: 'time-start',
-                content: `Timer '${label}' started`,
-                timestamp: Date.now(),
-                label: label
-            });
-            originalConsole.time.apply(console, arguments);
-        };
-
-        // Enhanced console.timeEnd
-        console.timeEnd = function (label = 'default') {
-            const startTime = consoleState.timers.get(label);
-            if (startTime !== undefined) {
-                const endTime = performance.now();
-                const duration = (endTime - startTime).toFixed(3);
-                consoleState.timers.delete(label);
-
-                output.push({
-                    type: 'time-end',
-                    content: `Timer '${label}': ${duration}ms`,
-                    timestamp: Date.now(),
-                    label: label,
-                    duration: duration
-                });
-            } else {
-                output.push({
-                    type: 'error',
-                    content: `Timer '${label}' does not exist`,
-                    timestamp: Date.now()
-                });
-            }
-            originalConsole.timeEnd.apply(console, arguments);
-        };
-
-        // Enhanced console.clear
-        console.clear = function () {
-            output.push({
-                type: 'clear',
-                content: 'Console cleared',
-                timestamp: Date.now()
-            });
-            originalConsole.clear.apply(console, arguments);
-        };
-
-        // Execute code in isolated scope
-        const func = new Function(code);
-        func();
-
-        // Restore console methods
-        Object.assign(console, originalConsole);
-
-        const executionTime = (performance.now() - startTime).toFixed(2);
-
-        // Store in history
-        const outputEntry = {
-            code: code,
-            output: output,
-            timestamp: Date.now(),
-            executionTime: executionTime
-        };
-
-        consoleState.outputHistory.push(outputEntry);
-        if (consoleState.outputHistory.length > consoleState.maxHistoryItems) {
-            consoleState.outputHistory.shift();
+        // Show execution start
+        const outputEl = document.getElementById('console-output');
+        if (outputEl) {
+            outputEl.innerHTML = '<div class="console-info">Изпълнение на кода...</div>';
         }
 
-        return {
-            success: true,
-            logs: output,
-            executionTime: executionTime
-        };
-
-    } catch (error) {
-        // Restore console methods in case of error
-        const originalConsole = {
-            log: console.log,
-            error: console.error,
-            warn: console.warn,
-            table: console.table,
-            time: console.time,
-            timeEnd: console.timeEnd,
-            clear: console.clear,
-            info: console.info
-        };
-        Object.assign(console, originalConsole);
-
-        // Try to extract line number from error
-        const lineNumber = extractErrorLineNumber(error, code);
-
-        return {
-            success: false,
-            error: error.message,
-            lineNumber: lineNumber
-        };
-    }
-}
-
-/**
- * Format enhanced value for display with better JSON formatting
- */
-function formatEnhancedValue(arg) {
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
-
-    if (typeof arg === 'string') {
-        return `"${arg}"`;
-    }
-
-    if (typeof arg === 'number' || typeof arg === 'boolean') {
-        return String(arg);
-    }
-
-    if (typeof arg === 'function') {
-        return `[Function: ${arg.name || 'anonymous'}]`;
-    }
-
-    if (typeof arg === 'object') {
-        try {
-            return JSON.stringify(arg, null, 2);
-        } catch (e) {
-            return '[Circular Object]';
-        }
-    }
-
-    return String(arg);
-}
-
-/**
- * Format table data for display
- */
-function formatTableData(data, columns) {
-    try {
-        if (!data) return 'undefined';
-
-        // Handle arrays
-        if (Array.isArray(data)) {
-            if (data.length === 0) return 'Empty Array []';
-
-            // Simple array
-            if (data.every(item => typeof item !== 'object' || item === null)) {
-                return createSimpleTable(data);
-            }
-
-            // Array of objects
-            return createObjectTable(data, columns);
-        }
-
-        // Handle objects
-        if (typeof data === 'object') {
-            return createObjectTable([data], columns);
-        }
-
-        return formatEnhancedValue(data);
-
-    } catch (error) {
-        return `[Table Error: ${error.message}]`;
-    }
-}
-
-/**
- * Create simple table for primitive arrays
- */
-function createSimpleTable(data) {
-    let html = '<table class="console-table">';
-    html += '<thead><tr><th>(index)</th><th>Value</th></tr></thead>';
-    html += '<tbody>';
-
-    data.forEach((value, index) => {
-        html += `<tr><td class="table-index">${index}</td><td class="table-value">${formatEnhancedValue(value)}</td></tr>`;
-    });
-
-    html += '</tbody></table>';
-    return html;
-}
-
-/**
- * Create object table for complex data
- */
-function createObjectTable(data, columns) {
-    if (!Array.isArray(data) || data.length === 0) {
-        return 'Empty data';
-    }
-
-    // Get all keys from all objects
-    const allKeys = columns || [...new Set(data.flatMap(obj =>
-        obj && typeof obj === 'object' ? Object.keys(obj) : []
-    ))];
-
-    if (allKeys.length === 0) {
-        return 'No properties to display';
-    }
-
-    let html = '<table class="console-table">';
-
-    // Header
-    html += '<thead><tr><th>(index)</th>';
-    allKeys.forEach(key => {
-        html += `<th>${escapeHtml(String(key))}</th>`;
-    });
-    html += '</tr></thead>';
-
-    // Body
-    html += '<tbody>';
-    data.forEach((row, index) => {
-        html += `<tr><td class="table-index">${index}</td>`;
-        allKeys.forEach(key => {
-            const value = row && typeof row === 'object' ? row[key] : undefined;
-            html += `<td class="table-value">${formatEnhancedValue(value)}</td>`;
+        // Execute code with sessionId
+        const response = await fetch('/proxy/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Important for session cookies
+            body: JSON.stringify({
+                code: code,
+                sessionId: sessionId // Include sessionId in request body
+            })
         });
-        html += '</tr>';
-    });
-    html += '</tbody></table>';
 
-    return html;
-}
+        const result = await response.json();
 
-/**
- * Display enhanced output with all console types
- */
-function displayEnhancedOutput(logs) {
-    const outputEl = document.getElementById('code-output');
-    if (!outputEl) return;
+        if (response.ok && result.output) {
+            // Display output
+            displayExecutionResult(result.output);
 
-    if (logs.length === 0) {
-        outputEl.innerHTML = '<div class="output-placeholder">Кодът е изпълнен успешно (няма output)</div>';
-        return;
-    }
+            // Show execution time if available
+            if (result.executionTime) {
+                showExecutionInfo(`Изпълнено за ${result.executionTime}ms`);
+            }
+        } else {
+            // Display error
+            const errorMsg = result.error || result.message || 'Грешка при изпълнение';
+            displayError(errorMsg);
 
-    let outputHtml = '';
-
-    logs.forEach((item, index) => {
-        const className = `output-line output-${item.type}`;
-
-        switch (item.type) {
-            case 'table':
-                outputHtml += `<div class="${className}">
-                    <div class="output-table-wrapper">${item.content}</div>
-                </div>`;
-                break;
-
-            case 'time-start':
-                outputHtml += `<div class="${className}">
-                    <span class="time-label">⏱️</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            case 'time-end':
-                outputHtml += `<div class="${className}">
-                    <span class="time-label">⏹️</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            case 'clear':
-                outputHtml += `<div class="${className}">
-                    <span class="clear-label">🧹</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            case 'error':
-                outputHtml += `<div class="${className}">
-                    <span class="error-icon">❌</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            case 'warn':
-                outputHtml += `<div class="${className}">
-                    <span class="warn-icon">⚠️</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            case 'info':
-                outputHtml += `<div class="${className}">
-                    <span class="info-icon">ℹ️</span> ${escapeHtml(item.content)}
-                </div>`;
-                break;
-
-            default: // log
-                outputHtml += `<div class="${className}">${escapeHtml(item.content)}</div>`;
-                break;
-        }
-    });
-
-    outputEl.innerHTML = outputHtml;
-
-    // Scroll to bottom
-    outputEl.scrollTop = outputEl.scrollHeight;
-}
-
-/**
- * Extract error line number from error stack
- */
-function extractErrorLineNumber(error, code) {
-    try {
-        const stack = error.stack || '';
-        const lines = code.split('\n');
-
-        // Try to find line number in stack trace
-        const match = stack.match(/:(\d+):\d+/);
-        if (match) {
-            const lineNum = parseInt(match[1], 10);
-            if (lineNum >= 1 && lineNum <= lines.length) {
-                return lineNum;
+            // If it's a session error, show more details
+            if (errorMsg.includes('SESSION_REQUIRED') || errorMsg.includes('No valid session')) {
+                showError('Сесията е изтекла. Моля влезте отново.');
             }
         }
 
-        return null;
-    } catch (e) {
-        return null;
-    }
-}
-
-/**
- * Highlight error line in editor
- */
-function highlightErrorLine(lineNumber) {
-    try {
-        if (!window.ExamApp.editor || !lineNumber) return;
-
-        // Remove existing decorations
-        const oldDecorations = window.ExamApp.editor.deltaDecorations([], []);
-
-        // Add error line decoration
-        const newDecorations = window.ExamApp.editor.deltaDecorations(oldDecorations, [{
-            range: new monaco.Range(lineNumber, 1, lineNumber, 1),
-            options: {
-                isWholeLine: true,
-                className: 'error-line',
-                glyphMarginClassName: 'error-line-glyph'
-            }
-        }]);
-
-        // Store decorations for later cleanup
-        window.ExamApp.errorDecorations = newDecorations;
-
-        // Scroll to error line
-        window.ExamApp.editor.revealLineInCenter(lineNumber);
+        // Save code after execution
+        saveCode();
 
     } catch (error) {
-        console.error('Failed to highlight error line:', error);
+        console.error('Execution error:', error);
+        displayError('Грешка при връзка със сървъра: ' + error.message);
+    } finally {
+        // Reset button state
+        const runBtn = document.getElementById('run-btn');
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '▶ Run';
+        }
+    }
+}
+
+/**
+ * Display execution result in console
+ */
+function displayExecutionResult(output) {
+    const consoleOutput = document.getElementById('console-output');
+    if (consoleOutput) {
+        // Parse and format output
+        const lines = output.split('\n');
+        const formattedOutput = lines.map(line => {
+            // Check for console.table, console.error etc.
+            if (line.startsWith('[TABLE]')) {
+                return formatTableOutput(line.substring(7));
+            } else if (line.startsWith('[ERROR]')) {
+                return `<span class="console-error">${escapeHtml(line.substring(7))}</span>`;
+            } else if (line.startsWith('[WARN]')) {
+                return `<span class="console-warn">${escapeHtml(line.substring(6))}</span>`;
+            } else if (line.startsWith('[INFO]')) {
+                return `<span class="console-info">${escapeHtml(line.substring(6))}</span>`;
+            } else {
+                return escapeHtml(line);
+            }
+        }).join('<br>');
+
+        consoleOutput.innerHTML = formattedOutput;
+    }
+}
+
+/**
+ * Display error in console
+ */
+function displayError(error) {
+    const consoleOutput = document.getElementById('console-output');
+    if (consoleOutput) {
+        consoleOutput.innerHTML = `<div class="console-error">
+            <strong>Грешка:</strong><br>
+            ${escapeHtml(error)}
+        </div>`;
     }
 }
 
 /**
  * Show execution info
  */
-function showExecutionInfo(message) {
-    try {
-        const infoEl = document.getElementById('execution-info');
-        if (infoEl) {
-            infoEl.textContent = message;
-            infoEl.style.display = 'block';
+function showExecutionInfo(info) {
+    const executionInfo = document.getElementById('execution-info');
+    if (executionInfo) {
+        executionInfo.textContent = info;
+        executionInfo.style.display = 'block';
 
-            // Hide after 3 seconds
-            setTimeout(() => {
-                infoEl.style.display = 'none';
-            }, 3000);
-        }
-    } catch (error) {
-        console.error('Failed to show execution info:', error);
+        setTimeout(() => {
+            executionInfo.style.display = 'none';
+        }, 5000);
     }
+}
+
+/**
+ * Format table output for console
+ */
+function formatTableOutput(data) {
+    try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+            let table = '<table class="console-table">';
+            // Get headers
+            const headers = Object.keys(parsed[0] || {});
+            table += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            // Add rows
+            parsed.forEach(row => {
+                table += '<tr>' + headers.map(h => `<td>${row[h]}</td>`).join('') + '</tr>';
+            });
+            table += '</table>';
+            return table;
+        }
+    } catch (e) {
+        // Fall back to plain text
+    }
+    return escapeHtml(data);
+}
+
+/**
+ * Escape HTML for safe display
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 /**
@@ -886,7 +570,7 @@ export function formatCode() {
     try {
         if (!window.ExamApp.editor) {
             console.warn('Editor not available');
-            showError('Редакторът не е готов. Моля изчакайте.');
+            showError('Редакторът не е готов.');
             return;
         }
 
@@ -927,9 +611,9 @@ export function saveCode() {
  */
 export function clearOutput() {
     try {
-        const outputEl = document.getElementById('code-output');
+        const outputEl = document.getElementById('console-output');
         if (outputEl) {
-            outputEl.innerHTML = '<div class="output-placeholder">Резултатът от вашия код ще се покаже тук...</div>';
+            outputEl.innerHTML = '';
         }
 
         // Clear error line highlighting
@@ -963,8 +647,10 @@ export function changeTheme(event) {
 
         const theme = event.target ? event.target.value : event;
         monaco.editor.setTheme(theme);
+        console.log(`Editor theme changed to: ${theme}`);
+
     } catch (error) {
-        console.error('Theme change failed:', error);
+        console.error('Failed to change theme:', error);
     }
 }
 
@@ -973,65 +659,41 @@ export function changeTheme(event) {
  */
 function updateLastSaved() {
     try {
-        const now = new Date().toLocaleTimeString('bg-BG');
-        const lastSavedEl = document.getElementById('last-saved');
-
-        if (lastSavedEl) {
-            lastSavedEl.textContent = `Последно запазване: ${now}`;
-        }
-
         window.ExamApp.lastSaveTime = Date.now();
+        const lastSavedEl = document.getElementById('last-saved');
+        if (lastSavedEl) {
+            lastSavedEl.textContent = `Запазено: ${new Date().toLocaleTimeString('bg-BG')}`;
+        }
     } catch (error) {
         console.error('Failed to update last saved:', error);
     }
 }
 
 /**
- * Show error in error panel
+ * Show error notification
  */
 function showError(message) {
-    try {
-        const errorPanel = document.getElementById('error-panel');
-        const errorContent = document.getElementById('error-content');
-
-        if (errorPanel && errorContent) {
-            errorContent.textContent = message;
-            errorPanel.style.display = 'block';
-        }
-
-        console.error('Error shown to user:', message);
-    } catch (error) {
-        console.error('Failed to show error:', error);
+    if (window.ExamApp?.showError) {
+        window.ExamApp.showError(message);
+    } else {
+        console.error(message);
     }
 }
 
 /**
- * Hide error panel
+ * Hide error display
  */
 function hideError() {
-    try {
-        const errorPanel = document.getElementById('error-panel');
-        if (errorPanel) {
-            errorPanel.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Failed to hide error:', error);
+    const errorEl = document.getElementById('error-display');
+    if (errorEl) {
+        errorEl.style.display = 'none';
     }
 }
 
 /**
- * Escape HTML for safe display
+ * Get editor value
  */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
- * Get current editor content
- */
-export function getEditorContent() {
+export function getEditorValue() {
     if (!window.ExamApp.editor) {
         return '';
     }
@@ -1039,25 +701,24 @@ export function getEditorContent() {
     try {
         return window.ExamApp.editor.getValue();
     } catch (error) {
-        console.error('Failed to get editor content:', error);
+        console.error('Failed to get editor value:', error);
         return '';
     }
 }
 
 /**
- * Set editor content
+ * Set editor value
  */
-export function setEditorContent(content) {
+export function setEditorValue(value) {
     if (!window.ExamApp.editor) {
-        console.warn('Editor not available');
         return false;
     }
 
     try {
-        window.ExamApp.editor.setValue(content || '');
+        window.ExamApp.editor.setValue(value);
         return true;
     } catch (error) {
-        console.error('Failed to set editor content:', error);
+        console.error('Failed to set editor value:', error);
         return false;
     }
 }
@@ -1067,7 +728,6 @@ export function setEditorContent(content) {
  */
 export function focusEditor() {
     if (!window.ExamApp.editor) {
-        console.warn('Editor not available');
         return false;
     }
 
