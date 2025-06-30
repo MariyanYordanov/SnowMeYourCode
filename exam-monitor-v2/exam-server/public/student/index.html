@@ -14,9 +14,20 @@
     <link rel="stylesheet" href="/student/css/styles.css">
 
     <!-- Monaco Editor CDN -->
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+   - Monaco Editor - ПРАВИЛЕН РЕД -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
+
+<!-- Първо loader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<!-- След това конфигурация -->
+<script>
+    require.config({
+        paths: {
+            'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
+        }
+    });
+</script>
 </head>
 
 <body>
@@ -31,7 +42,7 @@
                     <div class="terms-header">
                         <h3>Условия на изпита</h3>
                     </div>
-            
+
                     <!-- Terms Content -->
                     <div class="terms-content">
                         <div class="terms-text">
@@ -43,7 +54,7 @@
                                 <li><strong>Копиране/поставяне на код</strong> от външни източници</li>
                                 <li><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
                             </ul>
-            
+
                             <!-- CRITICAL: Touch Policy Section -->
                             <div class="no-touch-policy">
                                 <h4>ВАЖНО: TOUCH ВЗАИМОДЕЙСТВИЕ ЗАБРАНЕНО</h4>
@@ -57,7 +68,7 @@
                                     </ul>
                                 </div>
                             </div>
-            
+
                             <h4>Разрешени действия:</h4>
                             <ul class="allowed-list">
                                 <li><strong>Писане на код</strong> в редактора</li>
@@ -66,7 +77,7 @@
                                 <li><strong>Developer Tools</strong> в рамките на fullscreen режима</li>
                                 <li><strong>Мишка и клавиатура</strong> взаимодействия</li>
                             </ul>
-            
+
                             <!-- Platform-Specific Allowed Actions -->
                             <div class="tech-info">
                                 <h5>Разрешени клавиши за смяна на език:</h5>
@@ -76,26 +87,28 @@
                                     <li><strong>Linux:</strong> Super+Space, Alt+Shift (зависи от настройките)</li>
                                 </ul>
                             </div>
-            
+
                             <div class="warning-box">
                                 <strong>ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>Автоматично</strong>
                                 без възможност за връщане! Системата засича всички взаимодействия в реално време -
-                                включително <strong>touch events</strong>, излизане от <strong>fullscreen</strong> и превключване между приложения.
+                                включително <strong>touch events</strong>, излизане от <strong>fullscreen</strong> и
+                                превключване между приложения.
                             </div>
-            
+
                             <div class="info-box">
                                 <strong>ДОПЪЛНИТЕЛНО:</strong> Времето за изпита е <strong>3 часа</strong>.
                                 Кодът се запазва автоматично на всеки 2 секунди. След приключване на изпита
                                 няма възможност за връщане или промени.
                             </div>
-            
+
                             <div class="tech-info">
                                 <strong>ТЕХНИЧЕСКА ИНФОРМАЦИЯ:</strong> Системата използва стандартни web APIs
-                                за детекция на <strong>fullscreen</strong> състоянието и <strong>touch events</strong>. Работи на всички модерни браузъри.
+                                за детекция на <strong>fullscreen</strong> състоянието и <strong>touch events</strong>.
+                                Работи на всички модерни браузъри.
                             </div>
                         </div>
                     </div>
-            
+
                     <!-- Agreement Checkbox -->
                     <div class="agreement-checkbox">
                         <label class="checkbox-label">
@@ -108,15 +121,15 @@
                         </label>
                     </div>
                 </div>
-            
+
                 <!-- Login Form - Right Column -->
                 <div class="login-form">
                     <h2>Вход в изпита по програмиране</h2>
-            
+
                     <div class="form-group">
                         <input type="text" id="student-name" placeholder="Име и фамилия" required>
                     </div>
-            
+
                     <div class="form-group">
                         <select id="student-class" required>
                             <option value="">Изберете клас</option>
@@ -126,12 +139,12 @@
                             <option value="12Б">12Б</option>
                         </select>
                     </div>
-            
+
                     <!-- Enhanced Login Button -->
                     <button id="login-btn" class="btn-primary" disabled data-event="click" data-handler="handleLogin">
                         Влез в изпита
                     </button>
-            
+
                     <div id="login-status" class="status-message"></div>
                 </div>
             </div>
@@ -148,12 +161,12 @@
                         <span class="student-class">{{studentClass}}</span>
                         <span class="session-id">{{sessionId}}</span>
                     </div>
-            
+
                     <div class="exam-timer">
                         <span class="timer-label">Time left:</span>
                         <span id="exam-timer" class="timer-value">03:00:00</span>
                     </div>
-            
+
                     <div class="layout-controls">
                         <button id="toggle-files" class="layout-btn active" title="Toggle Files Panel (Ctrl+1)">Files
                         </button>
@@ -162,14 +175,14 @@
                         <button id="layout-mode" class="layout-btn" title="Change Layout Mode (Ctrl+3)">Default
                         </button>
                     </div>
-            
+
                     <div class="exam-actions">
                         <button id="finish-exam-btn" class="btn btn-danger">
                             Send
                         </button>
                     </div>
                 </header>
-            
+
                 <!-- Files Panel (Left) -->
                 <aside class="files-panel">
                     <div class="files-header">
@@ -189,51 +202,47 @@
                         </div>
                     </div>
                 </aside>
-            
+
                 <!-- Editor Panel (Center) -->
-                <main class="editor-panel">
+                <div class="editor-panel">
+                    <!-- НОВАТА СТРУКТУРА С TABS -->
                     <div class="editor-header">
-                        <h3>Код Редактор</h3>
-                        <div class="editor-controls">
-                            <button id="run-code-btn" class="btn btn-primary">
-                                ▶️ Run
-                            </button>
-                            <button id="format-code-btn" class="btn btn-secondary">
-                                🎨 Format Code
-                            </button>
-                            <button id="clear-output-btn" class="btn btn-secondary">
-                                🗑️ Clear
-                            </button>
-                            <select id="theme-selector" class="theme-select">
-                                <option value="vs-dark">Dark Theme</option>
-                                <option value="vs">Light Theme</option>
+                        <div id="file-tabs-container" class="file-tabs-container"></div>
+                        <div class="editor-actions">
+                            <button id="run-btn" class="action-btn">▶ Run</button>
+                            <button id="save-btn" class="action-btn">💾 Save</button>
+                            <button id="format-btn" class="action-btn">⚡ Format</button>
+                            <button id="clear-btn" class="action-btn">🗑️ Clear</button>
+                            <select id="theme-select" class="theme-select">
+                                <option value="vs-dark">Dark</option>
+                                <option value="vs">Light</option>
                                 <option value="hc-black">High Contrast</option>
                             </select>
                         </div>
                     </div>
-            
-                    <div class="editor-content">
-                        <!-- Monaco Editor Container -->
-                        <div class="monaco-editor-container">
-                            <div id="monaco-editor"></div>
+
+                    <!-- Monaco Editor Container -->
+                    <div id="monaco-editor" class="monaco-container"></div>
+
+                    <!-- Output Panel -->
+                    <div class="output-panel">
+                        <div class="output-tabs">
+                            <button class="tab-btn active" id="console-tab">Console</button>
+                            <button class="tab-btn" id="problems-tab">Problems</button>
                         </div>
-            
-                        <!-- Console Output -->
-                        <div class="console-container">
-                            <div class="console-header">
-                                <h4>Console</h4>
-                            </div>
-                            <div id="console-output" class="console-output"></div>
+                        <div class="output-content">
+                            <div id="console-output" class="console-output active"></div>
+                            <div id="problems-output" class="problems-output"></div>
                         </div>
                     </div>
-                </main>
-            
+                </div>
+
                 <!-- DevTools Panel (Right) -->
                 <aside class="devtools-panel">
                     <div class="devtools-header">
                         <h3>Exam Dev Tools</h3>
                     </div>
-            
+
                     <!-- DevTools Tabs -->
                     <div class="devtools-tabs">
                         <button class="devtool-tab active" data-tab="network">
@@ -249,7 +258,7 @@
                             💾 Application
                         </button>
                     </div>
-            
+
                     <!-- Tab Content -->
                     <div class="devtools-content">
                         <!-- Network Tab -->
@@ -265,7 +274,7 @@
                                 </div>
                             </div>
                         </div>
-            
+
                         <!-- Console Tab -->
                         <div class="devtool-panel" id="console-panel">
                             <div class="console-filters">
@@ -276,7 +285,7 @@
                             </div>
                             <div class="devtools-console-output"></div>
                         </div>
-            
+
                         <!-- Elements Tab -->
                         <div class="devtool-panel" id="elements-panel">
                             <div class="dom-tree">
@@ -286,7 +295,7 @@
                                 </div>
                             </div>
                         </div>
-            
+
                         <!-- Application Tab -->
                         <div class="devtool-panel" id="application-panel">
                             <div class="storage-explorer">
@@ -313,7 +322,7 @@
                         </div>
                     </div>
                 </aside>
-            
+
                 <!-- Exam Footer -->
                 <footer class="exam-footer">
                     <div class="footer-left">
@@ -325,7 +334,7 @@
                             Автоматично запазване: <span id="last-save-time">активно</span>
                         </span>
                     </div>
-            
+
                     <div class="footer-right">
                         <span class="fullscreen-status">
                             Fullscreen: <span id="fullscreen-status">активен</span>
@@ -347,23 +356,24 @@
                             data-handler="clearOutput">Clear</button>
                         <button class="console-btn" id="console-filter-btn" title="Filter Messages" data-event="click"
                             data-handler="toggleConsoleFilter">Filter</button>
-                        <button class="console-btn" id="console-settings-btn" title="Console Settings" data-event="click"
-                            data-handler="toggleConsoleSettings">Settings</button>
+                        <button class="console-btn" id="console-settings-btn" title="Console Settings"
+                            data-event="click" data-handler="toggleConsoleSettings">Settings</button>
                     </div>
                 </div>
-            
+
                 <!-- Main Output Area -->
                 <div id="code-output" class="code-output">
                     <div class="output-placeholder">
                         Резултатът от вашия код ще се покаже тук...
                     </div>
                 </div>
-            
+
                 <!-- Error Panel (Hidden by default) -->
                 <div id="error-panel" class="error-panel" style="display: none;">
                     <div class="error-header">
                         <span class="error-icon">Error</span>
-                        <button class="error-close-btn" id="error-close-btn" data-event="click" data-handler="closeError">×</button>
+                        <button class="error-close-btn" id="error-close-btn" data-event="click"
+                            data-handler="closeError">×</button>
                     </div>
                     <div id="error-content" class="error-content">
                         <!-- Error details will be populated by JS -->
@@ -373,7 +383,7 @@
                         <button class="error-action-btn" id="error-copy">Copy Error</button>
                     </div>
                 </div>
-            
+
                 <!-- Execution Info Panel (Hidden by default) -->
                 <div id="execution-info" class="execution-info" style="display: none;">
                     <div class="execution-status">
@@ -385,7 +395,7 @@
                         <span id="execution-memory">Memory usage: -</span>
                     </div>
                 </div>
-            
+
                 <!-- Console Filter Options (Hidden by default) -->
                 <div id="console-filter-panel" class="console-filter-panel" style="display: none;">
                     <div class="filter-options">
@@ -415,7 +425,7 @@
                         </label>
                     </div>
                 </div>
-            
+
                 <!-- Console Settings Panel (Hidden by default) -->
                 <div id="console-settings-panel" class="console-settings-panel" style="display: none;">
                     <div class="settings-group">
@@ -450,7 +460,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Console Output Templates (Hidden, used by JS) -->
             <div id="console-templates" style="display: none;">
                 <!-- Log Line Template -->
@@ -458,26 +468,26 @@
                     <span class="output-timestamp"></span>
                     <span class="output-content"></span>
                 </div>
-            
+
                 <!-- Error Line Template -->
                 <div class="output-line output-error template" data-template="error">
                     <span class="output-timestamp"></span>
                     <span class="output-content"></span>
                     <div class="error-stack"></div>
                 </div>
-            
+
                 <!-- Warning Line Template -->
                 <div class="output-line output-warn template" data-template="warn">
                     <span class="output-timestamp"></span>
                     <span class="output-content"></span>
                 </div>
-            
+
                 <!-- Info Line Template -->
                 <div class="output-line output-info template" data-template="info">
                     <span class="output-timestamp"></span>
                     <span class="output-content"></span>
                 </div>
-            
+
                 <!-- Table Template -->
                 <div class="output-line output-table template" data-template="table">
                     <span class="output-timestamp"></span>
@@ -488,14 +498,14 @@
                         </table>
                     </div>
                 </div>
-            
+
                 <!-- Time Start Template -->
                 <div class="output-line output-time-start template" data-template="time-start">
                     <span class="output-timestamp"></span>
                     <span class="time-label">Timer Start</span>
                     <span class="output-content"></span>
                 </div>
-            
+
                 <!-- Time End Template -->
                 <div class="output-line output-time-end template" data-template="time-end">
                     <span class="output-timestamp"></span>
@@ -503,7 +513,7 @@
                     <span class="output-content"></span>
                     <span class="time-duration"></span>
                 </div>
-            
+
                 <!-- Clear Template -->
                 <div class="output-line output-clear template" data-template="clear">
                     <span class="output-timestamp"></span>
@@ -523,14 +533,14 @@
                         <span class="violation-icon">Warning</span>
                         <h2 id="violation-title">Нарушение на сигурността</h2>
                     </div>
-            
+
                     <!-- Violation Body Content -->
                     <div class="violation-body">
                         <!-- Main violation message -->
                         <div id="violation-reason" class="violation-message">
                             Изпитът се прекратява поради нарушение на правилата.
                         </div>
-            
+
                         <!-- Detailed violation explanation -->
                         <div class="violation-reason" id="violation-details" style="display: none;">
                             <div class="violation-reason-title">Детайли за нарушението:</div>
@@ -538,23 +548,23 @@
                                 <!-- Detailed explanation will be populated by JS -->
                             </div>
                         </div>
-            
+
                         <!-- General warning -->
                         <div class="violation-warning">
                             Изпитът се затваря автоматично. Няма възможност за връщане.
                         </div>
-            
+
                         <!-- Auto-close countdown -->
                         <div class="violation-auto-close">
                             Автоматично затваряне след <span id="violation-countdown">10</span> секунди...
                         </div>
                     </div>
-            
+
                     <!-- NO BUTTONS - Auto close only per security requirements -->
                     <!-- This ensures students cannot interact or delay the violation -->
                 </div>
             </div>
-            
+
             <!-- Touch Device Warning (for touch violations) -->
             <div id="touch-device-warning" class="touch-device-warning" style="display: none;">
                 <div class="touch-warning-content">
@@ -563,7 +573,7 @@
                     Изпитът се прекратява автоматично.
                 </div>
             </div>
-            
+
             <!-- Developer Tools Detection Warning -->
             <div id="devtools-detection-warning" class="devtools-detection-warning" style="display: none;">
                 <div class="devtools-warning-content">
@@ -571,7 +581,7 @@
                     Моля затворете ги незабавно.
                 </div>
             </div>
-            
+
             <!-- Network Violation Warning -->
             <div id="network-violation-warning" class="network-violation-warning" style="display: none;">
                 <div class="network-warning-content">
@@ -580,7 +590,7 @@
                     Изпитът се прекратява поради нарушение на сигурността.
                 </div>
             </div>
-            
+
             <!-- Loading Overlay (shown during violation processing) -->
             <div id="violation-loading" class="violation-loading-overlay" style="display: none;">
                 <div class="violation-loading-content">
@@ -588,75 +598,87 @@
                     <div class="violation-loading-text">Обработване на нарушението...</div>
                 </div>
             </div>
-            
+
             <!-- Background Blur Effect Container -->
             <div id="violation-backdrop" class="violation-backdrop" style="display: none;"></div>
-            
+
             <!-- Violation Templates (Hidden, used by JS for different violation types) -->
             <div id="violation-templates" style="display: none;">
                 <!-- Fullscreen Violation -->
                 <div class="violation-template" data-type="fullscreen">
                     <div class="template-title">Fullscreen нарушение</div>
-                    <div class="template-message">Излязохте от fullscreen режим. Изпитът се прекратява автоматично.</div>
-                    <div class="template-details">Fullscreen режимът е задължителен по време на цялия изпит. Всяко излизане води до
+                    <div class="template-message">Излязохте от fullscreen режим. Изпитът се прекратява автоматично.
+                    </div>
+                    <div class="template-details">Fullscreen режимът е задължителен по време на цялия изпит. Всяко
+                        излизане води до
                         автоматично прекратяване.</div>
                 </div>
-            
+
                 <!-- Tab Switch Violation -->
                 <div class="violation-template" data-type="tab-switch">
                     <div class="template-title">Превключване между приложения</div>
-                    <div class="template-message">Засечено е превключване към друго приложение. Изпитът се прекратява.</div>
-                    <div class="template-details">Превключването между приложения или прозорци е строго забранено по време на
+                    <div class="template-message">Засечено е превключване към друго приложение. Изпитът се прекратява.
+                    </div>
+                    <div class="template-details">Превключването между приложения или прозорци е строго забранено по
+                        време на
                         изпита.</div>
                 </div>
-            
+
                 <!-- Copy/Paste Violation -->
                 <div class="violation-template" data-type="copy-paste">
                     <div class="template-title">Копиране/Поставяне забранено</div>
                     <div class="template-message">Опит за копиране или поставяне на код. Изпитът се прекратява.</div>
-                    <div class="template-details">Копирането и поставянето на код от външни источници е строго забранено.</div>
+                    <div class="template-details">Копирането и поставянето на код от външни источници е строго
+                        забранено.</div>
                 </div>
-            
+
                 <!-- Developer Tools Violation -->
                 <div class="violation-template" data-type="devtools">
                     <div class="template-title">Developer Tools нарушение</div>
                     <div class="template-message">Опит за отваряне на Developer Tools. Изпитът се прекратява.</div>
-                    <div class="template-details">Developer Tools са забранени по време на изпита за осигуряване на честност.</div>
+                    <div class="template-details">Developer Tools са забранени по време на изпита за осигуряване на
+                        честност.</div>
                 </div>
-            
+
                 <!-- Touch Event Violation -->
                 <div class="violation-template" data-type="touch">
                     <div class="template-title">Touch взаимодействие забранено</div>
-                    <div class="template-message">Засечено е докосване на екрана. Изпитът се прекратява автоматично.</div>
-                    <div class="template-details">Touch устройствата не са позволени. Използвайте само мишка и клавиатура.</div>
+                    <div class="template-message">Засечено е докосване на екрана. Изпитът се прекратява автоматично.
+                    </div>
+                    <div class="template-details">Touch устройствата не са позволени. Използвайте само мишка и
+                        клавиатура.</div>
                 </div>
-            
+
                 <!-- Right Click Violation -->
                 <div class="violation-template" data-type="right-click">
                     <div class="template-title">Десен клик ограничен</div>
                     <div class="template-message">Десният клик е ограничен по време на изпита.</div>
                     <div class="template-details">Context меню функциите са деактивирани за сигурност на изпита.</div>
                 </div>
-            
+
                 <!-- Network Violation -->
                 <div class="violation-template" data-type="network">
                     <div class="template-title">Мрежово нарушение</div>
-                    <div class="template-message">Засечена е подозрителна мрежова активност. Изпитът се прекратява.</div>
-                    <div class="template-details">Неразрешени мрежови заявки или опити за заобикаляне на сигурността.</div>
+                    <div class="template-message">Засечена е подозрителна мрежова активност. Изпитът се прекратява.
+                    </div>
+                    <div class="template-details">Неразрешени мрежови заявки или опити за заобикаляне на сигурността.
+                    </div>
                 </div>
-            
+
                 <!-- Multiple Sessions Violation -->
                 <div class="violation-template" data-type="multiple-sessions">
                     <div class="template-title">Множество сесии</div>
                     <div class="template-message">Засечени са множество активни сесии. Изпитът се прекратява.</div>
-                    <div class="template-details">Разрешена е само една активна сесия на студент по време на изпита.</div>
+                    <div class="template-details">Разрешена е само една активна сесия на студент по време на изпита.
+                    </div>
                 </div>
-            
+
                 <!-- Time Violation -->
                 <div class="violation-template" data-type="time-expired">
                     <div class="template-title">Времето изтече</div>
                     <div class="template-message">Времето за изпита изтече. Изпитът се затваря автоматично.</div>
-                    <div class="template-details">Времето за изпита беше 3 часа. Всички промени са запазени автоматично.</div>
+                    <div class="template-details">Времето за изпита беше 3 часа. Всички промени са запазени автоматично.
+                    </div>
                 </div>
             </div>
         </div>
