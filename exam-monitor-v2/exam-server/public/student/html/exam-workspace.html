@@ -1,198 +1,197 @@
-<!-- Exam Workspace Template - 3-Column Layout: Files | Editor | DevTools -->
-<div class="exam-container" >
-    <!-- Header -->
-    <div class="exam-header">
-        <div class="student-info">
-            <span>Студент: <strong id="student-name-display"></strong></span>
-            <span>Клас: <strong id="student-class-display"></strong></span>
-            <span>ID: <strong id="session-id-display"></strong></span>
+<!-- Exam Workspace Component - 3-Column Layout -->
+<div class="exam-container show-both">
+    <!-- Exam Header -->
+    <header class="exam-header">
+        <div class="exam-info">
+            <span class="student-name">{{studentName}}</span>
+            <span class="student-class">{{studentClass}}</span>
+            <span class="session-id">{{sessionId}}</span>
         </div>
 
         <div class="exam-timer">
-            <span class="timer-icon">⏱</span>
-            <span id="timer-display">03:00:00</span>
+            <span class="timer-label">Оставащо време:</span>
+            <span id="exam-timer" class="timer-value">03:00:00</span>
         </div>
 
         <div class="layout-controls">
-            <button class="layout-btn" id="toggle-files-btn" data-event="click" data-handler="togglePanel"
-                data-params='{"panel":"files"}'>Files</button>
-            <button class="layout-btn active" id="toggle-devtools-btn" data-event="click" data-handler="togglePanel"
-                data-params='{"panel":"devtools"}'>DevTools</button>
-            <button id="finish-exam-btn" class="btn-danger" data-event="click" data-handler="finishExam">Приключи
-                изпита</button>
-        </div>
-    </div>
-
-    <!-- Main Content - 3 Column Grid -->
-    <div class="exam-content">
-        <!-- Files Panel (Left) -->
-        <div class="files-panel" id="files-panel">
-            <div class="files-header">
-                <h3>Project Files</h3>
-                <div class="files-controls">
-                    <button class="file-action-btn new-file" title="New File"></button>
-                    <button class="file-action-btn upload" title="Upload"></button>
-                    <button class="file-action-btn refresh" title="Refresh"></button>
-                </div>
-            </div>
-            <div class="files-content">
-                <!-- File tree will be populated by JS -->
-                <div class="file-tree-empty">
-                    <div class="empty-folder-icon">📁</div>
-                    <div class="empty-title">No Files</div>
-                    <div class="empty-description">Upload files or create new ones to get started</div>
-                </div>
-            </div>
+            <button id="toggle-files" class="layout-btn active" title="Toggle Files Panel (Ctrl+1)">
+                📁 Files
+            </button>
+            <button id="toggle-devtools" class="layout-btn active" title="Toggle DevTools (Ctrl+2)">
+                🛠️ DevTools
+            </button>
+            <button id="layout-mode" class="layout-btn" title="Change Layout Mode (Ctrl+3)">
+                ⚙️ Default
+            </button>
         </div>
 
-        <!-- Editor Panel (Center) -->
-        <div class="editor-panel">
-            <div class="editor-header">
-                <h3>Код Редактор</h3>
-                <div class="editor-controls">
-                    <button id="run-code-btn" class="btn-success" data-event="click"
-                        data-handler="runCode">Стартирай</button>
-                    <button id="format-code-btn" class="btn-primary" data-event="click"
-                        data-handler="formatCode">Форматирай</button>
-                    <button id="clear-output-btn" class="btn-secondary" data-event="click"
-                        data-handler="clearOutput">Изчисти</button>
-                    <select id="theme-selector">
-                        <option value="vs-dark">Dark</option>
-                        <option value="vs">Light</option>
-                        <option value="hc-black">High Contrast</option>
-                    </select>
-                </div>
-            </div>
+        <div class="exam-actions">
+            <button id="finish-exam-btn" class="btn btn-danger">
+                Предай изпита
+            </button>
+        </div>
+    </header>
 
+    <!-- Files Panel (Left) -->
+    <aside class="files-panel">
+        <div class="files-header">
+            <h3>Project Files</h3>
+            <div class="file-toolbar">
+                <button class="file-action-btn new-file" title="New File">📄</button>
+                <button class="file-action-btn upload" title="Upload Files">⬆️</button>
+                <button class="file-action-btn refresh" title="Refresh">🔄</button>
+            </div>
+        </div>
+        <div class="files-content">
+            <!-- File tree will be rendered here -->
+            <div class="file-tree-empty">
+                <div class="empty-folder-icon">📁</div>
+                <div class="empty-title">No Project Files</div>
+                <div class="empty-subtitle">Create or upload files to start</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Editor Panel (Center) -->
+    <main class="editor-panel">
+        <div class="editor-header">
+            <h3>Код Редактор</h3>
+            <div class="editor-controls">
+                <button id="run-code-btn" class="btn btn-primary">
+                    ▶️ Изпълни
+                </button>
+                <button id="format-code-btn" class="btn btn-secondary">
+                    🎨 Форматирай
+                </button>
+                <button id="clear-output-btn" class="btn btn-secondary">
+                    🗑️ Изчисти
+                </button>
+                <select id="theme-selector" class="theme-select">
+                    <option value="vs-dark">Dark Theme</option>
+                    <option value="vs">Light Theme</option>
+                    <option value="hc-black">High Contrast</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="editor-content">
             <!-- Monaco Editor Container -->
-            <div class="editor-content">
-                <div id="monaco-editor" class="monaco-container"></div>
+            <div class="monaco-editor-container">
+                <div id="monaco-editor"></div>
+            </div>
+
+            <!-- Console Output -->
+            <div class="console-container">
+                <div class="console-header">
+                    <h4>Конзола</h4>
+                </div>
+                <div id="console-output" class="console-output"></div>
             </div>
         </div>
+    </main>
 
-        <!-- DevTools Panel (Right) -->
-        <div class="devtools-panel" id="devtools-panel">
-            <div class="devtools-header">
-                <h3>Developer Tools</h3>
-                <div class="devtools-controls">
-                    <button id="console-tab" class="devtools-btn console-btn active" data-event="click" data-handler="switchTab"
-                        data-params='{"tab":"console"}'>Console</button>
-                    <button id="mdn-tab" class="devtools-btn dom-btn" data-event="click" data-handler="switchTab"
-                        data-params='{"tab":"dom"}'>DOM Preview</button>
-                    <button class="devtools-btn mdn-btn" data-event="click" data-handler="switchTab"
-                        data-params='{"tab":"mdn"}'>MDN Reference</button>
+    <!-- DevTools Panel (Right) -->
+    <aside class="devtools-panel">
+        <div class="devtools-header">
+            <h3>Exam Dev Tools</h3>
+        </div>
+
+        <!-- DevTools Tabs -->
+        <div class="devtools-tabs">
+            <button class="devtool-tab active" data-tab="network">
+                📊 Network
+            </button>
+            <button class="devtool-tab" data-tab="console">
+                🌐 Console
+            </button>
+            <button class="devtool-tab" data-tab="elements">
+                🏗️ Elements
+            </button>
+            <button class="devtool-tab" data-tab="application">
+                💾 Application
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="devtools-content">
+            <!-- Network Tab -->
+            <div class="devtool-panel active" id="network-panel">
+                <div class="network-header">
+                    <button class="clear-btn">Clear</button>
+                    <input type="search" placeholder="Filter requests..." class="network-filter">
                 </div>
-            </div>
-
-            <div class="devtools-content">
-                <!-- Console Tab (Default Active) -->
-                <div id="console-tab-content" class="tab-content active">
-                    <div id="code-output" class="code-output">
-                        <div class="output-placeholder">
-                            Резултатът от вашия код ще се покаже тук...
-                        </div>
-                    </div>
-
-                    <!-- Error Panel -->
-                    <div id="error-panel" class="error-panel" style="display: none;">
-                        <div class="error-header">Грешка в кода</div>
-                        <div id="error-content" class="error-content"></div>
-                    </div>
-
-                    <!-- Execution Info Display -->
-                    <div id="execution-info" style="display: none;"></div>
-                </div>
-
-                <!-- DOM Preview Tab -->
-                <div id="dom-tab-content" class="tab-content" style="display: none;">
-                    <div class="dom-preview">
-                        <div class="dom-preview-header">
-                            <h4>Live Preview</h4>
-                            <div class="preview-controls">
-                                <button class="preview-btn refresh-preview">Refresh</button>
-                                <button class="preview-btn toggle-responsive">Responsive</button>
-                            </div>
-                        </div>
-                        <div class="dom-preview-content">
-                            <iframe id="dom-preview-iframe" class="preview-iframe"
-                                sandbox="allow-scripts allow-same-origin"></iframe>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MDN Reference Tab -->
-                <div id="mdn-tab-content" class="tab-content" style="display: none;">
-                    <div class="mdn-offline">
-                        <div class="mdn-header">
-                            <h3>JavaScript Quick Reference</h3>
-                        </div>
-
-                        <div class="mdn-nav">
-                            <button class="mdn-nav-btn active" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"overview"}'>Overview</button>
-                            <button class="mdn-nav-btn" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"fetch"}'>Fetch</button>
-                            <button class="mdn-nav-btn" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"dom"}'>DOM</button>
-                            <button class="mdn-nav-btn" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"array"}'>Arrays</button>
-                            <button class="mdn-nav-btn" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"object"}'>Objects</button>
-                            <button class="mdn-nav-btn" data-event="click" data-handler="showMDNSection"
-                                data-params='{"section":"json"}'>JSON</button>
-                        </div>
-
-                        <div class="mdn-content-area">
-                            <!-- MDN content sections will be populated by JS -->
-                            <div class="mdn-section active" id="overview-section">
-                                <h4>JavaScript Overview</h4>
-                                <p>Quick reference for common JavaScript methods and APIs available during the exam.</p>
-                            </div>
-
-                            <div class="mdn-section" id="fetch-section" style="display: none;">
-                                <h4>Fetch API</h4>
-                                <div class="api-syntax">fetch(url, options)</div>
-                                <p class="api-description">Modern way to make HTTP requests</p>
-                            </div>
-
-                            <div class="mdn-section" id="dom-section" style="display: none;">
-                                <h4>DOM Manipulation</h4>
-                                <div class="api-syntax">document.querySelector(selector)</div>
-                                <p class="api-description">Select elements from the DOM</p>
-                            </div>
-
-                            <div class="mdn-section" id="array-section" style="display: none;">
-                                <h4>Array Methods</h4>
-                                <div class="api-syntax">array.map(callback)</div>
-                                <p class="api-description">Transform array elements</p>
-                            </div>
-
-                            <div class="mdn-section" id="object-section" style="display: none;">
-                                <h4>Object Methods</h4>
-                                <div class="api-syntax">Object.keys(obj)</div>
-                                <p class="api-description">Get object property names</p>
-                            </div>
-
-                            <div class="mdn-section" id="json-section" style="display: none;">
-                                <h4>JSON Methods</h4>
-                                <div class="api-syntax">JSON.parse(string)</div>
-                                <p class="api-description">Parse JSON string to object</p>
-                            </div>
-                        </div>
+                <div class="network-list">
+                    <div class="empty-state">
+                        <span>🌐</span>
+                        <p>No network activity yet</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Footer -->
-    <div class="exam-footer">
-        <div class="footer-info">
-            <span id="connection-status">Connected</span>
-            <span id="auto-save-status">Auto-save: enabled</span>
+            <!-- Console Tab -->
+            <div class="devtool-panel" id="console-panel">
+                <div class="console-filters">
+                    <label><input type="checkbox" checked> All</label>
+                    <label><input type="checkbox" checked> Logs</label>
+                    <label><input type="checkbox" checked> Errors</label>
+                    <label><input type="checkbox" checked> Warnings</label>
+                </div>
+                <div class="devtools-console-output"></div>
+            </div>
+
+            <!-- Elements Tab -->
+            <div class="devtool-panel" id="elements-panel">
+                <div class="dom-tree">
+                    <div class="empty-state">
+                        <span>🏗️</span>
+                        <p>DOM tree will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Tab -->
+            <div class="devtool-panel" id="application-panel">
+                <div class="storage-explorer">
+                    <h4>Storage</h4>
+                    <details open>
+                        <summary>🍪 Cookies</summary>
+                        <div class="storage-content" id="cookies-content">
+                            <p class="empty">No cookies</p>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>🗄️ Local Storage</summary>
+                        <div class="storage-content" id="localstorage-content">
+                            <p class="empty">No data</p>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>📊 Session Storage</summary>
+                        <div class="storage-content" id="sessionstorage-content">
+                            <p class="empty">No data</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
         </div>
-        <div class="footer-actions">
-            <span id="fullscreen-status">Fullscreen: активен</span>
+    </aside>
+
+    <!-- Exam Footer -->
+    <footer class="exam-footer">
+        <div class="footer-left">
+            <span class="connection-status">
+                <span class="status-indicator connected"></span>
+                Свързан
+            </span>
+            <span class="save-status">
+                Автоматично запазване: <span id="last-save-time">активно</span>
+            </span>
         </div>
-    </div>
+
+        <div class="footer-right">
+            <span class="fullscreen-status">
+                Fullscreen: <span id="fullscreen-status">активен</span>
+            </span>
+        </div>
+    </footer>
 </div>

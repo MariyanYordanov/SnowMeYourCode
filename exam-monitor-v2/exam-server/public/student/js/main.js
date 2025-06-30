@@ -128,7 +128,7 @@ async function startExam(data) {
 
         loginContainer.style.display = 'none';
         examContainer.classList.add('active');
-        examContainer.style.display = 'block'; 
+        examContainer.style.display = 'block';
 
         window.ExamApp.isLoggedIn = true;
         window.ExamApp.examStartTime = Date.now();
@@ -143,6 +143,15 @@ async function startExam(data) {
             clearOutput: clearOutput,
             changeTheme: changeTheme
         });
+
+        // ДОБАВЕТЕ ТОВА - зареди layout-toggle след като DOM е готов
+        const layoutScript = document.createElement('script');
+        layoutScript.type = 'module';
+        layoutScript.src = '/student/js/layout-toggle.js';
+        document.body.appendChild(layoutScript);
+
+        // Re-initialize tabs now that DOM is ready
+        setupTabs();
 
         activateAntiCheat();
         enterFullscreenMode();

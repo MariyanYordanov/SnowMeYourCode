@@ -1,81 +1,97 @@
 /* 
    3-Column Adaptive Exam Layout System
    Files Explorer | Monaco Editor | DevTools Panel
-   RESPONSIVE & SMART SIZING
+   FIXED VERSION - Working Toggle States
 */
 
 /* =================================
-   MAIN EXAM CONTAINER - ADAPTIVE GRID
+   CSS VARIABLES FOR LAYOUT
    ================================= */
 
-/* КРИТИЧНА ПОПРАВКА за exam.css - заменете съществуващия .exam-container блок с това: */
+:root {
+    /* Grid column sizes */
+    --files-panel-width: 250px;
+    --devtools-panel-width: 400px;
+    --min-editor-width: 500px;
+
+    /* Transitions */
+    --panel-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =================================
+   MAIN EXAM CONTAINER - FIXED GRID
+   ================================= */
 
 .exam-container {
     display: grid;
-    /* ВИНАГИ показвай като grid */
     grid-template-areas:
         "header header header"
         "files editor devtools"
         "footer footer footer";
 
-    /* ПОПРАВЕНИ grid-template-columns - покажи всички панели */
-    grid-template-columns: 250px 1fr 350px;
-    /* Files | Editor | DevTools */
-
-    grid-template-rows:
-        50px 1fr 40px;
-    /* Header | Content | Footer */
+    /* Default: All panels visible */
+    grid-template-columns: var(--files-panel-width) 1fr var(--devtools-panel-width);
+    grid-template-rows: 50px 1fr 40px;
 
     height: 100vh;
     background: var(--editor-bg);
     color: var(--editor-text);
     overflow: hidden;
-}
-
-/* Ако искаш да скриеш панели, използвай тези класове */
-.exam-container.hide-files {
-    grid-template-columns: 0px 1fr 350px;
-}
-
-.exam-container.hide-devtools {
-    grid-template-columns: 250px 1fr 0px;
-}
-
-.exam-container.editor-only {
-    grid-template-columns: 0px 1fr 0px;
+    transition: grid-template-columns var(--panel-transition);
 }
 
 /* =================================
-   ADAPTIVE LAYOUT TOGGLE STATES
+   TOGGLE STATES - WORKING VERSION
    ================================= */
 
-/* Show Files Panel Only - Adaptive width */
-.exam-container.show-files {
-    grid-template-columns: var(--grid-files-only);
+/* Hide Files Panel */
+.exam-container.hide-files {
+    grid-template-columns: 0 1fr var(--devtools-panel-width);
 }
 
-/* Show DevTools Panel Only - Adaptive width */
-.exam-container.show-devtools {
-    grid-template-columns: var(--grid-devtools-only);
+.exam-container.hide-files .files-panel {
+    overflow: hidden;
+    opacity: 0;
 }
 
-/* Show Both Panels - Compact balanced mode */
+/* Hide DevTools Panel */
+.exam-container.hide-devtools {
+    grid-template-columns: var(--files-panel-width) 1fr 0;
+}
+
+.exam-container.hide-devtools .devtools-panel {
+    overflow: hidden;
+    opacity: 0;
+}
+
+/* Editor Only Mode */
+.exam-container.editor-only {
+    grid-template-columns: 0 1fr 0;
+}
+
+.exam-container.editor-only .files-panel,
+.exam-container.editor-only .devtools-panel {
+    overflow: hidden;
+    opacity: 0;
+}
+
+/* Show Both Side Panels */
 .exam-container.show-both {
-    grid-template-columns: var(--grid-both-panels);
+    grid-template-columns: var(--files-panel-width) 1fr var(--devtools-panel-width);
 }
 
-/* DevTools Focus Mode - Wide debugging panel */
+/* DevTools Focus Mode */
 .exam-container.focus-devtools {
-    grid-template-columns: var(--grid-devtools-focus);
+    grid-template-columns: 150px 1fr 600px;
 }
 
-/* Files Focus Mode - Wide file management panel */
+/* Files Focus Mode */
 .exam-container.focus-files {
-    grid-template-columns: var(--grid-files-focus);
+    grid-template-columns: 400px 1fr 250px;
 }
 
 /* =================================
-   EXAM HEADER - RESPONSIVE
+   GRID AREAS ASSIGNMENT
    ================================= */
 
 .exam-header {
@@ -86,87 +102,8 @@
     padding: 0 var(--spacing-xl);
     background: var(--editor-panel-bg);
     border-bottom: 1px solid var(--editor-border);
-    z-index: var(--z-sticky);
-    min-height: var(--header-height);
+    z-index: 10;
 }
-
-.student-info {
-    display: flex;
-    gap: var(--spacing-xl);
-    font-size: var(--font-base);
-    color: #e0e0e0;
-    flex-wrap: wrap;
-}
-
-.student-info strong {
-    color: var(--editor-text);
-    font-weight: var(--font-semibold);
-}
-
-.exam-timer {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-lg);
-    font-weight: var(--font-semibold);
-    color: var(--success-color);
-    min-width: 120px;
-    justify-content: center;
-}
-
-.timer-icon {
-    font-size: var(--font-xl);
-}
-
-/* Layout Controls - Responsive button group */
-.layout-controls {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-left: auto;
-    margin-right: var(--spacing-lg);
-    flex-wrap: wrap;
-}
-
-.layout-btn {
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--editor-text);
-    border: 1px solid var(--editor-border);
-    border-radius: var(--btn-border-radius);
-    font-size: var(--font-sm);
-    cursor: pointer;
-    transition: var(--transition-all);
-    user-select: none;
-    white-space: nowrap;
-    min-width: 60px;
-}
-
-.layout-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: var(--primary-color);
-    transform: translateY(-1px);
-}
-
-.layout-btn.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: white;
-    box-shadow: var(--shadow-primary);
-}
-
-/* Advanced layout mode buttons */
-.layout-btn.focus-mode {
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-    border: none;
-}
-
-.layout-btn.focus-mode:hover {
-    background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
-}
-
-/* =================================
-   FILES PANEL (LEFT) - ADAPTIVE
-   ================================= */
 
 .files-panel {
     grid-area: files;
@@ -175,64 +112,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-width: 0;
-    /* Prevent flex overflow */
-    transition: all var(--transition-normal) var(--ease-in-out);
+    transition: opacity var(--panel-transition);
 }
-
-.files-panel.collapsed {
-    display: none;
-}
-
-.files-panel.resizing {
-    transition: none;
-    /* Disable transitions during manual resize */
-}
-
-.files-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--editor-border);
-    background: var(--editor-panel-bg);
-    min-height: var(--panel-header-height);
-}
-
-.files-header h3 {
-    font-size: var(--font-base);
-    font-weight: var(--font-semibold);
-    color: var(--editor-text);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.files-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-md);
-    scrollbar-width: thin;
-    scrollbar-color: var(--editor-border) transparent;
-}
-
-.files-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.files-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.files-content::-webkit-scrollbar-thumb {
-    background: var(--editor-border);
-    border-radius: 3px;
-}
-
-/* =================================
-   EDITOR PANEL (CENTER) - ADAPTIVE
-   ================================= */
 
 .editor-panel {
     grid-area: editor;
@@ -240,71 +121,9 @@
     flex-direction: column;
     background: var(--editor-bg);
     min-width: 0;
-    /* Prevent flex overflow */
+    /* Important for grid flexibility */
     position: relative;
 }
-
-.editor-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--editor-panel-bg);
-    border-bottom: 1px solid var(--editor-border);
-    min-height: var(--panel-header-height);
-}
-
-.editor-header h3 {
-    font-size: var(--font-base);
-    font-weight: var(--font-semibold);
-    color: var(--editor-text);
-    margin: 0;
-}
-
-.editor-controls {
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.editor-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Monaco Editor Container - Adaptive */
-.monaco-editor-container {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    background: var(--editor-bg);
-}
-
-#monaco-editor {
-    height: 100% !important;
-    width: 100% !important;
-}
-
-/* Console Output Area - Resizable */
-.console-area {
-    height: 300px;
-    background: var(--console-bg);
-    border-top: 1px solid var(--editor-border);
-    display: flex;
-    flex-direction: column;
-    resize: vertical;
-    overflow: hidden;
-    min-height: 150px;
-    max-height: 50vh;
-}
-
-/* =================================
-   DEVTOOLS PANEL (RIGHT) - ADAPTIVE
-   ================================= */
 
 .devtools-panel {
     grid-area: devtools;
@@ -313,75 +132,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-width: 0;
-    /* Prevent flex overflow */
-    transition: all var(--transition-normal) var(--ease-in-out);
+    transition: opacity var(--panel-transition);
 }
-
-.devtools-panel.collapsed {
-    display: none;
-}
-
-.devtools-panel.focus-mode {
-    background: linear-gradient(180deg, var(--editor-panel-bg), rgba(102, 126, 234, 0.05));
-    border-left: 2px solid var(--primary-color);
-}
-
-.devtools-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--editor-border);
-    background: var(--editor-panel-bg);
-    min-height: var(--panel-header-height);
-}
-
-.devtools-header h3 {
-    font-size: var(--font-base);
-    font-weight: var(--font-semibold);
-    color: var(--editor-text);
-    margin: 0;
-}
-
-.devtools-content {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-/* =================================
-   PANEL RESIZE HANDLES
-   ================================= */
-
-.resize-handle {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    cursor: col-resize;
-    background: transparent;
-    z-index: var(--z-dropdown);
-    transition: background-color var(--transition-fast);
-}
-
-.resize-handle:hover,
-.resize-handle.active {
-    background: var(--primary-color);
-}
-
-.resize-handle.files {
-    right: -3px;
-}
-
-.resize-handle.devtools {
-    left: -3px;
-}
-
-/* =================================
-   EXAM FOOTER - RESPONSIVE
-   ================================= */
 
 .exam-footer {
     grid-area: footer;
@@ -391,230 +143,153 @@
     padding: 0 var(--spacing-xl);
     background: var(--editor-panel-bg);
     border-top: 1px solid var(--editor-border);
-    min-height: var(--footer-height);
     font-size: var(--font-sm);
     color: var(--text-muted);
+    z-index: 10;
 }
 
-.footer-status {
-    display: flex;
-    gap: var(--spacing-lg);
-    align-items: center;
-}
+/* =================================
+   LAYOUT CONTROLS
+   ================================= */
 
-.footer-actions {
+.layout-controls {
     display: flex;
     gap: var(--spacing-sm);
     align-items: center;
 }
 
-/* =================================
-   RESPONSIVE LAYOUT ADJUSTMENTS
-   ================================= */
-
-/* Large screens - Enable advanced features */
-@media (min-width: 1600px) {
-    .layout-controls {
-        gap: var(--spacing-md);
-    }
-
-    .layout-btn {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: var(--font-base);
-    }
-
-    .exam-header {
-        padding: 0 var(--spacing-xxl);
-    }
-}
-
-/* Medium screens - Balanced layout */
-@media (max-width: 1280px) {
-    .student-info {
-        gap: var(--spacing-md);
-        font-size: var(--font-sm);
-    }
-
-    .layout-controls {
-        margin-right: var(--spacing-md);
-    }
-}
-
-/* Small screens - Compact mode */
-@media (max-width: 1024px) {
-    .exam-header {
-        padding: 0 var(--spacing-lg);
-        flex-wrap: wrap;
-        min-height: auto;
-        padding-top: var(--spacing-sm);
-        padding-bottom: var(--spacing-sm);
-    }
-
-    .student-info {
-        order: 1;
-        width: 100%;
-        justify-content: space-between;
-        margin-bottom: var(--spacing-sm);
-    }
-
-    .exam-timer {
-        order: 2;
-        font-size: var(--font-base);
-    }
-
-    .layout-controls {
-        order: 3;
-        margin: 0;
-    }
-
-    .layout-btn {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: var(--font-xs);
-        min-width: 50px;
-    }
-}
-
-/* Mobile screens - Single panel only */
-@media (max-width: 768px) {
-    .exam-container.show-both {
-        grid-template-columns: var(--grid-collapsed);
-        /* Force editor only */
-    }
-
-    .layout-btn {
-        display: none;
-        /* Hide panel toggles on mobile */
-    }
-
-    .layout-btn.mobile-visible {
-        display: inline-block;
-        /* Show specific mobile controls */
-    }
-
-    .student-info span {
-        font-size: var(--font-xs);
-    }
-
-    .exam-timer {
-        font-size: var(--font-sm);
-    }
-
-    /* Make panels full-width when active on mobile */
-    .files-panel,
-    .devtools-panel {
-        position: fixed;
-        top: var(--header-height);
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: var(--z-modal);
-        border: none;
-        background: var(--editor-panel-bg);
-    }
-}
-
-/* =================================
-   FOCUS INDICATORS & ACCESSIBILITY
-   ================================= */
-
-.layout-btn:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
-.exam-container:focus-within .files-panel {
-    border-right-color: var(--primary-color);
-}
-
-.exam-container:focus-within .devtools-panel {
-    border-left-color: var(--primary-color);
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-
-    .exam-header,
-    .files-header,
-    .editor-header,
-    .devtools-header {
-        border-bottom-width: 2px;
-    }
-
-    .layout-btn.active {
-        border-width: 2px;
-    }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-
-    .exam-container,
-    .files-panel,
-    .devtools-panel,
-    .layout-btn {
-        transition: none;
-    }
-}
-
-/* ДОБАВИ В КРАЯ НА exam.css - липсващи класове */
-
-/* Monaco Editor специфични стилове */
-.monaco-container {
-    height: 100%;
-    width: 100%;
-    min-height: 400px;
-}
-
-.editor-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-/* Exam Footer */
-.exam-footer {
-    grid-area: footer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 var(--spacing-lg);
-    background: var(--editor-panel-bg);
-    border-top: 1px solid var(--editor-border);
-    font-size: var(--font-xs);
+.layout-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--editor-border);
+    border-radius: 4px;
     color: var(--text-muted);
-}
-
-.footer-info {
+    font-size: var(--font-xs);
+    cursor: pointer;
+    transition: all 0.2s;
     display: flex;
-    gap: var(--spacing-lg);
+    align-items: center;
+    gap: 4px;
 }
 
-.footer-actions {
-    display: flex;
-    gap: var(--spacing-md);
-}
-
-/* Tab content visibility */
-.tab-content {
-    display: none;
-    flex: 1;
-    overflow: hidden;
-}
-
-.tab-content.active {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Button improvements */
-.btn-primary {
-    background: var(--primary-color);
+.layout-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--editor-text);
     border-color: var(--primary-color);
-    color: white;
 }
 
-.btn-primary:hover {
-    background: var(--secondary-color);
-    border-color: var(--secondary-color);
+.layout-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Toggle specific buttons */
+#toggle-files::before {
+    content: '📁';
+}
+
+#toggle-devtools::before {
+    content: '🛠️';
+}
+
+#layout-mode::before {
+    content: '⚙️';
+}
+
+/* =================================
+   RESPONSIVE ADJUSTMENTS
+   ================================= */
+
+@media (max-width: 1200px) {
+    :root {
+        --files-panel-width: 200px;
+        --devtools-panel-width: 350px;
+    }
+
+    .exam-container.focus-devtools {
+        grid-template-columns: 0 1fr 500px;
+    }
+
+    .exam-container.focus-files {
+        grid-template-columns: 350px 1fr 0;
+    }
+}
+
+@media (max-width: 900px) {
+
+    /* Force single panel on small screens */
+    .exam-container {
+        grid-template-columns: 0 1fr 0 !important;
+    }
+
+    .layout-controls {
+        display: none;
+    }
+}
+
+/* =================================
+   PANEL RESIZE HANDLES
+   ================================= */
+
+.resize-handle {
+    position: absolute;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 20;
+    transition: background 0.2s;
+}
+
+.resize-handle:hover {
+    background: var(--primary-color);
+}
+
+.resize-handle-left {
+    left: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+}
+
+.resize-handle-right {
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+}
+
+/* =================================
+   SMOOTH ANIMATIONS
+   ================================= */
+
+.panel-enter {
+    animation: slideIn 0.3s ease-out;
+}
+
+.panel-exit {
+    animation: slideOut 0.3s ease-in;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
 }
