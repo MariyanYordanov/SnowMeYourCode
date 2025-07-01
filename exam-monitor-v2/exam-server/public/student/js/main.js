@@ -566,3 +566,8 @@ function checkSessionRestore() {
 window.startExam = startExam;
 window.completeExam = completeExam;
 window.exitExam = exitExam;
+
+// Добавяме и в ExamApp обекта
+window.ExamApp.startExam = startExam;
+window.ExamApp.completeExam = completeExam;
+window.ExamApp.exitExam = exitExam;
