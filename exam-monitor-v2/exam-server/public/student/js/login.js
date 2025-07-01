@@ -1,11 +1,3 @@
-/**
- * Enhanced Login Module with Terms Agreement
- * Handles login form, validation, terms agreement, and student authentication
- */
-
-/**
- * Setup login form event handlers with terms agreement
- */
 export function setupLoginForm() {
     try {
         const loginBtn = document.getElementById('login-btn');
@@ -14,22 +6,17 @@ export function setupLoginForm() {
         const termsContent = document.querySelector('.terms-content');
         const termsAgreement = document.getElementById('terms-agreement');
 
-        if (!loginBtn || !studentName || !studentClass || !termsContent || !termsAgreement) {
-            console.error('Login form elements not found');
-            console.log('Found elements:', {
-                loginBtn: !!loginBtn,
-                studentName: !!studentName,
-                studentClass: !!studentClass,
-                termsContent: !!termsContent,
-                termsAgreement: !!termsAgreement
-            });
+        if (!loginBtn || !studentName || !studentClass) {
+            console.error('Required form elements not found');
             return false;
         }
 
-        // Login button handler
+        if (!termsAgreement) {
+            console.warn('Terms agreement checkbox not found, continuing without it');
+        }
+
         loginBtn.addEventListener('click', handleLogin);
 
-        // Enter key support
         [studentName, studentClass].forEach(input => {
             input.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
@@ -38,21 +25,19 @@ export function setupLoginForm() {
             });
         });
 
-        // REMOVED: Terms toggle functionality - no longer needed
+        if (termsAgreement) {
+            termsAgreement.addEventListener('change', handleTermsAgreement);
+            termsAgreement.addEventListener('change', validateLoginForm);
+        }
 
-        // Terms agreement checkbox
-        termsAgreement.addEventListener('change', handleTermsAgreement);
-
-        // Form validation on input changes
-        [studentName, studentClass, termsAgreement].forEach(input => {
+        [studentName, studentClass].forEach(input => {
             input.addEventListener('change', validateLoginForm);
             input.addEventListener('input', validateLoginForm);
         });
 
-        // Initial validation
         validateLoginForm();
 
-        console.log('Enhanced login form with terms agreement initialized');
+        console.log('Login form initialized successfully');
         return true;
     } catch (error) {
         console.error('Failed to setup login form:', error);
@@ -60,29 +45,19 @@ export function setupLoginForm() {
     }
 }
 
-/**
- * Handle terms agreement checkbox change
- */
 function handleTermsAgreement() {
     try {
         const termsAgreement = document.getElementById('terms-agreement');
         const isAgreed = termsAgreement?.checked;
 
         console.log(`Terms agreement: ${isAgreed ? 'accepted' : 'declined'}`);
-
-        // Validate form after agreement change
         validateLoginForm();
-
-        // REMOVED: Auto-collapse logic - terms are always visible now
 
     } catch (error) {
         console.error('Error handling terms agreement:', error);
     }
 }
 
-/**
- * Validate login form (enhanced with terms validation)
- */
 function validateLoginForm() {
     try {
         const studentName = document.getElementById('student-name');
@@ -90,26 +65,23 @@ function validateLoginForm() {
         const termsAgreement = document.getElementById('terms-agreement');
         const loginBtn = document.getElementById('login-btn');
 
-        if (!studentName || !studentClass || !termsAgreement || !loginBtn) {
+        if (!studentName || !studentClass || !loginBtn) {
             return false;
         }
 
         const name = studentName.value.trim();
         const selectedClass = studentClass.value;
-        const isAgreed = termsAgreement.checked;
+        const isAgreed = termsAgreement ? termsAgreement.checked : true;
 
-        // Validation criteria
         const isNameValid = name.length >= 3;
         const isClassValid = selectedClass !== '';
         const isTermsAccepted = isAgreed;
 
         const isFormValid = isNameValid && isClassValid && isTermsAccepted;
 
-        // Update button state
         loginBtn.disabled = !isFormValid;
 
-        // Update button text based on validation
-        if (!isTermsAccepted) {
+        if (!isTermsAccepted && termsAgreement) {
             loginBtn.textContent = 'Моля приемете условията';
         } else if (!isNameValid || !isClassValid) {
             loginBtn.textContent = 'Попълнете данните';
@@ -125,41 +97,35 @@ function validateLoginForm() {
     }
 }
 
-/**
- * Handle login button click (enhanced with terms validation)
- */
 export function handleLogin() {
     try {
         const name = document.getElementById('student-name').value.trim();
         const studentClass = document.getElementById('student-class').value;
-        const termsAgreement = document.getElementById('terms-agreement').checked;
+        const termsAgreement = document.getElementById('terms-agreement');
+        const termsAccepted = termsAgreement ? termsAgreement.checked : true;
 
-        // Enhanced validation including terms
-        if (!validateLoginInput(name, studentClass, termsAgreement)) {
+        if (!validateLoginInput(name, studentClass, termsAccepted)) {
             return;
         }
 
-        // Show loading state
         showLoginStatus('Влизане в изпита...', 'info');
-        setLoginButtonState(true); // Disable button
+        setLoginButtonState(true);
 
-        // Store student info in global state
         window.ExamApp.studentName = name;
         window.ExamApp.studentClass = studentClass;
-        window.ExamApp.termsAccepted = true;
+        window.ExamApp.termsAccepted = termsAccepted;
         window.ExamApp.termsAcceptedAt = Date.now();
 
-        // Send login request via WebSocket
         if (window.ExamApp.socket && window.ExamApp.socket.connected) {
             window.ExamApp.socket.emit('student-join', {
                 studentName: name,
                 studentClass: studentClass,
-                termsAccepted: true,
+                termsAccepted: termsAccepted,
                 termsAcceptedAt: window.ExamApp.termsAcceptedAt
             });
         } else {
             showLoginStatus('Няма връзка със сървъра', 'error');
-            setLoginButtonState(false); // Re-enable button
+            setLoginButtonState(false);
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -168,9 +134,6 @@ export function handleLogin() {
     }
 }
 
-/**
- * Validate login input (enhanced with terms validation)
- */
 function validateLoginInput(name, studentClass, termsAccepted) {
     if (!name || !studentClass) {
         showLoginStatus('Моля въведете име и изберете клас', 'error');
@@ -187,160 +150,115 @@ function validateLoginInput(name, studentClass, termsAccepted) {
         return false;
     }
 
-    // Check for valid Bulgarian characters
     const cyrillicPattern = /^[А-Яа-я\s]+$/;
     if (!cyrillicPattern.test(name)) {
         showLoginStatus('Името трябва да съдържа само български букви', 'error');
         return false;
     }
 
-    // Check name format (at least first and last name)
-    const nameParts = name.split(/\s+/);
-    if (nameParts.length < 2) {
-        showLoginStatus('Моля въведете име и фамилия', 'error');
+    const validClasses = ['11А', '11Б', '12А', '12Б'];
+    if (!validClasses.includes(studentClass)) {
+        showLoginStatus('Невалиден клас', 'error');
         return false;
-    }
-
-    // Each name part must be at least 2 characters
-    for (const part of nameParts) {
-        if (part.length < 2) {
-            showLoginStatus('Всяка част от името трябва да е поне 2 символа', 'error');
-            return false;
-        }
     }
 
     return true;
 }
 
-/**
- * Show login status message
- */
-export function showLoginStatus(message, type) {
-    try {
-        const statusEl = document.getElementById('login-status');
-        if (!statusEl) {
-            console.error('Login status element not found');
-            return;
-        }
-
+function showLoginStatus(message, type = 'info') {
+    const statusEl = document.getElementById('login-status');
+    if (statusEl) {
         statusEl.textContent = message;
         statusEl.className = `status-message ${type}`;
-
-        console.log(`Login status: ${type} - ${message}`);
-    } catch (error) {
-        console.error('Failed to show login status:', error);
+        statusEl.style.display = 'block';
     }
 }
 
-/**
- * Set login button state (enabled/disabled)
- */
 function setLoginButtonState(disabled) {
-    try {
-        const loginBtn = document.getElementById('login-btn');
-        if (loginBtn) {
-            loginBtn.disabled = disabled;
-
-            if (disabled) {
-                loginBtn.textContent = 'Влизане...';
-            } else {
-                // Reset to appropriate text based on validation
-                validateLoginForm();
-            }
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.disabled = disabled;
+        if (!disabled) {
+            validateLoginForm();
         }
-    } catch (error) {
-        console.error('Failed to set login button state:', error);
     }
 }
 
-/**
- * Handle successful login response
- */
 export function handleLoginSuccess(data) {
     try {
         console.log('Login successful:', data);
 
-        // Update global state
         window.ExamApp.sessionId = data.sessionId;
-        window.ExamApp.examStartTime = Date.now();
+        window.ExamApp.examStartTime = data.examStartTime || Date.now();
+        window.ExamApp.isLoggedIn = true;
 
-        // Show success message
-        showLoginStatus('Влизане успешно! Стартиране на изпита...', 'success');
+        showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
 
-        // Start exam after short delay
+        localStorage.setItem('examSession', JSON.stringify({
+            sessionId: data.sessionId,
+            studentName: window.ExamApp.studentName,
+            studentClass: window.ExamApp.studentClass,
+            examStartTime: window.ExamApp.examStartTime,
+            examEndTime: data.examEndTime
+        }));
+
         setTimeout(() => {
-            if (window.ExamApp.startExam) {
-                window.ExamApp.startExam(data);
+            if (window.startExam) {
+                window.startExam(data);
             }
-        }, 1500);
+        }, 1000);
+
     } catch (error) {
-        console.error('Failed to handle login success:', error);
+        console.error('Error handling login success:', error);
         showLoginStatus('Грешка при стартиране на изпита', 'error');
-        setLoginButtonState(false);
     }
 }
 
-/**
- * Handle session restore response
- */
-export function handleSessionRestore(data) {
+export function handleLoginError(error) {
+    console.error('Login error:', error);
+
+    const errorMessage = error.message || error.error || 'Грешка при влизане';
+    showLoginStatus(errorMessage, 'error');
+
+    setLoginButtonState(false);
+}
+
+export function handleSessionRestore(sessionData) {
     try {
-        console.log('Session restored:', data);
+        console.log('Restoring session:', sessionData);
 
-        // Update global state
-        window.ExamApp.sessionId = data.sessionId;
+        window.ExamApp.studentName = sessionData.studentName;
+        window.ExamApp.studentClass = sessionData.studentClass;
+        window.ExamApp.sessionId = sessionData.sessionId;
+        window.ExamApp.examStartTime = sessionData.examStartTime;
+        window.ExamApp.isLoggedIn = true;
 
-        // Show restore message
-        showLoginStatus(data.message, 'success');
-
-        // Start exam after short delay
         setTimeout(() => {
-            if (window.ExamApp.startExam) {
-                window.ExamApp.startExam(data);
+            if (window.startExam) {
+                window.startExam(sessionData);
             }
-        }, 1500);
+        }, 500);
+
     } catch (error) {
-        console.error('Failed to handle session restore:', error);
-        showLoginStatus('Грешка при възстановяване на сесията', 'error');
-        setLoginButtonState(false);
+        console.error('Failed to restore session:', error);
+        localStorage.removeItem('examSession');
     }
 }
 
-/**
- * Handle login error response
- */
-export function handleLoginError(data) {
-    try {
-        console.error('Login error:', data);
-
-        // Show error message
-        showLoginStatus(data.message, 'error');
-
-        // Re-enable login button
-        setLoginButtonState(false);
-
-        // Clear stored data
-        window.ExamApp.studentName = null;
-        window.ExamApp.studentClass = null;
-        window.ExamApp.termsAccepted = false;
-        window.ExamApp.termsAcceptedAt = null;
-    } catch (error) {
-        console.error('Failed to handle login error:', error);
-    }
-}
-
-/**
- * Update student display in exam interface
- */
 export function updateStudentDisplay(studentName, studentClass, sessionId) {
     try {
-        const nameEl = document.getElementById('student-name-display');
-        const classEl = document.getElementById('student-class-display');
-        const sessionEl = document.getElementById('session-id-display');
+        const elements = {
+            '.student-name': studentName,
+            '.student-class': studentClass,
+            '.session-id': sessionId
+        };
 
-        if (nameEl) nameEl.textContent = studentName || 'Неизвестен';
-        if (classEl) classEl.textContent = studentClass || 'Неизвестен';
-        if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
+        for (const [selector, value] of Object.entries(elements)) {
+            const el = document.querySelector(selector);
+            if (el) {
+                el.textContent = value || 'Неизвестен';
+            }
+        }
 
         console.log(`Student display updated: ${studentName} (${studentClass}) - ${sessionId}`);
     } catch (error) {
@@ -348,9 +266,6 @@ export function updateStudentDisplay(studentName, studentClass, sessionId) {
     }
 }
 
-/**
- * Clear login form
- */
 export function clearLoginForm() {
     try {
         const studentName = document.getElementById('student-name');
@@ -375,12 +290,8 @@ export function clearLoginForm() {
     }
 }
 
-/**
- * Reset login state
- */
 export function resetLoginState() {
     try {
-        // Clear global state
         window.ExamApp.studentName = null;
         window.ExamApp.studentClass = null;
         window.ExamApp.sessionId = null;
@@ -388,11 +299,9 @@ export function resetLoginState() {
         window.ExamApp.termsAccepted = false;
         window.ExamApp.termsAcceptedAt = null;
 
-        // Clear form
         clearLoginForm();
 
-        // Show login container, hide exam container
-        const loginContainer = document.getElementById('login-container');
+        const loginContainer = document.getElementById('login-component');
         const examContainer = document.getElementById('exam-component');
 
         if (loginContainer) loginContainer.style.display = 'flex';
@@ -404,9 +313,6 @@ export function resetLoginState() {
     }
 }
 
-/**
- * Get current login state
- */
 export function getLoginState() {
     return {
         studentName: window.ExamApp.studentName,
@@ -419,9 +325,6 @@ export function getLoginState() {
     };
 }
 
-/**
- * Get terms acceptance info (for server logging)
- */
 export function getTermsAcceptanceInfo() {
     return {
         accepted: window.ExamApp.termsAccepted || false,
@@ -430,9 +333,6 @@ export function getTermsAcceptanceInfo() {
     };
 }
 
-/**
- * Format student name consistently
- */
 export function formatStudentName(name) {
     if (!name || typeof name !== 'string') {
         return '';
@@ -440,15 +340,12 @@ export function formatStudentName(name) {
 
     return name
         .trim()
-        .replace(/\s+/g, ' ') // Multiple spaces to single
+        .replace(/\s+/g, ' ')
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
 }
 
-/**
- * Validate student class
- */
 export function validateStudentClass(studentClass) {
     const validClasses = ['11А', '11Б', '12А', '12Б'];
     return validClasses.includes(studentClass);

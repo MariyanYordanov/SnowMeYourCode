@@ -7,29 +7,21 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Exam Monitor - Student Interface</title>
 
-    <!-- External Dependencies -->
     <script src="/socket.io/socket.io.js"></script>
 
-    <!-- CSS - Modular Import System -->
     <link rel="stylesheet" href="/student/css/styles.css">
 
-    <!-- Monaco Editor CDN -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
-
-    <!-- Monaco Loader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
-    <!-- Monaco Configuration -->
     <script>
-        // Configure Monaco paths
         require.config({
             paths: {
                 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
             }
         });
 
-        // Глобална функция за проверка дали Monaco е готов
         window.waitForMonaco = function (callback) {
             if (typeof monaco !== 'undefined') {
                 callback();
@@ -43,107 +35,65 @@
 </head>
 
 <body>
-    <!-- Main Application Container -->
     <div id="app-container" class="app-container">
-        <!-- Login Component Container -->
         <div id="login-component" class="component-container">
-            <!-- Login Form Template - Clean, Modular Component -->
             <div class="login-container">
-                <!-- Terms Section - Left Column -->
                 <div class="terms-section">
-                    <div class="terms-header">
-                        <h3>Условия на изпита</h3>
+                    <div class="terms-header bg-primary text-white rounded-lg">
+                        <h3 class="m-0 text-lg font-semibold">📋 Условия за честно провеждане на изпита</h3>
                     </div>
-
-                    <!-- Terms Content -->
-                    <div class="terms-content">
+                    <div class="terms-content p-xxl">
                         <div class="terms-text">
-                            <h4>АВТОМАТИЧНО ПРЕКРАТЯВАНЕ ПРИ:</h4>
-                            <ul class="violation-list">
-                                <li><strong>Излизане от fullscreen режим</strong></li>
-                                <li><strong>Скриване на прозореца</strong> на изпита</li>
-                                <li><strong>Превключване към други приложения</strong> или прозорци</li>
-                                <li><strong>Копиране/поставяне на код</strong> от външни източници</li>
-                                <li><strong>ДОКОСВАНЕ НА ЕКРАНА</strong> (touch events)</li>
-                            </ul>
+                            <h4 class="text-md font-semibold mb-lg">❌ Забранени действия по време на изпита:</h4>
 
-                            <!-- CRITICAL: Touch Policy Section -->
-                            <div class="no-touch-policy">
-                                <h4>ВАЖНО: TOUCH ВЗАИМОДЕЙСТВИЕ ЗАБРАНЕНО</h4>
-                                <div class="touch-policy-content">
-                                    <p><strong>ВСЯКО ДОКОСВАНЕ === АВТОМАТИЧНО ИЗГОНВАНЕ</strong></p>
-                                    <ul class="touch-rules">
-                                        <li>Използвайте <strong>САМО МИШКА И КЛАВИАТУРА</strong></li>
-                                        <li>Touch screens <strong>НЕ СА ПОЗВОЛЕНИ</strong></li>
-                                        <li>Таблети и телефони <strong>НЕ СА ПОДХОДЯЩИ</strong> за изпита</li>
-                                        <li>Всеки touch event се засича <strong>МОМЕНТАЛНО</strong></li>
-                                    </ul>
-                                </div>
-                            </div>
+                            <ol class="violation-list">
+                                <li><strong>Смяна на прозорци/табове:</strong> Напускане на изпитния прозорец</li>
+                                <li><strong>Копиране от външни източници:</strong> Използване на clipboard от други
+                                    приложения</li>
+                                <li><strong>Отваряне на DevTools:</strong> F12, Ctrl+Shift+I или десен бутон</li>
+                                <li><strong>Използване на горещи клавиши:</strong> Alt+Tab, Win+Tab, Ctrl+Alt+Del</li>
+                                <li><strong>Достъп до други програми:</strong> IDE, браузъри, чат приложения</li>
+                                <li><strong>Връзка с други устройства:</strong> TeamViewer, AnyDesk, Remote Desktop</li>
+                                <li><strong>Използване на AI асистенти:</strong> ChatGPT, GitHub Copilot, Bard</li>
+                                <li><strong>Комуникация с други лица:</strong> По всякакъв начин</li>
+                            </ol>
 
-                            <h4>Разрешени действия:</h4>
-                            <ul class="allowed-list">
-                                <li><strong>Писане на код</strong> в редактора</li>
-                                <li><strong>Изпълнение на код</strong> и преглед на резултатите</li>
-                                <li><strong>Форматиране на кода</strong> с предоставените инструменти</li>
-                                <li><strong>Developer Tools</strong> в рамките на fullscreen режима</li>
-                                <li><strong>Мишка и клавиатура</strong> взаимодействия</li>
-                            </ul>
+                            <h4 class="text-md font-semibold mb-lg mt-xl">✅ Позволени действия:</h4>
 
-                            <!-- Platform-Specific Allowed Actions -->
-                            <div class="tech-info">
-                                <h5>Разрешени клавиши за смяна на език:</h5>
-                                <ul class="platform-list allowed">
-                                    <li><strong>Windows:</strong> Windows+Space, Alt+Shift</li>
-                                    <li><strong>Mac:</strong> Cmd+Space (Spotlight), Control+Space</li>
-                                    <li><strong>Linux:</strong> Super+Space, Alt+Shift (зависи от настройките)</li>
-                                </ul>
-                            </div>
+                            <ol class="allowed-list">
+                                <li>Писане на код в предоставения редактор</li>
+                                <li>Използване на вградената конзола за дебъгване</li>
+                                <li>Преглед на MDN документация в Exam Dev Tools</li>
+                                <li>Създаване и редактиране на файлове в проекта</li>
+                            </ol>
 
-                            <div class="warning-box">
-                                <strong>ВАЖНО:</strong> При нарушение изпитът се прекратява <strong>Автоматично</strong>
-                                без възможност за връщане! Системата засича всички взаимодействия в реално време -
-                                включително <strong>touch events</strong>, излизане от <strong>fullscreen</strong> и
-                                превключване между приложения.
-                            </div>
-
-                            <div class="info-box">
-                                <strong>ДОПЪЛНИТЕЛНО:</strong> Времето за изпита е <strong>3 часа</strong>.
-                                Кодът се запазва автоматично на всеки 2 секунди. След приключване на изпита
-                                няма възможност за връщане или промени.
-                            </div>
-
-                            <div class="tech-info">
-                                <strong>ТЕХНИЧЕСКА ИНФОРМАЦИЯ:</strong> Системата използва стандартни web APIs
-                                за детекция на <strong>fullscreen</strong> състоянието и <strong>touch events</strong>.
-                                Работи на всички модерни браузъри.
-                            </div>
+                            <p class="warning-text mt-xl p-lg rounded bg-danger text-white">
+                                <strong>⚠️ ВНИМАНИЕ:</strong> При установяване на нарушение, изпитът се прекратява
+                                автоматично и се оценява с двойка (2)!
+                            </p>
                         </div>
-                    </div>
 
-                    <!-- Agreement Checkbox -->
-                    <div class="agreement-checkbox">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="terms-agreement" required>
-                            <span class="checkmark"></span>
-                            <span class="checkbox-text">
-                                Прочетох и се <strong>съгласявам с условията</strong> на изпита.
-                                Разбирам, че при нарушение изпитът се прекратява автоматично.
-                            </span>
-                        </label>
+                        <div class="agreement-checkbox mt-xl p-lg rounded">
+                            <label class="checkbox-label d-flex gap-md cursor-pointer">
+                                <input type="checkbox" id="terms-agreement" class="checkbox">
+                                <span class="checkbox-text">
+                                    <strong>Прочетох и се съгласявам с условията.</strong>
+                                    Разбирам, че при нарушение изпитът се прекратява автоматично.
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Login Form - Right Column -->
                 <div class="login-form">
-                    <h2>Вход в изпита по програмиране</h2>
+                    <h2 class="text-center mb-xxl">Вход в изпита по програмиране</h2>
 
-                    <div class="form-group">
-                        <input type="text" id="student-name" placeholder="Име и фамилия" required>
+                    <div class="form-group mb-lg">
+                        <input type="text" id="student-name" class="input" placeholder="Име и фамилия" required>
                     </div>
 
-                    <div class="form-group">
-                        <select id="student-class" required>
+                    <div class="form-group mb-lg">
+                        <select id="student-class" class="input select" required>
                             <option value="">Изберете клас</option>
                             <option value="11А">11А</option>
                             <option value="11Б">11Б</option>
@@ -152,39 +102,35 @@
                         </select>
                     </div>
 
-                    <!-- Enhanced Login Button - БЕЗ data атрибути -->
-                    <button id="login-btn" class="btn-primary" disabled>
+                    <button id="login-btn" class="btn btn-primary w-100" disabled>
                         Влез в изпита
                     </button>
 
-                    <div id="login-status" class="status-message"></div>
+                    <div id="login-status" class="status-message mt-lg"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Exam Workspace Container -->
         <div id="exam-component" class="component-container" style="display: none;">
-            <!-- Exam Workspace Component - 3-Column Layout -->
-            <div class="exam-container show-both">
-                <!-- Exam Header -->
+            <div class="exam-container">
                 <header class="exam-header">
-                    <div class="exam-info">
-                        <span class="student-name">{{studentName}}</span>
-                        <span class="student-class">{{studentClass}}</span>
-                        <span class="session-id">{{sessionId}}</span>
+                    <div class="exam-info d-flex gap-lg items-center">
+                        <span class="student-name text-sm font-medium"></span>
+                        <span class="student-class text-sm"></span>
+                        <span class="session-id text-xs text-muted"></span>
                     </div>
 
-                    <div class="exam-timer">
-                        <span class="timer-label">Time left:</span>
-                        <span id="exam-timer" class="timer-value">03:00:00</span>
+                    <div class="exam-timer d-flex items-center gap-sm">
+                        <span class="timer-label text-sm">Time left:</span>
+                        <span id="exam-timer" class="timer-value font-mono text-lg font-bold">03:00:00</span>
                     </div>
 
-                    <div class="layout-controls">
-                        <button id="toggle-files" class="layout-btn active" title="Toggle Files Panel (Ctrl+1)">Files
+                    <div class="layout-controls d-flex gap-xs">
+                        <button id="toggle-files" class="btn btn-sm active" title="Toggle Files Panel (Ctrl+1)">
+                            Files
                         </button>
-                        <button id="toggle-devtools" class="layout-btn active" title="Toggle DevTools (Ctrl+2)">DevTools
-                        </button>
-                        <button id="layout-mode" class="layout-btn" title="Change Layout Mode (Ctrl+3)">Default
+                        <button id="toggle-devtools" class="btn btn-sm active" title="Toggle DevTools (Ctrl+2)">
+                            DevTools
                         </button>
                     </div>
 
@@ -195,40 +141,34 @@
                     </div>
                 </header>
 
-                <!-- Files Panel (Left) -->
                 <aside class="files-panel">
-                    <div class="files-header">
-                        <h3>Project Files</h3>
-                        <div class="file-toolbar">
-                            <button id="new-file-btn" class="file-action-btn new-file" title="New File">📄 New
-                                File</button>
-                            <button class="file-action-btn upload" title="Upload Files">⬆️ Upload Files</button>
-                            <button class="file-action-btn refresh" title="Refresh">🔄 Refresh</button>
+                    <div class="panel-header">
+                        <h3 class="text-sm font-medium m-0">Project Files</h3>
+                        <div class="file-toolbar d-flex gap-xs">
+                            <button id="new-file-btn" class="btn btn-icon btn-sm" title="New File">📄</button>
+                            <button class="btn btn-icon btn-sm" title="Upload Files">⬆️</button>
+                            <button class="btn btn-icon btn-sm" title="Refresh">🔄</button>
                         </div>
                     </div>
-                    <div class="files-content">
-                        <!-- File tree will be rendered here -->
+                    <div class="panel-content">
                         <div id="file-tree" class="file-tree">
-                            <div class="file-tree-empty">
-                                <div class="empty-folder-icon">📁</div>
-                                <div class="empty-title">No Project Files</div>
-                                <div class="empty-subtitle">Create or upload files to start</div>
+                            <div class="file-tree-empty text-center text-muted p-xl">
+                                <div class="empty-icon text-xxl mb-md opacity-50">📁</div>
+                                <div class="empty-title font-medium mb-sm">No Project Files</div>
+                                <div class="empty-subtitle text-sm">Create or upload files to start</div>
                             </div>
                         </div>
                     </div>
                 </aside>
 
-                <!-- Editor Panel (Center) -->
                 <div class="editor-panel">
-                    <!-- НОВАТА СТРУКТУРА С TABS -->
                     <div class="editor-header">
-                        <div id="file-tabs-container" class="file-tabs-container"></div>
-                        <div class="editor-actions">
-                            <button id="run-btn" class="action-btn">▶ Run</button>
-                            <button id="save-btn" class="action-btn">💾 Save</button>
-                            <button id="format-btn" class="action-btn">⚡ Format</button>
-                            <button id="clear-btn" class="action-btn">🗑️ Clear</button>
-                            <select id="theme-select" class="theme-select">
+                        <div id="file-tabs-container" class="tabs-container"></div>
+                        <div class="editor-actions d-flex gap-xs">
+                            <button id="run-btn" class="btn btn-sm btn-primary">▶ Run</button>
+                            <button id="save-btn" class="btn btn-sm">💾 Save</button>
+                            <button id="format-btn" class="btn btn-sm">⚡ Format</button>
+                            <select id="theme-selector" class="select text-xs">
                                 <option value="vs-dark">Dark</option>
                                 <option value="vs">Light</option>
                                 <option value="hc-black">High Contrast</option>
@@ -236,171 +176,133 @@
                         </div>
                     </div>
 
-                    <!-- Monaco Editor Container -->
-                    <div id="monaco-editor" class="monaco-container"></div>
+                    <div id="monaco-editor" class="flex-1"></div>
 
-                    <!-- Output Panel -->
-                    <div class="output-panel">
-                        <div class="output-tabs">
-                            <button class="tab-btn active" id="console-tab">Console</button>
-                            <button class="tab-btn" id="problems-tab">Problems</button>
+                    <div class="editor-footer d-flex justify-between items-center px-md py-xs bg-panel border-top">
+                        <div class="editor-status d-flex gap-lg text-xs text-muted">
+                            <span id="cursor-position">Ln 1, Col 1</span>
+                            <span id="file-language">JavaScript</span>
+                            <span id="encoding">UTF-8</span>
                         </div>
-                        <div class="output-content">
-                            <div id="console-output" class="console-output active"></div>
-                            <div id="problems-output" class="problems-output"></div>
+                        <div class="editor-info d-flex gap-lg text-xs">
+                            <span id="word-count">0 words</span>
+                            <span id="char-count">0 chars</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- DevTools Panel (Right) -->
                 <aside class="devtools-panel">
-                    <div class="devtools-header">
-                        <h3>Exam Dev Tools</h3>
-                    </div>
-
-                    <!-- DevTools Tabs -->
                     <div class="devtools-tabs">
-                        <button class="devtool-tab active" data-tab="network">
-                            📊 Network
-                        </button>
-                        <button class="devtool-tab" data-tab="console">
-                            🌐 Console
-                        </button>
-                        <button class="devtool-tab" data-tab="elements">
-                            🏗️ Elements
-                        </button>
-                        <button class="devtool-tab" data-tab="application">
-                            💾 Application
-                        </button>
+                        <button class="devtool-tab active" data-tab="console">Console</button>
+                        <button class="devtool-tab" data-tab="network">Network</button>
+                        <button class="devtool-tab" data-tab="storage">Storage</button>
+                        <button class="devtool-tab" data-tab="elements">Elements</button>
+                        <button class="devtool-tab" data-tab="sources">Sources</button>
+                        <button class="devtool-tab" data-tab="mdn">MDN Docs</button>
                     </div>
 
-                    <!-- Tab Content -->
                     <div class="devtools-content">
-                        <!-- Network Tab -->
-                        <div class="devtool-panel active" id="network-panel">
-                            <div class="network-header">
-                                <button class="clear-btn">Clear</button>
-                                <input type="search" placeholder="Filter requests..." class="network-filter">
-                            </div>
-                            <div class="network-list">
-                                <div class="empty-state">
-                                    <span>🌐</span>
-                                    <p>No network activity yet</p>
+                        <div id="console-panel" class="devtool-panel active">
+                            <div class="console-header d-flex justify-between items-center p-sm border-bottom">
+                                <div class="console-filters d-flex gap-xs">
+                                    <button class="filter-chip active text-xs">All</button>
+                                    <button class="filter-chip text-xs">Logs</button>
+                                    <button class="filter-chip text-xs">Errors</button>
+                                    <button class="filter-chip text-xs">Warnings</button>
                                 </div>
+                                <button id="clear-console" class="btn btn-icon btn-sm"
+                                    title="Clear console">🗑️</button>
+                            </div>
+                            <div id="console-output" class="console-output"></div>
+                        </div>
+
+                        <div id="network-panel" class="devtool-panel d-none">
+                            <div class="network-content">
+                                <table class="network-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                            <th>Size</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="network-requests"></tbody>
+                                </table>
                             </div>
                         </div>
 
-                        <!-- Console Tab -->
-                        <div class="devtool-panel" id="console-panel">
-                            <div class="console-filters">
-                                <label><input type="checkbox" checked> All</label>
-                                <label><input type="checkbox" checked> Logs</label>
-                                <label><input type="checkbox" checked> Errors</label>
-                                <label><input type="checkbox" checked> Warnings</label>
-                            </div>
-                            <div class="devtools-console-output"></div>
-                        </div>
-
-                        <!-- Elements Tab -->
-                        <div class="devtool-panel" id="elements-panel">
-                            <div class="dom-tree">
-                                <div class="empty-state">
-                                    <span>🏗️</span>
-                                    <p>DOM tree will appear here</p>
-                                </div>
+                        <div id="storage-panel" class="devtool-panel d-none">
+                            <div class="storage-empty devtools-empty">
+                                <div class="empty-icon">💾</div>
+                                <div class="empty-title">No Storage Data</div>
+                                <div class="empty-description">Local storage and session storage will appear here</div>
                             </div>
                         </div>
 
-                        <!-- Application Tab -->
-                        <div class="devtool-panel" id="application-panel">
-                            <div class="storage-explorer">
-                                <h4>Storage</h4>
-                                <details open>
-                                    <summary>🍪 Cookies</summary>
-                                    <div class="storage-content" id="cookies-content">
-                                        <p class="empty">No cookies</p>
-                                    </div>
-                                </details>
-                                <details>
-                                    <summary>🗄️ Local Storage</summary>
-                                    <div class="storage-content" id="localstorage-content">
-                                        <p class="empty">No data</p>
-                                    </div>
-                                </details>
-                                <details>
-                                    <summary>📊 Session Storage</summary>
-                                    <div class="storage-content" id="sessionstorage-content">
-                                        <p class="empty">No data</p>
-                                    </div>
-                                </details>
+                        <div id="elements-panel" class="devtool-panel d-none">
+                            <div class="elements-empty devtools-empty">
+                                <div class="empty-icon">🏗️</div>
+                                <div class="empty-title">DOM Inspector</div>
+                                <div class="empty-description">Coming soon...</div>
                             </div>
+                        </div>
+
+                        <div id="sources-panel" class="devtool-panel d-none">
+                            <div class="sources-empty devtools-empty">
+                                <div class="empty-icon">📄</div>
+                                <div class="empty-title">Sources Panel</div>
+                                <div class="empty-description">View your project files here</div>
+                            </div>
+                        </div>
+
+                        <div id="mdn-panel" class="devtool-panel d-none">
+                            <div class="mdn-tabs tabs-container">
+                                <button class="tab active" data-section="javascript">JavaScript</button>
+                                <button class="tab" data-section="dom">DOM API</button>
+                                <button class="tab" data-section="css">CSS</button>
+                                <button class="tab" data-section="html">HTML</button>
+                            </div>
+                            <div class="mdn-content p-md overflow-y-auto"></div>
                         </div>
                     </div>
                 </aside>
 
-                <!-- Exam Footer -->
                 <footer class="exam-footer">
-                    <div class="footer-left">
-                        <span class="connection-status">
-                            <span class="status-indicator connected"></span>
-                            Свързан
+                    <div class="footer-left d-flex items-center gap-md">
+                        <span class="connection-status d-flex items-center gap-xs">
+                            <span class="status-indicator"></span>
+                            <span class="status-text text-xs">Connected</span>
                         </span>
-                        <span class="save-status">
-                            Автоматично запазване: <span id="last-save-time">активно</span>
+                        <span class="server-info text-xs text-muted">Server: exam-server:8080</span>
+                    </div>
+
+                    <div class="footer-center">
+                        <span class="exam-progress text-xs">
+                            <span id="completed-tasks">0</span> / <span id="total-tasks">5</span> tasks completed
                         </span>
                     </div>
 
-                    <div class="footer-right">
-                        <span class="fullscreen-status">
-                            Fullscreen: <span id="fullscreen-status">активен</span>
-                        </span>
+                    <div class="footer-right d-flex items-center gap-md">
+                        <button class="btn btn-sm" id="help-btn">❓ Help</button>
+                        <span class="version-info text-xs text-muted">v2.0.0</span>
                     </div>
                 </footer>
             </div>
         </div>
-
-        <!-- Violation Screen Container - СЪКРАТЕН -->
-        <div id="violation-component" class="component-container">
-            <div id="violation-screen" class="violation-overlay">
-                <div class="violation-dialog">
-                    <div class="violation-header">
-                        <span class="violation-icon">Warning</span>
-                        <h2 id="violation-title">Нарушение на сигурността</h2>
-                    </div>
-
-                    <div class="violation-body">
-                        <div id="violation-reason" class="violation-message">
-                            Изпитът се прекратява поради нарушение на правилата.
-                        </div>
-
-                        <div class="violation-warning">
-                            Изпитът се затваря автоматично. Няма възможност за връщане.
-                        </div>
-
-                        <div class="violation-auto-close">
-                            Автоматично затваряне след <span id="violation-countdown">10</span> секунди...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-overlay" style="display: none;">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Зареждане на изпита...</div>
+    <div id="violation-overlay" class="violation-overlay d-none">
+        <div class="violation-content">
+            <div class="violation-icon">⚠️</div>
+            <h2 class="violation-title">Изпитът е прекратен!</h2>
+            <p class="violation-message mb-xl"></p>
+            <button class="btn btn-danger" onclick="window.location.reload()">Затвори</button>
         </div>
     </div>
 
-    <!-- Custom Dialog Container -->
-    <div id="custom-dialog-container" class="dialog-container"></div>
-
-    <!-- Core Application JavaScript - ES6 Modules -->
     <script type="module" src="/student/js/main.js"></script>
-
 </body>
 
 </html>
