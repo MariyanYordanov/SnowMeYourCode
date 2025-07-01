@@ -101,7 +101,7 @@ function initializeApp() {
     }
 }
 
-function startExam(sessionData) {
+async function startExam(sessionData) {
     try {
         if (!sessionData || !window.ExamApp.sessionId) {
             throw new Error('Invalid session data');
@@ -121,7 +121,8 @@ function startExam(sessionData) {
             window.ExamApp.sessionId
         );
 
-        initializeMonaco();
+        // ВАЖНО: Изчакваме Monaco да се инициализира
+        await initializeMonaco();
 
         setupTabs();
 
@@ -136,73 +137,115 @@ function startExam(sessionData) {
 
         fixHeaderStyles();
 
-        showNotification('Изпитът започна успешно!', 'success');
+        showNotification('Изпитът започна успешно! Успех!', 'success');
 
         console.log('Exam started successfully');
 
     } catch (error) {
         console.error('Failed to start exam:', error);
-        showError('Грешка при стартиране на изпита');
+        showError('[ERROR] Грешка при стартиране на изпита');
 
+        // НЕ връщаме към login веднага - даваме време за грешката да се покаже
         setTimeout(() => {
-            exitExam('start_error');
+            if (window.ExamApp.isLoggedIn) {
+                exitExam('start_error');
+            }
         }, 3000);
     }
 }
 
-function initializeMonaco() {
-    const editor = initializeMonacoEditor();
+async function initializeMonaco() {
+    try {
+        console.log('Initializing Monaco editor...');
 
-    if (editor) {
+        // Изчакваме editor да се създаде
+        const editor = await initializeMonacoEditor();
+
+        if (!editor) {
+            throw new Error('Failed to create Monaco editor');
+        }
+
         window.ExamApp.editor = editor;
 
+        // Създаваме file manager
         const fileManager = new MonacoFileManager(editor);
         window.ExamApp.fileManager = fileManager;
 
+        // Setup controls
         setupEditorControls();
 
-        setupFileManagerCommands();
+        // Setup commands САМО ако monaco е дефиниран
+        if (typeof monaco !== 'undefined') {
+            setupFileManagerCommands();
+        }
 
+        // Зареждаме проект или starter files
         if (window.ExamApp.sessionId) {
-            fileManager.loadProjectStructure(window.ExamApp.sessionId)
-                .then(success => {
-                    if (!success) {
-                        console.log('No existing project found, loading starter files');
-                        loadStarterProject();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading project:', error);
+            try {
+                const success = await fileManager.loadProjectStructure(window.ExamApp.sessionId);
+                if (!success) {
+                    console.log('No existing project found, loading starter files');
                     loadStarterProject();
-                });
+                }
+            } catch (error) {
+                console.error('Error loading project:', error);
+                loadStarterProject();
+            }
         } else {
             loadStarterProject();
         }
+
+        console.log('Monaco initialization complete');
+
+    } catch (error) {
+        console.error('Monaco initialization failed:', error);
+        throw error;
     }
 }
 
 function setupFileManagerCommands() {
-    const fileManager = window.ExamApp.fileManager;
+    try {
+        const fileManager = window.ExamApp.fileManager;
+        const editor = window.ExamApp.editor;
 
-    document.getElementById('new-file-btn')?.addEventListener('click', () => {
-        fileManager.createNewFile();
-    });
+        if (!fileManager || !editor || typeof monaco === 'undefined') {
+            console.warn('Cannot setup file manager commands - missing dependencies');
+            return;
+        }
 
-    document.getElementById('save-btn')?.addEventListener('click', () => {
-        fileManager.saveCurrentFile();
-    });
+        // File management buttons
+        const newFileBtn = document.getElementById('new-file-btn');
+        if (newFileBtn) {
+            newFileBtn.addEventListener('click', () => {
+                fileManager.createNewFile();
+            });
+        }
 
-    window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-        fileManager.saveCurrentFile();
-    });
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                fileManager.saveCurrentFile();
+            });
+        }
 
-    window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyW, () => {
-        fileManager.closeCurrentFile();
-    });
+        // Keyboard shortcuts - проверяваме че monaco е наличен
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+            fileManager.saveCurrentFile();
+        });
 
-    window.ExamApp.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN, () => {
-        fileManager.createNewFile();
-    });
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyW, () => {
+            fileManager.closeCurrentFile();
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN, () => {
+            fileManager.createNewFile();
+        });
+
+        console.log('File manager commands setup complete');
+
+    } catch (error) {
+        console.error('Failed to setup file manager commands:', error);
+    }
 }
 
 function setupExamControls() {
@@ -232,7 +275,7 @@ function setupExamControls() {
         themeSelect.addEventListener('change', changeTheme);
     }
 
-    const submitBtn = document.getElementById('submit-exam-btn');
+    const submitBtn = document.getElementById('submit-exam-btn') || document.getElementById('finish-exam-btn');
     if (submitBtn) {
         submitBtn.addEventListener('click', () => {
             if (confirm('Сигурни ли сте, че искате да предадете изпита?')) {
@@ -244,21 +287,20 @@ function setupExamControls() {
     const toggleFiles = document.getElementById('toggle-files');
     if (toggleFiles) {
         toggleFiles.addEventListener('click', () => {
-            document.getElementById('exam-container').classList.toggle('hide-files');
+            const examContainer = document.querySelector('.exam-container');
+            if (examContainer) {
+                examContainer.classList.toggle('hide-files');
+            }
         });
     }
 
     const toggleDevTools = document.getElementById('toggle-devtools');
     if (toggleDevTools) {
         toggleDevTools.addEventListener('click', () => {
-            document.getElementById('exam-container').classList.toggle('hide-devtools');
-        });
-    }
-
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', () => {
-            enterFullscreenMode();
+            const examContainer = document.querySelector('.exam-container');
+            if (examContainer) {
+                examContainer.classList.toggle('hide-devtools');
+            }
         });
     }
 }
@@ -354,7 +396,7 @@ function completeExam(reason = 'unknown') {
             clearInterval(window.ExamApp.timerInterval);
         }
 
-        if (window.ExamApp.socket) {
+        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
             window.ExamApp.socket.emit('exam-complete', {
                 sessionId: window.ExamApp.sessionId,
                 reason: reason,
@@ -387,7 +429,7 @@ function exitExam(reason = 'unknown') {
             window.ExamApp.fileManager.disposeAll();
         }
 
-        if (window.ExamApp.socket) {
+        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
             window.ExamApp.socket.emit('exam-complete', {
                 sessionId: window.ExamApp.sessionId,
                 reason: reason,
@@ -441,9 +483,10 @@ function hideExamComponent() {
 
 function updateStudentInfoDisplay(studentName, studentClass, sessionId) {
     try {
-        const nameEl = document.getElementById('student-name-display');
-        const classEl = document.getElementById('student-class-display');
-        const sessionEl = document.getElementById('session-id-display');
+        // Опитваме различни селектори
+        const nameEl = document.querySelector('.student-name') || document.getElementById('student-name-display');
+        const classEl = document.querySelector('.student-class') || document.getElementById('student-class-display');
+        const sessionEl = document.querySelector('.session-id') || document.getElementById('session-id-display');
 
         if (nameEl) nameEl.textContent = studentName || 'Неизвестен';
         if (classEl) classEl.textContent = studentClass || 'Неизвестен';
