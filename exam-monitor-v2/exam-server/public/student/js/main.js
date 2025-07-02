@@ -3,6 +3,7 @@ import { updateEditorIntegration, loadStarterProject } from './editor-integratio
 
 import {
     setupLoginForm,
+    handleLogin,
     handleLoginSuccess,
     handleSessionRestore,
     handleLoginError,
@@ -113,6 +114,40 @@ async function startExam(sessionData) {
         window.ExamApp.examEndTime = new Date(window.ExamApp.examStartTime + window.ExamApp.examDuration);
 
         hideLoginComponent();
+        showPreExamComponent();
+
+        updatePreExamDisplay(
+            window.ExamApp.studentName,
+            window.ExamApp.studentClass,
+            window.ExamApp.sessionId
+        );
+
+        setupPreExamButton();
+
+        console.log('Pre-exam screen shown, waiting for fullscreen');
+
+    } catch (error) {
+        console.error('Failed to start exam:', error);
+        showError('[ERROR] Грешка при стартиране на изпита');
+
+        setTimeout(() => {
+            if (window.ExamApp.isLoggedIn) {
+                exitExam('start_error');
+            }
+        }, 3000);
+    }
+}
+
+async function startFullscreenExam() {
+    try {
+        const success = enterFullscreenMode();
+
+        if (!success) {
+            showError('Браузърът не поддържа fullscreen режим');
+            return;
+        }
+
+        hidePreExamComponent();
         showExamComponent();
 
         updateStudentDisplay(
@@ -125,23 +160,15 @@ async function startExam(sessionData) {
 
         setupTabs();
 
-        enterFullscreenMode();
-
         startExamTimer(window.ExamApp.examEndTime);
 
         showNotification('Изпитът започна успешно! Успех!', 'success');
 
-        console.log('Exam started successfully');
+        console.log('Exam started successfully in fullscreen');
 
     } catch (error) {
-        console.error('Failed to start exam:', error);
+        console.error('Failed to start fullscreen exam:', error);
         showError('[ERROR] Грешка при стартиране на изпита');
-
-        setTimeout(() => {
-            if (window.ExamApp.isLoggedIn) {
-                exitExam('start_error');
-            }
-        }, 3000);
     }
 }
 
@@ -331,6 +358,39 @@ function hideExamComponent() {
     }
 }
 
+function showPreExamComponent() {
+    const preExamComponent = document.getElementById('pre-exam-component');
+    if (preExamComponent) {
+        preExamComponent.style.display = 'flex';
+    }
+}
+
+function hidePreExamComponent() {
+    const preExamComponent = document.getElementById('pre-exam-component');
+    if (preExamComponent) {
+        preExamComponent.style.display = 'none';
+    }
+}
+
+function updatePreExamDisplay(studentName, studentClass, sessionId) {
+    const nameEl = document.getElementById('pre-exam-student-name');
+    const classEl = document.getElementById('pre-exam-student-class');
+    const sessionEl = document.getElementById('pre-exam-session-id');
+
+    if (nameEl) nameEl.textContent = studentName || 'Неизвестен';
+    if (classEl) classEl.textContent = studentClass || 'Неизвестен';
+    if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
+}
+
+function setupPreExamButton() {
+    const startBtn = document.getElementById('start-fullscreen-exam-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            startFullscreenExam();
+        });
+    }
+}
+
 function showNotification(message, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${message}`);
 
@@ -380,6 +440,7 @@ function setupGlobalErrorHandler() {
 }
 
 function setupWindowFunctions() {
+    window.handleLogin = handleLogin;
     window.handleLoginSuccess = handleLoginSuccess;
     window.handleSessionRestore = handleSessionRestore;
     window.handleLoginError = handleLoginError;
@@ -388,9 +449,11 @@ function setupWindowFunctions() {
 }
 
 window.startExam = startExam;
+window.startFullscreenExam = startFullscreenExam;
 window.completeExam = completeExam;
 window.exitExam = exitExam;
 
 window.ExamApp.startExam = startExam;
+window.ExamApp.startFullscreenExam = startFullscreenExam;
 window.ExamApp.completeExam = completeExam;
 window.ExamApp.exitExam = exitExam;

@@ -11,12 +11,13 @@ export function setupSocket() {
 
         socket.on('connect', handleSocketConnect);
         socket.on('disconnect', handleSocketDisconnect);
-        socket.on('session-created', handleSessionCreated);
-        socket.on('login-success', handleLoginSuccess);
+        socket.on('student-id-assigned', handleNewSession);
+        socket.on('session-restored', handleSessionRestored);
         socket.on('login-error', handleLoginError);
         socket.on('time-warning', handleTimeWarning);
         socket.on('exam-expired', handleExamExpired);
-        socket.on('violation-recorded', handleViolationRecorded);
+        socket.on('force-disconnect', handleForceDisconnect);
+        socket.on('anti-cheat-warning', handleAntiCheatWarning);
         socket.on('server-message', handleServerMessage);
         socket.on('reconnect', handleReconnect);
         socket.on('reconnect_error', handleReconnectError);
@@ -46,42 +47,51 @@ function handleSocketDisconnect(reason) {
     console.log('Disconnected from server:', reason);
 }
 
-async function handleSessionCreated(data) {
-    console.log('Session created:', data);
+function handleNewSession(data) {
+    console.log('New session created:', data);
 
     window.ExamApp.sessionId = data.sessionId;
+    window.ExamApp.examStartTime = Date.now();
+    window.ExamApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
+    window.ExamApp.examEndTime = new Date(window.ExamApp.examStartTime + window.ExamApp.examDuration);
 
-    // ВАЖНО: Задаваме сесията в cookie чрез API call
-    try {
-        const response = await fetch('/api/student-login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                studentName: window.ExamApp.studentName,
-                studentClass: window.ExamApp.studentClass
-            })
+    if (window.startExam) {
+        window.startExam({
+            sessionId: data.sessionId,
+            examStartTime: window.ExamApp.examStartTime,
+            examDuration: window.ExamApp.examDuration,
+            examEndTime: window.ExamApp.examEndTime,
+            timeLeft: window.ExamApp.examDuration,
+            isNewSession: true
         });
-
-        if (response.ok) {
-            console.log('Session cookie set successfully');
-        }
-    } catch (error) {
-        console.error('Failed to set session cookie:', error);
-    }
-
-    if (window.handleLoginSuccess) {
-        window.handleLoginSuccess(data);
     }
 }
 
-function handleLoginSuccess(data) {
-    console.log('Login success from server:', data);
+function handleSessionRestored(data) {
+    console.log('Session restored:', data);
 
-    if (window.handleLoginSuccess) {
-        window.handleLoginSuccess(data);
+    window.ExamApp.sessionId = data.sessionId;
+    window.ExamApp.examStartTime = new Date(data.examStartTime).getTime();
+    window.ExamApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
+    window.ExamApp.examEndTime = new Date(data.examEndTime).getTime();
+
+    const timeLeft = data.timeLeft || (window.ExamApp.examEndTime - Date.now());
+
+    if (timeLeft <= 0) {
+        handleExamExpired();
+        return;
+    }
+
+    if (window.startExam) {
+        window.startExam({
+            sessionId: data.sessionId,
+            examStartTime: window.ExamApp.examStartTime,
+            examDuration: window.ExamApp.examDuration,
+            examEndTime: window.ExamApp.examEndTime,
+            timeLeft: timeLeft,
+            lastCode: data.lastCode || '',
+            isNewSession: false
+        });
     }
 }
 
@@ -97,7 +107,7 @@ function handleTimeWarning(data) {
     console.warn('Time warning:', data);
 
     if (window.handleTimeWarning) {
-        window.handleTimeWarning(data.timeLeft);
+        window.handleTimeWarning(data);
     }
 }
 
@@ -109,16 +119,25 @@ function handleExamExpired() {
     }
 }
 
-function handleViolationRecorded(data) {
-    console.error('Violation recorded:', data);
+function handleForceDisconnect(data) {
+    console.error('Force disconnect:', data);
 
-    const violationEl = document.getElementById('violation-overlay');
-    const messageEl = violationEl?.querySelector('.violation-message');
+    if (window.ExamApp?.showViolationScreen) {
+        window.ExamApp.showViolationScreen(data.message || 'Изпитът е прекратен');
+    }
 
-    if (violationEl && messageEl) {
-        messageEl.textContent = data.message || 'Установено е нарушение!';
-        violationEl.classList.remove('d-none');
-        violationEl.style.display = 'flex';
+    setTimeout(() => {
+        if (window.exitExam) {
+            window.exitExam(data.reason || 'force_disconnect');
+        }
+    }, 5000);
+}
+
+function handleAntiCheatWarning(data) {
+    console.warn('Anti-cheat warning:', data);
+
+    if (window.ExamApp?.showNotification) {
+        window.ExamApp.showNotification(data.message, 'warning');
     }
 }
 
@@ -151,8 +170,8 @@ export function sendCodeUpdate(code, filename = 'main.js') {
 
         window.ExamApp.socket.emit('code-update', {
             sessionId: window.ExamApp.sessionId,
-            filename: filename,
             code: code,
+            filename: filename,
             timestamp: Date.now()
         });
 
@@ -164,12 +183,13 @@ export function sendCodeUpdate(code, filename = 'main.js') {
     }
 }
 
-export function reportActivity(activity) {
+export function reportSuspiciousActivity(activity, details = {}) {
     try {
         if (window.ExamApp.socket?.connected) {
-            window.ExamApp.socket.emit('activity-report', {
+            window.ExamApp.socket.emit('suspicious-activity', {
                 sessionId: window.ExamApp.sessionId,
                 activity: activity,
+                details: details,
                 timestamp: Date.now()
             });
         }
