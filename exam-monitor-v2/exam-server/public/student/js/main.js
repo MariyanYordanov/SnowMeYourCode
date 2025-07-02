@@ -5,7 +5,8 @@ import {
     setupLoginForm,
     handleLoginSuccess,
     handleSessionRestore,
-    handleLoginError
+    handleLoginError,
+    updateStudentDisplay
 } from './login.js';
 
 import { setupSocket } from './socket.js';
@@ -15,9 +16,7 @@ import {
     setupEditorControls,
     runCode,
     formatCode,
-    clearOutput,
-    changeTheme,
-    saveCode
+    clearOutput
 } from './editor.js';
 
 import {
@@ -28,7 +27,6 @@ import {
 
 import {
     setupAntiCheat,
-    activateAntiCheat,
     enterFullscreenMode,
     deactivateAntiCheat
 } from './anticheat.js';
@@ -72,7 +70,7 @@ window.ExamApp = {
 
     showNotification: showNotification,
     showError: showError,
-    updateStudentDisplay: updateStudentInfoDisplay
+    updateStudentDisplay: updateStudentDisplay
 };
 
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -87,11 +85,13 @@ function initializeApp() {
 
         setupSocket();
 
+        setupAntiCheat();
+
         setupGlobalErrorHandler();
 
         preventDefaultBehaviors();
 
-        checkSessionRestore();
+        setupWindowFunctions();
 
         console.log('App initialized successfully');
 
@@ -115,27 +115,19 @@ async function startExam(sessionData) {
         hideLoginComponent();
         showExamComponent();
 
-        updateStudentInfoDisplay(
+        updateStudentDisplay(
             window.ExamApp.studentName,
             window.ExamApp.studentClass,
             window.ExamApp.sessionId
         );
 
-        // ВАЖНО: Изчакваме Monaco да се инициализира
         await initializeMonaco();
 
         setupTabs();
 
         enterFullscreenMode();
-        setTimeout(() => {
-            activateAntiCheat();
-        }, 1000);
 
         startExamTimer(window.ExamApp.examEndTime);
-
-        setupExamControls();
-
-        fixHeaderStyles();
 
         showNotification('Изпитът започна успешно! Успех!', 'success');
 
@@ -145,7 +137,6 @@ async function startExam(sessionData) {
         console.error('Failed to start exam:', error);
         showError('[ERROR] Грешка при стартиране на изпита');
 
-        // НЕ връщаме към login веднага - даваме време за грешката да се покаже
         setTimeout(() => {
             if (window.ExamApp.isLoggedIn) {
                 exitExam('start_error');
@@ -158,7 +149,6 @@ async function initializeMonaco() {
     try {
         console.log('Initializing Monaco editor...');
 
-        // Изчакваме editor да се създаде
         const editor = await initializeMonacoEditor();
 
         if (!editor) {
@@ -167,19 +157,15 @@ async function initializeMonaco() {
 
         window.ExamApp.editor = editor;
 
-        // Създаваме file manager
         const fileManager = new MonacoFileManager(editor);
         window.ExamApp.fileManager = fileManager;
 
-        // Setup controls
         setupEditorControls();
 
-        // Setup commands САМО ако monaco е дефиниран
         if (typeof monaco !== 'undefined') {
             setupFileManagerCommands();
         }
 
-        // Зареждаме проект или starter files
         if (window.ExamApp.sessionId) {
             try {
                 const success = await fileManager.loadProjectStructure(window.ExamApp.sessionId);
@@ -213,7 +199,6 @@ function setupFileManagerCommands() {
             return;
         }
 
-        // File management buttons
         const newFileBtn = document.getElementById('new-file-btn');
         if (newFileBtn) {
             newFileBtn.addEventListener('click', () => {
@@ -228,7 +213,6 @@ function setupFileManagerCommands() {
             });
         }
 
-        // Keyboard shortcuts - проверяваме че monaco е наличен
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
             fileManager.saveCurrentFile();
         });
@@ -246,140 +230,6 @@ function setupFileManagerCommands() {
     } catch (error) {
         console.error('Failed to setup file manager commands:', error);
     }
-}
-
-function setupExamControls() {
-    const runBtn = document.getElementById('run-btn');
-    if (runBtn) {
-        runBtn.addEventListener('click', () => {
-            runCode();
-        });
-    }
-
-    const formatBtn = document.getElementById('format-btn');
-    if (formatBtn) {
-        formatBtn.addEventListener('click', () => {
-            formatCode();
-        });
-    }
-
-    const clearBtn = document.getElementById('clear-btn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            clearOutput();
-        });
-    }
-
-    const themeSelect = document.getElementById('theme-select');
-    if (themeSelect) {
-        themeSelect.addEventListener('change', changeTheme);
-    }
-
-    const submitBtn = document.getElementById('submit-exam-btn') || document.getElementById('finish-exam-btn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', () => {
-            if (confirm('Сигурни ли сте, че искате да предадете изпита?')) {
-                completeExam('manual_submit');
-            }
-        });
-    }
-
-    const toggleFiles = document.getElementById('toggle-files');
-    if (toggleFiles) {
-        toggleFiles.addEventListener('click', () => {
-            const examContainer = document.querySelector('.exam-container');
-            if (examContainer) {
-                examContainer.classList.toggle('hide-files');
-            }
-        });
-    }
-
-    const toggleDevTools = document.getElementById('toggle-devtools');
-    if (toggleDevTools) {
-        toggleDevTools.addEventListener('click', () => {
-            const examContainer = document.querySelector('.exam-container');
-            if (examContainer) {
-                examContainer.classList.toggle('hide-devtools');
-            }
-        });
-    }
-}
-
-function fixHeaderStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .exam-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            padding: 5px 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        
-        .student-name {
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .student-class {
-            color: #e0e0e0 !important;
-            font-size: 14px;
-        }
-        
-        .session-id {
-            color: #a0a0a0 !important;
-            font-size: 12px;
-            font-family: monospace;
-        }
-        
-        .exam-timer {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 5px 15px;
-            border-radius: 4px;
-        }
-        
-        .timer-label {
-            color: #e0e0e0 !important;
-            margin-right: 10px;
-        }
-        
-        .timer-value {
-            color: #4CAF50 !important;
-            font-weight: 600;
-            font-size: 18px;
-            font-family: monospace;
-        }
-        
-        .file-tabs-container {
-            display: flex;
-            background: var(--editor-panel-bg);
-            border-bottom: 1px solid var(--editor-border);
-            overflow-x: auto;
-            scrollbar-width: thin;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .editor-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0;
-            background: var(--editor-panel-bg);
-            border-bottom: 1px solid var(--editor-border);
-        }
-        
-        .editor-actions {
-            display: flex;
-            gap: 5px;
-            padding: 5px 10px;
-            flex-shrink: 0;
-        }
-    `;
-
-    document.head.appendChild(style);
 }
 
 function completeExam(reason = 'unknown') {
@@ -481,23 +331,6 @@ function hideExamComponent() {
     }
 }
 
-function updateStudentInfoDisplay(studentName, studentClass, sessionId) {
-    try {
-        // Опитваме различни селектори
-        const nameEl = document.querySelector('.student-name') || document.getElementById('student-name-display');
-        const classEl = document.querySelector('.student-class') || document.getElementById('student-class-display');
-        const sessionEl = document.querySelector('.session-id') || document.getElementById('session-id-display');
-
-        if (nameEl) nameEl.textContent = studentName || 'Неизвестен';
-        if (classEl) classEl.textContent = studentClass || 'Неизвестен';
-        if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
-
-        console.log(`Student display updated: ${studentName} (${studentClass}) - ${sessionId}`);
-    } catch (error) {
-        console.error('Failed to update student display:', error);
-    }
-}
-
 function showNotification(message, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${message}`);
 
@@ -546,28 +379,18 @@ function setupGlobalErrorHandler() {
     });
 }
 
-function checkSessionRestore() {
-    const savedSession = localStorage.getItem('examSession');
-    if (savedSession) {
-        try {
-            const sessionData = JSON.parse(savedSession);
-            if (sessionData.examEndTime > Date.now()) {
-                handleSessionRestore(sessionData);
-            } else {
-                localStorage.removeItem('examSession');
-            }
-        } catch (error) {
-            console.error('Failed to restore session:', error);
-            localStorage.removeItem('examSession');
-        }
-    }
+function setupWindowFunctions() {
+    window.handleLoginSuccess = handleLoginSuccess;
+    window.handleSessionRestore = handleSessionRestore;
+    window.handleLoginError = handleLoginError;
+    window.handleTimeWarning = handleTimeWarning;
+    window.handleExamExpired = handleExamExpired;
 }
 
 window.startExam = startExam;
 window.completeExam = completeExam;
 window.exitExam = exitExam;
 
-// Добавяме и в ExamApp обекта
 window.ExamApp.startExam = startExam;
 window.ExamApp.completeExam = completeExam;
 window.ExamApp.exitExam = exitExam;
