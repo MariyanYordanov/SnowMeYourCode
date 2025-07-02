@@ -114,17 +114,36 @@ async function startExam(sessionData) {
         window.ExamApp.examEndTime = new Date(window.ExamApp.examStartTime + window.ExamApp.examDuration);
 
         hideLoginComponent();
-        showPreExamComponent();
+        showExamComponent();
 
-        updatePreExamDisplay(
+        updateStudentDisplay(
             window.ExamApp.studentName,
             window.ExamApp.studentClass,
             window.ExamApp.sessionId
         );
 
-        setupPreExamButton();
+        await initializeMonaco();
 
-        console.log('Pre-exam screen shown, waiting for fullscreen');
+        setupTabs();
+
+        enterFullscreenMode();
+
+        startExamTimer(window.ExamApp.examEndTime);
+
+        // Различни съобщения за нова/възстановена сесия
+        if (sessionData.isNewSession) {
+            showNotification('Изпитът започна! Успех!', 'success');
+        } else {
+            const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
+            showNotification(`Добре дошли обратно! Остават ${minutesLeft} минути`, 'info');
+
+            // Възстановяваме кода
+            if (sessionData.lastCode && window.ExamApp.editor) {
+                window.ExamApp.editor.setValue(sessionData.lastCode);
+            }
+        }
+
+        console.log('Exam started successfully');
 
     } catch (error) {
         console.error('Failed to start exam:', error);
