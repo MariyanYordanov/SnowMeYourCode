@@ -97,7 +97,7 @@ function validateLoginForm() {
     }
 }
 
-export function handleLogin() {
+export async function handleLogin() {
     try {
         const name = document.getElementById('student-name').value.trim();
         const studentClass = document.getElementById('student-class').value;
@@ -116,17 +116,46 @@ export function handleLogin() {
         window.ExamApp.termsAccepted = termsAccepted;
         window.ExamApp.termsAcceptedAt = Date.now();
 
-        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-            window.ExamApp.socket.emit('student-join', {
-                studentName: name,
-                studentClass: studentClass,
-                termsAccepted: termsAccepted,
-                termsAcceptedAt: window.ExamApp.termsAcceptedAt
+        // ПЪРВО: HTTP login за express session
+        try {
+            const response = await fetch('/api/student-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    studentName: name,
+                    studentClass: studentClass
+                })
             });
-        } else {
-            showLoginStatus('Няма връзка със сървъра', 'error');
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showLoginStatus(result.message || 'Грешка при влизане', 'error');
+                setLoginButtonState(false);
+                return;
+            }
+
+            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
+                window.ExamApp.socket.emit('student-join', {
+                    studentName: name,
+                    studentClass: studentClass,
+                    termsAccepted: termsAccepted,
+                    termsAcceptedAt: window.ExamApp.termsAcceptedAt
+                });
+            } else {
+                showLoginStatus('Няма връзка със сървъра', 'error');
+                setLoginButtonState(false);
+            }
+
+        } catch (error) {
+            console.error('HTTP login error:', error);
+            showLoginStatus('Грешка при връзка със сървъра', 'error');
             setLoginButtonState(false);
         }
+
     } catch (error) {
         console.error('Login error:', error);
         showLoginStatus('Грешка при влизане', 'error');
