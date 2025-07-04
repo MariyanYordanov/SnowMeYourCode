@@ -1,5 +1,6 @@
 import { MonacoFileManager } from './monaco-file-manager.js';
 import { updateEditorIntegration, loadStarterProject } from './editor-integration.js';
+import { initializeResizers } from './resizer.js';
 
 import {
     setupLoginForm,
@@ -80,11 +81,15 @@ function initializeApp() {
     try {
         console.log('Initializing Exam Monitor App...');
 
+        const examApp = window.ExamApp;
+
         updateEditorIntegration();
 
-        setupLoginForm();
+        setupLoginForm(examApp);
 
         setupSocket();
+
+        initializeResizers();
 
         setupAntiCheat();
 
@@ -104,22 +109,24 @@ function initializeApp() {
 
 async function startExam(sessionData) {
     try {
-        if (!sessionData || !window.ExamApp.sessionId) {
+        const examApp = window.ExamApp;
+
+        if (!sessionData || !examApp.sessionId) {
             throw new Error('Invalid session data');
         }
 
-        window.ExamApp.isLoggedIn = true;
-        window.ExamApp.examStartTime = sessionData.examStartTime || Date.now();
-        window.ExamApp.examDuration = sessionData.examDuration || (3 * 60 * 60 * 1000);
-        window.ExamApp.examEndTime = new Date(window.ExamApp.examStartTime + window.ExamApp.examDuration);
+        examApp.isLoggedIn = true;
+        examApp.examStartTime = sessionData.examStartTime || Date.now();
+        examApp.examDuration = sessionData.examDuration || (3 * 60 * 60 * 1000);
+        examApp.examEndTime = new Date(examApp.examStartTime + examApp.examDuration);
 
         hideLoginComponent();
         showExamComponent();
 
         updateStudentDisplay(
-            window.ExamApp.studentName,
-            window.ExamApp.studentClass,
-            window.ExamApp.sessionId
+            examApp.studentName,
+            examApp.studentClass,
+            examApp.sessionId
         );
 
         await initializeMonaco();
@@ -128,7 +135,7 @@ async function startExam(sessionData) {
 
         enterFullscreenMode();
 
-        startExamTimer(window.ExamApp.examEndTime);
+        startExamTimer(examApp.examEndTime);
 
         // Различни съобщения за нова/възстановена сесия
         if (sessionData.isNewSession) {
@@ -138,8 +145,8 @@ async function startExam(sessionData) {
             showNotification(`Добре дошли обратно! Остават ${minutesLeft} минути`, 'info');
 
             // Възстановяваме кода
-            if (sessionData.lastCode && window.ExamApp.editor) {
-                window.ExamApp.editor.setValue(sessionData.lastCode);
+            if (sessionData.lastCode && examApp.editor) {
+                examApp.editor.setValue(sessionData.lastCode);
             }
         }
 
@@ -160,6 +167,7 @@ async function startExam(sessionData) {
 async function startFullscreenExam() {
     try {
         const success = enterFullscreenMode();
+        const examApp = window.ExamApp;
 
         if (!success) {
             showError('Браузърът не поддържа fullscreen режим');
@@ -170,16 +178,16 @@ async function startFullscreenExam() {
         showExamComponent();
 
         updateStudentDisplay(
-            window.ExamApp.studentName,
-            window.ExamApp.studentClass,
-            window.ExamApp.sessionId
+            examApp.studentName,
+            examApp.studentClass,
+            examApp.sessionId
         );
 
         await initializeMonaco();
 
         setupTabs();
 
-        startExamTimer(window.ExamApp.examEndTime);
+        startExamTimer(examApp.examEndTime);
 
         showNotification('Изпитът започна успешно! Успех!', 'success');
 
@@ -196,25 +204,28 @@ async function initializeMonaco() {
         console.log('Initializing Monaco editor...');
 
         const editor = await initializeMonacoEditor();
+        const examApp = window.ExamApp;
 
         if (!editor) {
             throw new Error('Failed to create Monaco editor');
         }
 
-        window.ExamApp.editor = editor;
+        examApp.editor = editor;
 
         const fileManager = new MonacoFileManager(editor);
-        window.ExamApp.fileManager = fileManager;
+        examApp.fileManager = fileManager;
 
         setupEditorControls();
 
         if (typeof monaco !== 'undefined') {
             setupFileManagerCommands();
-        }
+    }
 
-        if (window.ExamApp.sessionId) {
+    setupProjectRunner();
+
+    if (examApp.sessionId) {
             try {
-                const success = await fileManager.loadProjectStructure(window.ExamApp.sessionId);
+                const success = await fileManager.loadProjectStructure(examApp.sessionId);
                 if (!success) {
                     console.log('No existing project found, loading starter files');
                     loadStarterProject();
@@ -237,8 +248,9 @@ async function initializeMonaco() {
 
 function setupFileManagerCommands() {
     try {
-        const fileManager = window.ExamApp.fileManager;
-        const editor = window.ExamApp.editor;
+        const examApp = window.ExamApp;
+        const fileManager = examApp.fileManager;
+        const editor = examApp.editor;
 
         if (!fileManager || !editor || typeof monaco === 'undefined') {
             console.warn('Cannot setup file manager commands - missing dependencies');
@@ -278,23 +290,55 @@ function setupFileManagerCommands() {
     }
 }
 
+function setupProjectRunner() {
+    const runBtn = document.getElementById('run-project-btn');
+    const stopBtn = document.getElementById('stop-project-btn');
+    const iframe = document.getElementById('project-iframe');
+    const examApp = window.ExamApp;
+
+    if (!runBtn || !stopBtn || !iframe) {
+        console.warn('Project runner elements not found.');
+        return;
+    }
+
+    runBtn.addEventListener('click', () => {
+        const sessionId = examApp.sessionId;
+        if (!sessionId) {
+            showError('Cannot run project without a valid session.');
+            return;
+        }
+        // Save all files before running
+        examApp.fileManager.saveAllFiles();
+
+        const projectUrl = `/api/project/run/${sessionId}/index.html`;
+        iframe.src = projectUrl;
+        showNotification('Running project...', 'info');
+    });
+
+    stopBtn.addEventListener('click', () => {
+        iframe.src = 'about:blank';
+        showNotification('Project stopped.', 'warn');
+    });
+}
+
 function completeExam(reason = 'unknown') {
     try {
-        window.ExamApp.completionInProgress = true;
+        const examApp = window.ExamApp;
+        examApp.completionInProgress = true;
 
-        if (window.ExamApp.fileManager) {
-            window.ExamApp.fileManager.saveCurrentFile();
+        if (examApp.fileManager) {
+            examApp.fileManager.saveCurrentFile();
         }
 
         deactivateAntiCheat();
 
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
         }
 
-        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-            window.ExamApp.socket.emit('exam-complete', {
-                sessionId: window.ExamApp.sessionId,
+        if (examApp.socket && examApp.socket.connected) {
+            examApp.socket.emit('exam-complete', {
+                sessionId: examApp.sessionId,
                 reason: reason,
                 timestamp: Date.now()
             });
@@ -313,33 +357,34 @@ function completeExam(reason = 'unknown') {
 
 function exitExam(reason = 'unknown') {
     try {
-        window.ExamApp.completionInProgress = true;
+        const examApp = window.ExamApp;
+        examApp.completionInProgress = true;
 
         deactivateAntiCheat();
 
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
         }
 
-        if (window.ExamApp.fileManager) {
-            window.ExamApp.fileManager.disposeAll();
+        if (examApp.fileManager) {
+            examApp.fileManager.disposeAll();
         }
 
-        if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-            window.ExamApp.socket.emit('exam-complete', {
-                sessionId: window.ExamApp.sessionId,
+        if (examApp.socket && examApp.socket.connected) {
+            examApp.socket.emit('exam-complete', {
+                sessionId: examApp.sessionId,
                 reason: reason,
                 timestamp: Date.now()
             });
         }
 
-        window.ExamApp.isLoggedIn = false;
-        window.ExamApp.antiCheatActive = false;
+        examApp.isLoggedIn = false;
+        examApp.antiCheatActive = false;
 
         setTimeout(() => {
             hideExamComponent();
             showLoginComponent();
-            window.ExamApp.completionInProgress = false;
+            examApp.completionInProgress = false;
         }, 2000);
 
         console.log(`Exam exited: ${reason}`);
@@ -459,20 +504,26 @@ function setupGlobalErrorHandler() {
 }
 
 function setupWindowFunctions() {
-    window.handleLogin = handleLogin;
-    window.handleLoginSuccess = handleLoginSuccess;
-    window.handleSessionRestore = handleSessionRestore;
-    window.handleLoginError = handleLoginError;
+    const examApp = window.ExamApp;
+    window.handleLogin = (data) => handleLogin(examApp, data);
+    window.handleLoginSuccess = (data) => handleLoginSuccess(examApp, data);
+    window.handleSessionRestore = (data) => handleSessionRestore(examApp, data);
+    window.handleLoginError = (error) => handleLoginError(examApp, error);
     window.handleTimeWarning = handleTimeWarning;
     window.handleExamExpired = handleExamExpired;
+
+    // Assign functions to ExamApp for external access
+    examApp.startExam = startExam;
+    examApp.startFullscreenExam = startFullscreenExam;
+    examApp.completeExam = completeExam;
+    examApp.exitExam = exitExam;
+    examApp.resetLoginState = () => resetLoginState(examApp);
+    examApp.getLoginState = () => getLoginState(examApp);
+    examApp.getTermsAcceptanceInfo = () => getTermsAcceptanceInfo(examApp);
+
+    // Assign functions to ExamApp for external access
+    examApp.startExam = startExam;
+    examApp.startFullscreenExam = startFullscreenExam;
+    examApp.completeExam = completeExam;
+    examApp.exitExam = exitExam;
 }
-
-window.startExam = startExam;
-window.startFullscreenExam = startFullscreenExam;
-window.completeExam = completeExam;
-window.exitExam = exitExam;
-
-window.ExamApp.startExam = startExam;
-window.ExamApp.startFullscreenExam = startFullscreenExam;
-window.ExamApp.completeExam = completeExam;
-window.ExamApp.exitExam = exitExam;

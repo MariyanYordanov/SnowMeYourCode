@@ -1,0 +1,104 @@
+Navigated to http://localhost:8080/student/
+about:blank:1 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+main.js:82 Initializing Exam Monitor App...
+login.js:40 Login form initialized successfully
+socket.js:28 Socket setup completed
+resizer.js:107 Resizer system initialized
+anticheat.js:4 Anti-cheat initialized
+main.js:102 App initialized successfully
+socket.js:38 Socket.io connected. isLoggedIn: false, sessionId: null
+login.js:53 Terms agreement: accepted
+login.js:208 Login successful: {success: true, type: 'success', message: 'Изпитът започна! Имате 3 часа за решаване', sessionId: '11б-иван-иванов', timeLeft: 10800000}
+login.js:121 Fetch finished loading: POST "http://localhost:8080/api/student-login".
+handleLogin @ login.js:121
+(anonymous) @ login.js:18
+login.js:213 handleLoginSuccess: examApp.isLoggedIn set to true. Session ID: 11б-иван-иванов
+socket.js:52 Disconnected from server: transport close
+socket.js:38 Socket.io connected. isLoggedIn: true, sessionId: 11б-иван-иванов
+socket.js:42 Emitting session-restore from handleSocketConnect.
+login.js:283 Student display updated: Иван Иванов (11Б) - 11б-иван-иванов
+main.js:204 Initializing Monaco editor...
+editor.js:270 Code quality hints setup
+editor.js:129 Enhanced Monaco Editor initialized
+editor.js:371 Run button setup complete
+editor.js:404 Editor controls setup completed
+main.js:286 File manager commands setup complete
+main.js:230 No existing project found, loading starter files
+main.js:241 Monaco initialization complete
+tabs.js:36 Console tab button not found in DOM
+overrideMethod @ hook.js:608
+setupTabButtons @ tabs.js:36
+setupTabs @ tabs.js:15
+startExam @ main.js:134
+await in startExam
+(anonymous) @ login.js:227
+setTimeout
+handleLoginSuccess @ login.js:225
+handleLogin @ login.js:143
+await in handleLogin
+(anonymous) @ login.js:18
+tabs.js:42 MDN tab button not found in DOM
+overrideMethod @ hook.js:608
+setupTabButtons @ tabs.js:42
+setupTabs @ tabs.js:15
+startExam @ main.js:134
+await in startExam
+(anonymous) @ login.js:227
+setTimeout
+handleLoginSuccess @ login.js:225
+handleLogin @ login.js:143
+await in handleLogin
+(anonymous) @ login.js:18
+tabs.js:154 Offline MDN functions initialized
+tabs.js:17 Enhanced tabs system initialized
+timer.js:45 Exam timer started
+main.js:459 [INFO] Добре дошли обратно! Остават 180 минути
+main.js:153 Exam started successfully
+monaco-file-manager.js:35 Fetch finished loading: GET "http://localhost:8080/api/project/files?sessionId=11%D0%B1-%D0%B8%D0%B2%D0%B0%D0%BD-%D0%B8%D0%B2%D0%B0%D0%BD%D0%BE%D0%B2".
+loadProjectStructure @ monaco-file-manager.js:35
+initializeMonaco @ main.js:228
+await in initializeMonaco
+startExam @ main.js:132
+(anonymous) @ login.js:227
+setTimeout
+handleLoginSuccess @ login.js:225
+handleLogin @ login.js:143
+await in handleLogin
+(anonymous) @ login.js:18
+anticheat.js:105 Fullscreen entered - activating anti-cheat
+anticheat.js:25 Anti-cheat activated
+editor.js:450  POST http://localhost:8080/proxy/execute 401 (Unauthorized)
+runCode @ editor.js:450
+(anonymous) @ editor.js:369
+editor.js:450 Fetch failed loading: POST "http://localhost:8080/proxy/execute".
+runCode @ editor.js:450
+(anonymous) @ editor.js:369
+anticheat.js:156 DOCUMENT HIDDEN DETECTED - TERMINATING EXAM
+anticheat.js:233 Suspicious activity reported: document_hidden_violation {method: 'result_detection', timestamp: 1751621542116}
+overrideMethod @ hook.js:608
+reportSuspiciousActivity @ anticheat.js:233
+handleVisibilityChange @ anticheat.js:158
+student/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+student/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+student/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+student/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+student/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+socket.js:52 Disconnected from server: transport close
+socket.js:38 Socket.io connected. isLoggedIn: true, sessionId: 11б-иван-иванов
+socket.js:42 Emitting session-restore from handleSocketConnect.
+editor.js:450  POST http://localhost:8080/proxy/execute 401 (Unauthorized)
+runCode @ editor.js:450
+(anonymous) @ editor.js:369
+editor.js:450 Fetch failed loading: POST "http://localhost:8080/proxy/execute".
+runCode @ editor.js:450
+(anonymous) @ editor.js:369
+tabs.js:180 Switched to console devtools tab
+tabs.js:180 Switched to network devtools tab
+tabs.js:180 Switched to storage devtools tab
+tabs.js:180 Switched to elements devtools tab
+editor.js:450  POST http://localhost:8080/proxy/execute 401 (Unauthorized)
+runCode @ editor.js:450
+(anonymous) @ editor.js:369
+editor.js:450 Fetch failed loading: POST "http://localhost:8080/proxy/execute".
+runCode @ editor.js:450
+(anonymous) @ editor.js:369

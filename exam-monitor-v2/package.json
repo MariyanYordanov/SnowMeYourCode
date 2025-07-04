@@ -26,6 +26,7 @@
   "author": "Exam Monitor Team",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "http-proxy-middleware": "^3.0.0",

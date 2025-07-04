@@ -20,21 +20,22 @@ let warnedTimes = new Set();
 export function startExamTimer(duration) {
     try {
         const endTime = Date.now() + duration;
+        const examApp = window.ExamApp;
 
         // Store timer info in global state
-        window.ExamApp.examEndTime = endTime;
-        window.ExamApp.examDuration = duration;
+        examApp.examEndTime = endTime;
+        examApp.examDuration = duration;
 
         // Clear any existing timer
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
         }
 
         // Reset warned times
         warnedTimes.clear();
 
         // Start countdown interval
-        window.ExamApp.timerInterval = setInterval(() => {
+        examApp.timerInterval = setInterval(() => {
             updateTimerTick(endTime);
         }, 1000);
 
@@ -150,10 +151,11 @@ function checkTimeWarnings(timeLeft) {
 export function showTimeWarning(minutes) {
     try {
         const message = `Внимание! Остават ${minutes} минути до края на изпита!`;
+        const examApp = window.ExamApp;
 
         // Show notification
-        if (window.ExamApp.showNotification) {
-            window.ExamApp.showNotification(message, 'warning');
+        if (examApp.showNotification) {
+            examApp.showNotification(message, 'warning');
         }
 
         // Log warning (only when actually shown)
@@ -226,18 +228,19 @@ function playWarningSound(minutes) {
 export function handleExamExpired() {
     try {
         console.log('Exam time expired');
+        const examApp = window.ExamApp;
 
         // Clear timer interval
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
-            window.ExamApp.timerInterval = null;
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
+            examApp.timerInterval = null;
         }
 
         // Update display to show 00:00:00
         updateTimerDisplay(0);
 
         // Save final code
-        if (window.ExamApp.editor && typeof saveCode === 'function') {
+        if (examApp.editor && typeof saveCode === 'function') {
             try {
                 saveCode();
             } catch (error) {
@@ -246,14 +249,14 @@ export function handleExamExpired() {
         }
 
         // Show expiration screen
-        if (window.ExamApp.showViolationScreen) {
-            window.ExamApp.showViolationScreen('Времето за изпита изтече!');
+        if (examApp.showViolationScreen) {
+            examApp.showViolationScreen('Времето за изпита изтече!');
         }
 
         // Auto-close after 10 seconds
         setTimeout(() => {
-            if (window.ExamApp.exitExam) {
-                window.ExamApp.exitExam('expired');
+            if (examApp.exitExam) {
+                examApp.exitExam('expired');
             } else {
                 window.close();
             }
@@ -287,12 +290,13 @@ export function handleTimeWarning(data) {
  */
 export function getRemainingTime() {
     try {
-        if (!window.ExamApp.examEndTime) {
+        const examApp = window.ExamApp;
+        if (!examApp.examEndTime) {
             return 0;
         }
 
         const now = Date.now();
-        return Math.max(0, window.ExamApp.examEndTime - now);
+        return Math.max(0, examApp.examEndTime - now);
     } catch (error) {
         console.error('Error getting remaining time:', error);
         return 0;
@@ -317,12 +321,13 @@ export function getFormattedRemainingTime() {
  */
 export function getElapsedTime() {
     try {
-        if (!window.ExamApp.examStartTime) {
+        const examApp = window.ExamApp;
+        if (!examApp.examStartTime) {
             return 0;
         }
 
         const now = Date.now();
-        return Math.max(0, now - window.ExamApp.examStartTime);
+        return Math.max(0, now - examApp.examStartTime);
     } catch (error) {
         console.error('Error getting elapsed time:', error);
         return 0;
@@ -334,12 +339,13 @@ export function getElapsedTime() {
  */
 export function getExamProgress() {
     try {
-        if (!window.ExamApp.examDuration || !window.ExamApp.examStartTime) {
+        const examApp = window.ExamApp;
+        if (!examApp.examDuration || !examApp.examStartTime) {
             return 0;
         }
 
         const elapsed = getElapsedTime();
-        const progress = (elapsed / window.ExamApp.examDuration) * 100;
+        const progress = (elapsed / examApp.examDuration) * 100;
         return Math.min(100, Math.max(0, progress));
     } catch (error) {
         console.error('Error calculating exam progress:', error);
@@ -370,20 +376,21 @@ export function isTimeWarning() {
  */
 export function extendExamTime(additionalMinutes) {
     try {
-        if (!window.ExamApp.examEndTime) {
+        const examApp = window.ExamApp;
+        if (!examApp.examEndTime) {
             console.error('No exam in progress');
             return false;
         }
 
         const additionalTime = additionalMinutes * 60 * 1000;
-        window.ExamApp.examEndTime += additionalTime;
-        window.ExamApp.examDuration += additionalTime;
+        examApp.examEndTime += additionalTime;
+        examApp.examDuration += additionalTime;
 
         console.log(`⏰ Exam time extended by ${additionalMinutes} minutes`);
 
         // Show notification
-        if (window.ExamApp.showNotification) {
-            window.ExamApp.showNotification(`Времето за изпита е удължено с ${additionalMinutes} минути`, 'success');
+        if (examApp.showNotification) {
+            examApp.showNotification(`Времето за изпита е удължено с ${additionalMinutes} минути`, 'success');
         }
 
         return true;
@@ -398,10 +405,11 @@ export function extendExamTime(additionalMinutes) {
  */
 export function pauseTimer() {
     try {
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
-            window.ExamApp.timerInterval = null;
-            window.ExamApp.timerPaused = true;
+        const examApp = window.ExamApp;
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
+            examApp.timerInterval = null;
+            examApp.timerPaused = true;
 
             console.log('Timer paused');
             return true;
@@ -418,12 +426,13 @@ export function pauseTimer() {
  */
 export function resumeTimer() {
     try {
-        if (window.ExamApp.timerPaused && window.ExamApp.examEndTime) {
-            window.ExamApp.timerInterval = setInterval(() => {
-                updateTimerTick(window.ExamApp.examEndTime);
+        const examApp = window.ExamApp;
+        if (examApp.timerPaused && examApp.examEndTime) {
+            examApp.timerInterval = setInterval(() => {
+                updateTimerTick(examApp.examEndTime);
             }, 1000);
 
-            window.ExamApp.timerPaused = false;
+            examApp.timerPaused = false;
             console.log('Timer resumed');
             return true;
         }
@@ -439,16 +448,17 @@ export function resumeTimer() {
  */
 export function stopTimer() {
     try {
-        if (window.ExamApp.timerInterval) {
-            clearInterval(window.ExamApp.timerInterval);
-            window.ExamApp.timerInterval = null;
+        const examApp = window.ExamApp;
+        if (examApp.timerInterval) {
+            clearInterval(examApp.timerInterval);
+            examApp.timerInterval = null;
         }
 
         // Reset timer state
-        window.ExamApp.examEndTime = null;
-        window.ExamApp.examDuration = null;
-        window.ExamApp.timeLeft = 0;
-        window.ExamApp.timerPaused = false;
+        examApp.examEndTime = null;
+        examApp.examDuration = null;
+        examApp.timeLeft = 0;
+        examApp.timerPaused = false;
 
         // Clear warned times
         warnedTimes.clear();
@@ -464,17 +474,18 @@ export function stopTimer() {
  * Get timer status
  */
 export function getTimerStatus() {
+    const examApp = window.ExamApp;
     return {
-        isRunning: Boolean(window.ExamApp.timerInterval),
-        isPaused: Boolean(window.ExamApp.timerPaused),
+        isRunning: Boolean(examApp.timerInterval),
+        isPaused: Boolean(examApp.timerPaused),
         timeLeft: getRemainingTime(),
         formattedTimeLeft: getFormattedRemainingTime(),
         elapsedTime: getElapsedTime(),
         progress: getExamProgress(),
         isCritical: isTimeCritical(),
         isWarning: isTimeWarning(),
-        examEndTime: window.ExamApp.examEndTime,
-        examDuration: window.ExamApp.examDuration
+        examEndTime: examApp.examEndTime,
+        examDuration: examApp.examDuration
     };
 }
 

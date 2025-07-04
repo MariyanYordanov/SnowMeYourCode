@@ -47,7 +47,7 @@ export class WebSocketHandler {
      */
     initialize() {
         this.io.on('connection', (socket) => {
-            console.log(`New connection: ${socket.id}`);
+            console.log(`New connection: ${socket.id} (IP: ${socket.handshake.address})`);
 
             // Set up common event handlers
             this.setupCommonHandlers(socket);
@@ -177,7 +177,7 @@ export class WebSocketHandler {
                 timeLeft: loginResult.timeLeft
             });
 
-            console.log(`Student joined: ${studentName} (${studentClass}) - ${loginResult.sessionId}`);
+            console.log(`Student joined: ${studentName} (${studentClass}) - ${loginResult.sessionId} (Socket ID: ${socket.id})`);
 
         } catch (error) {
             console.error('Error handling student join:', error);
@@ -254,6 +254,10 @@ export class WebSocketHandler {
             });
 
             console.log(`Suspicious activity: ${socket.studentInfo.name} - ${data.activity}`);
+
+            // Force disconnect student due to suspicious activity
+            await this.sessionManager.completeSession(sessionId, 'forced_violations');
+            this.forceDisconnectStudent(socket, 'suspicious_activity');
 
         } catch (error) {
             console.error('Error handling suspicious activity:', error);
@@ -332,7 +336,7 @@ export class WebSocketHandler {
      * Handle disconnection
      */
     async handleDisconnection(socket, reason) {
-        console.log(`🔌 Disconnection: ${socket.id} - ${reason}`);
+        console.log(`🔌 Disconnection: ${socket.id} - ${reason}. Student Info: ${socket.studentInfo ? JSON.stringify(socket.studentInfo) : 'N/A'}`);
 
         // Handle student disconnection
         if (socket.studentInfo) {

@@ -1,4 +1,4 @@
-export function setupLoginForm() {
+export function setupLoginForm(examApp) {
     try {
         const loginBtn = document.getElementById('login-btn');
         const studentName = document.getElementById('student-name');
@@ -15,12 +15,12 @@ export function setupLoginForm() {
             console.warn('Terms agreement checkbox not found, continuing without it');
         }
 
-        loginBtn.addEventListener('click', handleLogin);
+        loginBtn.addEventListener('click', () => handleLogin(examApp));
 
         [studentName, studentClass].forEach(input => {
             input.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
-                    handleLogin();
+                    handleLogin(examApp);
                 }
             });
         });
@@ -97,7 +97,7 @@ function validateLoginForm() {
     }
 }
 
-export async function handleLogin() {
+export async function handleLogin(examApp) {
     try {
         const name = document.getElementById('student-name').value.trim();
         const studentClass = document.getElementById('student-class').value;
@@ -111,10 +111,10 @@ export async function handleLogin() {
         showLoginStatus('Влизане в изпита...', 'info');
         setLoginButtonState(true);
 
-        window.ExamApp.studentName = name;
-        window.ExamApp.studentClass = studentClass;
-        window.ExamApp.termsAccepted = termsAccepted;
-        window.ExamApp.termsAcceptedAt = Date.now();
+        examApp.studentName = name;
+        examApp.studentClass = studentClass;
+        examApp.termsAccepted = termsAccepted;
+        examApp.termsAcceptedAt = Date.now();
 
         // ПЪРВО: HTTP login за express session
         try {
@@ -133,33 +133,23 @@ export async function handleLogin() {
             const result = await response.json();
 
             if (!result.success) {
-                showLoginStatus(result.message || 'Грешка при влизане', 'error');
-                setLoginButtonState(false);
+                handleLoginError(examApp, result.message || 'Грешка при влизане');
                 return;
             }
 
-            if (window.ExamApp.socket && window.ExamApp.socket.connected) {
-                window.ExamApp.socket.emit('student-join', {
-                    studentName: name,
-                    studentClass: studentClass,
-                    termsAccepted: termsAccepted,
-                    termsAcceptedAt: window.ExamApp.termsAcceptedAt
-                });
-            } else {
-                showLoginStatus('Няма връзка със сървъра', 'error');
-                setLoginButtonState(false);
-            }
+            // No need to emit 'student-join' here, HTTP login already handled session creation/restoration.
+            // The WebSocket connection is already established and will be used for real-time updates.
+            // Proceed directly to handling login success.
+            handleLoginSuccess(examApp, result);
 
         } catch (error) {
             console.error('HTTP login error:', error);
-            showLoginStatus('Грешка при връзка със сървъра', 'error');
-            setLoginButtonState(false);
+            handleLoginError(examApp, 'Грешка при връзка със сървъра');
         }
 
     } catch (error) {
         console.error('Login error:', error);
-        showLoginStatus('Грешка при влизане', 'error');
-        setLoginButtonState(false);
+        handleLoginError(examApp, 'Грешка при влизане');
     }
 }
 
@@ -213,27 +203,28 @@ function setLoginButtonState(disabled) {
     }
 }
 
-export function handleLoginSuccess(data) {
+export function handleLoginSuccess(examApp, data) {
     try {
         console.log('Login successful:', data);
 
-        window.ExamApp.sessionId = data.sessionId;
-        window.ExamApp.examStartTime = data.examStartTime || Date.now();
-        window.ExamApp.isLoggedIn = true;
+        examApp.sessionId = data.sessionId;
+        examApp.examStartTime = data.examStartTime || Date.now();
+        examApp.isLoggedIn = true;
+        console.log(`handleLoginSuccess: examApp.isLoggedIn set to true. Session ID: ${examApp.sessionId}`);
 
         showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
 
         localStorage.setItem('examSession', JSON.stringify({
             sessionId: data.sessionId,
-            studentName: window.ExamApp.studentName,
-            studentClass: window.ExamApp.studentClass,
-            examStartTime: window.ExamApp.examStartTime,
+            studentName: examApp.studentName,
+            studentClass: examApp.studentClass,
+            examStartTime: examApp.examStartTime,
             examEndTime: data.examEndTime
         }));
 
         setTimeout(() => {
-            if (window.startExam) {
-                window.startExam(data);
+            if (examApp.startExam) {
+                examApp.startExam(data);
             }
         }, 1000);
 
@@ -243,7 +234,7 @@ export function handleLoginSuccess(data) {
     }
 }
 
-export function handleLoginError(error) {
+export function handleLoginError(examApp, error) {
     console.error('Login error:', error);
 
     const errorMessage = error.message || error.error || 'Грешка при влизане';
@@ -252,15 +243,15 @@ export function handleLoginError(error) {
     setLoginButtonState(false);
 }
 
-export function handleSessionRestore(sessionData) {
+export function handleSessionRestore(examApp, sessionData) {
     try {
         console.log('Restoring session:', sessionData);
 
-        window.ExamApp.studentName = sessionData.studentName;
-        window.ExamApp.studentClass = sessionData.studentClass;
-        window.ExamApp.sessionId = sessionData.sessionId;
-        window.ExamApp.examStartTime = sessionData.examStartTime;
-        window.ExamApp.isLoggedIn = true;
+        examApp.studentName = sessionData.studentName;
+        examApp.studentClass = sessionData.studentClass;
+        examApp.sessionId = sessionData.sessionId;
+        examApp.examStartTime = sessionData.examStartTime;
+        examApp.isLoggedIn = true;
 
         setTimeout(() => {
             if (window.startExam) {
@@ -319,14 +310,14 @@ export function clearLoginForm() {
     }
 }
 
-export function resetLoginState() {
+export function resetLoginState(examApp) {
     try {
-        window.ExamApp.studentName = null;
-        window.ExamApp.studentClass = null;
-        window.ExamApp.sessionId = null;
-        window.ExamApp.examStartTime = null;
-        window.ExamApp.termsAccepted = false;
-        window.ExamApp.termsAcceptedAt = null;
+        examApp.studentName = null;
+        examApp.studentClass = null;
+        examApp.sessionId = null;
+        examApp.examStartTime = null;
+        examApp.termsAccepted = false;
+        examApp.termsAcceptedAt = null;
 
         clearLoginForm();
 
@@ -342,22 +333,22 @@ export function resetLoginState() {
     }
 }
 
-export function getLoginState() {
+export function getLoginState(examApp) {
     return {
-        studentName: window.ExamApp.studentName,
-        studentClass: window.ExamApp.studentClass,
-        sessionId: window.ExamApp.sessionId,
-        isLoggedIn: window.ExamApp.isLoggedIn,
-        examStartTime: window.ExamApp.examStartTime,
-        termsAccepted: window.ExamApp.termsAccepted,
-        termsAcceptedAt: window.ExamApp.termsAcceptedAt
+        studentName: examApp.studentName,
+        studentClass: examApp.studentClass,
+        sessionId: examApp.sessionId,
+        isLoggedIn: examApp.isLoggedIn,
+        examStartTime: examApp.examStartTime,
+        termsAccepted: examApp.termsAccepted,
+        termsAcceptedAt: examApp.termsAcceptedAt
     };
 }
 
-export function getTermsAcceptanceInfo() {
+export function getTermsAcceptanceInfo(examApp) {
     return {
-        accepted: window.ExamApp.termsAccepted || false,
-        acceptedAt: window.ExamApp.termsAcceptedAt || null,
+        accepted: examApp.termsAccepted || false,
+        acceptedAt: examApp.termsAcceptedAt || null,
         timestamp: Date.now()
     };
 }

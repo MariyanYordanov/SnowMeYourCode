@@ -267,6 +267,21 @@
                     </div>
                 </aside>
 
+                <div class="resizer" id="resizer-devtools"></div>
+
+                <div class="project-runner-panel">
+                    <div class="panel-header">
+                        <h3>Project Output</h3>
+                        <div class="panel-controls">
+                            <button id="run-project-btn" class="control-btn">Run Project</button>
+                            <button id="stop-project-btn" class="control-btn">Stop</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <iframe id="project-iframe" class="project-iframe" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-downloads allow-modals"></iframe>
+                    </div>
+                </div>
+
                 <footer class="exam-footer">
                     <div class="footer-left d-flex items-center gap-md">
                         <span class="connection-status d-flex items-center gap-xs">

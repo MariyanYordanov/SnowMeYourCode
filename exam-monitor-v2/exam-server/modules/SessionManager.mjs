@@ -1,5 +1,7 @@
 import { JSONDataStore } from './JSONDataStore.mjs';
 import { StudentValidator } from './StudentValidator.mjs';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Session states
 export const SESSION_STATES = {
@@ -24,11 +26,35 @@ export class SessionManager {
         this.dataStore = new JSONDataStore(baseDir);
         this.validator = new StudentValidator(baseDir);
         this.sessions = new Map(); // In-memory cache
-        this.EXAM_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-        this.GRACE_PERIOD = 3 * 60 * 1000; // 3 minutes in milliseconds
+        this.baseDir = baseDir;
+        this.EXAM_DURATION = 3 * 60 * 60 * 1000; // Default: 3 hours in milliseconds
+        this.GRACE_PERIOD = 3 * 60 * 1000; // Default: 3 minutes in milliseconds
 
-        // Load existing sessions on startup
-        this.loadExistingSessions();
+        this.loadConfig().then(() => {
+            // Load existing sessions on startup after config is loaded
+            this.loadExistingSessions();
+        });
+    }
+
+    async loadConfig() {
+        try {
+            const configPath = path.join(this.baseDir, 'config', 'exam-config.json');
+            const configData = await fs.readFile(configPath, 'utf8');
+            const config = JSON.parse(configData);
+
+            if (config.exam && config.exam.duration && config.exam.durationUnit === 'minutes') {
+                this.EXAM_DURATION = config.exam.duration * 60 * 1000;
+                console.log(`Exam duration set to ${config.exam.duration} minutes from config.`);
+            }
+
+            if (config.security && config.security.sessionSecurity && config.security.sessionSecurity.gracePeriod && config.security.sessionSecurity.gracePeriodUnit === 'minutes') {
+                this.GRACE_PERIOD = config.security.sessionSecurity.gracePeriod * 60 * 1000;
+                console.log(`Grace period set to ${config.security.sessionSecurity.gracePeriod} minutes from config.`);
+            }
+
+        } catch (error) {
+            console.error('Error loading exam-config.json, using default values:', error);
+        }
     }
 
     /**

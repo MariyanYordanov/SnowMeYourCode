@@ -34,6 +34,7 @@ export function initializeMonacoEditor(initialCode = '') {
             require(['vs/editor/editor.main'], function () {
                 try {
                     const defaultCode = initialCode || getDefaultCode();
+                    const examApp = window.ExamApp;
 
                     const editor = monaco.editor.create(document.getElementById('monaco-editor'), {
                         value: defaultCode,
@@ -105,7 +106,7 @@ export function initializeMonacoEditor(initialCode = '') {
                     });
 
                     // CRITICAL: Store editor in global state immediately
-                    window.ExamApp.editor = editor;
+                    examApp.editor = editor;
 
                     // Setup language features
                     setupLanguageFeatures(editor);
@@ -177,17 +178,18 @@ function setupLanguageFeatures(editor) {
  */
 function setupErrorDetection(editor) {
     try {
+        const examApp = window.ExamApp;
         // This will be triggered after code execution
         window.highlightErrorLine = (lineNumber) => {
             if (!editor || lineNumber < 1) return;
 
             // Remove previous error decorations
-            if (window.ExamApp.errorDecorations) {
-                editor.deltaDecorations(window.ExamApp.errorDecorations, []);
+            if (examApp.errorDecorations) {
+                editor.deltaDecorations(examApp.errorDecorations, []);
             }
 
             // Add new error decoration
-            window.ExamApp.errorDecorations = editor.deltaDecorations([], [
+            examApp.errorDecorations = editor.deltaDecorations([], [
                 {
                     range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                     options: {
@@ -411,7 +413,8 @@ export function setupEditorControls() {
  */
 export async function runCode() {
     try {
-        const editor = window.ExamApp?.editor;
+        const examApp = window.ExamApp;
+        const editor = examApp?.editor;
         if (!editor) {
             console.error('Editor not initialized');
             showError('Редакторът не е готов');
@@ -419,7 +422,7 @@ export async function runCode() {
         }
 
         const code = editor.getValue();
-        const sessionId = window.ExamApp?.sessionId;
+        const sessionId = examApp?.sessionId;
 
         if (!sessionId) {
             console.error('No valid session ID');
@@ -586,13 +589,14 @@ function escapeHtml(text) {
  */
 export function formatCode() {
     try {
-        if (!window.ExamApp.editor) {
+        const examApp = window.ExamApp;
+        if (!examApp.editor) {
             console.warn('Editor not available');
             showError('Редакторът не е готов.');
             return;
         }
 
-        window.ExamApp.editor.getAction('editor.action.formatDocument').run();
+        examApp.editor.getAction('editor.action.formatDocument').run();
     } catch (error) {
         console.error('Code formatting failed:', error);
         showError('Грешка при форматиране на кода');
@@ -604,11 +608,12 @@ export function formatCode() {
  */
 export function saveCode() {
     try {
-        if (!window.ExamApp.editor) {
+        const examApp = window.ExamApp;
+        if (!examApp.editor) {
             return false;
         }
 
-        const code = window.ExamApp.editor.getValue();
+        const code = examApp.editor.getValue();
 
         // Send to server via socket
         const success = sendCodeUpdate(code, 'main.js');
@@ -633,11 +638,11 @@ export function clearOutput() {
         if (outputEl) {
             outputEl.innerHTML = '';
         }
-
+        const examApp = window.ExamApp;
         // Clear error line highlighting
-        if (window.ExamApp.editor && window.ExamApp.errorDecorations) {
-            window.ExamApp.editor.deltaDecorations(window.ExamApp.errorDecorations, []);
-            window.ExamApp.errorDecorations = [];
+        if (examApp.editor && examApp.errorDecorations) {
+            examApp.editor.deltaDecorations(examApp.errorDecorations, []);
+            examApp.errorDecorations = [];
         }
 
         hideError();
@@ -658,7 +663,8 @@ export function clearOutput() {
  */
 export function changeTheme(event) {
     try {
-        if (!window.ExamApp.editor) {
+        const examApp = window.ExamApp;
+        if (!examApp.editor) {
             console.warn('Editor not available');
             return;
         }
@@ -677,7 +683,8 @@ export function changeTheme(event) {
  */
 function updateLastSaved() {
     try {
-        window.ExamApp.lastSaveTime = Date.now();
+        const examApp = window.ExamApp;
+        examApp.lastSaveTime = Date.now();
         const lastSavedEl = document.getElementById('last-saved');
         if (lastSavedEl) {
             lastSavedEl.textContent = `Запазено: ${new Date().toLocaleTimeString('bg-BG')}`;
@@ -691,8 +698,9 @@ function updateLastSaved() {
  * Show error notification
  */
 function showError(message) {
-    if (window.ExamApp?.showError) {
-        window.ExamApp.showError(message);
+    const examApp = window.ExamApp;
+    if (examApp?.showError) {
+        examApp.showError(message);
     } else {
         console.error(message);
     }
@@ -712,12 +720,13 @@ function hideError() {
  * Get editor value
  */
 export function getEditorValue() {
-    if (!window.ExamApp.editor) {
+    const examApp = window.ExamApp;
+    if (!examApp.editor) {
         return '';
     }
 
     try {
-        return window.ExamApp.editor.getValue();
+        return examApp.editor.getValue();
     } catch (error) {
         console.error('Failed to get editor value:', error);
         return '';
@@ -728,12 +737,13 @@ export function getEditorValue() {
  * Set editor value
  */
 export function setEditorValue(value) {
-    if (!window.ExamApp.editor) {
+    const examApp = window.ExamApp;
+    if (!examApp.editor) {
         return false;
     }
 
     try {
-        window.ExamApp.editor.setValue(value);
+        examApp.editor.setValue(value);
         return true;
     } catch (error) {
         console.error('Failed to set editor value:', error);
@@ -745,12 +755,13 @@ export function setEditorValue(value) {
  * Focus editor
  */
 export function focusEditor() {
-    if (!window.ExamApp.editor) {
+    const examApp = window.ExamApp;
+    if (!examApp.editor) {
         return false;
     }
 
     try {
-        window.ExamApp.editor.focus();
+        examApp.editor.focus();
         return true;
     } catch (error) {
         console.error('Failed to focus editor:', error);
@@ -762,12 +773,13 @@ export function focusEditor() {
  * Resize editor
  */
 export function resizeEditor() {
-    if (!window.ExamApp.editor) {
+    const examApp = window.ExamApp;
+    if (!examApp.editor) {
         return;
     }
 
     try {
-        window.ExamApp.editor.layout();
+        examApp.editor.layout();
     } catch (error) {
         console.error('Failed to resize editor:', error);
     }
@@ -800,10 +812,10 @@ export function destroyEditor() {
 
         // Clear console state
         clearConsoleHistory();
-
-        if (window.ExamApp.editor) {
-            window.ExamApp.editor.dispose();
-            window.ExamApp.editor = null;
+        const examApp = window.ExamApp;
+        if (examApp.editor) {
+            examApp.editor.dispose();
+            examApp.editor = null;
         }
 
     } catch (error) {

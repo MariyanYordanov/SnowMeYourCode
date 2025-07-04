@@ -57,10 +57,10 @@
 .exam-container {
     display: grid;
     grid-template-areas:
-        "header header header"
-        "files editor devtools"
-        "footer footer footer";
-    grid-template-columns: var(--files-width) 1fr var(--devtools-width);
+        "header header header header header"
+        "files resizer1 editor resizer2 runner"
+        "footer footer footer footer footer";
+    grid-template-columns: var(--files-width) 10px 1fr 10px var(--runner-width);
     grid-template-rows: var(--header-height) 1fr var(--footer-height);
     height: 100vh;
     background: var(--bg-dark);
@@ -126,6 +126,23 @@
     flex-direction: column;
     overflow: hidden;
     transition: opacity var(--transition);
+}
+
+.project-runner-panel {
+    grid-area: runner;
+    background: var(--bg-darker);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.project-iframe {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
 }
 
 .panel-header {

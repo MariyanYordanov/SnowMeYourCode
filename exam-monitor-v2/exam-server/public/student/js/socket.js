@@ -1,3 +1,5 @@
+import { showViolationExitDialog } from './dialogs.js';
+
 export function setupSocket() {
     try {
         const socket = io('/', {
@@ -7,7 +9,8 @@ export function setupSocket() {
             reconnectionDelay: 1000
         });
 
-        window.ExamApp.socket = socket;
+        const examApp = window.ExamApp;
+        examApp.socket = socket;
 
         socket.on('connect', handleSocketConnect);
         socket.on('disconnect', handleSocketDisconnect);
@@ -32,13 +35,15 @@ export function setupSocket() {
 }
 
 function handleSocketConnect() {
-    console.log('Socket.io connected');
+    console.log(`Socket.io connected. isLoggedIn: ${window.ExamApp.isLoggedIn}, sessionId: ${window.ExamApp.sessionId}`);
+    const examApp = window.ExamApp;
 
-    if (window.ExamApp.isLoggedIn && window.ExamApp.sessionId) {
-        window.ExamApp.socket.emit('session-restore', {
-            sessionId: window.ExamApp.sessionId,
-            studentName: window.ExamApp.studentName,
-            studentClass: window.ExamApp.studentClass
+    if (examApp.isLoggedIn && examApp.sessionId) {
+        console.log('Emitting session-restore from handleSocketConnect.');
+        examApp.socket.emit('session-restore', {
+            sessionId: examApp.sessionId,
+            studentName: examApp.studentName,
+            studentClass: examApp.studentClass
         });
     }
 }
@@ -49,19 +54,20 @@ function handleSocketDisconnect(reason) {
 
 function handleNewSession(data) {
     console.log('New session created:', data);
+    const examApp = window.ExamApp;
 
-    window.ExamApp.sessionId = data.sessionId;
-    window.ExamApp.examStartTime = Date.now();
-    window.ExamApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
-    window.ExamApp.examEndTime = new Date(window.ExamApp.examStartTime + window.ExamApp.examDuration);
+    examApp.sessionId = data.sessionId;
+    examApp.examStartTime = Date.now();
+    examApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
+    examApp.examEndTime = new Date(examApp.examStartTime + examApp.examDuration);
 
     if (window.startExam) {
         window.startExam({
             sessionId: data.sessionId,
-            examStartTime: window.ExamApp.examStartTime,
-            examDuration: window.ExamApp.examDuration,
-            examEndTime: window.ExamApp.examEndTime,
-            timeLeft: window.ExamApp.examDuration,
+            examStartTime: examApp.examStartTime,
+            examDuration: examApp.examDuration,
+            examEndTime: examApp.examEndTime,
+            timeLeft: examApp.examDuration,
             isNewSession: true
         });
     }
@@ -69,13 +75,14 @@ function handleNewSession(data) {
 
 function handleSessionRestored(data) {
     console.log('Session restored:', data);
+    const examApp = window.ExamApp;
 
-    window.ExamApp.sessionId = data.sessionId;
-    window.ExamApp.examStartTime = new Date(data.examStartTime).getTime();
-    window.ExamApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
-    window.ExamApp.examEndTime = new Date(data.examEndTime).getTime();
+    examApp.sessionId = data.sessionId;
+    examApp.examStartTime = new Date(data.examStartTime).getTime();
+    examApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
+    examApp.examEndTime = new Date(data.examEndTime).getTime();
 
-    const timeLeft = data.timeLeft || (window.ExamApp.examEndTime - Date.now());
+    const timeLeft = data.timeLeft || (examApp.examEndTime - Date.now());
 
     if (timeLeft <= 0) {
         handleExamExpired();
@@ -85,9 +92,9 @@ function handleSessionRestored(data) {
     if (window.startExam) {
         window.startExam({
             sessionId: data.sessionId,
-            examStartTime: window.ExamApp.examStartTime,
-            examDuration: window.ExamApp.examDuration,
-            examEndTime: window.ExamApp.examEndTime,
+            examStartTime: examApp.examStartTime,
+            examDuration: examApp.examDuration,
+            examEndTime: examApp.examEndTime,
             timeLeft: timeLeft,
             lastCode: data.lastCode || '',
             isNewSession: false
@@ -119,41 +126,41 @@ function handleExamExpired() {
     }
 }
 
-function handleForceDisconnect(data) {
+async function handleForceDisconnect(data) {
     console.error('Force disconnect:', data);
 
-    if (window.ExamApp?.showViolationScreen) {
-        window.ExamApp.showViolationScreen(data.message || 'Изпитът е прекратен');
-    }
+    const message = data.message || 'Изпитът е прекратен поради нарушение на правилата.';
+    await showViolationExitDialog(message);
 
-    setTimeout(() => {
-        if (window.exitExam) {
-            window.exitExam(data.reason || 'force_disconnect');
-        }
-    }, 5000);
+    if (window.exitExam) {
+        window.exitExam(data.reason || 'force_disconnect');
+    }
 }
 
 function handleAntiCheatWarning(data) {
     console.warn('Anti-cheat warning:', data);
+    const examApp = window.ExamApp;
 
-    if (window.ExamApp?.showNotification) {
-        window.ExamApp.showNotification(data.message, 'warning');
+    if (examApp?.showNotification) {
+        examApp.showNotification(data.message, 'warning');
     }
 }
 
 function handleServerMessage(data) {
     console.log('Server message:', data);
+    const examApp = window.ExamApp;
 
-    if (window.ExamApp?.showNotification) {
-        window.ExamApp.showNotification(data.message, data.type || 'info');
+    if (examApp?.showNotification) {
+        examApp.showNotification(data.message, data.type || 'info');
     }
 }
 
 function handleReconnect(attemptNumber) {
     console.log('Reconnected after', attemptNumber, 'attempts');
+    const examApp = window.ExamApp;
 
-    if (window.ExamApp?.showNotification) {
-        window.ExamApp.showNotification('Връзката е възстановена', 'success');
+    if (examApp?.showNotification) {
+        examApp.showNotification('Връзката е възстановена', 'success');
     }
 }
 
@@ -163,13 +170,14 @@ function handleReconnectError(error) {
 
 export function sendCodeUpdate(code, filename = 'main.js') {
     try {
-        if (!window.ExamApp.socket?.connected) {
+        const examApp = window.ExamApp;
+        if (!examApp.socket?.connected) {
             console.warn('Socket not connected');
             return false;
         }
 
-        window.ExamApp.socket.emit('code-update', {
-            sessionId: window.ExamApp.sessionId,
+        examApp.socket.emit('code-update', {
+            sessionId: examApp.sessionId,
             code: code,
             filename: filename,
             timestamp: Date.now()
@@ -185,9 +193,10 @@ export function sendCodeUpdate(code, filename = 'main.js') {
 
 export function reportSuspiciousActivity(activity, details = {}) {
     try {
-        if (window.ExamApp.socket?.connected) {
-            window.ExamApp.socket.emit('suspicious-activity', {
-                sessionId: window.ExamApp.sessionId,
+        const examApp = window.ExamApp;
+        if (examApp.socket?.connected) {
+            examApp.socket.emit('suspicious-activity', {
+                sessionId: examApp.sessionId,
                 activity: activity,
                 details: details,
                 timestamp: Date.now()
