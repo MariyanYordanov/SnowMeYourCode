@@ -1,6 +1,6 @@
 import { MonacoFileManager } from './monaco-file-manager.js';
-import { updateEditorIntegration, loadStarterProject } from './editor-integration.js';
-import { initializeResizers } from './resizer.js';
+import { updateEditorIntegration, loadStarterProject } from './editor-integration.js'; 
+import { SidebarManager } from './sidebar-manager.js';
 
 import {
     setupLoginForm,
@@ -89,8 +89,6 @@ function initializeApp() {
 
         setupSocket();
 
-        initializeResizers();
-
         setupAntiCheat();
 
         setupGlobalErrorHandler();
@@ -98,6 +96,8 @@ function initializeApp() {
         preventDefaultBehaviors();
 
         setupWindowFunctions();
+
+        examApp.sidebarManager = new SidebarManager();
 
         console.log('App initialized successfully');
 
@@ -221,8 +221,6 @@ async function initializeMonaco() {
             setupFileManagerCommands();
     }
 
-    setupProjectRunner();
-
     if (examApp.sessionId) {
             try {
                 const success = await fileManager.loadProjectStructure(examApp.sessionId);
@@ -288,37 +286,6 @@ function setupFileManagerCommands() {
     } catch (error) {
         console.error('Failed to setup file manager commands:', error);
     }
-}
-
-function setupProjectRunner() {
-    const runBtn = document.getElementById('run-project-btn');
-    const stopBtn = document.getElementById('stop-project-btn');
-    const iframe = document.getElementById('project-iframe');
-    const examApp = window.ExamApp;
-
-    if (!runBtn || !stopBtn || !iframe) {
-        console.warn('Project runner elements not found.');
-        return;
-    }
-
-    runBtn.addEventListener('click', () => {
-        const sessionId = examApp.sessionId;
-        if (!sessionId) {
-            showError('Cannot run project without a valid session.');
-            return;
-        }
-        // Save all files before running
-        examApp.fileManager.saveAllFiles();
-
-        const projectUrl = `/api/project/run/${sessionId}/index.html`;
-        iframe.src = projectUrl;
-        showNotification('Running project...', 'info');
-    });
-
-    stopBtn.addEventListener('click', () => {
-        iframe.src = 'about:blank';
-        showNotification('Project stopped.', 'warn');
-    });
 }
 
 function completeExam(reason = 'unknown') {

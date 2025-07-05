@@ -57,10 +57,10 @@
 .exam-container {
     display: grid;
     grid-template-areas:
-        "header header header"
-        "files editor devtools"
-        "footer footer footer";
-    grid-template-columns: var(--files-width) 1fr var(--devtools-width);
+        "header header"
+        "sidebar main"
+        "footer footer";
+    grid-template-columns: 20% 80%;
     grid-template-rows: var(--header-height) 1fr var(--footer-height);
     height: 100vh;
     background: var(--bg-dark);
@@ -68,28 +68,8 @@
     transition: grid-template-columns var(--transition-slow);
 }
 
-.exam-container.hide-files {
-    grid-template-columns: 0 1fr var(--devtools-width);
-}
-
-.exam-container.hide-devtools {
-    grid-template-columns: var(--files-width) 1fr 0;
-}
-
-.exam-container.hide-files.hide-devtools {
-    grid-template-columns: 0 1fr 0;
-}
-
-.exam-container.editor-only {
-    grid-template-columns: 0 1fr 0;
-}
-
-.exam-container.focus-files {
-    grid-template-columns: 400px 1fr 200px;
-}
-
-.exam-container.focus-devtools {
-    grid-template-columns: 150px 1fr 500px;
+.exam-container.sidebar-expanded {
+    grid-template-columns: 50% 50%;
 }
 
 .exam-header {
@@ -112,32 +92,99 @@
     padding: 0 var(--space-lg);
 }
 
-.files-panel {
-    grid-area: files;
+.exam-sidebar {
+    grid-area: sidebar;
     background: var(--bg-panel);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: opacity var(--transition);
 }
 
-.editor-panel {
-    grid-area: editor;
+.sidebar-tabs {
+    display: flex;
+    background: var(--bg-darker);
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-tab {
+    flex: 1;
+    padding: var(--space-sm);
+    text-align: center;
+    cursor: pointer;
+    font-size: var(--font-xs);
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition);
+}
+
+.sidebar-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: var(--bg-dark);
-    min-width: 0;
 }
 
-.devtools-panel {
-    grid-area: devtools;
-    background: var(--bg-panel);
-    border-left: 1px solid var(--border);
+.sidebar-panel {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-area {
+    grid-area: main;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: opacity var(--transition);
+}
+
+.editor-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.console-area {
+    height: 20%;
+    min-height: 100px;
+    background: var(--bg-darker);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.console-header {
+    height: 32px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-sm);
+}
+
+.editor-header {
+    height: var(--panel-header);
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-md);
 }
 
 .panel-header {
@@ -202,7 +249,7 @@
     padding: 0 var(--space-md);
 }
 
-.console-output {
+#console-output {
     flex: 1;
     overflow-y: auto;
     padding: var(--space-sm);
@@ -443,13 +490,17 @@
 
 @media (max-width: 1280px) {
     .exam-container {
-        grid-template-columns: 200px 1fr 350px;
+        grid-template-columns: 25% 75%;
+    }
+
+    .exam-container.sidebar-expanded {
+        grid-template-columns: 45% 55%;
     }
 }
 
 @media (max-width: 1024px) {
     .exam-container {
-        grid-template-columns: 180px 1fr 300px;
+        grid-template-columns: 30% 70%;
     }
 
     .panel-header {
@@ -459,14 +510,26 @@
 
 @media (max-width: 768px) {
     .exam-container {
-        grid-template-columns: 0 1fr 0;
+        grid-template-columns: 100% 0;
     }
 
-    .exam-container.show-files {
-        grid-template-columns: 100vw 0 0;
+    .exam-container.sidebar-expanded {
+        grid-template-columns: 100% 0;
     }
 
-    .exam-container.show-devtools {
-        grid-template-columns: 0 0 100vw;
+    .main-area {
+        display: none;
+    }
+
+    .exam-container.show-main {
+        grid-template-columns: 0 100%;
+    }
+
+    .exam-container.show-main .exam-sidebar {
+        display: none;
+    }
+
+    .exam-container.show-main .main-area {
+        display: flex;
     }
 }

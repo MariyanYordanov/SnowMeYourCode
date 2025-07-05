@@ -360,10 +360,8 @@ function setupKeyboardShortcuts(editor) {
  */
 export function setupEditorControls() {
     try {
-        // Run code button - търси по различни ID-та
-        const runBtn = document.getElementById('run-btn') ||
-            document.getElementById('run-code-btn') ||
-            document.querySelector('button[id*="run"]');
+        // Run code button
+        const runBtn = document.getElementById('run-btn');
         if (runBtn) {
             runBtn.addEventListener('click', () => {
                 runCode();
@@ -374,22 +372,26 @@ export function setupEditorControls() {
         }
 
         // Format code button
-        const formatBtn = document.getElementById('format-btn') ||
-            document.getElementById('format-code-btn') ||
-            document.querySelector('button[id*="format"]');
+        const formatBtn = document.getElementById('format-btn');
         if (formatBtn) {
             formatBtn.addEventListener('click', () => {
                 formatCode();
             });
         }
 
-        // Clear output button
-        const clearBtn = document.getElementById('clear-btn') ||
-            document.getElementById('clear-output-btn') ||
-            document.querySelector('button[id*="clear"]');
+        // Clear console button - КОРИГИРАН ID
+        const clearBtn = document.getElementById('clear-console');
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
                 clearOutput();
+            });
+        }
+
+        // Save button
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                saveCode();
             });
         }
 
@@ -440,44 +442,62 @@ export async function runCode() {
             runBtn.innerHTML = '⏳ Running...';
         }
 
-        // Show execution start
-        const outputEl = document.getElementById('console-output');
-        if (outputEl) {
-            outputEl.innerHTML = '<div class="console-info">Изпълнение на кода...</div>';
+        // ВАЖНО: Проверка за console output
+        const consoleOutput = document.getElementById('console-output');
+        if (!consoleOutput) {
+            console.error('Console output element not found');
+            showError('Console панелът не е намерен');
+            return;
         }
 
-        // Execute code with sessionId
-        const response = await fetch('/proxy/execute', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include', // Important for session cookies
-            body: JSON.stringify({
-                code: code,
-                sessionId: sessionId // Include sessionId in request body
-            })
-        });
+        // Show execution start
+        consoleOutput.innerHTML = '<div class="console-info">Изпълнение на кода...</div>';
 
-        const result = await response.json();
+        try {
+            // Локално изпълнение (докато practice server не работи)
+            const originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn,
+                info: console.info
+            };
 
-        if (response.ok && result.output) {
-            // Display output
-            displayExecutionResult(result.output);
+            const outputs = [];
 
-            // Show execution time if available
-            if (result.executionTime) {
-                showExecutionInfo(`Изпълнено за ${result.executionTime}ms`);
+            console.log = (...args) => {
+                outputs.push({ type: 'log', args });
+                originalConsole.log(...args);
+            };
+            console.error = (...args) => {
+                outputs.push({ type: 'error', args });
+                originalConsole.error(...args);
+            };
+            console.warn = (...args) => {
+                outputs.push({ type: 'warn', args });
+                originalConsole.warn(...args);
+            };
+            console.info = (...args) => {
+                outputs.push({ type: 'info', args });
+                originalConsole.info(...args);
+            };
+
+            // Изпълняваме кода
+            const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
+            const func = new AsyncFunction(code);
+            await func();
+
+            // Възстановяваме console
+            Object.assign(console, originalConsole);
+
+            // Форматираме изхода
+            if (outputs.length > 0) {
+                displayExecutionResult(outputs);
+            } else {
+                consoleOutput.innerHTML = '<div style="color: #666;">Кодът се изпълни без изход в конзолата</div>';
             }
-        } else {
-            // Display error
-            const errorMsg = result.error || result.message || 'Грешка при изпълнение';
-            displayError(errorMsg);
 
-            // If it's a session error, show more details
-            if (errorMsg.includes('SESSION_REQUIRED') || errorMsg.includes('No valid session')) {
-                showError('Сесията е изтекла. Моля влезте отново.');
-            }
+        } catch (error) {
+            displayError(error.message);
         }
 
         // Save code after execution
@@ -485,7 +505,7 @@ export async function runCode() {
 
     } catch (error) {
         console.error('Execution error:', error);
-        displayError('Грешка при връзка със сървъра: ' + error.message);
+        displayError('Грешка при изпълнение: ' + error.message);
     } finally {
         // Reset button state
         const runBtn = document.getElementById('run-btn');
@@ -499,28 +519,41 @@ export async function runCode() {
 /**
  * Display execution result in console
  */
-function displayExecutionResult(output) {
+function displayExecutionResult(outputs) {
     const consoleOutput = document.getElementById('console-output');
-    if (consoleOutput) {
-        // Parse and format output
-        const lines = output.split('\n');
-        const formattedOutput = lines.map(line => {
-            // Check for console.table, console.error etc.
-            if (line.startsWith('[TABLE]')) {
-                return formatTableOutput(line.substring(7));
-            } else if (line.startsWith('[ERROR]')) {
-                return `<span class="console-error">${escapeHtml(line.substring(7))}</span>`;
-            } else if (line.startsWith('[WARN]')) {
-                return `<span class="console-warn">${escapeHtml(line.substring(6))}</span>`;
-            } else if (line.startsWith('[INFO]')) {
-                return `<span class="console-info">${escapeHtml(line.substring(6))}</span>`;
-            } else {
-                return escapeHtml(line);
-            }
-        }).join('<br>');
+    if (!consoleOutput) return;
 
-        consoleOutput.innerHTML = formattedOutput;
-    }
+    let htmlOutput = '';
+
+    outputs.forEach(output => {
+        const content = output.args.map(arg => {
+            if (typeof arg === 'object') {
+                try {
+                    return JSON.stringify(arg, null, 2);
+                } catch (e) {
+                    return String(arg);
+                }
+            }
+            return String(arg);
+        }).join(' ');
+
+        switch (output.type) {
+            case 'error':
+                htmlOutput += `<div class="console-error">${escapeHtml(content)}</div>`;
+                break;
+            case 'warn':
+                htmlOutput += `<div class="console-warn">${escapeHtml(content)}</div>`;
+                break;
+            case 'info':
+                htmlOutput += `<div class="console-info">${escapeHtml(content)}</div>`;
+                break;
+            default:
+                htmlOutput += `<div class="console-log">${escapeHtml(content)}</div>`;
+        }
+    });
+
+    consoleOutput.innerHTML = htmlOutput;
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
 }
 
 /**

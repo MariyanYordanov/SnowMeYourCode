@@ -108,7 +108,7 @@
                 </div>
             </div>
         </div>
-
+        
         <div id="exam-component" class="component-container" style="display: none;">
             <div class="exam-container">
                 <header class="exam-header">
@@ -117,171 +117,143 @@
                         <span class="student-class text-sm"></span>
                         <span class="session-id text-xs text-muted"></span>
                     </div>
-
+        
                     <div class="exam-timer d-flex items-center gap-sm">
                         <span class="timer-label text-sm">Time left:</span>
                         <span id="exam-timer" class="timer-value font-mono text-lg font-bold">03:00:00</span>
                     </div>
-
-                    <div class="layout-controls d-flex gap-xs">
-                        <button id="toggle-files" class="btn btn-sm active" title="Toggle Files Panel (Ctrl+1)">
-                            Files
-                        </button>
-                        <button id="toggle-devtools" class="btn btn-sm active" title="Toggle DevTools (Ctrl+2)">
-                            DevTools
-                        </button>
-                    </div>
-
+        
                     <div class="exam-actions">
                         <button id="finish-exam-btn" class="btn btn-danger">
                             Send
                         </button>
                     </div>
                 </header>
-
-                <aside class="files-panel">
-                    <div class="panel-header">
-                        <h3 class="text-sm font-medium m-0">Project Files</h3>
-                        <div class="file-toolbar d-flex gap-xs">
-                            <button id="new-file-btn" class="btn btn-icon btn-sm" title="New File">📄</button>
-                            <button class="btn btn-icon btn-sm" title="Upload Files">⬆️</button>
-                            <button class="btn btn-icon btn-sm" title="Refresh">🔄</button>
-                        </div>
+        
+                <aside class="exam-sidebar">
+                    <div class="sidebar-tabs">
+                        <button class="sidebar-tab active" data-panel="files">Files</button>
+                        <button class="sidebar-tab" data-panel="mdn">MDN</button>
+                        <button class="sidebar-tab" data-panel="devtools">DevTools</button>
                     </div>
-                    <div class="panel-content">
-                        <div id="file-tree" class="file-tree">
-                            <div class="file-tree-empty text-center text-muted p-xl">
-                                <div class="empty-icon text-xxl mb-md opacity-50">📁</div>
-                                <div class="empty-title font-medium mb-sm">No Project Files</div>
-                                <div class="empty-subtitle text-sm">Create or upload files to start</div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="editor-panel">
-                    <div class="editor-header">
-                        <div id="file-tabs-container" class="tabs-container"></div>
-                        <div class="editor-actions d-flex gap-xs">
-                            <button id="run-btn" class="btn btn-sm btn-primary">▶ Run</button>
-                            <button id="save-btn" class="btn btn-sm">💾 Save</button>
-                            <button id="format-btn" class="btn btn-sm">⚡ Format</button>
-                            <select id="theme-selector" class="select text-xs">
-                                <option value="vs-dark">Dark</option>
-                                <option value="vs">Light</option>
-                                <option value="hc-black">High Contrast</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="monaco-editor" class="flex-1"></div>
-
-                    <div class="editor-footer d-flex justify-between items-center px-md py-xs bg-panel border-top">
-                        <div class="editor-status d-flex gap-lg text-xs text-muted">
-                            <span id="cursor-position">Ln 1, Col 1</span>
-                            <span id="file-language">JavaScript</span>
-                            <span id="encoding">UTF-8</span>
-                        </div>
-                        <div class="editor-info d-flex gap-lg text-xs">
-                            <span id="word-count">0 words</span>
-                            <span id="char-count">0 chars</span>
-                        </div>
-                    </div>
-                </div>
-
-                <aside class="devtools-panel">
-                    <div class="devtools-tabs">
-                        <button class="devtool-tab active" data-tab="console">Console</button>
-                        <button class="devtool-tab" data-tab="network">Network</button>
-                        <button class="devtool-tab" data-tab="storage">Storage</button>
-                        <button class="devtool-tab" data-tab="elements">Elements</button>
-                        <button class="devtool-tab" data-tab="sources">Sources</button>
-                        <button class="devtool-tab" data-tab="mdn">MDN Docs</button>
-                    </div>
-
-                    <div class="devtools-content">
-                        <div id="console-panel" class="devtool-panel active">
-                            <div class="console-header d-flex justify-between items-center p-sm border-bottom">
-                                <div class="console-filters d-flex gap-xs">
-                                    <button class="filter-chip active text-xs">All</button>
-                                    <button class="filter-chip text-xs">Logs</button>
-                                    <button class="filter-chip text-xs">Errors</button>
-                                    <button class="filter-chip text-xs">Warnings</button>
+        
+                    <div class="sidebar-content">
+                        <div id="files-panel" class="sidebar-panel active">
+                            <div class="panel-header">
+                                <h3 class="text-sm font-medium m-0">Project Files</h3>
+                                <div class="file-toolbar d-flex gap-xs">
+                                    <button id="new-file-btn" class="btn btn-icon btn-sm" title="New File">📄</button>
+                                    <button class="btn btn-icon btn-sm" title="Refresh">🔄</button>
                                 </div>
-                                <button id="clear-console" class="btn btn-icon btn-sm"
-                                    title="Clear console">🗑️</button>
                             </div>
-                            <div id="console-output" class="console-output"></div>
-                        </div>
-
-                        <div id="network-panel" class="devtool-panel d-none">
-                            <div class="network-content">
-                                <table class="network-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Status</th>
-                                            <th>Type</th>
-                                            <th>Size</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="network-requests"></tbody>
-                                </table>
+                            <div id="file-tree" class="file-tree">
+                                <div class="file-tree-empty text-center text-muted p-xl">
+                                    <div class="empty-icon text-xxl mb-md opacity-50">📁</div>
+                                    <div class="empty-title font-medium mb-sm">No Project Files</div>
+                                    <div class="empty-subtitle text-sm">Create or upload files to start</div>
+                                </div>
                             </div>
                         </div>
-
-                        <div id="storage-panel" class="devtool-panel d-none">
-                            <div class="storage-empty devtools-empty">
-                                <div class="empty-icon">💾</div>
-                                <div class="empty-title">No Storage Data</div>
-                                <div class="empty-description">Local storage and session storage will appear here</div>
+        
+                        <div id="mdn-panel" class="sidebar-panel">
+                            <div class="panel-header">
+                                <h3 class="text-sm font-medium m-0">MDN Reference</h3>
                             </div>
-                        </div>
-
-                        <div id="elements-panel" class="devtool-panel d-none">
-                            <div class="elements-empty devtools-empty">
-                                <div class="empty-icon">🏗️</div>
-                                <div class="empty-title">DOM Inspector</div>
-                                <div class="empty-description">Coming soon...</div>
-                            </div>
-                        </div>
-
-                        <div id="sources-panel" class="devtool-panel d-none">
-                            <div class="sources-empty devtools-empty">
-                                <div class="empty-icon">📄</div>
-                                <div class="empty-title">Sources Panel</div>
-                                <div class="empty-description">View your project files here</div>
-                            </div>
-                        </div>
-
-                        <div id="mdn-panel" class="devtool-panel d-none">
                             <div class="mdn-tabs tabs-container">
                                 <button class="tab active" data-section="javascript">JavaScript</button>
                                 <button class="tab" data-section="dom">DOM API</button>
                                 <button class="tab" data-section="css">CSS</button>
                                 <button class="tab" data-section="html">HTML</button>
                             </div>
-                            <div class="mdn-content p-md overflow-y-auto"></div>
+                            <div class="mdn-content p-md overflow-y-auto">
+                                <div class="text-center text-muted p-xl">
+                                    <p>Offline MDN Documentation</p>
+                                    <p class="text-sm">Select a category above</p>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div id="devtools-panel" class="sidebar-panel">
+                            <div class="devtools-tabs">
+                                <button class="devtool-tab active" data-tool="network">Network</button>
+                                <button class="devtool-tab" data-tool="storage">Storage</button>
+                                <button class="devtool-tab" data-tool="elements">Elements</button>
+                            </div>
+                            <div class="devtools-content">
+                                <div id="network-tool" class="devtool-panel active">
+                                    <table class="network-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Status</th>
+                                                <th>Size</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="network-requests"></tbody>
+                                    </table>
+                                </div>
+        
+                                <div id="storage-tool" class="devtool-panel">
+                                    <div class="storage-empty devtools-empty">
+                                        <div class="empty-icon">💾</div>
+                                        <div class="empty-title">Storage Inspector</div>
+                                    </div>
+                                </div>
+        
+                                <div id="elements-tool" class="devtool-panel">
+                                    <div class="elements-empty devtools-empty">
+                                        <div class="empty-icon">🏗️</div>
+                                        <div class="empty-title">Elements Inspector</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </aside>
-
-                <div class="resizer" id="resizer-devtools"></div>
-
-                <div class="project-runner-panel">
-                    <div class="panel-header">
-                        <h3>Project Output</h3>
-                        <div class="panel-controls">
-                            <button id="run-project-btn" class="control-btn">Run Project</button>
-                            <button id="stop-project-btn" class="control-btn">Stop</button>
+        
+                <main class="main-area">
+                    <div class="editor-area">
+                        <div class="editor-header">
+                            <div id="file-tabs-container" class="tabs-container"></div>
+                            <div class="editor-actions d-flex gap-xs">
+                                <button id="run-btn" class="btn btn-sm btn-primary">▶ Run</button>
+                                <button id="save-btn" class="btn btn-sm">💾 Save</button>
+                                <button id="format-btn" class="btn btn-sm">⚡ Format</button>
+                                <select id="theme-selector" class="select text-xs">
+                                    <option value="vs-dark">Dark</option>
+                                    <option value="vs">Light</option>
+                                    <option value="hc-black">High Contrast</option>
+                                </select>
+                            </div>
+                        </div>
+        
+                        <div id="monaco-editor" class="flex-1"></div>
+        
+                        <div class="editor-footer d-flex justify-between items-center px-md py-xs bg-panel border-top">
+                            <div class="editor-status d-flex gap-lg text-xs text-muted">
+                                <span id="cursor-position">Ln 1, Col 1</span>
+                                <span id="file-language">JavaScript</span>
+                                <span id="encoding">UTF-8</span>
+                            </div>
+                            <div class="editor-info d-flex gap-lg text-xs">
+                                <span id="word-count">0 words</span>
+                                <span id="char-count">0 chars</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="panel-content">
-                        <iframe id="project-iframe" class="project-iframe" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-downloads allow-modals"></iframe>
+        
+                    <div class="console-area">
+                        <div class="console-header">
+                            <span class="text-sm font-medium">Console</span>
+                            <div class="console-actions d-flex gap-xs">
+                                <button id="clear-console" class="btn btn-icon btn-sm" title="Clear">🗑️</button>
+                            </div>
+                        </div>
+                        <div id="console-output"></div>
                     </div>
-                </div>
-
+                </main>
+        
                 <footer class="exam-footer">
                     <div class="footer-left d-flex items-center gap-md">
                         <span class="connection-status d-flex items-center gap-xs">
@@ -290,20 +262,21 @@
                         </span>
                         <span class="server-info text-xs text-muted">Server: exam-server:8080</span>
                     </div>
-
+        
                     <div class="footer-center">
                         <span class="exam-progress text-xs">
                             <span id="completed-tasks">0</span> / <span id="total-tasks">5</span> tasks completed
                         </span>
                     </div>
-
+        
                     <div class="footer-right d-flex items-center gap-md">
                         <button class="btn btn-sm" id="help-btn">❓ Help</button>
                         <span class="version-info text-xs text-muted">v2.0.0</span>
                     </div>
                 </footer>
-            </div>
+            </div>  
         </div>
+
     </div>
 
     <div id="violation-overlay" class="violation-overlay d-none">
