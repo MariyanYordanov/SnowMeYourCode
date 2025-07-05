@@ -57,10 +57,10 @@
 .exam-container {
     display: grid;
     grid-template-areas:
-        "header header header header header"
-        "files resizer1 editor resizer2 runner"
-        "footer footer footer footer footer";
-    grid-template-columns: var(--files-width) 10px 1fr 10px var(--runner-width);
+        "header header header"
+        "files editor devtools"
+        "footer footer footer";
+    grid-template-columns: var(--files-width) 1fr var(--devtools-width);
     grid-template-rows: var(--header-height) 1fr var(--footer-height);
     height: 100vh;
     background: var(--bg-dark);
@@ -78,6 +78,18 @@
 
 .exam-container.hide-files.hide-devtools {
     grid-template-columns: 0 1fr 0;
+}
+
+.exam-container.editor-only {
+    grid-template-columns: 0 1fr 0;
+}
+
+.exam-container.focus-files {
+    grid-template-columns: 400px 1fr 200px;
+}
+
+.exam-container.focus-devtools {
+    grid-template-columns: 150px 1fr 500px;
 }
 
 .exam-header {
@@ -126,23 +138,6 @@
     flex-direction: column;
     overflow: hidden;
     transition: opacity var(--transition);
-}
-
-.project-runner-panel {
-    grid-area: runner;
-    background: var(--bg-darker);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.project-iframe {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: white;
 }
 
 .panel-header {
@@ -207,13 +202,6 @@
     padding: 0 var(--space-md);
 }
 
-.console-panel {
-    background: var(--bg-darker);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 .console-output {
     flex: 1;
     overflow-y: auto;
@@ -221,6 +209,8 @@
     font-family: 'Monaco', 'Consolas', monospace;
     font-size: var(--font-xs);
     line-height: 1.5;
+    background: var(--bg-darker);
+    color: var(--text-secondary);
 }
 
 .console-entry {
@@ -245,15 +235,6 @@
 
 .console-info {
     color: var(--info);
-}
-
-.console-output {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--space-sm);
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: var(--font-xs);
-    line-height: 1.5;
 }
 
 .tabs-container {
@@ -304,6 +285,17 @@
 .devtool-tab.active {
     background: var(--primary);
     color: white;
+}
+
+.devtool-panel {
+    display: none;
+    flex: 1;
+    overflow: auto;
+}
+
+.devtool-panel.active {
+    display: flex;
+    flex-direction: column;
 }
 
 .network-table {
@@ -476,4 +468,5 @@
 
     .exam-container.show-devtools {
         grid-template-columns: 0 0 100vw;
-    } }
+    }
+}
