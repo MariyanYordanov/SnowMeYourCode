@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Login - Exam Monitor v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #e53e3e;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 12px;
+        }
+
+        .security-notice {
+            background: #fff5cd;
+            color: #744210;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            text-align: left;
+            border-left: 4px solid #ecc94b;
+        }
+
+        .security-notice strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>👨‍🏫 Teacher Login</h1>
+            <p>Exam Monitor v2.0 - Secure Access</p>
+        </div>
+
+        <div class="security-notice">
+            <strong>🔒 Security Notice:</strong>
+            This dashboard provides access to all student exams and system controls. Please keep your credentials secure.
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="teacher-login-form">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-input" 
+                       placeholder="Enter your username" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-input" 
+                       placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" id="login-btn" class="login-btn">
+                <span class="loading-spinner" id="loading-spinner"></span>
+                Login to Dashboard
+            </button>
+        </form>
+
+        <div class="footer">
+            <p>Exam Monitor v2.0 | Secure Teacher Access</p>
+            <p>Make sure you are on a secure connection</p>
+        </div>
+    </div>
+
+    <script>
+        // Teacher login functionality
+        class TeacherLogin {
+            constructor() {
+                this.form = document.getElementById('teacher-login-form');
+                this.usernameInput = document.getElementById('username');
+                this.passwordInput = document.getElementById('password');
+                this.loginBtn = document.getElementById('login-btn');
+                this.loadingSpinner = document.getElementById('loading-spinner');
+                this.errorMessage = document.getElementById('error-message');
+                this.successMessage = document.getElementById('success-message');
+                
+                this.setupEventListeners();
+                this.checkExistingSession();
+            }
+
+            setupEventListeners() {
+                this.form.addEventListener('submit', this.handleLogin.bind(this));
+                
+                // Auto-focus username field
+                this.usernameInput.focus();
+                
+                // Clear errors on input
+                this.usernameInput.addEventListener('input', () => this.clearMessages());
+                this.passwordInput.addEventListener('input', () => this.clearMessages());
+            }
+
+            async checkExistingSession() {
+                try {
+                    const response = await fetch('/api/teacher/verify-session', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.authenticated) {
+                            // Already logged in, redirect to dashboard
+                            window.location.href = '/teacher/';
+                        }
+                    }
+                } catch (error) {
+                    // Ignore session check errors
+                    console.log('No existing session found');
+                }
+            }
+
+            async handleLogin(e) {
+                e.preventDefault();
+                
+                const username = this.usernameInput.value.trim();
+                const password = this.passwordInput.value;
+                
+                if (!username || !password) {
+                    this.showError('Please enter both username and password');
+                    return;
+                }
+                
+                this.setLoading(true);
+                this.clearMessages();
+                
+                try {
+                    const response = await fetch('/api/teacher/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Login successful! Redirecting...');
+                        
+                        // Clear form
+                        this.form.reset();
+                        
+                        // Redirect to dashboard
+                        setTimeout(() => {
+                            window.location.href = '/teacher/';
+                        }, 1000);
+                        
+                    } else {
+                        this.handleLoginError(data);
+                    }
+                    
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showError('Connection error. Please try again.');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            handleLoginError(data) {
+                switch (data.error) {
+                    case 'invalid_credentials':
+                        this.showError('Invalid username or password');
+                        break;
+                    case 'too_many_attempts':
+                        const minutes = Math.ceil(data.lockoutTime / 60);
+                        this.showError(`Too many failed attempts. Try again in ${minutes} minutes.`);
+                        break;
+                    case 'missing_credentials':
+                        this.showError('Please enter both username and password');
+                        break;
+                    default:
+                        this.showError('Login failed. Please try again.');
+                }
+            }
+
+            setLoading(isLoading) {
+                this.loginBtn.disabled = isLoading;
+                this.loadingSpinner.style.display = isLoading ? 'inline-block' : 'none';
+                this.loginBtn.innerHTML = isLoading ? 
+                    '<span class="loading-spinner" style="display: inline-block;"></span> Logging in...' : 
+                    'Login to Dashboard';
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                this.successMessage.style.display = 'none';
+            }
+
+            showSuccess(message) {
+                this.successMessage.textContent = message;
+                this.successMessage.style.display = 'block';
+                this.errorMessage.style.display = 'none';
+            }
+
+            clearMessages() {
+                this.errorMessage.style.display = 'none';
+                this.successMessage.style.display = 'none';
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TeacherLogin();
+        });
+    </script>
+</body>
+</html>

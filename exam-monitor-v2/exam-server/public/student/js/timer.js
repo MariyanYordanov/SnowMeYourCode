@@ -84,7 +84,7 @@ export function updateTimerDisplay(timeLeft) {
 
         const display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-        const timerEl = document.getElementById('timer-display');
+        const timerEl = document.getElementById('exam-timer');
         if (timerEl) {
             timerEl.textContent = display;
         }
@@ -104,7 +104,7 @@ export function updateTimerDisplay(timeLeft) {
  */
 function updateTimerColor(timeLeft) {
     try {
-        const timerEl = document.querySelector('.exam-timer');
+        const timerEl = document.getElementById('exam-timer');
         if (!timerEl) return;
 
         const minutesLeft = Math.floor(timeLeft / (1000 * 60));
@@ -176,7 +176,7 @@ export function showTimeWarning(minutes) {
  */
 function flashTimer() {
     try {
-        const timerEl = document.querySelector('.exam-timer');
+        const timerEl = document.getElementById('exam-timer');
         if (!timerEl) return;
 
         // Add flash class

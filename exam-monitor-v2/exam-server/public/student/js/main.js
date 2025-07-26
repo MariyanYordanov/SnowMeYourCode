@@ -1,6 +1,8 @@
 import { MonacoFileManager } from './monaco-file-manager.js';
 import { updateEditorIntegration, loadStarterProject } from './editor-integration.js'; 
 import { SidebarManager } from './sidebar-manager.js';
+import { previewManager } from './preview-manager.js';
+import { HelpChat } from './help-chat.js';
 
 import {
     setupLoginForm,
@@ -30,7 +32,8 @@ import {
 import {
     setupAntiCheat,
     enterFullscreenMode,
-    deactivateAntiCheat
+    deactivateAntiCheat,
+    initializeAdvancedAntiCheat
 } from './anticheat.js';
 
 import {
@@ -44,10 +47,12 @@ window.ExamApp = {
     socket: null,
     editor: null,
     fileManager: null,
+    previewManager: previewManager,
 
     sessionId: null,
     studentName: null,
     studentClass: null,
+    helpChat: null,
 
     examStartTime: null,
     examDuration: 3 * 60 * 60 * 1000,
@@ -80,6 +85,12 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 function initializeApp() {
     try {
         console.log('Initializing Exam Monitor App...');
+        
+        // Check for mobile/tablet devices and block access
+        if (detectMobileDevice()) {
+            blockMobileAccess();
+            return; // Stop initialization
+        }
 
         const examApp = window.ExamApp;
 
@@ -133,21 +144,26 @@ async function startExam(sessionData) {
 
         setupTabs();
 
-        enterFullscreenMode();
+        // Initialize advanced anti-cheat modules
+        initializeAdvancedAntiCheat();
 
-        startExamTimer(examApp.examEndTime);
+        // Initialize help chat
+        if (examApp.socket) {
+            examApp.helpChat = new HelpChat(examApp.socket);
+            examApp.helpChat.requestNotificationPermission();
+        }
 
-        // Различни съобщения за нова/възстановена сесия
-        if (sessionData.isNewSession) {
-            showNotification('Изпитът започна! Успех!', 'success');
-        } else {
+        // Show minimal fullscreen button
+        showMinimalFullscreenButton();
+
+        startExamTimer(sessionData.timeLeft || examApp.examDuration);
+
+        // Възстановяваме кода за продължаващи сесии
+        if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
+            examApp.editor.setValue(sessionData.lastCode);
+            
             const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
-            showNotification(`Добре дошли обратно! Остават ${minutesLeft} минути`, 'info');
-
-            // Възстановяваме кода
-            if (sessionData.lastCode && examApp.editor) {
-                examApp.editor.setValue(sessionData.lastCode);
-            }
+            showNotification(`Сесията е възстановена. Остават ${minutesLeft} минути`, 'info');
         }
 
         console.log('Exam started successfully');
@@ -187,7 +203,7 @@ async function startFullscreenExam() {
 
         setupTabs();
 
-        startExamTimer(examApp.examEndTime);
+        startExamTimer(examApp.examDuration);
 
         showNotification('Изпитът започна успешно! Успех!', 'success');
 
@@ -262,12 +278,6 @@ function setupFileManagerCommands() {
             });
         }
 
-        const saveBtn = document.getElementById('save-btn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                fileManager.saveCurrentFile();
-            });
-        }
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
             fileManager.saveCurrentFile();
@@ -494,3 +504,144 @@ function setupWindowFunctions() {
     examApp.completeExam = completeExam;
     examApp.exitExam = exitExam;
 }
+
+/**
+ * Detect if the device is mobile or tablet
+ */
+function detectMobileDevice() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    
+    // Check for mobile devices
+    const mobileKeywords = [
+        'android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry',
+        'iemobile', 'opera mini', 'mobile', 'tablet', 'kindle', 'silk'
+    ];
+    
+    const isMobile = mobileKeywords.some(keyword => userAgent.includes(keyword));
+    
+    // Additional checks
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const smallScreen = window.innerWidth <= 768 || window.innerHeight <= 600;
+    
+    // Check for mobile-specific features
+    const isMobileUA = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    return isMobile || (hasTouch && smallScreen) || isMobileUA;
+}
+
+/**
+ * Block mobile access with error message
+ */
+function blockMobileAccess() {
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="
+                background: rgba(0,0,0,0.3);
+                padding: 40px;
+                border-radius: 10px;
+                max-width: 500px;
+            ">
+                <h1 style="font-size: 48px; margin-bottom: 20px;">📱❌</h1>
+                <h2 style="margin-bottom: 20px;">Мобилни устройства не се поддържат</h2>
+                <p style="font-size: 18px; line-height: 1.6;">
+                    Изпитът може да се провежда само на лаптоп или настолен компютър.
+                    <br><br>
+                    Моля, използвайте компютър с:
+                </p>
+                <ul style="text-align: left; display: inline-block; margin: 20px 0;">
+                    <li>Windows, macOS или Linux</li>
+                    <li>Chrome, Firefox, Edge или Safari браузър</li>
+                    <li>Минимална резолюция 1280x720</li>
+                    <li>Физическа клавиатура и мишка</li>
+                </ul>
+                <p style="margin-top: 30px; opacity: 0.8;">
+                    За въпроси се свържете с преподавателя.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Show minimal fullscreen button that auto-clicks after showing
+ */
+function showMinimalFullscreenButton() {
+    // Create a subtle overlay with a single button
+    const overlay = document.createElement('div');
+    overlay.id = 'fullscreen-button-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+        cursor: pointer;
+    `;
+    
+    const button = document.createElement('button');
+    button.style.cssText = `
+        background: #4299e1;
+        color: white;
+        border: none;
+        padding: 20px 40px;
+        font-size: 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: pulse 1s infinite;
+    `;
+    button.innerHTML = '🖥️ Започни изпита';
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    overlay.appendChild(button);
+    document.body.appendChild(overlay);
+    
+    // Make entire overlay clickable
+    const startExam = async () => {
+        try {
+            const success = enterFullscreenMode();
+            if (success) {
+                overlay.remove();
+                style.remove();
+            }
+        } catch (error) {
+            console.error('Failed to enter fullscreen:', error);
+            showError('Моля, разрешете fullscreen режим');
+        }
+    };
+    
+    button.addEventListener('click', startExam);
+    overlay.addEventListener('click', startExam);
+    
+    // Auto-focus the button
+    setTimeout(() => {
+        button.focus();
+    }, 100);
+}
+

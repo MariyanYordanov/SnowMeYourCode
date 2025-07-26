@@ -115,7 +115,6 @@
                     <div class="exam-info d-flex gap-lg items-center">
                         <span class="student-name text-sm font-medium"></span>
                         <span class="student-class text-sm"></span>
-                        <span class="session-id text-xs text-muted"></span>
                     </div>
         
                     <div class="exam-timer d-flex items-center gap-sm">
@@ -174,10 +173,8 @@
                         </div>
         
                         <div id="devtools-panel" class="sidebar-panel">
-                            <div class="devtools-tabs">
-                                <button class="devtool-tab active" data-tool="network">Network</button>
-                                <button class="devtool-tab" data-tool="storage">Storage</button>
-                                <button class="devtool-tab" data-tool="elements">Elements</button>
+                            <div class="devtools-header">
+                                <span class="devtools-title">🔍 Network Monitor</span>
                             </div>
                             <div class="devtools-content">
                                 <div id="network-tool" class="devtool-panel active">
@@ -194,19 +191,6 @@
                                     </table>
                                 </div>
         
-                                <div id="storage-tool" class="devtool-panel">
-                                    <div class="storage-empty devtools-empty">
-                                        <div class="empty-icon">💾</div>
-                                        <div class="empty-title">Storage Inspector</div>
-                                    </div>
-                                </div>
-        
-                                <div id="elements-tool" class="devtool-panel">
-                                    <div class="elements-empty devtools-empty">
-                                        <div class="empty-icon">🏗️</div>
-                                        <div class="empty-title">Elements Inspector</div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -215,18 +199,19 @@
                 <main class="main-area">
                     <div class="editor-area">
                         <div class="editor-header">
-                            <div id="file-tabs-container" class="tabs-container"></div>
                             <div class="editor-actions d-flex gap-xs">
                                 <button id="run-btn" class="btn btn-sm btn-primary">▶ Run</button>
-                                <button id="save-btn" class="btn btn-sm">💾 Save</button>
+                                <button id="preview-btn" class="btn btn-sm">🌐 Preview</button>
+                                <button id="start-server-btn" class="btn btn-sm btn-success">🚀 Start Server</button>
                                 <button id="format-btn" class="btn btn-sm">⚡ Format</button>
                                 <select id="theme-selector" class="select text-xs">
                                     <option value="vs-dark">Dark</option>
-                                    <option value="vs">Light</option>
                                     <option value="hc-black">High Contrast</option>
                                 </select>
                             </div>
                         </div>
+                        
+                        <div id="file-tabs-container" class="tabs-container"></div>
         
                         <div id="monaco-editor" class="flex-1"></div>
         
@@ -243,15 +228,8 @@
                         </div>
                     </div>
         
-                    <div class="console-area">
-                        <div class="console-header">
-                            <span class="text-sm font-medium">Console</span>
-                            <div class="console-actions d-flex gap-xs">
-                                <button id="clear-console" class="btn btn-icon btn-sm" title="Clear">🗑️</button>
-                            </div>
-                        </div>
-                        <div id="console-output"></div>
-                    </div>
+                    <!-- Bottom panels removed - console output is now in DevTools sidebar -->
+                    <!-- Preview opens in new tab when Preview button is clicked -->
                 </main>
         
                 <footer class="exam-footer">

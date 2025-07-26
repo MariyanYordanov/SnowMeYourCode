@@ -1,0 +1,307 @@
+{
+  "summary": {
+    "total": 23,
+    "passed": 0,
+    "failed": 15,
+    "errors": 8
+  },
+  "tests": [
+    {
+      "name": "Function Key F1",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008746094,
+      "endTime": 1752008747100,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F2",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008747100,
+      "endTime": 1752008748105,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F3",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008748105,
+      "endTime": 1752008749110,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F4",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008749110,
+      "endTime": 1752008750114,
+      "duration": 1004,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F5",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008750115,
+      "endTime": 1752008751123,
+      "duration": 1008,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F11",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008751123,
+      "endTime": 1752008752128,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Function Key F12",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1752008752129,
+      "endTime": 1752008753134,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: DevTools",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753134,
+      "endTime": 1752008753135,
+      "duration": 1,
+      "error": "Unknown key: \"Control+Shift+I\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: Console",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753135,
+      "endTime": 1752008753135,
+      "duration": 0,
+      "error": "Unknown key: \"Control+Shift+J\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: Refresh",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753135,
+      "endTime": 1752008753136,
+      "duration": 1,
+      "error": "Unknown key: \"Control+R\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: New Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753136,
+      "endTime": 1752008753136,
+      "duration": 0,
+      "error": "Unknown key: \"Control+T\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: Close Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753136,
+      "endTime": 1752008753136,
+      "duration": 0,
+      "error": "Unknown key: \"Control+W\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: Alt+Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753136,
+      "endTime": 1752008753136,
+      "duration": 0,
+      "error": "Unknown key: \"Alt+Tab\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Key Combo: View Source",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753136,
+      "endTime": 1752008753137,
+      "duration": 1,
+      "error": "Unknown key: \"Control+U\"",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Allowed Combo: Ctrl+C in Editor",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1752008753137,
+      "endTime": 1752008753165,
+      "duration": 28,
+      "error": "Node is either not clickable or not an Element",
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Right Click",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1752008753165,
+      "endTime": 1752008754199,
+      "duration": 1034,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Middle Click",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1752008754200,
+      "endTime": 1752008755222,
+      "duration": 1022,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Mouse Leave Window",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1752008755222,
+      "endTime": 1752008756228,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "ESC Key - Exit Fullscreen",
+      "category": "fullscreen",
+      "status": "failed",
+      "startTime": 1752008756228,
+      "endTime": 1752008757244,
+      "duration": 1016,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "F11 - Toggle Fullscreen",
+      "category": "fullscreen",
+      "status": "failed",
+      "startTime": 1752008757244,
+      "endTime": 1752008758253,
+      "duration": 1009,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Programmatic Fullscreen Exit",
+      "category": "fullscreen",
+      "status": "failed",
+      "startTime": 1752008758253,
+      "endTime": 1752008759279,
+      "duration": 1026,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Window Blur",
+      "category": "focus",
+      "status": "failed",
+      "startTime": 1752008759280,
+      "endTime": 1752008760284,
+      "duration": 1004,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Visibility Change",
+      "category": "focus",
+      "status": "failed",
+      "startTime": 1752008760285,
+      "endTime": 1752008761288,
+      "duration": 1003,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    }
+  ],
+  "browser": "",
+  "timestamp": "2025-07-08T21:05:28.890Z",
+  "coverage": {},
+  "config": {
+    "examUrl": "http://localhost:8080/student",
+    "testStudent": {
+      "name": "Test Student",
+      "class": "11Б"
+    },
+    "browsers": [
+      "chromium"
+    ],
+    "headless": false,
+    "timeout": 30000,
+    "outputDir": "./test-results"
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "platform": "MacIntel",
+    "language": "en-GB"
+  }
+}

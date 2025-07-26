@@ -241,13 +241,13 @@ export class MonacoFileManager {
 
         try {
             const content = this.editor.getValue();
+            const filename = encodeURIComponent(this.currentFile);
 
-            const response = await fetch('/api/project/save', {
-                method: 'POST',
+            const response = await fetch(`/api/project/file/${filename}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sessionId: window.ExamApp?.sessionId,
-                    path: this.currentFile,
                     content: content
                 })
             });
@@ -257,6 +257,12 @@ export class MonacoFileManager {
             if (result.success) {
                 this.unmarkFileAsModified(this.currentFile);
                 this.showNotification('Файлът е запазен', 'success');
+                
+                // Notify preview manager of file change
+                if (window.ExamApp?.previewManager) {
+                    window.ExamApp.previewManager.onFileChanged(this.currentFile);
+                }
+                
                 return true;
             }
 
@@ -284,9 +290,24 @@ export class MonacoFileManager {
 
     async createNewFile(fileName) {
         if (!fileName) {
-            fileName = prompt('Име на новия файл:');
+            fileName = prompt('File name (e.g. app.js, style.css, index.html):');
             if (!fileName) return;
         }
+
+        // Validate and sanitize filename
+        fileName = this.sanitizeFileName(fileName);
+        if (!fileName) {
+            alert('Invalid file name. Please use only letters, numbers, dots, and hyphens.');
+            return;
+        }
+
+        // Check if file already exists
+        if (this.models.has(fileName)) {
+            alert(`File "${fileName}" already exists!`);
+            return;
+        }
+
+        console.log('📁 Creating new file:', fileName);
 
         const content = this.getTemplateForFile(fileName);
         this.createFileModel(fileName, content);
@@ -294,6 +315,31 @@ export class MonacoFileManager {
         this.addTab(fileName);
 
         await this.saveCurrentFile();
+    }
+
+    /**
+     * Sanitize filename
+     */
+    sanitizeFileName(fileName) {
+        if (!fileName || typeof fileName !== 'string') return null;
+        
+        // Remove non-ASCII characters and invalid chars
+        fileName = fileName
+            .trim()
+            .replace(/[^\w\.-]/g, '') // Only allow word chars, dots, hyphens
+            .toLowerCase();
+        
+        // Ensure it has an extension
+        if (!fileName.includes('.')) {
+            fileName += '.js'; // Default to .js
+        }
+        
+        // Limit length
+        if (fileName.length > 50) {
+            fileName = fileName.substring(0, 47) + fileName.substring(fileName.lastIndexOf('.'));
+        }
+        
+        return fileName;
     }
 
     detectLanguage(path) {

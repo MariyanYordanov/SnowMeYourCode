@@ -182,6 +182,16 @@ pre {
     filter: brightness(110%);
 }
 
+.btn-warning {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    filter: brightness(110%);
+}
+
 .btn-danger {
     background: var(--danger);
     border-color: var(--danger);

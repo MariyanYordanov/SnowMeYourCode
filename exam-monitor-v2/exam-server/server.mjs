@@ -8,6 +8,7 @@ import { SessionManager } from './modules/SessionManager.mjs';
 import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
 import projectRoutes from './routes/project-routes.mjs';
+import teacherAuthRoutes, { requireTeacherAuth, redirectToLogin } from './routes/teacher-auth.mjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,7 +104,11 @@ app.get('/', (req, res) => {
     `);
 });
 
-app.get('/teacher', (req, res) => {
+// Teacher authentication routes
+app.use('/api/teacher', teacherAuthRoutes);
+
+// Protected teacher dashboard (requires authentication)
+app.get('/teacher', redirectToLogin, (req, res) => {
     res.sendFile(join(__dirname, 'public/teacher/index.html'));
 });
 
@@ -112,6 +117,99 @@ app.get('/student', (req, res) => {
 });
 
 app.use('/api/project', projectRoutes);
+
+// Exam files API
+app.get('/api/exam-files', async (req, res) => {
+    try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const examFilesPath = path.join(__dirname, '../practice-server/exam-files');
+        
+        async function scanDirectory(dirPath, relativePath = '') {
+            const files = [];
+            try {
+                const items = await fs.readdir(dirPath, { withFileTypes: true });
+                
+                for (const item of items) {
+                    const fullPath = path.join(dirPath, item.name);
+                    const relPath = relativePath ? `${relativePath}/${item.name}` : item.name;
+                    
+                    if (item.isDirectory()) {
+                        // Skip node_modules and other system folders
+                        if (!['node_modules', '.git', '.DS_Store'].includes(item.name)) {
+                            const subFiles = await scanDirectory(fullPath, relPath);
+                            files.push(...subFiles);
+                        }
+                    } else {
+                        const stats = await fs.stat(fullPath);
+                        files.push({
+                            name: item.name,
+                            path: relPath,
+                            size: stats.size,
+                            modified: stats.mtime
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error scanning directory:', dirPath, error);
+            }
+            
+            return files;
+        }
+        
+        const files = await scanDirectory(examFilesPath);
+        res.json({ success: true, files });
+        
+    } catch (error) {
+        console.error('Error loading exam files:', error);
+        res.status(500).json({ success: false, error: 'Failed to load exam files' });
+    }
+});
+
+// Teacher settings endpoints removed - exam duration is now configured in exam-config.json
+
+// Anti-cheat statistics endpoint (protected)
+app.get('/api/anticheat/stats', requireTeacherAuth, (req, res) => {
+    try {
+        const stats = webSocketHandler.getAntiCheatStats();
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Error getting anti-cheat stats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get anti-cheat statistics'
+        });
+    }
+});
+
+// Individual student anti-cheat stats
+app.get('/api/anticheat/student/:sessionId', requireTeacherAuth, (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const stats = webSocketHandler.getStudentAntiCheatStats(sessionId);
+        
+        if (!stats) {
+            return res.status(404).json({
+                success: false,
+                error: 'Student not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Error getting student anti-cheat stats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get student statistics'
+        });
+    }
+});
 
 // Dynamic route to serve student project files
 app.use('/api/project/run/:sessionId', (req, res, next) => {

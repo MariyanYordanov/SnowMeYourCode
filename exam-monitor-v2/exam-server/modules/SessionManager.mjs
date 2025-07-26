@@ -491,4 +491,17 @@ export class SessionManager {
 
         console.log('Session cleanup timer started');
     }
+
+    /**
+     * Get current exam configuration
+     */
+    getExamConfig() {
+        return {
+            duration: Math.floor(this.EXAM_DURATION / (60 * 1000)), // Convert to minutes
+            gracePeriod: Math.floor(this.GRACE_PERIOD / (60 * 1000)),
+            developmentMode: this.developmentMode !== false
+        };
+    }
+
+    // Exam settings methods removed - duration is now configured in exam-config.json
 }

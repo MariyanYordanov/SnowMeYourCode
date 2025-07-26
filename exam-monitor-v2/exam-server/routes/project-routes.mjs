@@ -7,7 +7,7 @@
 import { Router } from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
-import multer from 'multer';
+// Removed multer import - no longer needed with exam-files approach
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,338 +15,10 @@ const __dirname = path.dirname(__filename);
 
 const router = Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const sessionId = req.body.sessionId;
-        const uploadDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+// Multer configuration removed - using exam-files approach instead
 
-        // Ensure directory exists
-        fs.mkdir(uploadDir, { recursive: true })
-            .then(() => cb(null, uploadDir))
-            .catch(cb);
-    },
-    filename: (req, file, cb) => {
-        // Keep original filename
-        cb(null, file.originalname);
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit per file
-        files: 10 // Max 10 files at once
-    },
-    fileFilter: (req, file, cb) => {
-        // Allow only specific file types
-        const allowedTypes = [
-            'application/javascript',
-            'text/html',
-            'text/css',
-            'application/json',
-            'text/plain',
-            'text/markdown'
-        ];
-
-        const allowedExtensions = ['.js', '.html', '.css', '.json', '.txt', '.md'];
-        const fileExt = path.extname(file.originalname).toLowerCase();
-
-        if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExt)) {
-            cb(null, true);
-        } else {
-            cb(new Error('File type not allowed'), false);
-        }
-    }
-});
-
-/**
- * Project templates
- */
-const PROJECT_TEMPLATES = {
-    vanilla: {
-        name: 'Vanilla HTML/CSS/JS',
-        files: {
-            'index.html': `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Project</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header>
-        <h1>Welcome to Your Exam Project</h1>
-    </header>
-    
-    <main>
-        <section id="content">
-            <p>Start building your project here!</p>
-            <button id="demo-btn">Click Me</button>
-        </section>
-    </main>
-    
-    <script src="script.js"></script>
-</body>
-</html>`,
-            'style.css': `/* Exam Project Styles */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
-}
-
-header {
-    background: #333;
-    color: white;
-    text-align: center;
-    padding: 1rem;
-}
-
-main {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
-
-#content {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-#demo-btn {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 1rem;
-}
-
-#demo-btn:hover {
-    background: #0056b3;
-}`,
-            'script.js': `// Exam Project JavaScript
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Project loaded successfully!');
-    
-    // Demo button functionality
-    const demoBtn = document.getElementById('demo-btn');
-    if (demoBtn) {
-        demoBtn.addEventListener('click', function() {
-            alert('Hello! Start coding your exam project.');
-        });
-    }
-    
-    // Your code here...
-    
-});`
-        }
-    },
-
-    express: {
-        name: 'Express API Server',
-        files: {
-            'app.js': `// Express API Server - Exam Project
-
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// Routes
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Welcome to your Exam API Server!',
-        timestamp: new Date().toISOString()
-    });
-});
-
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'Exam API' });
-});
-
-// TODO: Add your API routes here
-app.get('/api/users', (req, res) => {
-    // Example endpoint - implement your logic
-    res.json({ users: [] });
-});
-
-app.post('/api/users', (req, res) => {
-    // Example endpoint - implement your logic
-    res.json({ message: 'User created', user: req.body });
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(\`Server running on port \${PORT}\`);
-    console.log(\`API available at http://localhost:\${PORT}\`);
-});`,
-            'package.json': `{
-  "name": "exam-api-project",
-  "version": "1.0.0",
-  "description": "Express API Server for Exam",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "test": "echo \\"No tests specified\\" && exit 1"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "keywords": ["express", "api", "exam"],
-  "author": "Student",
-  "license": "ISC"
-}`,
-            'routes/users.js': `// User routes - Example implementation
-
-const express = require('express');
-const router = express.Router();
-
-// In-memory storage (use database in real project)
-let users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-];
-
-// GET /api/users - Get all users
-router.get('/', (req, res) => {
-    res.json(users);
-});
-
-// GET /api/users/:id - Get user by ID
-router.get('/:id', (req, res) => {
-    const user = users.find(u => u.id === parseInt(req.params.id));
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-    }
-    res.json(user);
-});
-
-// POST /api/users - Create new user
-router.post('/', (req, res) => {
-    const { name, email } = req.body;
-    
-    if (!name || !email) {
-        return res.status(400).json({ error: 'Name and email are required' });
-    }
-    
-    const newUser = {
-        id: users.length + 1,
-        name,
-        email
-    };
-    
-    users.push(newUser);
-    res.status(201).json(newUser);
-});
-
-// PUT /api/users/:id - Update user
-router.put('/:id', (req, res) => {
-    const user = users.find(u => u.id === parseInt(req.params.id));
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-    }
-    
-    const { name, email } = req.body;
-    if (name) user.name = name;
-    if (email) user.email = email;
-    
-    res.json(user);
-});
-
-// DELETE /api/users/:id - Delete user
-router.delete('/:id', (req, res) => {
-    const index = users.findIndex(u => u.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'User not found' });
-    }
-    
-    users.splice(index, 1);
-    res.json({ message: 'User deleted successfully' });
-});
-
-module.exports = router;`,
-            'README.md': `# Express API Exam Project
-
-## Getting Started
-
-1. Install dependencies:
-   \`\`\`bash
-   npm install
-   \`\`\`
-
-2. Start the development server:
-   \`\`\`bash
-   npm run dev
-   \`\`\`
-
-3. API will be available at: http://localhost:3000
-
-## Available Endpoints
-
-- GET / - Welcome message
-- GET /api/health - Service health check
-- GET /api/users - Get all users
-- GET /api/users/:id - Get user by ID
-- POST /api/users - Create new user
-- PUT /api/users/:id - Update user
-- DELETE /api/users/:id - Delete user
-
-## Project Structure
-
-- \`app.js\` - Main application file
-- \`routes/\` - API route handlers
-- \`package.json\` - Project dependencies
-
-## TODO
-
-Complete the following tasks:
-- [ ] Implement database connection
-- [ ] Add authentication middleware
-- [ ] Add input validation
-- [ ] Write unit tests
-- [ ] Add error logging
-`
-        }
-    }
-};
+// Project templates removed - using exam-files approach instead
+// All templates are now served from practice-server/exam-files/
 
 /**
  * GET /api/project/files - Get project file structure
@@ -360,22 +32,43 @@ router.get('/files', async (req, res) => {
         }
 
         const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const examFilesDir = path.join(__dirname, '..', '..', 'practice-server', 'exam-files');
 
-        // Check if project directory exists
+        let useExamFiles = false;
+        let sourceDir = projectDir;
+
+        // Check if project directory exists, if not use exam-files
         try {
             await fs.access(projectDir);
         } catch {
-            return res.json({ success: false, error: 'No project found' });
+            try {
+                await fs.access(examFilesDir);
+                useExamFiles = true;
+                sourceDir = examFilesDir;
+                
+                // Copy exam files to student directory
+                await fs.mkdir(projectDir, { recursive: true });
+                await copyDirectory(examFilesDir, projectDir);
+                
+                // Install npm dependencies if package.json exists
+                await installProjectDependencies(projectDir, sessionId);
+                
+                console.log(`Initialized project files for session ${sessionId} from exam-files`);
+                
+            } catch {
+                return res.json({ success: false, error: 'No project files available' });
+            }
         }
 
-        const files = await getFileStructure(projectDir);
-        const projectType = await getProjectType(projectDir);
+        const files = await getFileStructure(sourceDir);
+        const projectType = await getProjectType(sourceDir);
 
         res.json({
             success: true,
             files,
             projectType,
-            projectRoot: projectDir
+            projectRoot: sourceDir,
+            source: useExamFiles ? 'exam-files' : 'session-files'
         });
 
     } catch (error) {
@@ -525,85 +218,7 @@ router.delete('/file/:filename', async (req, res) => {
     }
 });
 
-/**
- * POST /api/project/upload - Upload files
- */
-router.post('/upload', upload.array('file'), async (req, res) => {
-    try {
-        const { sessionId } = req.body;
-
-        if (!sessionId) {
-            return res.status(400).json({ success: false, error: 'Session ID required' });
-        }
-
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ success: false, error: 'No files uploaded' });
-        }
-
-        const uploadedFiles = req.files.map(file => ({
-            filename: file.filename,
-            originalName: file.originalname,
-            size: file.size,
-            path: file.path
-        }));
-
-        res.json({
-            success: true,
-            message: `${uploadedFiles.length} file(s) uploaded successfully`,
-            files: uploadedFiles
-        });
-
-    } catch (error) {
-        console.error('Error uploading files:', error);
-        res.status(500).json({ success: false, error: 'Failed to upload files' });
-    }
-});
-
-/**
- * POST /api/project/create-from-template - Create project from template
- */
-router.post('/create-from-template', async (req, res) => {
-    try {
-        const { sessionId, templateType } = req.body;
-
-        if (!sessionId || !templateType) {
-            return res.status(400).json({ success: false, error: 'Session ID and template type required' });
-        }
-
-        const template = PROJECT_TEMPLATES[templateType];
-        if (!template) {
-            return res.status(400).json({ success: false, error: 'Invalid template type' });
-        }
-
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
-
-        // Ensure project directory exists
-        await fs.mkdir(projectDir, { recursive: true });
-
-        // Create all template files
-        for (const [fileName, content] of Object.entries(template.files)) {
-            const filePath = path.join(projectDir, fileName);
-            const fileDir = path.dirname(filePath);
-
-            // Create subdirectory if needed
-            await fs.mkdir(fileDir, { recursive: true });
-
-            // Write file
-            await fs.writeFile(filePath, content, 'utf8');
-        }
-
-        res.json({
-            success: true,
-            message: `${template.name} project created successfully`,
-            templateType,
-            filesCreated: Object.keys(template.files)
-        });
-
-    } catch (error) {
-        console.error('Error creating project from template:', error);
-        res.status(500).json({ success: false, error: 'Failed to create project' });
-    }
-});
+// Upload and template endpoints removed - using exam-files approach instead
 
 /**
  * Helper functions
@@ -652,5 +267,309 @@ async function getProjectType(projectDir) {
         return 'vanilla';
     }
 }
+
+async function copyDirectory(src, dest) {
+    await fs.mkdir(dest, { recursive: true });
+    
+    const entries = await fs.readdir(src, { withFileTypes: true });
+    
+    for (const entry of entries) {
+        // Skip node_modules and system files
+        if (['node_modules', '.git', '.DS_Store', 'package-lock.json'].includes(entry.name)) {
+            continue;
+        }
+        
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        
+        if (entry.isDirectory()) {
+            await copyDirectory(srcPath, destPath);
+        } else {
+            await fs.copyFile(srcPath, destPath);
+        }
+    }
+}
+
+async function installProjectDependencies(projectDir, sessionId) {
+    try {
+        // Check if package.json exists
+        const packageJsonPath = path.join(projectDir, 'package.json');
+        await fs.access(packageJsonPath);
+        
+        console.log(`📦 Installing dependencies for session ${sessionId}...`);
+        
+        // Run npm install using spawn
+        const { spawn } = await import('child_process');
+        
+        return new Promise((resolve, reject) => {
+            const npmProcess = spawn('npm', ['install'], {
+                cwd: projectDir,
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+            
+            let output = '';
+            let errorOutput = '';
+            
+            npmProcess.stdout.on('data', (data) => {
+                output += data.toString();
+            });
+            
+            npmProcess.stderr.on('data', (data) => {
+                errorOutput += data.toString();
+            });
+            
+            npmProcess.on('close', (code) => {
+                if (code === 0) {
+                    console.log(`✅ Dependencies installed successfully for session ${sessionId}`);
+                    resolve();
+                } else {
+                    console.error(`❌ npm install failed for session ${sessionId}:`, errorOutput);
+                    reject(new Error(`npm install failed with code ${code}`));
+                }
+            });
+            
+            // Timeout after 30 seconds
+            setTimeout(() => {
+                npmProcess.kill('SIGTERM');
+                reject(new Error('npm install timeout'));
+            }, 30000);
+        });
+        
+    } catch (error) {
+        // No package.json or other error - not a Node.js project
+        console.log(`No package.json found for session ${sessionId} - skipping npm install`);
+    }
+}
+
+// Track running student servers
+const studentServers = new Map();
+let nextPort = 4000;
+
+async function startStudentServer(projectDir, sessionId) {
+    try {
+        // Check if server is already running
+        if (studentServers.has(sessionId)) {
+            const existing = studentServers.get(sessionId);
+            if (existing.process && !existing.process.killed) {
+                return existing.port;
+            }
+        }
+
+        // Find available port
+        const port = await findAvailablePort(nextPort);
+        nextPort = port + 1;
+
+        console.log(`🚀 Starting Express server for session ${sessionId} on port ${port}...`);
+
+        // Read package.json to get start script
+        const packageJsonPath = path.join(projectDir, 'package.json');
+        const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+        
+        // Determine start command
+        let startCommand = 'node';
+        let startArgs = ['./src/index.js']; // Default
+        
+        if (packageJson.scripts && packageJson.scripts.start) {
+            const startScript = packageJson.scripts.start;
+            if (startScript.includes('nodemon')) {
+                startCommand = 'node'; // Use node instead of nodemon
+                startArgs = ['./src/index.js'];
+            } else if (startScript.includes('node')) {
+                const parts = startScript.split(' ');
+                startArgs = parts.slice(1); // Remove 'node'
+            }
+        }
+
+        // Spawn the process
+        const { spawn } = await import('child_process');
+        
+        const serverProcess = spawn(startCommand, startArgs, {
+            cwd: projectDir,
+            stdio: ['ignore', 'pipe', 'pipe'],
+            env: {
+                ...process.env,
+                PORT: port.toString(),
+                NODE_ENV: 'development'
+            }
+        });
+
+        // Store server info
+        studentServers.set(sessionId, {
+            process: serverProcess,
+            port: port,
+            startTime: Date.now()
+        });
+
+        // Handle server output
+        serverProcess.stdout.on('data', (data) => {
+            console.log(`[${sessionId}:${port}] ${data.toString().trim()}`);
+        });
+
+        serverProcess.stderr.on('data', (data) => {
+            console.error(`[${sessionId}:${port}] ERROR: ${data.toString().trim()}`);
+        });
+
+        serverProcess.on('close', (code) => {
+            console.log(`[${sessionId}:${port}] Server closed with code ${code}`);
+            studentServers.delete(sessionId);
+        });
+
+        serverProcess.on('error', (error) => {
+            console.error(`[${sessionId}:${port}] Server error:`, error);
+            studentServers.delete(sessionId);
+        });
+
+        // Wait a moment for server to start
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        console.log(`✅ Express server started for session ${sessionId} on port ${port}`);
+        return port;
+
+    } catch (error) {
+        console.error(`❌ Failed to start server for session ${sessionId}:`, error);
+        throw error;
+    }
+}
+
+async function stopStudentServer(sessionId) {
+    const serverInfo = studentServers.get(sessionId);
+    if (serverInfo && serverInfo.process && !serverInfo.process.killed) {
+        console.log(`🛑 Stopping server for session ${sessionId} on port ${serverInfo.port}`);
+        serverInfo.process.kill('SIGTERM');
+        studentServers.delete(sessionId);
+        return true;
+    }
+    return false;
+}
+
+async function findAvailablePort(startPort) {
+    const { createServer } = await import('net');
+    
+    return new Promise((resolve, reject) => {
+        const server = createServer();
+        
+        server.listen(startPort, () => {
+            const port = server.address().port;
+            server.close(() => resolve(port));
+        });
+        
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(findAvailablePort(startPort + 1));
+            } else {
+                reject(err);
+            }
+        });
+    });
+}
+
+/**
+ * POST /api/project/start - Start student's Express server
+ */
+router.post('/start', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+            return res.status(400).json({ success: false, error: 'Session ID required' });
+        }
+
+        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        
+        // Check if this is an Express project
+        const projectType = await getProjectType(projectDir);
+        if (projectType !== 'express') {
+            return res.json({ success: false, error: 'Not an Express project' });
+        }
+
+        // Start the Express server for this student
+        const port = await startStudentServer(projectDir, sessionId);
+        
+        res.json({
+            success: true,
+            message: 'Server started successfully',
+            port: port,
+            url: `http://localhost:${port}`
+        });
+
+    } catch (error) {
+        console.error('Error starting student server:', error);
+        res.status(500).json({ success: false, error: 'Failed to start server' });
+    }
+});
+
+/**
+ * POST /api/project/stop - Stop student's Express server
+ */
+router.post('/stop', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+            return res.status(400).json({ success: false, error: 'Session ID required' });
+        }
+
+        await stopStudentServer(sessionId);
+        
+        res.json({
+            success: true,
+            message: 'Server stopped successfully'
+        });
+
+    } catch (error) {
+        console.error('Error stopping student server:', error);
+        res.status(500).json({ success: false, error: 'Failed to stop server' });
+    }
+});
+
+/**
+ * GET /api/project/preview/:sessionId/* - Serve project files for preview
+ */
+router.get('/preview/:sessionId/*', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const filePath = req.params[0] || 'index.html';
+
+        if (!sessionId) {
+            return res.status(400).send('Session ID required');
+        }
+
+        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const fullPath = path.join(projectDir, filePath);
+
+        // Security check
+        if (!fullPath.startsWith(projectDir)) {
+            return res.status(403).send('Access denied');
+        }
+
+        // Set appropriate content type
+        const ext = path.extname(filePath).toLowerCase();
+        const contentTypes = {
+            '.html': 'text/html',
+            '.css': 'text/css',
+            '.js': 'application/javascript',
+            '.json': 'application/json',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.pdf': 'application/pdf',
+            '.txt': 'text/plain',
+            '.md': 'text/markdown'
+        };
+
+        if (contentTypes[ext]) {
+            res.type(contentTypes[ext]);
+        }
+
+        // Serve the file
+        res.sendFile(fullPath);
+
+    } catch (error) {
+        console.error('Error serving preview file:', error);
+        res.status(500).send('Internal server error');
+    }
+});
 
 export default router;

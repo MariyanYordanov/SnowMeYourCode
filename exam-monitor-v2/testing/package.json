@@ -1,0 +1,24 @@
+{
+  "name": "exam-anticheat-testing",
+  "version": "1.0.0",
+  "description": "Automated testing suite for exam anti-cheat system",
+  "main": "test-runner.js",
+  "scripts": {
+    "test": "node test-runner.js",
+    "test-keyboard": "node tests/keyboard-tests.js",
+    "test-mouse": "node tests/mouse-tests.js",
+    "test-fullscreen": "node tests/fullscreen-tests.js",
+    "test-focus": "node tests/focus-tests.js",
+    "test-all": "node test-runner.js --all",
+    "install-deps": "npm install puppeteer playwright"
+  },
+  "dependencies": {
+    "puppeteer": "^21.6.1",
+    "playwright": "^1.40.1",
+    "colors": "^1.4.0",
+    "fs-extra": "^11.2.0"
+  },
+  "keywords": ["testing", "anti-cheat", "puppeteer", "automation"],
+  "author": "Exam Monitor System",
+  "license": "MIT"
+}

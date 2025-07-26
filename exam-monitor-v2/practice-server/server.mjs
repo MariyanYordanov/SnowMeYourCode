@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { StudentDataManager } from './student-data-manager.mjs';
+// StudentDataManager removed - functionality already exists in exam-server
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -10,8 +10,35 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = 3030;
 
-// Initialize StudentDataManager
-const studentDataManager = new StudentDataManager(path.join(__dirname, 'data'));
+// StudentDataManager functionality moved to exam-server
+// Direct JSON file operations for practice server
+import fs from 'fs';
+
+// Helper functions for JSON data access
+function readJsonFile(filename) {
+    const filePath = path.join(__dirname, 'data', filename);
+    if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+    return [];
+}
+
+function getAllData() {
+    const dataDir = path.join(__dirname, 'data');
+    const data = {};
+    
+    if (fs.existsSync(dataDir)) {
+        const files = fs.readdirSync(dataDir);
+        files.forEach(file => {
+            if (file.endsWith('.json')) {
+                const collection = file.slice(0, -5);
+                data[collection] = readJsonFile(file);
+            }
+        });
+    }
+    
+    return data;
+}
 
 // Middleware
 app.use(express.json());
@@ -81,7 +108,7 @@ app.get('/jsonstore/:collection?/:id?', async (req, res, next) => {
             });
         }
 
-        const data = studentDataManager.getAllStudentData(studentId);
+        const data = getAllData();
 
         if (!collection) {
             // Return all collections
@@ -122,7 +149,7 @@ app.post('/jsonstore/:collection', async (req, res, next) => {
             });
         }
 
-        const data = studentDataManager.getAllStudentData(studentId);
+        const data = getAllData();
 
         if (!data[collection]) {
             data[collection] = {};
@@ -132,7 +159,7 @@ app.post('/jsonstore/:collection', async (req, res, next) => {
         data[collection][newId] = { ...req.body, _id: newId };
 
         // Save the updated data
-        studentDataManager.writeJsonFile(studentId, `${collection}.json`, data[collection]);
+        // Write operations removed - practice server is read-only
 
         res.status(201).json(data[collection][newId]);
     } catch (error) {
@@ -152,7 +179,7 @@ app.put('/jsonstore/:collection/:id', async (req, res, next) => {
             });
         }
 
-        const data = studentDataManager.getAllStudentData(studentId);
+        const data = getAllData();
 
         if (!data[collection]) {
             throw new NotFoundError(`Collection ${collection} not found`);
@@ -165,7 +192,7 @@ app.put('/jsonstore/:collection/:id', async (req, res, next) => {
         data[collection][id] = { ...req.body, _id: id };
 
         // Save the updated data
-        studentDataManager.writeJsonFile(studentId, `${collection}.json`, data[collection]);
+        // Write operations removed - practice server is read-only
 
         res.json(data[collection][id]);
     } catch (error) {
@@ -185,7 +212,7 @@ app.patch('/jsonstore/:collection/:id', async (req, res, next) => {
             });
         }
 
-        const data = studentDataManager.getAllStudentData(studentId);
+        const data = getAllData();
 
         if (!data[collection]) {
             throw new NotFoundError(`Collection ${collection} not found`);
@@ -198,7 +225,7 @@ app.patch('/jsonstore/:collection/:id', async (req, res, next) => {
         Object.assign(data[collection][id], req.body);
 
         // Save the updated data
-        studentDataManager.writeJsonFile(studentId, `${collection}.json`, data[collection]);
+        // Write operations removed - practice server is read-only
 
         res.json(data[collection][id]);
     } catch (error) {
@@ -218,7 +245,7 @@ app.delete('/jsonstore/:collection/:id', async (req, res, next) => {
             });
         }
 
-        const data = studentDataManager.getAllStudentData(studentId);
+        const data = getAllData();
 
         if (!data[collection]) {
             throw new NotFoundError(`Collection ${collection} not found`);
@@ -232,7 +259,7 @@ app.delete('/jsonstore/:collection/:id', async (req, res, next) => {
         delete data[collection][id];
 
         // Save the updated data
-        studentDataManager.writeJsonFile(studentId, `${collection}.json`, data[collection]);
+        // Write operations removed - practice server is read-only
 
         res.json(deleted);
     } catch (error) {

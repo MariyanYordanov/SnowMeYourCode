@@ -1,3 +1,6 @@
+import { MDNViewer } from './mdn-viewer.js';
+import { DevToolsUI } from './devtools-ui.js';
+
 export class SidebarManager {
     constructor() {
         this.container = document.querySelector('.exam-container');
@@ -7,6 +10,8 @@ export class SidebarManager {
 
         this.currentPanel = 'files';
         this.isExpanded = false;
+        this.mdnViewer = null;
+        this.devToolsUI = null;
 
         this.init();
     }
@@ -74,6 +79,8 @@ export class SidebarManager {
             this.initDevTools();
         } else if (panelName === 'mdn') {
             this.initMDN();
+        } else if (panelName === 'devtools') {
+            this.initDevTools();
         }
 
         this.saveState();
@@ -95,52 +102,64 @@ export class SidebarManager {
         }
     }
 
-    initDevTools() {
-        const devtoolTabs = document.querySelectorAll('.devtool-tab');
-        const devtoolPanels = document.querySelectorAll('.devtool-panel');
+    async initDevTools() {
+        if (!this.devToolsUI) {
+            this.devToolsUI = new DevToolsUI();
+        }
 
-        devtoolTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const toolName = e.target.getAttribute('data-tool');
-
-                devtoolTabs.forEach(t => {
-                    t.classList.toggle('active', t.getAttribute('data-tool') === toolName);
-                });
-
-                devtoolPanels.forEach(panel => {
-                    panel.classList.toggle('active', panel.id === `${toolName}-tool`);
-                });
-            });
-        });
+        const devtoolsPanel = document.getElementById('devtools-panel');
+        if (devtoolsPanel && !devtoolsPanel.querySelector('.devtools-container')) {
+            // Clear existing content and initialize DevTools UI
+            devtoolsPanel.innerHTML = '';
+            this.devToolsUI.initializeInPanel(devtoolsPanel);
+        } else if (!devtoolsPanel) {
+            console.warn('DevTools panel element not found in DOM');
+        }
     }
 
-    initMDN() {
-        const mdnTabs = document.querySelectorAll('.mdn-tabs .tab');
-        const mdnContent = document.querySelector('.mdn-content');
+    async initMDN() {
+        if (!this.mdnViewer) {
+            this.mdnViewer = new MDNViewer();
+            await this.mdnViewer.loadReference();
+        }
 
-        mdnTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const section = e.target.getAttribute('data-section');
-
-                mdnTabs.forEach(t => {
-                    t.classList.toggle('active', t.getAttribute('data-section') === section);
-                });
-
-                this.loadMDNContent(section);
-            });
-        });
+        const mdnPanel = document.getElementById('mdn-panel');
+        if (mdnPanel && !mdnPanel.querySelector('.mdn-viewer')) {
+            // Clear existing content and initialize MDN viewer
+            mdnPanel.innerHTML = '';
+            this.mdnViewer.initializeViewer();
+        }
     }
 
-    loadMDNContent(section) {
-        const content = document.querySelector('.mdn-content');
-        const contentMap = {
-            javascript: '<h3>JavaScript Reference</h3><p>Array methods, String methods, Objects, Functions...</p>',
-            dom: '<h3>DOM API Reference</h3><p>Document methods, Element methods, Events...</p>',
-            css: '<h3>CSS Reference</h3><p>Properties, Selectors, Units, Functions...</p>',
-            html: '<h3>HTML Reference</h3><p>Elements, Attributes, Global attributes...</p>'
-        };
+    /**
+     * Get MDN viewer instance for external use
+     */
+    getMDNViewer() {
+        return this.mdnViewer;
+    }
 
-        content.innerHTML = contentMap[section] || '<p>Content not available</p>';
+    /**
+     * Quick search in MDN
+     */
+    searchMDN(query) {
+        if (this.mdnViewer) {
+            this.switchPanel('mdn');
+            setTimeout(() => {
+                this.mdnViewer.quickSearch(query);
+            }, 100);
+        }
+    }
+
+    /**
+     * Show specific MDN method
+     */
+    showMDNMethod(objectName, methodName, category = 'javascript') {
+        if (this.mdnViewer) {
+            this.switchPanel('mdn');
+            setTimeout(() => {
+                this.mdnViewer.showMethod(objectName, methodName, category);
+            }, 100);
+        }
     }
 
     saveState() {

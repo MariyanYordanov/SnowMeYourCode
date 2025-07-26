@@ -39,3 +39,5 @@ The project addresses identified issues by:
     *   `public/student/js/socket.js`
     *   `public/student/js/editor.js`
 *   **Addressed `iframe` Sandbox Warning:** The `sandbox` attribute of the `<iframe>` element in `public/student/index.html` was expanded to `allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-downloads allow-modals` to resolve a console warning and ensure necessary functionality while maintaining security.
+  - Admin Account: Username: admin, Password: exam-admin-2024
+  - Teacher Account: Username: teacher, Password: teacher-pass-2024

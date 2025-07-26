@@ -1,4 +1,5 @@
 import { SESSION_STATES } from './SessionManager.mjs';
+import { ServerSideAntiCheat } from './ServerSideAntiCheat.mjs';
 
 export const SOCKET_EVENTS = {
     // Student events
@@ -37,6 +38,10 @@ export class WebSocketHandler {
         this.teacherSockets = new Set();
         this.heartbeatInterval = 15000; // 15 seconds
         this.timeWarnings = [60, 30, 15, 5]; // Minutes before exam end to warn
+        
+        // Initialize server-side anti-cheat
+        this.antiCheat = new ServerSideAntiCheat();
+        this.setupAntiCheatEvents();
 
         this.setupHeartbeat();
         this.setupTimeWarnings();
@@ -72,10 +77,108 @@ export class WebSocketHandler {
      * Setup common event handlers
      */
     setupCommonHandlers(socket) {
-        // Heartbeat to detect disconnections
-        socket.on(SOCKET_EVENTS.HEARTBEAT, () => {
-            socket.emit(SOCKET_EVENTS.HEARTBEAT, { timestamp: Date.now() });
+        // Enhanced heartbeat with anti-cheat validation
+        socket.on(SOCKET_EVENTS.HEARTBEAT, (data) => {
+            this.handleHeartbeat(socket, data);
         });
+    }
+
+    /**
+     * Handle enhanced heartbeat with anti-cheat validation
+     */
+    async handleHeartbeat(socket, data) {
+        const timestamp = Date.now();
+        
+        // Send basic heartbeat response
+        socket.emit(SOCKET_EVENTS.HEARTBEAT, { timestamp });
+
+        // Validate with anti-cheat if student session exists
+        if (socket.studentInfo && socket.studentInfo.sessionId) {
+            const studentId = socket.studentInfo.sessionId;
+            
+            try {
+                const validation = this.antiCheat.validateHeartbeat(studentId, data || {});
+                
+                if (!validation.valid) {
+                    // Handle violation
+                    console.log(`🚨 Heartbeat validation failed: ${studentId} - ${validation.reason}`);
+                    
+                    if (validation.action === 'terminate') {
+                        // Will be handled by anti-cheat termination event
+                        return;
+                    }
+                }
+
+                // Send warnings to student if any
+                if (validation.warnings && validation.warnings.length > 0) {
+                    socket.emit('anti-cheat-warning', {
+                        warnings: validation.warnings,
+                        suspicionScore: validation.suspicionScore
+                    });
+                }
+
+                // Update teacher dashboard with suspicion score
+                if (validation.suspicionScore > 30) {
+                    this.broadcastToTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
+                        sessionId: studentId,
+                        type: 'suspicion_increase',
+                        suspicionScore: validation.suspicionScore,
+                        warnings: validation.warnings,
+                        timestamp: timestamp
+                    });
+                }
+
+            } catch (error) {
+                console.error('Heartbeat validation error:', error);
+            }
+        }
+    }
+
+    /**
+     * Setup anti-cheat event handlers
+     */
+    setupAntiCheatEvents() {
+        // Handle student termination from anti-cheat
+        this.antiCheat.emit = (event, data) => {
+            if (event === 'student-terminated') {
+                this.handleAntiCheatTermination(data);
+            }
+        };
+    }
+
+    /**
+     * Handle anti-cheat student termination
+     */
+    async handleAntiCheatTermination(data) {
+        const { studentId, reason, violations, suspicionScore } = data;
+        
+        try {
+            // Complete session as terminated
+            await this.sessionManager.completeSession(studentId, 'terminated', {
+                reason: reason,
+                violations: violations,
+                suspicionScore: suspicionScore,
+                timestamp: Date.now()
+            });
+
+            // Force disconnect student
+            this.forceDisconnectStudent(studentId, `Exam terminated: ${reason}`);
+
+            // Notify teachers
+            this.broadcastToTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
+                sessionId: studentId,
+                type: 'terminated',
+                reason: reason,
+                violations: violations,
+                suspicionScore: suspicionScore,
+                timestamp: Date.now()
+            });
+
+            console.log(`🛑 Anti-cheat termination: ${studentId} - ${reason}`);
+
+        } catch (error) {
+            console.error('Error handling anti-cheat termination:', error);
+        }
     }
 
     /**
@@ -101,6 +204,15 @@ export class WebSocketHandler {
         socket.on(SOCKET_EVENTS.EXAM_COMPLETE, async (data) => {
             await this.handleExamComplete(socket, data);
         });
+
+        // Help chat events
+        socket.on('help-request', async (data) => {
+            await this.handleHelpRequest(socket, data);
+        });
+
+        socket.on('student-typing', (data) => {
+            this.handleStudentTyping(socket, data);
+        });
     }
 
     /**
@@ -110,6 +222,15 @@ export class WebSocketHandler {
         // Teacher joining dashboard
         socket.on(SOCKET_EVENTS.TEACHER_JOIN, () => {
             this.handleTeacherJoin(socket);
+        });
+
+        // Teacher help chat events
+        socket.on('help-response', async (data) => {
+            await this.handleHelpResponse(socket, data);
+        });
+
+        socket.on('teacher-typing', (data) => {
+            this.handleTeacherTyping(socket, data);
         });
     }
 
@@ -150,6 +271,13 @@ export class WebSocketHandler {
 
             this.studentSockets.set(loginResult.sessionId, socket);
             socket.join('students');
+
+            // Initialize anti-cheat profile
+            this.antiCheat.initializeStudentProfile(loginResult.sessionId, {
+                ipAddress: socket.handshake.address,
+                userAgent: socket.handshake.headers['user-agent'],
+                sessionType: loginResult.type
+            });
 
             // Send success response
             if (loginResult.type === 'continue_session') {
@@ -196,11 +324,41 @@ export class WebSocketHandler {
         try {
             const { sessionId } = socket.studentInfo;
 
+            // Validate code submission with anti-cheat
+            const codeValidation = this.antiCheat.validateCodeSubmission(
+                sessionId, 
+                data.code || '', 
+                {
+                    filename: data.filename,
+                    typingDuration: data.typingDuration,
+                    lastModified: data.lastModified
+                }
+            );
+
+            if (!codeValidation.valid) {
+                console.log(`🚨 Code validation failed: ${sessionId} - ${codeValidation.reason}`);
+                
+                // Notify teacher of suspicious code
+                this.broadcastToTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
+                    sessionId,
+                    type: 'suspicious_code',
+                    reason: codeValidation.reason,
+                    patterns: codeValidation.patterns,
+                    suspicion: codeValidation.suspicion,
+                    timestamp: Date.now()
+                });
+
+                // Will be handled by anti-cheat termination if severe enough
+                if (codeValidation.suspicion >= 0.7) {
+                    return;
+                }
+            }
+
             // Update session with code
             const success = await this.sessionManager.updateSessionActivity(sessionId, {
                 code: data.code,
                 filename: data.filename || 'main.js',
-                suspicious: data.suspicious
+                suspicious: data.suspicious || (codeValidation.suspicion > 0.3)
             });
 
             if (!success) {
@@ -253,11 +411,17 @@ export class WebSocketHandler {
                 severity: data.severity || 'medium'
             });
 
-            console.log(`Suspicious activity: ${socket.studentInfo.name} - ${data.activity}`);
+            console.log(`Suspicious activity: ${socket.studentInfo.name} - ${data.activityType || data.activity}`);
 
-            // Force disconnect student due to suspicious activity
-            await this.sessionManager.completeSession(sessionId, 'forced_violations');
-            this.forceDisconnectStudent(socket, 'suspicious_activity');
+            // Enhanced activity type handling
+            const activityType = data.activityType || data.activity;
+            const severity = this.assessSeverity(activityType, data.details);
+
+            // Only force disconnect for critical violations
+            if (severity === 'critical' || this.isCriticalViolation(activityType)) {
+                await this.sessionManager.completeSession(sessionId, 'forced_violations');
+                this.forceDisconnectStudent(socket, 'suspicious_activity');
+            }
 
         } catch (error) {
             console.error('Error handling suspicious activity:', error);
@@ -341,6 +505,9 @@ export class WebSocketHandler {
         // Handle student disconnection
         if (socket.studentInfo) {
             const { sessionId, name, class: studentClass } = socket.studentInfo;
+
+            // Clean up anti-cheat data
+            this.antiCheat.cleanupStudent(sessionId);
 
             // Mark session as disconnected
             await this.sessionManager.markSessionDisconnected(sessionId);
@@ -582,5 +749,194 @@ export class WebSocketHandler {
             disconnectedCount: this.studentSockets.size,
             timestamp: Date.now()
         });
+    }
+
+    /**
+     * Get anti-cheat statistics for teacher dashboard
+     */
+    getAntiCheatStats() {
+        const generalStats = this.antiCheat.getAllStats();
+        const detailedStats = [];
+
+        // Get detailed stats for each student
+        for (const [sessionId] of this.studentSockets.entries()) {
+            const studentStats = this.antiCheat.getStudentStats(sessionId);
+            if (studentStats) {
+                detailedStats.push(studentStats);
+            }
+        }
+
+        return {
+            ...generalStats,
+            detailedStats: detailedStats
+        };
+    }
+
+    /**
+     * Get anti-cheat statistics for specific student
+     */
+    getStudentAntiCheatStats(sessionId) {
+        return this.antiCheat.getStudentStats(sessionId);
+    }
+
+    /**
+     * Assess the severity of suspicious activity
+     */
+    assessSeverity(activityType, details = {}) {
+        // Simple approach - any focus loss or fullscreen exit is critical
+        const criticalActivities = [
+            'fullscreen_exit',
+            'focus_loss',
+            'tab_hidden',
+            // Keep legacy names for compatibility
+            'fullscreen_exit_violation',
+            'document_hidden_violation'
+        ];
+
+        if (criticalActivities.includes(activityType)) {
+            return 'critical';
+        } else {
+            return 'medium';
+        }
+    }
+
+    /**
+     * Check if activity requires immediate termination
+     */
+    isCriticalViolation(activityType) {
+        const instantTermination = [
+            'fullscreen_exit',
+            'focus_loss',
+            'tab_hidden',
+            // Keep legacy names for compatibility
+            'fullscreen_exit_violation',
+            'document_hidden_violation'
+        ];
+
+        return instantTermination.includes(activityType);
+    }
+
+    /**
+     * Handle help request from student
+     */
+    async handleHelpRequest(socket, data) {
+        if (!socket.studentInfo) return;
+
+        try {
+            const { sessionId, name, class: studentClass } = socket.studentInfo;
+            
+            console.log(`Help request from ${name}: ${data.message}`);
+
+            // Store help request in session (optional)
+            await this.sessionManager.updateSessionActivity(sessionId, {
+                helpRequest: {
+                    message: data.message,
+                    timestamp: data.timestamp,
+                    id: data.id
+                }
+            });
+
+            // Send confirmation to student
+            socket.emit('help-message-received', {
+                messageId: data.id,
+                timestamp: Date.now()
+            });
+
+            // Notify all teachers
+            this.notifyTeachers('student-help-request', {
+                sessionId: sessionId,
+                studentName: name,
+                studentClass: studentClass,
+                message: data.message,
+                timestamp: data.timestamp,
+                messageId: data.id,
+                socketId: socket.id
+            });
+
+        } catch (error) {
+            console.error('Error handling help request:', error);
+        }
+    }
+
+    /**
+     * Handle help response from teacher
+     */
+    async handleHelpResponse(socket, data) {
+        try {
+            const { studentId, message, messageId } = data;
+            
+            // Find student socket
+            const studentSocket = this.studentSockets.get(studentId);
+            if (!studentSocket) {
+                socket.emit('help-response-error', {
+                    messageId: messageId,
+                    error: 'Student not connected'
+                });
+                return;
+            }
+
+            // Send response to student
+            studentSocket.emit('help-response', {
+                id: messageId || Date.now(),
+                message: message,
+                timestamp: Date.now(),
+                teacherName: data.teacherName || 'Учител',
+                type: 'response'
+            });
+
+            // Confirm to teacher
+            socket.emit('help-response-sent', {
+                messageId: messageId,
+                studentId: studentId,
+                timestamp: Date.now()
+            });
+
+            console.log(`Help response sent to ${studentSocket.studentInfo?.name}: ${message}`);
+
+        } catch (error) {
+            console.error('Error handling help response:', error);
+            socket.emit('help-response-error', {
+                messageId: data.messageId,
+                error: 'Failed to send response'
+            });
+        }
+    }
+
+    /**
+     * Handle student typing indicator
+     */
+    handleStudentTyping(socket, data) {
+        if (!socket.studentInfo) return;
+
+        // Notify teachers about student typing
+        this.notifyTeachers('student-typing', {
+            sessionId: socket.studentInfo.sessionId,
+            studentName: socket.studentInfo.name,
+            isTyping: data.isTyping,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * Handle teacher typing indicator
+     */
+    handleTeacherTyping(socket, data) {
+        const { studentId, isTyping } = data;
+        
+        // Find student socket and notify
+        const studentSocket = this.studentSockets.get(studentId);
+        if (studentSocket) {
+            studentSocket.emit('teacher-typing', {
+                isTyping: isTyping,
+                timestamp: Date.now()
+            });
+        }
+    }
+
+    /**
+     * Broadcast to teachers (alias for notifyTeachers)
+     */
+    broadcastToTeachers(event, data) {
+        this.notifyTeachers(event, data);
     }
 }

@@ -118,6 +118,7 @@ export async function handleLogin(examApp) {
 
         // ПЪРВО: HTTP login за express session
         try {
+            console.log('🔄 Attempting HTTP login...', { name, studentClass });
             const response = await fetch('/api/student-login', {
                 method: 'POST',
                 headers: {
@@ -130,9 +131,20 @@ export async function handleLogin(examApp) {
                 })
             });
 
+            console.log('📡 HTTP Response:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ HTTP Error:', response.status, errorText);
+                handleLoginError(examApp, `Server error: ${response.status} - ${errorText.substring(0, 100)}`);
+                return;
+            }
+
             const result = await response.json();
+            console.log('✅ Login result:', result);
 
             if (!result.success) {
+                console.error('❌ Login failed:', result.message);
                 handleLoginError(examApp, result.message || 'Грешка при влизане');
                 return;
             }
@@ -269,8 +281,7 @@ export function updateStudentDisplay(studentName, studentClass, sessionId) {
     try {
         const elements = {
             '.student-name': studentName,
-            '.student-class': studentClass,
-            '.session-id': sessionId
+            '.student-class': studentClass
         };
 
         for (const [selector, value] of Object.entries(elements)) {
