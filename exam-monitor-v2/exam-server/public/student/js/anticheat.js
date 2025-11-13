@@ -81,54 +81,60 @@ export function setupFocusMonitoring() {
         // Monitor window focus/blur
         window.addEventListener('blur', handleFocusLoss);
         window.addEventListener('focus', handleFocusGain);
-        
+
         // Monitor visibility changes (tab switching)
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        
+
         // 🔥 AGGRESSIVE: Monitor keyboard events in CAPTURE phase for maximum interception
         document.addEventListener('keydown', handleKeyDown, true);
         document.addEventListener('keyup', handleKeyUp, true);
-        
+
         // 🔥 SYSTEM-LEVEL: Add multiple layers of key event interception
         window.addEventListener('keydown', handleKeyDown, true);
         window.addEventListener('keyup', handleKeyUp, true);
-        
+
         // 🔥 CAPTURE ALL: Override at document level with highest priority
         document.documentElement.addEventListener('keydown', handleKeyDown, true);
         document.documentElement.addEventListener('keyup', handleKeyUp, true);
-        
+
         // 🔥 BODY LEVEL: Additional layer
         document.body.addEventListener('keydown', handleKeyDown, true);
         document.body.addEventListener('keyup', handleKeyUp, true);
-        
+
         // Monitor window resize and screen changes
         window.addEventListener('resize', handleWindowResize);
-        
+
         // Monitor screen resolution changes
         if (screen && screen.orientation) {
             screen.orientation.addEventListener('change', handleOrientationChange);
         }
-        
+
         // Monitor mouse movement for multi-monitor detection
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseleave', handleMouseLeave);
-        
+
         // Block dangerous mouse events
         document.addEventListener('mousedown', handleMouseDown, true);
         document.addEventListener('mouseup', handleMouseUp, true);
         document.addEventListener('contextmenu', handleContextMenu, true);
         document.addEventListener('selectstart', handleSelectStart, true);
         document.addEventListener('dragstart', handleDragStart, true);
-        
+
+        // 🔥🔥🔥 CRITICAL: Block browser navigation (swipe gestures)
+        blockBrowserNavigation();
+
+        // 🔥🔥🔥 CRITICAL: Start DevTools detection
+        startDevToolsDetection();
+
         // Start aggressive focus polling
         startAggressiveFocusPolling();
-        
+
         // Initialize mouse lock when possible
         initializeMouseLock();
-        
+
         // 🔥 AGGRESSIVE: Apply CSS-based blocking
         applyCSSBlockingRules();
-        
+
         console.log('🔥 AGGRESSIVE FOCUS MONITORING ESTABLISHED - NO ESCAPE!');
     } catch (error) {
         console.error('Failed to setup focus monitoring:', error);
@@ -235,17 +241,71 @@ function handleVisibilityChange() {
 
 function handleKeyDown(event) {
     const examApp = window.ExamApp;
-    
+
     if (!examApp.antiCheatActive || examApp.completionInProgress) {
         return;
     }
-    
-    // 🔥 AGGRESSIVE MODE: Block ALL modifier combinations first
+
+    // 🔥🔥🔥 CRITICAL: Block ALL DevTools shortcuts IMMEDIATELY - HIGHEST PRIORITY
+    const devToolsShortcuts = [
+        // F12 (all platforms)
+        { key: 'F12', code: 'F12' },
+
+        // Ctrl+Shift+I / Cmd+Option+I (Inspector)
+        { ctrl: true, shift: true, key: 'I' },
+        { ctrl: true, shift: true, key: 'i' },
+        { meta: true, alt: true, key: 'I' },
+        { meta: true, alt: true, key: 'i' },
+
+        // Ctrl+Shift+J / Cmd+Option+J (Console)
+        { ctrl: true, shift: true, key: 'J' },
+        { ctrl: true, shift: true, key: 'j' },
+        { meta: true, alt: true, key: 'J' },
+        { meta: true, alt: true, key: 'j' },
+
+        // Ctrl+Shift+C / Cmd+Option+C (Inspect Element)
+        { ctrl: true, shift: true, key: 'C' },
+        { ctrl: true, shift: true, key: 'c' },
+        { meta: true, alt: true, key: 'C' },
+        { meta: true, alt: true, key: 'c' },
+
+        // Ctrl+Shift+K (Firefox Console)
+        { ctrl: true, shift: true, key: 'K' },
+        { ctrl: true, shift: true, key: 'k' },
+        { meta: true, alt: true, key: 'K' },
+        { meta: true, alt: true, key: 'k' },
+
+        // Ctrl+U / Cmd+Option+U (View Source)
+        { ctrl: true, key: 'U' },
+        { ctrl: true, key: 'u' },
+        { meta: true, key: 'U' },
+        { meta: true, key: 'u' },
+    ];
+
+    // Check if current key combo matches any DevTools shortcut
+    for (const shortcut of devToolsShortcuts) {
+        const keyMatch = (shortcut.key === event.key || shortcut.code === event.code);
+        const ctrlMatch = !shortcut.ctrl || event.ctrlKey;
+        const shiftMatch = !shortcut.shift || event.shiftKey;
+        const altMatch = !shortcut.alt || event.altKey;
+        const metaMatch = !shortcut.meta || event.metaKey;
+
+        if (keyMatch && ctrlMatch && shiftMatch && altMatch && metaMatch) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            console.log(`🔥🔥🔥 DEVTOOLS SHORTCUT ANNIHILATED: ${getKeyComboString(event)}`);
+            reportViolation('devtools_shortcut_attempt');
+            return; // Exit immediately
+        }
+    }
+
+    // 🔥 AGGRESSIVE MODE: Block ALL modifier combinations
     if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) {
-        
+
         // Check if we're in Monaco editor context
         const isInEditor = isInEditorContext(event.target);
-        
+
         // WHITELIST: Only allow essential editor combinations
         const allowedEditorCombos = [
             // Basic editing
@@ -256,7 +316,7 @@ function handleKeyDown(event) {
             { ctrl: true, key: 'y' },           // Redo
             { ctrl: true, key: 'a' },           // Select All
             { ctrl: true, key: 's' },           // Save (for auto-save)
-            
+
             // Monaco editor specific
             { ctrl: true, key: 'f' },           // Find
             { ctrl: true, key: 'h' },           // Replace
@@ -266,7 +326,7 @@ function handleKeyDown(event) {
             { ctrl: true, key: '/' },           // Toggle comment
             { ctrl: true, shift: true, key: 'f' }, // Format document
             { ctrl: true, shift: true, key: 'o' }, // Organize imports
-            
+
             // Navigation
             { ctrl: true, key: 'ArrowLeft' },   // Word navigation
             { ctrl: true, key: 'ArrowRight' },  // Word navigation
@@ -276,7 +336,7 @@ function handleKeyDown(event) {
             { shift: true, key: 'ArrowDown' },  // Selection
             { shift: true, key: 'ArrowLeft' },  // Selection
             { shift: true, key: 'ArrowRight' }, // Selection
-            
+
             // macOS equivalents
             { meta: true, key: 'c' },           // Copy Mac
             { meta: true, key: 'v' },           // Paste Mac
@@ -286,7 +346,7 @@ function handleKeyDown(event) {
             { meta: true, key: 'a' },           // Select All Mac
             { meta: true, key: 's' },           // Save Mac
         ];
-        
+
         // Check if current combination is allowed
         let isAllowed = false;
         if (isInEditor) {
@@ -296,14 +356,14 @@ function handleKeyDown(event) {
                              (!combo.shift || event.shiftKey) &&
                              (!combo.meta || event.metaKey) &&
                              (combo.key === event.key);
-                             
+
                 if (match) {
                     isAllowed = true;
                     break;
                 }
             }
         }
-        
+
         // 🔥 BLOCK EVERYTHING ELSE WITH MODIFIERS
         if (!isAllowed) {
             event.preventDefault();
@@ -314,13 +374,13 @@ function handleKeyDown(event) {
             return;
         }
     }
-    
+
     // 🔥 Block ALL function keys - ZERO exceptions
     const functionKeys = [
         'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
         'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20', 'F21', 'F22', 'F23', 'F24'
     ];
-    
+
     if (functionKeys.includes(event.key) || functionKeys.includes(event.code)) {
         event.preventDefault();
         event.stopPropagation();
@@ -329,7 +389,7 @@ function handleKeyDown(event) {
         reportViolation('function_key_attempt');
         return;
     }
-    
+
     // 🔥 Block ALL system keys - ZERO mercy
     const systemKeys = [
         'Meta', 'OS', 'Super',           // Windows/Cmd key
@@ -341,7 +401,7 @@ function handleKeyDown(event) {
         'MediaPlayPause', 'MediaStop', 'MediaTrackNext', 'MediaTrackPrevious',
         'Escape'                         // ESC key - NO ESCAPE!
     ];
-    
+
     if (systemKeys.includes(event.key) || systemKeys.includes(event.code)) {
         event.preventDefault();
         event.stopPropagation();
@@ -350,7 +410,7 @@ function handleKeyDown(event) {
         reportViolation('system_key_attempt');
         return;
     }
-    
+
     // 🔥 Block standalone modifier keys
     if (['Control', 'Alt', 'Shift', 'Meta', 'AltGraph'].includes(event.key)) {
         event.preventDefault();
@@ -408,9 +468,9 @@ function applyCSSBlockingRules() {
             -ms-user-select: none !important;
             user-select: none !important;
         }
-        
+
         /* ✅ ALLOW SELECTION ONLY IN MONACO EDITOR */
-        .monaco-editor, .monaco-editor *, 
+        .monaco-editor, .monaco-editor *,
         #monaco-editor, #monaco-editor *,
         input, textarea {
             -webkit-user-select: text !important;
@@ -418,7 +478,7 @@ function applyCSSBlockingRules() {
             -ms-user-select: text !important;
             user-select: text !important;
         }
-        
+
         /* 🔥 DISABLE DRAG AND DROP GLOBALLY */
         * {
             -webkit-user-drag: none !important;
@@ -426,7 +486,7 @@ function applyCSSBlockingRules() {
             user-drag: none !important;
             draggable: false !important;
         }
-        
+
         /* 🔥 DISABLE ZOOM AND SCALING */
         body {
             zoom: 1 !important;
@@ -437,28 +497,46 @@ function applyCSSBlockingRules() {
             -moz-user-scalable: no !important;
             user-scalable: no !important;
         }
-        
+
+        /* 🔥🔥🔥 CRITICAL: Disable overscroll (swipe navigation) */
+        html, body {
+            overscroll-behavior: none !important;
+            overscroll-behavior-x: none !important;
+            overscroll-behavior-y: none !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        /* 🔥🔥🔥 CRITICAL: macOS window control blocking */
+        body {
+            -webkit-app-region: drag !important;
+        }
+
+        /* Allow interactions only on specific elements */
+        button, input, textarea, select, a, .monaco-editor, .monaco-editor * {
+            -webkit-app-region: no-drag !important;
+        }
+
         /* 🔥 HIDE SCROLLBARS TO PREVENT ESCAPE */
         ::-webkit-scrollbar {
             width: 8px !important;
             height: 8px !important;
         }
-        
+
         ::-webkit-scrollbar-track {
             background: transparent !important;
         }
-        
+
         ::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.3) !important;
             border-radius: 4px !important;
         }
-        
+
         /* 🔥 DISABLE OUTLINE AND FOCUS RINGS THAT COULD BE EXPLOITED */
         *:focus {
             outline: none !important;
             box-shadow: none !important;
         }
-        
+
         /* ✅ ALLOW FOCUS ONLY IN EDITOR */
         .monaco-editor *:focus,
         #monaco-editor *:focus,
@@ -466,27 +544,27 @@ function applyCSSBlockingRules() {
         button:focus {
             outline: 1px solid #007acc !important;
         }
-        
+
         /* 🔥 DISABLE POINTER EVENTS ON POTENTIAL ESCAPE ELEMENTS */
         iframe:not(.monaco-editor iframe) {
             pointer-events: none !important;
         }
-        
+
         /* 🔥 PREVENT CONTEXT MENU STYLING TRICKS */
         ::selection {
             background: rgba(0, 122, 204, 0.3) !important;
         }
-        
+
         ::-moz-selection {
             background: rgba(0, 122, 204, 0.3) !important;
         }
-        
+
         /* 🔥 DISABLE PRINT STYLES */
         @media print {
             * {
                 display: none !important;
             }
-            
+
             body::before {
                 content: "PRINTING DISABLED DURING EXAM" !important;
                 display: block !important;
@@ -495,14 +573,14 @@ function applyCSSBlockingRules() {
                 color: red !important;
             }
         }
-        
+
         /* 🔥 FULLSCREEN ENFORCEMENT */
         body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen) {
             filter: blur(20px) !important;
             opacity: 0.1 !important;
             pointer-events: none !important;
         }
-        
+
         body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen)::before {
             content: "⚠️ RETURN TO FULLSCREEN TO CONTINUE EXAM" !important;
             position: fixed !important;
@@ -519,7 +597,7 @@ function applyCSSBlockingRules() {
             border-radius: 10px !important;
             pointer-events: none !important;
         }
-        
+
         /* 🔥 PREVENT MANIPULATION OF ANTI-CHEAT ELEMENTS */
         #aggressive-anti-cheat-css {
             display: none !important;
@@ -983,6 +1061,155 @@ function handleDragStart(event) {
         reportViolation('drag_drop_attempt');
         return false;
     }
+}
+
+/**
+ * 🔥🔥🔥 CRITICAL: Block browser navigation (swipe gestures, back/forward)
+ */
+function blockBrowserNavigation() {
+    const examApp = window.ExamApp;
+
+    // Disable browser back/forward navigation (swipe gestures)
+    window.addEventListener('popstate', (event) => {
+        if (examApp.antiCheatActive && !examApp.completionInProgress) {
+            console.log('❌ BROWSER NAVIGATION DETECTED (Swipe Gesture) - TERMINATING');
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Push same state to prevent navigation
+            history.pushState(null, null, window.location.href);
+
+            reportViolation('browser_navigation_gesture');
+        }
+    });
+
+    // Override browser history on page load
+    if (examApp.antiCheatActive) {
+        history.pushState(null, null, window.location.href);
+    }
+
+    // Warn on page unload
+    window.addEventListener('beforeunload', (event) => {
+        if (examApp.antiCheatActive && !examApp.completionInProgress) {
+            const confirmationMessage = 'Изпитът все още е активен! Сигурни ли сте че искате да излезете?';
+            event.preventDefault();
+            event.returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+    });
+
+    // Block hash changes
+    window.addEventListener('hashchange', (event) => {
+        if (examApp.antiCheatActive && !examApp.completionInProgress) {
+            console.log('❌ HASH CHANGE DETECTED - SUSPICIOUS');
+            reportViolation('hash_change');
+        }
+    });
+
+    console.log('🔥 Browser navigation blocked (swipe gestures disabled)');
+}
+
+/**
+ * 🔥🔥🔥 CRITICAL: DevTools Detection System
+ * Detects if DevTools is open using multiple techniques
+ */
+function startDevToolsDetection() {
+    const examApp = window.ExamApp;
+    let devToolsOpen = false;
+
+    // Technique 1: Console.log timing
+    const threshold = 160;
+    setInterval(() => {
+        if (!examApp.antiCheatActive || examApp.completionInProgress) return;
+
+        const startTime = performance.now();
+        console.log('%c', 'color: transparent');
+        const endTime = performance.now();
+
+        // If console.log takes too long, DevTools is likely open
+        if (endTime - startTime > threshold) {
+            if (!devToolsOpen) {
+                devToolsOpen = true;
+                console.log('❌ DEVTOOLS DETECTED (Console timing) - TERMINATING');
+                reportViolation('devtools_console_timing');
+            }
+        } else {
+            devToolsOpen = false;
+        }
+    }, 1000);
+
+    // Technique 2: Window size detection
+    let lastInnerWidth = window.innerWidth;
+    let lastInnerHeight = window.innerHeight;
+    let lastOuterWidth = window.outerWidth;
+    let lastOuterHeight = window.outerHeight;
+
+    setInterval(() => {
+        if (!examApp.antiCheatActive || examApp.completionInProgress) return;
+
+        const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+        const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+
+        // DevTools open causes significant difference
+        if ((widthDiff > 200 || heightDiff > 200) && examApp.isFullscreen) {
+            console.log('❌ DEVTOOLS DETECTED (Window dimensions) - TERMINATING');
+            console.log(`Outer: ${window.outerWidth}x${window.outerHeight}, Inner: ${window.innerWidth}x${window.innerHeight}`);
+            reportViolation('devtools_window_dimensions');
+        }
+    }, 2000);
+
+    // Technique 3: Debug object detection
+    const detectDebugger = () => {
+        if (!examApp.antiCheatActive || examApp.completionInProgress) return;
+
+        const before = new Date();
+        debugger; // This will pause if DevTools is open
+        const after = new Date();
+
+        if (after - before > 100) {
+            console.log('❌ DEVTOOLS DETECTED (Debugger statement) - TERMINATING');
+            reportViolation('devtools_debugger_statement');
+        }
+    };
+
+    // Run debugger detection every 5 seconds
+    setInterval(detectDebugger, 5000);
+
+    // Technique 4: toString override detection
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'id', {
+        get: function() {
+            console.log('❌ DEVTOOLS DETECTED (Element inspection) - TERMINATING');
+            reportViolation('devtools_element_inspection');
+            throw new Error('DevTools detected');
+        }
+    });
+
+    // Log the element (triggers getter if inspected)
+    setInterval(() => {
+        if (!examApp.antiCheatActive || examApp.completionInProgress) return;
+        console.log(element);
+        console.clear(); // Clear to avoid clutter
+    }, 3000);
+
+    // Technique 5: Performance.now() precision detection
+    // DevTools can affect performance timing
+    let lastPerformanceCheck = performance.now();
+    setInterval(() => {
+        if (!examApp.antiCheatActive || examApp.completionInProgress) return;
+
+        const now = performance.now();
+        const elapsed = now - lastPerformanceCheck;
+        lastPerformanceCheck = now;
+
+        // If elapsed time is way off (e.g., paused in debugger), detect it
+        if (elapsed > 3000) { // More than 3 seconds for 1-second interval
+            console.log('❌ DEVTOOLS DETECTED (Performance timing anomaly) - TERMINATING');
+            reportViolation('devtools_performance_anomaly');
+        }
+    }, 1000);
+
+    console.log('🔍 DevTools detection system active (5 techniques)');
 }
 
 function reportViolation(violationType) {
