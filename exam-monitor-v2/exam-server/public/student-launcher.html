@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Launcher - Стартиране на изпит</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background: #f7f9fc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .warning-box p {
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .instructions {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .emoji {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🎓</div>
+        <h1>Exam Monitor v2.0</h1>
+        <p class="subtitle">Стартиране на изпит</p>
+
+        <div class="info-box">
+            <h3>ℹ️ Информация</h3>
+            <p>Този launcher ще отвори Chrome в exam mode автоматично.</p>
+            <p><strong>Важно:</strong> Уверете се че сте свързани към изпитната Wi-Fi мрежа!</p>
+        </div>
+
+        <div class="warning-box">
+            <p>⚠️ НЕ затваряйте този прозорец след стартиране на изпита!</p>
+        </div>
+
+        <div class="input-group">
+            <label for="teacherIP">IP адрес на учителя:</label>
+            <input type="text" id="teacherIP" placeholder="192.168.2.1" value="192.168.2.1">
+        </div>
+
+        <div class="button-group">
+            <button class="btn-secondary" onclick="testConnection()">Тест връзка</button>
+            <button class="btn-primary" onclick="startExam()">🚀 Старт изпит</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="instructions">
+            <h3>📋 Инструкции след стартиране:</h3>
+            <ol>
+                <li>Chrome ще се отвори на пълен екран автоматично</li>
+                <li>Въведете вашето име и клас</li>
+                <li>Приемете условията на изпита (checkbox)</li>
+                <li>Натиснете бутона "Enter Fullscreen"</li>
+                <li>НЕ излизайте от fullscreen по време на изпита!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Detect OS
+        const isMac = navigator.platform.toLowerCase().includes('mac');
+        const isWindows = navigator.platform.toLowerCase().includes('win');
+        const isLinux = navigator.platform.toLowerCase().includes('linux');
+
+        async function testConnection() {
+            const teacherIP = document.getElementById('teacherIP').value;
+            const status = document.getElementById('status');
+
+            status.className = 'status';
+            status.textContent = 'Проверка на връзката...';
+            status.style.display = 'block';
+
+            try {
+                const response = await fetch(`http://${teacherIP}:8080`, {
+                    mode: 'no-cors',
+                    timeout: 3000
+                });
+
+                status.className = 'status success';
+                status.textContent = '✅ Връзката е успешна! Можете да стартирате изпита.';
+            } catch (error) {
+                status.className = 'status error';
+                status.innerHTML = `
+                    ❌ Не може да се свърже със сървъра!<br>
+                    Проверете:<br>
+                    • Свързани ли сте към изпитната Wi-Fi?<br>
+                    • Работи ли компютърът на учителя?<br>
+                    • Правилен ли е IP адресът?
+                `;
+            }
+        }
+
+        function startExam() {
+            const teacherIP = document.getElementById('teacherIP').value;
+            const examURL = `http://${teacherIP}:8080/student`;
+
+            if (!teacherIP || teacherIP === '') {
+                alert('Моля въведете IP адрес на учителя!');
+                return;
+            }
+
+            // Build Chrome command
+            let chromeCommand = '';
+
+            if (isMac) {
+                chromeCommand = `/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --kiosk --fullscreen --disable-pinch --overscroll-history-navigation=0 --disable-blink-features=OverscrollCustomization "${examURL}"`;
+            } else if (isWindows) {
+                chromeCommand = `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk --fullscreen --disable-pinch --overscroll-history-navigation=0 --disable-blink-features=OverscrollCustomization "${examURL}"`;
+            } else {
+                chromeCommand = `google-chrome --kiosk --fullscreen --disable-pinch --overscroll-history-navigation=0 --disable-blink-features=OverscrollCustomization "${examURL}"`;
+            }
+
+            // Show instructions
+            const status = document.getElementById('status');
+            status.className = 'status success';
+            status.innerHTML = `
+                <strong>🚀 Стартиране на Chrome...</strong><br><br>
+                Ако Chrome не се отвори автоматично, копирайте тази команда:<br><br>
+                <code style="background: white; padding: 10px; display: block; margin: 10px 0; border-radius: 5px; word-break: break-all;">${chromeCommand}</code><br>
+                И я изпълнете в:<br>
+                • <strong>macOS:</strong> Terminal<br>
+                • <strong>Windows:</strong> Command Prompt (CMD)<br>
+                • <strong>Linux:</strong> Terminal
+            `;
+
+            // Try to open Chrome (will work if launched from file://)
+            // Note: This won't work from http:// due to browser security
+            try {
+                // For simple case - just open the URL and let user enter fullscreen manually
+                window.open(examURL, '_blank', 'fullscreen=yes,kiosk=yes');
+
+                setTimeout(() => {
+                    status.innerHTML += `<br><br>✅ Ако видите страницата на изпита, натиснете бутона "Enter Fullscreen"`;
+                }, 2000);
+            } catch (error) {
+                console.error('Cannot launch Chrome automatically:', error);
+            }
+        }
+
+        // Auto-populate IP if on same network
+        window.addEventListener('load', () => {
+            // Try to detect local network IP range
+            const currentIP = window.location.hostname;
+            if (currentIP && currentIP !== 'localhost' && currentIP !== '127.0.0.1') {
+                document.getElementById('teacherIP').value = currentIP;
+            }
+        });
+    </script>
+</body>
+</html>
