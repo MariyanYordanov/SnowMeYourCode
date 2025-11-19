@@ -38,14 +38,14 @@ function handleSocketConnect() {
     console.log(`Socket.io connected. isLoggedIn: ${window.ExamApp.isLoggedIn}, sessionId: ${window.ExamApp.sessionId}`);
     const examApp = window.ExamApp;
 
-    if (examApp.isLoggedIn && examApp.sessionId) {
-        console.log('Emitting session-restore from handleSocketConnect.');
-        examApp.socket.emit('session-restore', {
-            sessionId: examApp.sessionId,
-            studentName: examApp.studentName,
-            studentClass: examApp.studentClass
-        });
-    }
+    // CRITICAL SECURITY: Session restore is DISABLED for kiosk mode security
+    // Students MUST login again after any disconnection
+    // This prevents bypassing kiosk isolation
+
+    // Clear any stored session data
+    localStorage.removeItem('examSession');
+
+    console.log('⚠️ Session restore disabled - student must login again');
 }
 
 function handleSocketDisconnect(reason) {
@@ -74,32 +74,91 @@ function handleNewSession(data) {
 }
 
 function handleSessionRestored(data) {
-    console.log('Session restored:', data);
-    const examApp = window.ExamApp;
+    console.log('⚠️ Session restore attempt blocked for security');
 
-    examApp.sessionId = data.sessionId;
-    examApp.examStartTime = new Date(data.examStartTime).getTime();
-    examApp.examDuration = data.examDuration || (3 * 60 * 60 * 1000);
-    examApp.examEndTime = new Date(data.examEndTime).getTime();
+    // CRITICAL SECURITY: Disable session restore in kiosk mode
+    // Student MUST login again to open new kiosk window
+    // This prevents bypassing kiosk isolation via refresh
 
-    const timeLeft = data.timeLeft || (examApp.examEndTime - Date.now());
+    // Clear localStorage to force new login
+    localStorage.removeItem('examSession');
 
-    if (timeLeft <= 0) {
-        handleExamExpired();
-        return;
-    }
+    // Show warning message
+    showSessionRestoreBlocked();
+}
 
-    if (window.startExam) {
-        window.startExam({
-            sessionId: data.sessionId,
-            examStartTime: examApp.examStartTime,
-            examDuration: examApp.examDuration,
-            examEndTime: examApp.examEndTime,
-            timeLeft: timeLeft,
-            lastCode: data.lastCode || '',
-            isNewSession: false
-        });
-    }
+function showSessionRestoreBlocked() {
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: #212529;
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="
+                background: rgba(255,255,255,0.95);
+                padding: 40px;
+                border-radius: 10px;
+                max-width: 600px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            ">
+                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠️</h1>
+                <h2 style="margin-bottom: 20px; font-size: 28px; color: #dc3545;">
+                    Сесията е прекъсната
+                </h2>
+                <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #495057;">
+                    От съображения за сигурност, <strong>не можете да възстановите сесия</strong> след refresh на прозореца.
+                </p>
+
+                <div style="
+                    background: #fff3cd;
+                    border-left: 4px solid #ffc107;
+                    padding: 20px;
+                    margin-bottom: 30px;
+                    text-align: left;
+                ">
+                    <p style="margin: 0; font-size: 16px; color: #856404;">
+                        <strong>Причина:</strong> Изпитът се провежда в защитен kiosk режим.
+                        При опит за излизане или refresh, изпитът автоматично се прекратява.
+                    </p>
+                </div>
+
+                <p style="font-size: 16px; color: #6c757d; margin-bottom: 30px;">
+                    Моля, <strong>влезте наново</strong> за да започнете изпита отначало.
+                </p>
+
+                <button
+                    onclick="window.location.reload()"
+                    style="
+                        padding: 15px 40px;
+                        font-size: 18px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        transition: all 0.3s;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                    "
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'"
+                >
+                    🔄 Презареди и влез отново
+                </button>
+
+                <p style="margin-top: 30px; opacity: 0.7; font-size: 14px; color: #6c757d;">
+                    При влизане ще се отвори нов защитен прозорец
+                </p>
+            </div>
+        </div>
+    `;
 }
 
 function handleLoginError(error) {

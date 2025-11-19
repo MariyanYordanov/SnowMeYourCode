@@ -35,3 +35,6 @@ window.tabsDebug = {
     switchTab,
     getCurrentTab
 };
+
+
+

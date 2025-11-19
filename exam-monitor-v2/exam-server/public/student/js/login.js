@@ -226,13 +226,9 @@ export function handleLoginSuccess(examApp, data) {
 
         showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
 
-        localStorage.setItem('examSession', JSON.stringify({
-            sessionId: data.sessionId,
-            studentName: examApp.studentName,
-            studentClass: examApp.studentClass,
-            examStartTime: examApp.examStartTime,
-            examEndTime: data.examEndTime
-        }));
+        // CRITICAL SECURITY: Do NOT save session to localStorage
+        // Session restore is disabled for kiosk mode security
+        // localStorage.setItem('examSession', ...) - REMOVED
 
         setTimeout(() => {
             if (examApp.startExam) {

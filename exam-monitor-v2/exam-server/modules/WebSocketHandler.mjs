@@ -279,21 +279,18 @@ export class WebSocketHandler {
                 sessionType: loginResult.type
             });
 
-            // Send success response
-            if (loginResult.type === 'continue_session') {
-                socket.emit(SOCKET_EVENTS.SESSION_RESTORED, {
-                    sessionId: loginResult.sessionId,
-                    timeLeft: loginResult.timeLeft,
-                    message: loginResult.message,
-                    lastCode: loginResult.lastCode || ''
-                });
-            } else {
-                socket.emit(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, {
-                    sessionId: loginResult.sessionId,
-                    timeLeft: loginResult.timeLeft,
-                    message: loginResult.message
-                });
-            }
+            // CRITICAL SECURITY: Session restore is DISABLED for kiosk mode
+            // Always treat as NEW session to force kiosk popup
+            // This prevents bypassing kiosk isolation via session restore
+
+            // Send success response - ALWAYS as new session
+            socket.emit(SOCKET_EVENTS.STUDENT_ID_ASSIGNED, {
+                sessionId: loginResult.sessionId,
+                timeLeft: loginResult.timeLeft,
+                message: loginResult.type === 'continue_session'
+                    ? 'Продължаване на сесия (kiosk mode ще се стартира отново)'
+                    : loginResult.message
+            });
 
             // Notify teachers
             this.notifyTeachers(SOCKET_EVENTS.STUDENT_CONNECTED, {

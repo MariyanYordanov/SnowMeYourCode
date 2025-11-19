@@ -43,6 +43,20 @@ import {
 
 import { setupTabs } from './tabs.js';
 
+import {
+    isKioskMode,
+    launchKioskMode,
+    initializeKioskExam,
+    isKioskModeSupported
+} from './kiosk-mode.js';
+
+import {
+    detectVirtualMachine,
+    getVMDetectionReport,
+    shouldBlockLogin,
+    formatVMMessage
+} from './vm-detection.js';
+
 window.ExamApp = {
     socket: null,
     editor: null,
@@ -85,11 +99,36 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 function initializeApp() {
     try {
         console.log('Initializing Exam Monitor App...');
-        
+
         // Check for mobile/tablet devices and block access
         if (detectMobileDevice()) {
             blockMobileAccess();
             return; // Stop initialization
+        }
+
+        // CRITICAL: Check for Virtual Machine
+        console.log('🔍 Checking for Virtual Machine...');
+        const vmDetection = detectVirtualMachine();
+        const vmReport = getVMDetectionReport();
+
+        console.log('VM Detection Report:', vmReport);
+
+        if (shouldBlockLogin(vmDetection)) {
+            console.error('❌ VIRTUAL MACHINE DETECTED - BLOCKING ACCESS');
+            blockVMAccess(vmDetection);
+            return; // Stop initialization
+        } else {
+            console.log('✅ Real machine detected - proceeding');
+        }
+
+        // Check if running in kiosk mode
+        if (isKioskMode()) {
+            console.log('🔒 Running in KIOSK MODE');
+            const kioskInitialized = initializeKioskExam();
+            if (!kioskInitialized) {
+                console.error('Failed to initialize kiosk exam');
+                return;
+            }
         }
 
         const examApp = window.ExamApp;
@@ -126,6 +165,34 @@ async function startExam(sessionData) {
             throw new Error('Invalid session data');
         }
 
+        // If NOT in kiosk mode yet, launch kiosk mode popup
+        if (!isKioskMode()) {
+            console.log('📤 Launching kiosk mode popup...');
+
+            // Check if popup is supported
+            if (!isKioskModeSupported()) {
+                console.error('❌ Popup windows are blocked');
+                showError('Моля, разрешете popup прозорци в браузъра си');
+                return;
+            }
+
+            // Launch kiosk mode popup window
+            const kioskWindow = launchKioskMode(sessionData);
+
+            if (!kioskWindow) {
+                console.error('❌ Failed to open kiosk window');
+                showError('Не успях да отворя изпитния прозорец. Проверете дали popup прозорците не са блокирани.');
+                return;
+            }
+
+            // Parent window will close automatically after 2 seconds
+            // startExam() will be called again IN the kiosk window
+            return;
+        }
+
+        // If WE ARE in kiosk mode, continue with normal exam start
+        console.log('✅ Starting exam in kiosk mode');
+
         examApp.isLoggedIn = true;
         examApp.examStartTime = sessionData.examStartTime || Date.now();
         examApp.examDuration = sessionData.examDuration || (3 * 60 * 60 * 1000);
@@ -144,8 +211,21 @@ async function startExam(sessionData) {
 
         setupTabs();
 
-        // Initialize advanced anti-cheat modules
-        initializeAdvancedAntiCheat();
+        // CRITICAL: In kiosk mode, activate anti-cheat IMMEDIATELY
+        // Don't wait for fullscreen - kiosk window is already isolated
+        if (isKioskMode()) {
+            console.log('🔒 KIOSK MODE: Activating anti-cheat immediately');
+            examApp.antiCheatActive = true;
+            examApp.antiCheatActivationTime = Date.now();
+
+            // Force activate advanced anti-cheat
+            initializeAdvancedAntiCheat();
+
+            console.log('✅ Anti-cheat ACTIVE in kiosk mode (no escape possible)');
+        } else {
+            // Initialize advanced anti-cheat modules (normal mode)
+            initializeAdvancedAntiCheat();
+        }
 
         // Initialize help chat
         if (examApp.socket) {
@@ -153,8 +233,13 @@ async function startExam(sessionData) {
             examApp.helpChat.requestNotificationPermission();
         }
 
-        // Show minimal fullscreen button
-        showMinimalFullscreenButton();
+        // Show minimal fullscreen button (ONLY if NOT in kiosk mode)
+        // In kiosk mode, fullscreen is handled by kiosk-mode.js
+        if (!isKioskMode()) {
+            showMinimalFullscreenButton();
+        } else {
+            console.log('Kiosk mode: Skipping fullscreen button (auto-fullscreen active)');
+        }
 
         startExamTimer(sessionData.timeLeft || examApp.examDuration);
 
@@ -571,6 +656,79 @@ function blockMobileAccess() {
             </div>
         </div>
     `;
+}
+
+/**
+ * Block VM access with detailed error message
+ */
+function blockVMAccess(vmDetection) {
+    const message = formatVMMessage(vmDetection);
+    const indicators = vmDetection.indicators.join('<br>• ');
+
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="
+                background: rgba(0,0,0,0.3);
+                padding: 40px;
+                border-radius: 10px;
+                max-width: 600px;
+            ">
+                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠️</h1>
+                <h2 style="margin-bottom: 20px; font-size: 32px;">Виртуална машина засечена!</h2>
+                <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
+                    Изпитът <strong>НЕ МОЖЕ</strong> да се провежда във виртуална среда.
+                </p>
+
+                <div style="
+                    background: rgba(255,255,255,0.1);
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-bottom: 30px;
+                    text-align: left;
+                ">
+                    <h3 style="margin-top: 0;">Засечени индикатори:</h3>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        • ${indicators}
+                    </ul>
+                    <p style="margin-bottom: 0; opacity: 0.8; font-size: 14px;">
+                        Confidence: ${vmDetection.confidence}%
+                    </p>
+                </div>
+
+                <p style="font-size: 16px; line-height: 1.6;">
+                    <strong>Моля, влезте от реално устройство:</strong>
+                </p>
+                <ul style="text-align: left; display: inline-block; margin: 20px 0;">
+                    <li>Физически лаптоп или настолен компютър</li>
+                    <li>Без VirtualBox, VMware, Parallels и др.</li>
+                    <li>Без Wine или други емулатори</li>
+                    <li>Реална физическа машина</li>
+                </ul>
+
+                <p style="margin-top: 30px; opacity: 0.9; font-size: 14px;">
+                    За въпроси или технически проблеми се свържете с преподавателя.
+                </p>
+
+                <p style="margin-top: 20px; opacity: 0.7; font-size: 12px;">
+                    Тази проверка е задължителна за сигурността на изпита.
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Log to console for debugging
+    console.log('VM Detection blocked access:', vmDetection);
 }
 
 /**
