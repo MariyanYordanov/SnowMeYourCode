@@ -31,7 +31,8 @@ router.get('/files', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const examFilesDir = path.join(__dirname, '..', '..', 'practice-server', 'exam-files');
 
         let useExamFiles = false;
@@ -89,7 +90,8 @@ router.get('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -125,7 +127,8 @@ router.post('/file', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and filename required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const filePath = path.join(projectDir, filename);
 
         // Security check
@@ -163,7 +166,8 @@ router.put('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and content required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -197,7 +201,8 @@ router.delete('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -474,7 +479,8 @@ router.post('/start', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         
         // Check if this is an Express project
         const projectType = await getProjectType(projectDir);
@@ -534,7 +540,8 @@ router.get('/preview/:sessionId/*', async (req, res) => {
             return res.status(400).send('Session ID required');
         }
 
-        const projectDir = path.join(__dirname, '..', 'student-data', sessionId, 'project-files');
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
         const fullPath = path.join(projectDir, filePath);
 
         // Security check

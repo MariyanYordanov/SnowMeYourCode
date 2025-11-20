@@ -732,10 +732,9 @@ function blockVMAccess(vmDetection) {
 }
 
 /**
- * Show minimal fullscreen button that auto-clicks after showing
+ * Show minimal fullscreen button that enters fullscreen mode
  */
 function showMinimalFullscreenButton() {
-    // Create a subtle overlay with a single button
     const overlay = document.createElement('div');
     overlay.id = 'fullscreen-button-overlay';
     overlay.style.cssText = `
@@ -744,60 +743,61 @@ function showMinimalFullscreenButton() {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 999999;
         cursor: pointer;
     `;
-    
+
     const button = document.createElement('button');
     button.style.cssText = `
-        background: #4299e1;
-        color: white;
+        background: white;
+        color: #dc3545;
         border: none;
-        padding: 20px 40px;
-        font-size: 24px;
-        border-radius: 8px;
+        padding: 30px 60px;
+        font-size: 28px;
+        font-weight: bold;
+        border-radius: 12px;
         cursor: pointer;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        animation: pulse 1s infinite;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        animation: pulse 1.5s infinite;
     `;
-    button.innerHTML = '🖥️ Започни изпита';
-    
-    // Add CSS animation
+    button.innerHTML = '🖥️ Влез в Fullscreen режим';
+
     const style = document.createElement('style');
     style.textContent = `
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% { transform: scale(1); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+            50% { transform: scale(1.08); box-shadow: 0 12px 40px rgba(0,0,0,0.7); }
+            100% { transform: scale(1); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
         }
     `;
     document.head.appendChild(style);
-    
+
     overlay.appendChild(button);
     document.body.appendChild(overlay);
-    
-    // Make entire overlay clickable
-    const startExam = async () => {
+
+    const startExamFullscreen = async () => {
         try {
             const success = enterFullscreenMode();
             if (success) {
                 overlay.remove();
                 style.remove();
+                showNotification('Изпитът започна успешно!', 'success');
+            } else {
+                showError('Моля, разрешете fullscreen режим');
             }
         } catch (error) {
             console.error('Failed to enter fullscreen:', error);
             showError('Моля, разрешете fullscreen режим');
         }
     };
-    
-    button.addEventListener('click', startExam);
-    overlay.addEventListener('click', startExam);
-    
-    // Auto-focus the button
+
+    button.addEventListener('click', startExamFullscreen);
+    overlay.addEventListener('click', startExamFullscreen);
+
     setTimeout(() => {
         button.focus();
     }, 100);

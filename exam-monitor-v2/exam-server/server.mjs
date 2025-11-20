@@ -9,27 +9,12 @@ import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
 import projectRoutes from './routes/project-routes.mjs';
 import teacherAuthRoutes, { requireTeacherAuth, redirectToLogin } from './routes/teacher-auth.mjs';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-
-// Initialize Gemini API
-const geminiApiKey = process.env.GEMINI_API_KEY;
-let generativeModel;
-
-if (geminiApiKey) {
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    generativeModel = genAI.getGenerativeModel({ model: "gemini-pro" });
-    console.log("Gemini API initialized successfully.");
-} else {
-    console.warn("GEMINI_API_KEY not found in environment variables. Gemini API will not be available.");
-}
-
-// TODO: Pass generativeModel to SessionManager or WebSocketHandler if they need to use it.
 
 const io = new Server(server, {
     serveClient: true,
@@ -223,7 +208,7 @@ app.use('/api/project/run/:sessionId', (req, res, next) => {
         return res.status(400).send('Invalid Session ID format.');
     }
 
-    const projectPath = join(__dirname, 'data', 'student-data', 'classes', sessionId.split('-')[0].toUpperCase(), sessionId);
+    const projectPath = join(__dirname, 'data', 'classes', sessionId.split('-')[0].toUpperCase(), sessionId);
     
     // Serve static files from the student's project directory
     express.static(projectPath)(req, res, next);

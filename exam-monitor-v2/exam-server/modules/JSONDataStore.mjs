@@ -6,8 +6,7 @@ export class JSONDataStore {
         this.baseDir = baseDir;
         this.dataDir = path.join(baseDir, 'data');
         this.sessionsDir = path.join(this.dataDir, 'sessions');
-        this.studentDataDir = path.join(this.dataDir, 'student-data');
-        this.classesDir = path.join(this.studentDataDir, 'classes');
+        this.classesDir = path.join(this.dataDir, 'classes');
 
         this.ensureDirectories();
     }
@@ -19,7 +18,6 @@ export class JSONDataStore {
         const dirs = [
             this.dataDir,
             this.sessionsDir,
-            this.studentDataDir,
             this.classesDir
         ];
 

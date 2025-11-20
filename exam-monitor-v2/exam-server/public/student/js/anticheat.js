@@ -315,17 +315,17 @@ function handleKeyDown(event) {
         }
     }
     
-    // 🔥 Block ALL function keys - ZERO exceptions
+    // Block function keys except F12 (for DevTools debugging)
     const functionKeys = [
-        'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+        'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11',
         'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20', 'F21', 'F22', 'F23', 'F24'
     ];
-    
+
     if (functionKeys.includes(event.key) || functionKeys.includes(event.code)) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log(`🔥 FUNCTION KEY ANNIHILATED: ${event.key}`);
+        console.log(`🔥 FUNCTION KEY BLOCKED: ${event.key}`);
         reportViolation('function_key_attempt');
         return;
     }
