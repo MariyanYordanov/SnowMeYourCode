@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Student data (generated during exams)
+exam-server/data/classes/*/
+!exam-server/data/classes/.gitkeep
+exam-server/data/sessions/*/
+!exam-server/data/sessions/.gitkeep
+
+# Practice server student data
+practice-server/data/student-data/
+!practice-server/data/student-data/.gitkeep
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
