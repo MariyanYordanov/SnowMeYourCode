@@ -1571,6 +1571,21 @@
                     this.handleResponseError(data);
                 });
 
+                // Session restart events
+                this.socket.on('session-restart-success', (data) => {
+                    this.handleSessionRestartSuccess(data);
+                });
+
+                this.socket.on('session-restart-error', (data) => {
+                    this.handleSessionRestartError(data);
+                });
+
+                this.socket.on('session-restarted', (data) => {
+                    // Another teacher restarted a session - refresh display
+                    this.showNotification(`Session restarted: ${data.sessionId}`, 'info');
+                    this.manualRefresh();
+                });
+
                 console.log('🔗 Socket handlers configured');
             }
 
@@ -2087,8 +2102,15 @@
              * Render student controls
              */
             renderControls(student) {
+                // Terminated/completed students can only be restarted
                 if (student.status === 'terminated' || student.status === 'completed') {
-                    return '';
+                    return `
+                        <div class="controls">
+                            <button class="btn btn-success" onclick="teacherDashboard.restartStudentSession('${student.sessionId}', '${student.studentName}')">
+                                🔄 Restart Session
+                            </button>
+                        </div>
+                    `;
                 }
 
                 const hasHelpRequest = student.hasHelpRequest || false;
@@ -2102,6 +2124,9 @@
                         </button>
                         <button class="btn btn-warning" onclick="teacherDashboard.warnStudent('${student.sessionId}')">
                             ⚠️ Send Warning
+                        </button>
+                        <button class="btn btn-success" onclick="teacherDashboard.restartStudentSession('${student.sessionId}', '${student.studentName}')">
+                            🔄 Restart Session
                         </button>
                         <button class="btn btn-danger" onclick="teacherDashboard.terminateStudent('${student.sessionId}')">
                             🚫 Terminate Exam
@@ -2239,6 +2264,23 @@
                     this.socket.emit('terminate-student', { sessionId, reason: 'instructor_action' });
                     this.showNotification(`Terminating exam for ${student.studentName}`, 'error');
                 }
+            }
+
+            restartStudentSession(sessionId, studentName) {
+                if (confirm(`Restart session for ${studentName}?\n\nThis will allow the student to log in again with the same credentials.\nTheir previous session data will be cleared.`)) {
+                    this.socket.emit('teacher-restart-session', { sessionId });
+                    this.showNotification(`Restarting session for ${studentName}...`, 'info');
+                }
+            }
+
+            handleSessionRestartSuccess(data) {
+                this.showNotification(data.message || 'Session restarted successfully', 'success');
+                // Refresh student list to remove the restarted student
+                this.manualRefresh();
+            }
+
+            handleSessionRestartError(data) {
+                this.showNotification(data.message || 'Failed to restart session', 'error');
             }
 
             /**

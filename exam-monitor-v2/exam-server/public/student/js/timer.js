@@ -4,10 +4,9 @@
  */
 
 // Timer configuration
-const TIME_WARNINGS = [60, 30, 15, 5, 1]; // Minutes before exam end to warn
+const TIME_WARNINGS = [5]; // Minutes before exam end to warn
 const WARNING_COLORS = {
     normal: '#4CAF50',
-    warning: '#ffa502',
     critical: '#ff4757'
 };
 
@@ -109,16 +108,12 @@ function updateTimerColor(timeLeft) {
 
         const minutesLeft = Math.floor(timeLeft / (1000 * 60));
 
-        if (minutesLeft <= 5) {
-            // Critical: last 5 minutes
+        if (minutesLeft < 5) {
+            // Critical: last 5 minutes - RED with pulse animation
             timerEl.style.color = WARNING_COLORS.critical;
             timerEl.style.animation = 'pulse 1s infinite';
-        } else if (minutesLeft <= 15) {
-            // Warning: last 15 minutes
-            timerEl.style.color = WARNING_COLORS.warning;
-            timerEl.style.animation = 'none';
         } else {
-            // Normal: more than 15 minutes
+            // Normal: more than 5 minutes - GREEN
             timerEl.style.color = WARNING_COLORS.normal;
             timerEl.style.animation = 'none';
         }
@@ -363,12 +358,12 @@ export function isTimeCritical() {
 }
 
 /**
- * Check if exam time is in warning zone (less than 15 minutes)
+ * Check if exam time is in warning zone (less than 5 minutes)
  */
 export function isTimeWarning() {
     const timeLeft = getRemainingTime();
     const minutesLeft = Math.floor(timeLeft / (1000 * 60));
-    return minutesLeft <= 15;
+    return minutesLeft < 5;
 }
 
 /**

@@ -359,6 +359,36 @@ export class SessionManager {
     }
 
     /**
+     * Clear session (teacher restart)
+     * Removes session from memory and marks as cleared in DB
+     */
+    async clearSession(sessionId) {
+        try {
+            const session = this.sessions.get(sessionId);
+
+            if (session) {
+                // Mark as cleared and save final state
+                session.status = 'CLEARED';
+                session.clearedAt = new Date().toISOString();
+                session.clearedBy = 'teacher';
+
+                await this.dataStore.saveSession(session);
+
+                // Remove from active sessions
+                this.sessions.delete(sessionId);
+
+                console.log(`🧹 Session cleared by teacher: ${sessionId}`);
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error(`Error clearing session ${sessionId}:`, error);
+            return false;
+        }
+    }
+
+    /**
      * Get all active sessions for teacher dashboard
      */
     getActiveSessions() {

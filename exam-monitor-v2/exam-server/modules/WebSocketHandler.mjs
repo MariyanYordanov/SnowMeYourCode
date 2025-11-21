@@ -232,6 +232,11 @@ export class WebSocketHandler {
         socket.on('teacher-typing', (data) => {
             this.handleTeacherTyping(socket, data);
         });
+
+        // Teacher session management
+        socket.on('teacher-restart-session', async (data) => {
+            await this.handleTeacherRestartSession(socket, data);
+        });
     }
 
     /**
@@ -926,6 +931,70 @@ export class WebSocketHandler {
             studentSocket.emit('teacher-typing', {
                 isTyping: isTyping,
                 timestamp: Date.now()
+            });
+        }
+    }
+
+    /**
+     * Handle teacher restarting a student session
+     */
+    async handleTeacherRestartSession(socket, data) {
+        try {
+            const { sessionId } = data;
+
+            if (!sessionId) {
+                socket.emit('session-restart-error', {
+                    success: false,
+                    message: 'Session ID required'
+                });
+                return;
+            }
+
+            console.log(`👨‍🏫 Teacher requesting session restart for: ${sessionId}`);
+
+            // Clear session from SessionManager
+            const cleared = await this.sessionManager.clearSession(sessionId);
+
+            if (cleared) {
+                // Disconnect student socket if still connected
+                const studentSocket = this.studentSockets.get(sessionId);
+                if (studentSocket && studentSocket.connected) {
+                    studentSocket.emit('session-restarted', {
+                        message: 'Your session was restarted by the teacher. Please log in again.'
+                    });
+                    studentSocket.disconnect(true);
+                }
+
+                // Remove from local tracking
+                this.studentSockets.delete(sessionId);
+                this.antiCheat.cleanupStudent(sessionId);
+
+                // Notify all teachers
+                this.broadcastToTeachers('session-restarted', {
+                    sessionId: sessionId,
+                    timestamp: Date.now()
+                });
+
+                // Confirm to requesting teacher
+                socket.emit('session-restart-success', {
+                    success: true,
+                    sessionId: sessionId,
+                    message: 'Session restarted successfully. Student can now log in again.'
+                });
+
+                console.log(`✅ Session restarted: ${sessionId}`);
+            } else {
+                socket.emit('session-restart-error', {
+                    success: false,
+                    message: 'Failed to clear session. Session may not exist.'
+                });
+            }
+
+        } catch (error) {
+            console.error('Error restarting session:', error);
+            socket.emit('session-restart-error', {
+                success: false,
+                message: 'Internal server error'
             });
         }
     }
