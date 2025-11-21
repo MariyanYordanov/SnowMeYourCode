@@ -1,6 +1,6 @@
 {
   "exam": {
-    "duration": 30,
+    "duration": 1,
     "durationUnit": "minutes",
     "title": "Програмиране - Практически изпит",
     "instructions": "Решете задачите използвайки JavaScript. Времето за изпита е 3 часа.",
@@ -28,16 +28,8 @@
   "security": {
     "antiCheat": {
       "enabled": true,
-      "strictMode": true,
-      "maxSuspicionScore": 100,
-      "warningThreshold": 30,
-      "criticalThreshold": 70,
-      "autoDisconnectScore": 80,
-      "allowedViolations": {
-        "tabSwitches": 5,
-        "copyAttempts": 3,
-        "devToolsAttempts": 2
-      }
+      "maxFullscreenExitAttempts": 3,
+      "showWarningDialog": true
     },
     "sessionSecurity": {
       "sessionTimeout": 240,

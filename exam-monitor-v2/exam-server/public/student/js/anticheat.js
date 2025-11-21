@@ -199,9 +199,16 @@ function handleFullscreenChange() {
                 examApp.antiCheatActive &&
                 !examApp.completionInProgress) {
 
-                // NO EXCEPTIONS - ALWAYS TERMINATE ON FULLSCREEN EXIT
-                console.log('❌ FULLSCREEN EXIT DETECTED - TERMINATING EXAM');
-                reportViolation('fullscreen_exit');
+                // Увеличаваме брояча на опити
+                if (!examApp.fullscreenExitAttempts) {
+                    examApp.fullscreenExitAttempts = 0;
+                }
+                examApp.fullscreenExitAttempts++;
+
+                console.log(`❌ FULLSCREEN EXIT DETECTED - Attempt ${examApp.fullscreenExitAttempts}/3`);
+
+                // Показваме диалог с предупреждение
+                showFullscreenExitWarning(examApp.fullscreenExitAttempts);
             }
         }
     } catch (error) {
@@ -1051,4 +1058,195 @@ export function initializeAdvancedAntiCheat() {
     // No longer needed - keeping function for compatibility
     console.log('Simple anti-cheat mode active');
     return true;
+}
+
+/**
+ * Show fullscreen exit warning dialog
+ */
+function showFullscreenExitWarning(attemptNumber) {
+    const examApp = window.ExamApp;
+    const maxAttempts = 3;
+    const remainingAttempts = maxAttempts - attemptNumber;
+
+    // Ако е 3-ти опит → прекратяване
+    if (attemptNumber >= maxAttempts) {
+        console.log('❌ MAX FULLSCREEN EXIT ATTEMPTS REACHED - TERMINATING EXAM');
+        reportViolation('max_fullscreen_exit_attempts');
+
+        // Показваме финален диалог
+        showFinalTerminationDialog();
+        return;
+    }
+
+    // Създаваме overlay за диалога
+    const overlay = document.createElement('div');
+    overlay.id = 'fullscreen-exit-warning-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999999;
+        animation: fadeIn 0.3s ease-in-out;
+    `;
+
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        max-width: 600px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        animation: scaleIn 0.3s ease-in-out;
+    `;
+
+    dialog.innerHTML = `
+        <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+        <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 28px;">
+            FULLSCREEN РЕЖИМ ИЗКЛЮЧЕН
+        </h2>
+        <p style="font-size: 18px; line-height: 1.6; margin-bottom: 20px; color: #333;">
+            Опитахте да излезете от fullscreen режим.<br>
+            Това е <strong style="color: #dc3545;">ОПИТ ${attemptNumber} от ${maxAttempts}</strong>.
+        </p>
+        <p style="font-size: 20px; font-weight: bold; color: #dc3545; margin-bottom: 30px;">
+            ${remainingAttempts} ${remainingAttempts === 1 ? 'опит' : 'опита'} до прекратяване на изпита!
+        </p>
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
+            <button id="continue-exam-btn" style="
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 15px 40px;
+                font-size: 18px;
+                font-weight: bold;
+                border-radius: 8px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+                transition: all 0.2s;
+            ">
+                ✅ Продължи изпита
+            </button>
+            <button id="exit-exam-btn" style="
+                background: #6c757d;
+                color: white;
+                border: none;
+                padding: 15px 40px;
+                font-size: 18px;
+                font-weight: bold;
+                border-radius: 8px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(108,117,125,0.3);
+                transition: all 0.2s;
+            ">
+                🚪 Прекрати изпита
+            </button>
+        </div>
+    `;
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        #continue-exam-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40,167,69,0.4);
+        }
+        #exit-exam-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(108,117,125,0.4);
+        }
+    `;
+    document.head.appendChild(style);
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // Button handlers
+    document.getElementById('continue-exam-btn').addEventListener('click', () => {
+        overlay.remove();
+        style.remove();
+
+        // Връщаме се в fullscreen
+        enterFullscreenMode();
+    });
+
+    document.getElementById('exit-exam-btn').addEventListener('click', () => {
+        overlay.remove();
+        style.remove();
+
+        // Прекратяваме изпита
+        if (window.ExamApp && window.ExamApp.completeExam) {
+            window.ExamApp.completeExam('student_voluntary_exit');
+        }
+    });
+}
+
+/**
+ * Show final termination dialog (3rd attempt)
+ */
+function showFinalTerminationDialog() {
+    const overlay = document.createElement('div');
+    overlay.id = 'final-termination-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999999;
+    `;
+
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: white;
+        padding: 50px;
+        border-radius: 16px;
+        max-width: 600px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    `;
+
+    dialog.innerHTML = `
+        <div style="font-size: 80px; margin-bottom: 20px;">❌</div>
+        <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 32px;">
+            ИЗПИТЪТ Е ПРЕКРАТЕН
+        </h2>
+        <p style="font-size: 20px; line-height: 1.6; color: #333;">
+            Направихте <strong>3 опита</strong> да излезете от fullscreen режим.<br>
+            Изпитът е автоматично прекратен.
+        </p>
+        <p style="font-size: 16px; margin-top: 30px; color: #666;">
+            Свържете се с преподавателя за повече информация.
+        </p>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // Прекратяваме изпита след 3 секунди
+    setTimeout(() => {
+        if (window.ExamApp && window.ExamApp.completeExam) {
+            window.ExamApp.completeExam('max_fullscreen_exit_attempts');
+        }
+    }, 3000);
 }

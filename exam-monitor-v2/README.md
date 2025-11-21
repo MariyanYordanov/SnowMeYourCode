@@ -172,22 +172,6 @@ exam-server/data/classes/.gitkeep
 exam-server/data/sessions/.gitkeep
 ```
 
-## 🔐 Антиизмама нарушения
-
-| Нарушение | Строгост | Точки | Действие |
-|-----------|----------|-------|----------|
-| Window blur (Alt+Tab) | CRITICAL | 100 | Instant termination |
-| ESC (fullscreen exit) | CRITICAL | 100 | Instant termination |
-| DevTools в production | CRITICAL | 50 | Termination след 2 опита |
-| Copy от външен източник | MEDIUM | 10 | Warning след 3 опита |
-| Heartbeat пропуснат | MEDIUM | 15 | Warning след 3 пъти |
-
-**Scoring:**
-- < 30: ✅ Safe
-- 30-70: ⚠️ Warning
-- 70-80: 🔴 Critical
-- ≥ 80: ❌ Auto-disconnect
-
 ## 🌐 WebSocket Events
 
 ### Student → Server:
