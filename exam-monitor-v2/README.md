@@ -2,7 +2,7 @@
 
 > Web-based programming exam system with built-in anti-cheat protection
 
-## 🎯 What does it do?
+## What does it do?
 
 Exam Monitor is a web-based system for conducting programming exams in a controlled environment. It provides:
 
@@ -43,7 +43,7 @@ exam-monitor-v2/
     └── exam-files/           # Exam files
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Initial Installation
 ```bash
@@ -67,7 +67,7 @@ cd practice-server && node server.mjs
 - **Teacher:** http://localhost:8080/teacher
 - **Practice API:** http://localhost:3030/jsonstore/*
 
-## 👤 Login
+## Login
 
 ### Teacher Access
 ```
@@ -85,7 +85,7 @@ Password: exam-admin-2024
 6. Red screen with fullscreen button will appear
 7. Click the button → exam starts
 
-## 🎓 How does it work?
+## How does it work?
 
 ### 1. Student starts exam:
 ```
@@ -113,7 +113,7 @@ Student → WebSocket → Exam Server → Teacher Dashboard
                 Database (sessions + student data)
 ```
 
-## 📊 Configuration
+## Configuration
 
 Edit `exam-server/config/exam-config.json`:
 
@@ -149,7 +149,7 @@ Edit `exam-server/config/exam-config.json`:
 - **Timer warnings** - Only at 5 minutes remaining
 - **Timer turns red** - Last 5 minutes with pulse animation
 
-## 🛠️ Development Mode
+## Development Mode
 
 ### For development with DevTools:
 ```
@@ -162,7 +162,7 @@ window.ALLOW_DEV_MODE = true;
 location.reload();
 ```
 
-**⚠️ IMPORTANT:** Dev mode works ONLY on localhost/127.0.0.1
+** IMPORTANT:** Dev mode works ONLY on localhost/127.0.0.1
 
 ### To test anti-cheat:
 ```
@@ -170,7 +170,7 @@ http://localhost:8080/student
 // without ?dev=true
 ```
 
-## 📂 Data Directories
+## Data Directories
 
 ### Ignored by Git:
 ```
@@ -185,7 +185,7 @@ exam-server/data/classes/.gitkeep
 exam-server/data/sessions/.gitkeep
 ```
 
-## 👨‍🏫 Teacher Features
+## Teacher Features
 
 ### Session Management:
 - **Restart Session** button for each student
@@ -203,11 +203,11 @@ exam-server/data/sessions/.gitkeep
 
 ### How to restart a student session:
 1. Find the student in the dashboard
-2. Click "🔄 Restart Session" button
+2. Click "Restart Session" button
 3. Confirm the action
 4. Session is cleared - student can log in again with same credentials
 
-## 🌐 WebSocket Events
+## WebSocket Events
 
 ### Student → Server:
 - `student-join` - Student connects
@@ -232,7 +232,7 @@ exam-server/data/sessions/.gitkeep
 - `session-restart-success` - Session restarted successfully
 - `session-restart-error` - Restart failed
 
-## 📝 API Endpoints
+## API Endpoints
 
 ### Student endpoints:
 ```
@@ -258,7 +258,7 @@ POST http://localhost:8080/proxy/jsonstore/phonebook
 PUT  http://localhost:8080/proxy/jsonstore/phonebook/:id
 ```
 
-## 🎯 Supported Exam Types
+## Supported Exam Types
 
 ### 1. Vanilla JavaScript
 - HTML + CSS + JS
@@ -271,7 +271,7 @@ PUT  http://localhost:8080/proxy/jsonstore/phonebook/:id
 - Student server on port 4000+
 - Proxy to student server
 
-## 🚨 Common Issues
+## Common Issues
 
 ### "Cannot enter the exam"
 - Check that name is at least 3 characters
@@ -290,10 +290,10 @@ PUT  http://localhost:8080/proxy/jsonstore/phonebook/:id
 
 ### "Student has technical problems"
 - Teacher can restart the session from dashboard
-- Click "🔄 Restart Session" button
+- Click "Restart Session" button
 - Student can log in again with same credentials
 
-## 📦 Version History
+## Version History
 
 ### v2.0.0 (Current)
 - Simplified anti-cheat system (3-attempt fullscreen exit)
@@ -306,7 +306,7 @@ PUT  http://localhost:8080/proxy/jsonstore/phonebook/:id
 - Simplified directory structure
 - Updated documentation
 
-## 📄 License
+## License
 
 ISC
 
