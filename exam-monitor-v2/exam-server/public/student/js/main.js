@@ -767,7 +767,8 @@ function showMinimalFullscreenButton() {
                 overlay.remove();
                 style.remove();
 
-                // Show exam component NOW (after fullscreen entered)
+                // CRITICAL: Hide login component and show exam component
+                hideLoginComponent();
                 showExamComponent();
 
                 // Initialize everything AFTER exam component is shown
