@@ -199,63 +199,40 @@ async function startExam(sessionData) {
         examApp.examEndTime = new Date(examApp.examStartTime + examApp.examDuration);
 
         hideLoginComponent();
-        // DON'T show exam component yet if we need fullscreen
-        // It will be shown after fullscreen is entered
+
+        // In kiosk mode, show exam immediately and initialize everything
         if (isKioskMode()) {
             showExamComponent();
-        }
 
-        updateStudentDisplay(
-            examApp.studentName,
-            examApp.studentClass,
-            examApp.sessionId
-        );
+            updateStudentDisplay(
+                examApp.studentName,
+                examApp.studentClass,
+                examApp.sessionId
+            );
 
-        await initializeMonaco();
+            await initializeMonaco();
+            setupTabs();
 
-        setupTabs();
-
-        // CRITICAL: In kiosk mode, activate anti-cheat IMMEDIATELY
-        // Don't wait for fullscreen - kiosk window is already isolated
-        if (isKioskMode()) {
             console.log('🔒 KIOSK MODE: Activating anti-cheat immediately');
             examApp.antiCheatActive = true;
             examApp.antiCheatActivationTime = Date.now();
-
-            // Force activate advanced anti-cheat
             initializeAdvancedAntiCheat();
-
             console.log('✅ Anti-cheat ACTIVE in kiosk mode (no escape possible)');
+
+            if (examApp.socket) {
+                examApp.helpChat = new HelpChat(examApp.socket);
+                examApp.helpChat.requestNotificationPermission();
+            }
+
+            startExamTimer(sessionData.timeLeft || examApp.examDuration);
         } else {
-            // Initialize advanced anti-cheat modules (normal mode)
-            initializeAdvancedAntiCheat();
-        }
-
-        // Initialize help chat
-        if (examApp.socket) {
-            examApp.helpChat = new HelpChat(examApp.socket);
-            examApp.helpChat.requestNotificationPermission();
-        }
-
-        // Show minimal fullscreen button (ONLY if NOT in kiosk mode)
-        // In kiosk mode, fullscreen is handled by kiosk-mode.js
-        if (!isKioskMode()) {
+            // Normal mode: Show fullscreen button first, initialize AFTER fullscreen
+            // Store session data for later initialization
+            examApp.pendingSessionData = sessionData;
             showMinimalFullscreenButton();
-        } else {
-            console.log('Kiosk mode: Skipping fullscreen button (auto-fullscreen active)');
         }
 
-        startExamTimer(sessionData.timeLeft || examApp.examDuration);
-
-        // Възстановяваме кода за продължаващи сесии
-        if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
-            examApp.editor.setValue(sessionData.lastCode);
-            
-            const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
-            showNotification(`Сесията е възстановена. Остават ${minutesLeft} минути`, 'info');
-        }
-
-        console.log('Exam started successfully');
+        console.log('Exam initialization completed');
 
     } catch (error) {
         console.error('Failed to start exam:', error);
@@ -793,7 +770,38 @@ function showMinimalFullscreenButton() {
                 // Show exam component NOW (after fullscreen entered)
                 showExamComponent();
 
-                showNotification('Изпитът започна успешно!', 'success');
+                // Initialize everything AFTER exam component is shown
+                const examApp = window.ExamApp;
+                const sessionData = examApp.pendingSessionData;
+
+                updateStudentDisplay(
+                    examApp.studentName,
+                    examApp.studentClass,
+                    examApp.sessionId
+                );
+
+                await initializeMonaco();
+                setupTabs();
+
+                // Initialize advanced anti-cheat modules
+                initializeAdvancedAntiCheat();
+
+                // Initialize help chat
+                if (examApp.socket) {
+                    examApp.helpChat = new HelpChat(examApp.socket);
+                    examApp.helpChat.requestNotificationPermission();
+                }
+
+                startExamTimer(sessionData.timeLeft || examApp.examDuration);
+
+                // Restore code for continuing sessions
+                if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
+                    examApp.editor.setValue(sessionData.lastCode);
+                    const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
+                    showNotification(`Сесията е възстановена. Остават ${minutesLeft} минути`, 'info');
+                } else {
+                    showNotification('Изпитът започна успешно!', 'success');
+                }
             } else {
                 showError('Моля, разрешете fullscreen режим');
             }
