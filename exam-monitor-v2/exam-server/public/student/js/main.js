@@ -199,7 +199,11 @@ async function startExam(sessionData) {
         examApp.examEndTime = new Date(examApp.examStartTime + examApp.examDuration);
 
         hideLoginComponent();
-        showExamComponent();
+        // DON'T show exam component yet if we need fullscreen
+        // It will be shown after fullscreen is entered
+        if (isKioskMode()) {
+            showExamComponent();
+        }
 
         updateStudentDisplay(
             examApp.studentName,
@@ -785,6 +789,10 @@ function showMinimalFullscreenButton() {
             if (success) {
                 overlay.remove();
                 style.remove();
+
+                // Show exam component NOW (after fullscreen entered)
+                showExamComponent();
+
                 showNotification('Изпитът започна успешно!', 'success');
             } else {
                 showError('Моля, разрешете fullscreen режим');
