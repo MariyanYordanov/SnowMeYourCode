@@ -301,9 +301,9 @@ async function initializeMonaco() {
 
         if (typeof monaco !== 'undefined') {
             setupFileManagerCommands();
-    }
+        }
 
-    if (examApp.sessionId) {
+        if (examApp.sessionId) {
             try {
                 const success = await fileManager.loadProjectStructure(examApp.sessionId);
                 if (!success) {
