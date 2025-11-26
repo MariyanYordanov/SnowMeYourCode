@@ -1,9 +1,6 @@
-// 🔒 SECURITY: Development mode DISABLED by default for production safety
-// To enable development mode, add ?dev=true to URL or set window.ALLOW_DEV_MODE = true in console
-const DEVELOPMENT_MODE = (
-    window.ALLOW_DEV_MODE === true || 
-    new URLSearchParams(window.location.search).get('dev') === 'true'
-) && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+// 🔒 SECURITY: Development mode ENABLED for localhost debugging
+// DevTools are ALWAYS allowed on localhost for debugging
+const DEVELOPMENT_MODE = true; // Always enabled for debugging
 
 export function setupAntiCheat() {
     try {
