@@ -194,40 +194,7 @@ async function startExam(sessionData) {
     }
 }
 
-async function startFullscreenExam() {
-    try {
-        const success = enterFullscreenMode();
-        const examApp = window.ExamApp;
-
-        if (!success) {
-            showError('Браузърът не поддържа fullscreen режим');
-            return;
-        }
-
-        hidePreExamComponent();
-        showExamComponent();
-
-        updateStudentDisplay(
-            examApp.studentName,
-            examApp.studentClass,
-            examApp.sessionId
-        );
-
-        await initializeMonaco();
-
-        setupTabs();
-
-        startExamTimer(examApp.examDuration);
-
-        showNotification('Изпитът започна успешно! Успех!', 'success');
-
-        console.log('Exam started successfully in fullscreen');
-
-    } catch (error) {
-        console.error('Failed to start fullscreen exam:', error);
-        showError('[ERROR] Грешка при стартиране на изпита');
-    }
-}
+// OLD FUNCTION REMOVED - Now using showMinimalFullscreenButton with embedded startExamFullscreen
 
 async function initializeMonaco() {
     try {
@@ -437,14 +404,7 @@ function updatePreExamDisplay(studentName, studentClass, sessionId) {
     if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
 }
 
-function setupPreExamButton() {
-    const startBtn = document.getElementById('start-fullscreen-exam-btn');
-    if (startBtn) {
-        startBtn.addEventListener('click', () => {
-            startFullscreenExam();
-        });
-    }
-}
+// OLD FUNCTION REMOVED - setupPreExamButton not needed anymore
 
 function showNotification(message, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${message}`);
@@ -505,18 +465,11 @@ function setupWindowFunctions() {
 
     // Assign functions to ExamApp for external access
     examApp.startExam = startExam;
-    examApp.startFullscreenExam = startFullscreenExam;
     examApp.completeExam = completeExam;
     examApp.exitExam = exitExam;
     examApp.resetLoginState = () => resetLoginState(examApp);
     examApp.getLoginState = () => getLoginState(examApp);
     examApp.getTermsAcceptanceInfo = () => getTermsAcceptanceInfo(examApp);
-
-    // Assign functions to ExamApp for external access
-    examApp.startExam = startExam;
-    examApp.startFullscreenExam = startFullscreenExam;
-    examApp.completeExam = completeExam;
-    examApp.exitExam = exitExam;
 }
 
 /**

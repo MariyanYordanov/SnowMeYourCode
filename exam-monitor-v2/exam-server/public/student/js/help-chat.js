@@ -612,8 +612,14 @@ export class HelpChat {
      * Request notification permission
      */
     requestNotificationPermission() {
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
+        try {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().catch(err => {
+                    console.log('Notification permission request failed (expected in fullscreen):', err);
+                });
+            }
+        } catch (error) {
+            console.log('Notification permission not available:', error);
         }
     }
 
