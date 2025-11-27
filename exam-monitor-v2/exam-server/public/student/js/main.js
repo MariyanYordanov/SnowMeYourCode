@@ -165,33 +165,7 @@ async function startExam(sessionData) {
             throw new Error('Invalid session data');
         }
 
-        // If NOT in kiosk mode yet, launch kiosk mode popup
-        if (!isKioskMode()) {
-            console.log('📤 Launching kiosk mode popup...');
-
-            // Check if popup is supported
-            if (!isKioskModeSupported()) {
-                console.error('❌ Popup windows are blocked');
-                showError('Моля, разрешете popup прозорци в браузъра си');
-                return;
-            }
-
-            // Launch kiosk mode popup window
-            const kioskWindow = launchKioskMode(sessionData);
-
-            if (!kioskWindow) {
-                console.error('❌ Failed to open kiosk window');
-                showError('Не успях да отворя изпитния прозорец. Проверете дали popup прозорците не са блокирани.');
-                return;
-            }
-
-            // Parent window will close automatically after 2 seconds
-            // startExam() will be called again IN the kiosk window
-            return;
-        }
-
-        // If WE ARE in kiosk mode, continue with normal exam start
-        console.log('✅ Starting exam in kiosk mode');
+        console.log('✅ Starting exam');
 
         examApp.isLoggedIn = true;
         examApp.examStartTime = sessionData.examStartTime || Date.now();
@@ -200,39 +174,13 @@ async function startExam(sessionData) {
 
         hideLoginComponent();
 
-        // In kiosk mode, show exam immediately and initialize everything
-        if (isKioskMode()) {
-            showExamComponent();
+        // Store session data for later initialization (after fullscreen)
+        examApp.pendingSessionData = sessionData;
 
-            updateStudentDisplay(
-                examApp.studentName,
-                examApp.studentClass,
-                examApp.sessionId
-            );
+        // Show fullscreen button - exam will initialize AFTER fullscreen is entered
+        showMinimalFullscreenButton();
 
-            await initializeMonaco();
-            setupTabs();
-
-            console.log('🔒 KIOSK MODE: Activating anti-cheat immediately');
-            examApp.antiCheatActive = true;
-            examApp.antiCheatActivationTime = Date.now();
-            initializeAdvancedAntiCheat();
-            console.log('✅ Anti-cheat ACTIVE in kiosk mode (no escape possible)');
-
-            if (examApp.socket) {
-                examApp.helpChat = new HelpChat(examApp.socket);
-                examApp.helpChat.requestNotificationPermission();
-            }
-
-            startExamTimer(sessionData.timeLeft || examApp.examDuration);
-        } else {
-            // Normal mode: Show fullscreen button first, initialize AFTER fullscreen
-            // Store session data for later initialization
-            examApp.pendingSessionData = sessionData;
-            showMinimalFullscreenButton();
-        }
-
-        console.log('Exam initialization completed');
+        console.log('Exam initialization completed - waiting for fullscreen');
 
     } catch (error) {
         console.error('Failed to start exam:', error);
