@@ -119,10 +119,10 @@ export function setupFocusMonitoring() {
         
         // Start aggressive focus polling
         startAggressiveFocusPolling();
-        
-        // Initialize mouse lock when possible
-        initializeMouseLock();
-        
+
+        // DISABLED: Mouse lock causes cursor to disappear
+        // initializeMouseLock();
+
         // 🔥 AGGRESSIVE: Apply CSS-based blocking
         applyCSSBlockingRules();
         
@@ -181,13 +181,13 @@ function handleFullscreenChange() {
                     showNotification('Изпитът започна успешно!', 'success');
                 }
             }
-            
-            // Request mouse lock when in fullscreen
-            if (!wasFullscreen) {
-                setTimeout(() => {
-                    requestMouseLock();
-                }, 500); // Small delay to ensure fullscreen is stable
-            }
+
+            // DISABLED: Mouse lock causes cursor to disappear
+            // if (!wasFullscreen) {
+            //     setTimeout(() => {
+            //         requestMouseLock();
+            //     }, 500);
+            // }
         } else {
             updateFullscreenStatus('Fullscreen неактивен');
 
