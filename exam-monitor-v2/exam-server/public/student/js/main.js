@@ -661,7 +661,16 @@ function showMinimalFullscreenButton() {
     overlay.appendChild(button);
     document.body.appendChild(overlay);
 
+    let examStarting = false;  // Flag to prevent double initialization
+
     const startExamFullscreen = async () => {
+        if (examStarting) {
+            console.log('⚠️ Exam already starting, ignoring duplicate call');
+            return;
+        }
+
+        examStarting = true;
+
         try {
             const success = enterFullscreenMode();
             if (success) {
@@ -706,15 +715,17 @@ function showMinimalFullscreenButton() {
                 }
             } else {
                 showError('Моля, разрешете fullscreen режим');
+                examStarting = false;
             }
         } catch (error) {
             console.error('Failed to enter fullscreen:', error);
             showError('Моля, разрешете fullscreen режим');
+            examStarting = false;
         }
     };
 
     button.addEventListener('click', startExamFullscreen);
-    overlay.addEventListener('click', startExamFullscreen);
+    // Removed overlay click listener to prevent double initialization
 
     setTimeout(() => {
         button.focus();
