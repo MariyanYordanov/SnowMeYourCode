@@ -5,6 +5,7 @@ import { previewManager } from './preview-manager.js';
 import { HelpChat } from './help-chat.js';
 
 import {
+    setupTermsAgreement,
     setupLoginForm,
     handleLogin,
     handleLoginSuccess,
@@ -121,6 +122,8 @@ function initializeApp() {
         const examApp = window.ExamApp;
 
         updateEditorIntegration();
+
+        setupTermsAgreement();
 
         setupLoginForm(examApp);
 
@@ -347,7 +350,11 @@ function showLoginComponent() {
 }
 
 function hideLoginComponent() {
+    const termsComponent = document.getElementById('terms-component');
     const loginComponent = document.getElementById('login-component');
+    if (termsComponent) {
+        termsComponent.style.display = 'none';
+    }
     if (loginComponent) {
         loginComponent.style.display = 'none';
     }

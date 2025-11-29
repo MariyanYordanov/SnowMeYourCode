@@ -38,12 +38,13 @@
 
 <body>
     <div id="app-container" class="app-container">
-        <div id="login-component" class="component-container">
+        <!-- Terms Component (Screen 1) -->
+        <div id="terms-component" class="component-container">
             <div class="login-container">
                 <div class="terms-section">
                     <div class="terms-content p-xxl">
                         <div class="terms-text">
-                            <h4 class="text-md font-semibold mb-lg">❌ Забранени действия по време на изпита:</h4>
+                            <h4 class="text-md font-semibold mb-lg">Забранени действия по време на изпита:</h4>
 
                             <ol class="violation-list">
                                 <li><strong>Смяна на прозорци/табове:</strong> Напускане на изпитния прозорец</li>
@@ -57,7 +58,7 @@
                                 <li><strong>Комуникация с други лица:</strong> По всякакъв начин</li>
                             </ol>
 
-                            <h4 class="text-md font-semibold mb-lg mt-xl">✅ Позволени действия:</h4>
+                            <h4 class="text-md font-semibold mb-lg mt-xl">Позволени действия:</h4>
 
                             <ol class="allowed-list">
                                 <li>Писане на код в предоставения редактор</li>
@@ -67,7 +68,7 @@
                             </ol>
 
                             <p class="warning-text mt-xl p-lg rounded bg-danger text-white">
-                                <strong>⚠️ ВНИМАНИЕ:</strong> При установяване на нарушение, изпитът се прекратява
+                                <strong>ВНИМАНИЕ:</strong> При установяване на нарушение, изпитът се прекратява
                                 автоматично и се оценява със слаба оценка!
                             </p>
                         </div>
@@ -81,9 +82,18 @@
                                 </span>
                             </label>
                         </div>
+
+                        <button id="continue-to-login-btn" class="btn btn-primary w-100 mt-lg" disabled>
+                            Продължи към вход
+                        </button>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- Login Component (Screen 2) -->
+        <div id="login-component" class="component-container" style="display: none;">
+            <div class="login-container">
                 <div class="login-form">
                     <h2 class="text-center mb-xxl">Вход в изпита по програмиране</h2>
 
@@ -175,7 +185,7 @@
         
                         <div id="devtools-panel" class="sidebar-panel">
                             <div class="devtools-header">
-                                <span class="devtools-title">🔍 Network Monitor</span>
+                                <span class="devtools-title">Network Monitor</span>
                             </div>
                             <div class="devtools-content">
                                 <div id="network-tool" class="devtool-panel active">
@@ -201,10 +211,10 @@
                     <div class="editor-area">
                         <div class="editor-header">
                             <div class="editor-actions d-flex gap-xs">
-                                <button id="run-btn" class="btn btn-sm btn-primary">▶ Run</button>
-                                <button id="preview-btn" class="btn btn-sm">🌐 Preview</button>
-                                <button id="start-server-btn" class="btn btn-sm btn-success">🚀 Start Server</button>
-                                <button id="format-btn" class="btn btn-sm">⚡ Format</button>
+                                <button id="run-btn" class="btn btn-sm btn-primary">Run</button>
+                                <button id="preview-btn" class="btn btn-sm">Preview</button>
+                                <button id="start-server-btn" class="btn btn-sm btn-success">Start Server</button>
+                                <button id="format-btn" class="btn btn-sm">Format</button>
                                 <select id="theme-selector" class="select text-xs">
                                     <option value="vs-dark">Dark</option>
                                     <option value="hc-black">High Contrast</option>
@@ -229,8 +239,6 @@
                         </div>
                     </div>
         
-                    <!-- Bottom panels removed - console output is now in DevTools sidebar -->
-                    <!-- Preview opens in new tab when Preview button is clicked -->
                 </main>
         
                 <footer class="exam-footer">
@@ -249,7 +257,7 @@
                     </div>
         
                     <div class="footer-right d-flex items-center gap-md">
-                        <button class="btn btn-sm" id="help-btn">❓ Help</button>
+                        <button class="btn btn-sm" id="help-btn">Help</button>
                         <span class="version-info text-xs text-muted">v2.0.0</span>
                     </div>
                 </footer>
