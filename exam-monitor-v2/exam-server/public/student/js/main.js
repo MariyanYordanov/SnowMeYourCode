@@ -39,7 +39,8 @@ import {
 
 import {
     showCompletionDialog,
-    hideCustomDialogs
+    hideCustomDialogs,
+    confirm
 } from './dialogs.js';
 
 import { setupTabs } from './tabs.js';
@@ -208,6 +209,18 @@ async function initializeMonaco() {
             setupFileManagerCommands();
         }
 
+        // Setup finish exam button event listener
+        const finishBtn = document.getElementById('finish-exam-btn');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', async () => {
+                const confirmed = await confirm('Сигурни ли сте, че искате да приключите изпита?');
+                if (confirmed) {
+                    completeExam('student_submit');
+                }
+            });
+            console.log('Finish exam button event listener attached');
+        }
+
         if (examApp.sessionId) {
             try {
                 const success = await fileManager.loadProjectStructure(examApp.sessionId);
@@ -292,11 +305,13 @@ function completeExam(reason = 'unknown') {
             });
         }
 
-        showCompletionDialog(reason);
+        // Show brief "Submitting..." notification instead of dialog
+        showNotification('Изпращане на решението...', 'info');
 
+        // Show completion screen after 2 seconds
         setTimeout(() => {
             exitExam(reason);
-        }, 3000);
+        }, 2000);
 
     } catch (error) {
         console.error('Error completing exam:', error);
