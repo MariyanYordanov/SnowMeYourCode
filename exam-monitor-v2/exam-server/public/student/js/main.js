@@ -328,7 +328,7 @@ function exitExam(reason = 'unknown') {
 
         setTimeout(() => {
             hideExamComponent();
-            showLoginComponent();
+            showCompletionScreen();
             examApp.completionInProgress = false;
         }, 2000);
 
@@ -364,6 +364,34 @@ function hideExamComponent() {
     const examComponent = document.getElementById('exam-component');
     if (examComponent) {
         examComponent.style.display = 'none';
+    }
+}
+
+function showCompletionScreen() {
+    const examApp = window.ExamApp;
+    const completionComponent = document.getElementById('completion-component');
+
+    if (completionComponent) {
+        // Fill in student info
+        const studentNameEl = document.getElementById('completion-student-name');
+        const studentClassEl = document.getElementById('completion-student-class');
+        const completionTimeEl = document.getElementById('completion-time');
+
+        if (studentNameEl) studentNameEl.textContent = examApp.studentName || 'Неизвестен';
+        if (studentClassEl) studentClassEl.textContent = examApp.studentClass || 'Неизвестен';
+        if (completionTimeEl) {
+            const now = new Date();
+            completionTimeEl.textContent = now.toLocaleString('bg-BG');
+        }
+
+        completionComponent.style.display = 'block';
+    }
+}
+
+function hideCompletionScreen() {
+    const completionComponent = document.getElementById('completion-component');
+    if (completionComponent) {
+        completionComponent.style.display = 'none';
     }
 }
 

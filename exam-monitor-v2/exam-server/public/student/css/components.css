@@ -2570,3 +2570,77 @@ body.resizing * {
     margin: 4px 0;
 }
 
+/* Exam Completion Component Styles */
+.completion-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.completion-card {
+    background: white;
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    max-width: 600px;
+    animation: slideIn 0.5s ease-out;
+}
+
+.completion-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: scaleIn 0.6s ease-out 0.2s both;
+}
+
+.completion-title {
+    color: #2d3748;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.completion-message {
+    color: #4a5568;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.completion-info {
+    background: #f7fafc;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.completion-info p {
+    margin: 0.75rem 0;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.completion-info strong {
+    color: #667eea;
+    margin-right: 0.5rem;
+}
+
+.completion-footer {
+    color: #718096;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
