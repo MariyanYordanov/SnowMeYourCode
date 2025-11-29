@@ -21,7 +21,7 @@ export class MDNViewer {
         try {
             const response = await fetch('/student/data/mdn-reference.json');
             this.data = await response.json();
-            console.log('📚 MDN Reference loaded');
+            console.log('MDN Reference loaded');
             return true;
         } catch (error) {
             console.error('Failed to load MDN reference:', error);
@@ -50,7 +50,7 @@ export class MDNViewer {
         this.renderCategoryList();
         this.bindEvents();
         
-        console.log('📖 MDN Viewer initialized');
+        console.log('MDN Viewer initialized');
     }
 
     /**
@@ -63,7 +63,7 @@ export class MDNViewer {
         
         container.innerHTML = `
             <div class="mdn-header">
-                <h3>📚 JavaScript Reference</h3>
+                <h3>JavaScript Reference</h3>
                 <div class="mdn-search">
                     <input type="text" id="mdn-search" placeholder="Търси метод..." />
                     <button id="mdn-search-btn">🔍</button>

@@ -9,7 +9,7 @@ import { sendCodeUpdate } from './socket.js';
 
 // Auto-save timeout
 let autoSaveTimeout = null;
-const AUTO_SAVE_DELAY = 2000; // 2 seconds
+const AUTO_SAVE_DELAY = 1000; 
 
 // Console enhancement state
 const consoleState = {
@@ -278,22 +278,10 @@ function setupCodeQualityHints(editor) {
  * Get default code template with enhanced console examples
  */
 function getDefaultCode() {
-    return `// Напишете вашият JavaScript код тук
-console.log("Здравей, свят!");
-
-// Пример за функция
-function решиЗадача() {
-    // Вашето решение тук
-    return "Готово!";
-}
-
-// Тествайте кода си
-console.log(решиЗадача());
-
-// Enhanced Console Examples:
-// console.table([1, 2, 3, 4, 5]);
-// console.time("timer1");
-// console.timeEnd("timer1");`;
+    return `
+    // Напишете вашият код тук
+    console.log("Здравей, свят!");
+    `;
 }
 
 /**
@@ -1166,7 +1154,7 @@ function captureAssert(output, condition, args) {
         const message = args.length > 0 ? args.map(formatValue) : ['Assertion failed'];
         output.push({
             type: 'error',
-            content: ['❌ Assertion failed:', ...message],
+            content: ['Assertion failed:', ...message],
             timestamp: Date.now()
         });
     }
@@ -1296,8 +1284,8 @@ function captureMemory(output) {
 function captureProfile(output, action, name) {
     const profileName = name || 'Profile';
     const message = action === 'start' ? 
-        `🚀 Profile "${profileName}" started` : 
-        `⏹️ Profile "${profileName}" ended`;
+        `Profile "${profileName}" started` : 
+        `Profile "${profileName}" ended`;
     
     output.push({
         type: 'profile',
@@ -1374,14 +1362,14 @@ function showExecutionStats(result) {
     if (!statsEl) return;
     
     let html = `<div class="execution-stats">`;
-    html += `<span>⏱️ ${result.executionTime}ms</span>`;
+    html += `<span>${result.executionTime}ms</span>`;
     
     if (result.memoryUsage) {
         const memMB = Math.round(result.memoryUsage.used / 1024 / 1024);
-        html += `<span>🧠 ${memMB}MB</span>`;
+        html += `<span>${memMB}MB</span>`;
     }
     
-    html += `<span>📝 ${result.output.length} outputs</span>`;
+    html += `<span>${result.output.length} outputs</span>`;
     html += `</div>`;
     
     statsEl.innerHTML = html;
@@ -1447,7 +1435,7 @@ export async function startExpressServer() {
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
             startServerBtn.disabled = true;
-            startServerBtn.textContent = '🔄 Starting...';
+            startServerBtn.textContent = 'Starting...';
         }
 
         // Save current code before starting server
@@ -1460,7 +1448,7 @@ export async function startExpressServer() {
             }
         }
 
-        console.log('🚀 Starting Express server...');
+        console.log('Starting Express server...');
 
         const response = await fetch('/api/project/start', {
             method: 'POST',
@@ -1473,11 +1461,11 @@ export async function startExpressServer() {
         const result = await response.json();
 
         if (result.success) {
-            showSuccess(`✅ Server started on ${result.url}`);
+            showSuccess(`Server started on ${result.url}`);
             
             // Update button to show server is running
             if (startServerBtn) {
-                startServerBtn.textContent = '✅ Server Running';
+                startServerBtn.textContent = 'Server Running';
                 startServerBtn.disabled = false;
                 startServerBtn.classList.remove('btn-success');
                 startServerBtn.classList.add('btn-warning');
@@ -1493,21 +1481,21 @@ export async function startExpressServer() {
             }
 
         } else {
-            showError(`❌ Server start failed: ${result.error}`);
+            showError(`Server start failed: ${result.error}`);
             if (startServerBtn) {
                 startServerBtn.disabled = false;
-                startServerBtn.textContent = '🚀 Start Server';
+                startServerBtn.textContent = 'Start Server';
             }
         }
 
     } catch (error) {
         console.error('Error starting Express server:', error);
-        showError('❌ Failed to start server');
+        showError('Failed to start server');
         
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
             startServerBtn.disabled = false;
-            startServerBtn.textContent = '🚀 Start Server';
+            startServerBtn.textContent = 'Start Server';
         }
     }
 }
@@ -1528,10 +1516,10 @@ export async function stopExpressServer() {
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
             startServerBtn.disabled = true;
-            startServerBtn.textContent = '🔄 Stopping...';
+            startServerBtn.textContent = 'Stopping...';
         }
 
-        console.log('🛑 Stopping Express server...');
+        console.log('Stopping Express server...');
 
         const response = await fetch('/api/project/stop', {
             method: 'POST',
@@ -1544,11 +1532,11 @@ export async function stopExpressServer() {
         const result = await response.json();
 
         if (result.success) {
-            showSuccess('🛑 Server stopped');
+            showSuccess('Server stopped');
             
             // Reset button to start server
             if (startServerBtn) {
-                startServerBtn.textContent = '🚀 Start Server';
+                startServerBtn.textContent = 'Start Server';
                 startServerBtn.disabled = false;
                 startServerBtn.classList.remove('btn-warning');
                 startServerBtn.classList.add('btn-success');
@@ -1558,21 +1546,21 @@ export async function stopExpressServer() {
             }
 
         } else {
-            showError(`❌ Stop failed: ${result.error}`);
+            showError(`Stop failed: ${result.error}`);
             if (startServerBtn) {
                 startServerBtn.disabled = false;
-                startServerBtn.textContent = '✅ Server Running';
+                startServerBtn.textContent = 'Server Running';
             }
         }
 
     } catch (error) {
         console.error('Error stopping Express server:', error);
-        showError('❌ Failed to stop server');
+        showError('Failed to stop server');
         
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
             startServerBtn.disabled = false;
-            startServerBtn.textContent = '✅ Server Running';
+            startServerBtn.textContent = 'Server Running';
         }
     }
 }

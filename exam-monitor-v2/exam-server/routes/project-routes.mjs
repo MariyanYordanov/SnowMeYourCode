@@ -325,10 +325,10 @@ async function installProjectDependencies(projectDir, sessionId) {
             
             npmProcess.on('close', (code) => {
                 if (code === 0) {
-                    console.log(`✅ Dependencies installed successfully for session ${sessionId}`);
+                    console.log(`Dependencies installed successfully for session ${sessionId}`);
                     resolve();
                 } else {
-                    console.error(`❌ npm install failed for session ${sessionId}:`, errorOutput);
+                    console.error(`npm install failed for session ${sessionId}:`, errorOutput);
                     reject(new Error(`npm install failed with code ${code}`));
                 }
             });
@@ -364,7 +364,7 @@ async function startStudentServer(projectDir, sessionId) {
         const port = await findAvailablePort(nextPort);
         nextPort = port + 1;
 
-        console.log(`🚀 Starting Express server for session ${sessionId} on port ${port}...`);
+        console.log(`Starting Express server for session ${sessionId} on port ${port}...`);
 
         // Read package.json to get start script
         const packageJsonPath = path.join(projectDir, 'package.json');
@@ -427,11 +427,11 @@ async function startStudentServer(projectDir, sessionId) {
         // Wait a moment for server to start
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        console.log(`✅ Express server started for session ${sessionId} on port ${port}`);
+        console.log(`Express server started for session ${sessionId} on port ${port}`);
         return port;
 
     } catch (error) {
-        console.error(`❌ Failed to start server for session ${sessionId}:`, error);
+        console.error(`Failed to start server for session ${sessionId}:`, error);
         throw error;
     }
 }
@@ -439,7 +439,7 @@ async function startStudentServer(projectDir, sessionId) {
 async function stopStudentServer(sessionId) {
     const serverInfo = studentServers.get(sessionId);
     if (serverInfo && serverInfo.process && !serverInfo.process.killed) {
-        console.log(`🛑 Stopping server for session ${sessionId} on port ${serverInfo.port}`);
+        console.log(`Stopping server for session ${sessionId} on port ${serverInfo.port}`);
         serverInfo.process.kill('SIGTERM');
         studentServers.delete(sessionId);
         return true;

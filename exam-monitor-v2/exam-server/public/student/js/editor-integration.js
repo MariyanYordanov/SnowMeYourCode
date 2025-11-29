@@ -121,12 +121,12 @@ h1 {
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }`,
-        'script.js': `// Вашият JavaScript код тук
+        'script.js': `// Вашият код
 console.log("Здравей, свят!");
 
 function main() {
     const app = document.getElementById('app');
-    app.innerHTML = '<p>Започнете да пишете вашия код...</p>';
+    app.innerHTML = '<p>Започнете да пишете код...</p>';
 }
 
 document.addEventListener('DOMContentLoaded', main);`

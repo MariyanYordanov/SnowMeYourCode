@@ -11,7 +11,7 @@ export class DevToolsUI {
         this.consoleLogs = [];
         this.storageData = {};
         
-        console.log('🔧 DevTools UI initialized');
+        console.log('DevTools UI initialized');
     }
 
     /**
@@ -131,7 +131,7 @@ export class DevToolsUI {
         window.devToolsUI = this;
         
         this.initialized = true;
-        console.log('🔧 DevTools panel initialized with tabs');
+        console.log('DevTools panel initialized with tabs');
     }
 
     /**

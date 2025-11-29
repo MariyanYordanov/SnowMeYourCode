@@ -22,7 +22,7 @@ export class HelpChat {
         this.createChatUI();
         this.bindEvents();
         this.setupSocketEvents();
-        console.log('💬 Help Chat initialized');
+        console.log('Help Chat initialized');
     }
 
     /**
@@ -243,14 +243,14 @@ export class HelpChat {
             clearTimeout(this.typingTimeout);
         }
 
-        // Stop typing indicator after 3 seconds
+        // Stop typing indicator after second
         this.typingTimeout = setTimeout(() => {
             this.isTyping = false;
             this.socket.emit('student-typing', {
                 studentId: window.ExamApp?.sessionId,
                 isTyping: false
             });
-        }, 3000);
+        }, 1000);
     }
 
     /**
@@ -683,7 +683,7 @@ export class HelpChat {
             clearTimeout(this.typingTimeout);
         }
         
-        console.log('💬 Help Chat destroyed');
+        console.log('Help Chat destroyed');
     }
 }
 

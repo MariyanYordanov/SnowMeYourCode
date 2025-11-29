@@ -1,15 +1,15 @@
-// 🔒 SECURITY: Development mode ENABLED for localhost debugging
+// SECURITY: Development mode ENABLED for localhost debugging
 // DevTools are ALWAYS allowed on localhost for debugging
 const DEVELOPMENT_MODE = true; // Always enabled for debugging
 
 export function setupAntiCheat() {
     try {
         if (DEVELOPMENT_MODE) {
-            console.log('🔧 Development mode - LIMITED protection (dev=true detected)');
-            console.warn('⚠️ DEVELOPMENT MODE ACTIVE - NOT FOR PRODUCTION USE!');
+            console.log('Development mode - LIMITED protection (dev=true detected)');
+            console.warn('DEVELOPMENT MODE ACTIVE - NOT FOR PRODUCTION USE!');
             setupLimitedAntiCheat();
         } else {
-            console.log('🔒 Production mode - FULL protection active');
+            console.log('Production mode - FULL protection active');
             setupFullscreenMonitoring();
             setupFocusMonitoring();
         }
@@ -82,19 +82,19 @@ export function setupFocusMonitoring() {
         // Monitor visibility changes (tab switching)
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
-        // 🔥 AGGRESSIVE: Monitor keyboard events in CAPTURE phase for maximum interception
+        // AGGRESSIVE: Monitor keyboard events in CAPTURE phase for maximum interception
         document.addEventListener('keydown', handleKeyDown, true);
         document.addEventListener('keyup', handleKeyUp, true);
         
-        // 🔥 SYSTEM-LEVEL: Add multiple layers of key event interception
+        // SYSTEM-LEVEL: Add multiple layers of key event interception
         window.addEventListener('keydown', handleKeyDown, true);
         window.addEventListener('keyup', handleKeyUp, true);
         
-        // 🔥 CAPTURE ALL: Override at document level with highest priority
+        // CAPTURE ALL: Override at document level with highest priority
         document.documentElement.addEventListener('keydown', handleKeyDown, true);
         document.documentElement.addEventListener('keyup', handleKeyUp, true);
         
-        // 🔥 BODY LEVEL: Additional layer
+        // BODY LEVEL: Additional layer
         document.body.addEventListener('keydown', handleKeyDown, true);
         document.body.addEventListener('keyup', handleKeyUp, true);
         
@@ -123,10 +123,10 @@ export function setupFocusMonitoring() {
         // DISABLED: Mouse lock causes cursor to disappear
         // initializeMouseLock();
 
-        // 🔥 AGGRESSIVE: Apply CSS-based blocking
+        // AGGRESSIVE: Apply CSS-based blocking
         applyCSSBlockingRules();
         
-        console.log('🔥 AGGRESSIVE FOCUS MONITORING ESTABLISHED - NO ESCAPE!');
+        console.log('AGGRESSIVE FOCUS MONITORING ESTABLISHED - NO ESCAPE!');
     } catch (error) {
         console.error('Failed to setup focus monitoring:', error);
     }
@@ -181,13 +181,6 @@ function handleFullscreenChange() {
                     showNotification('Изпитът започна успешно!', 'success');
                 }
             }
-
-            // DISABLED: Mouse lock causes cursor to disappear
-            // if (!wasFullscreen) {
-            //     setTimeout(() => {
-            //         requestMouseLock();
-            //     }, 500);
-            // }
         } else {
             updateFullscreenStatus('Fullscreen неактивен');
 
@@ -202,7 +195,7 @@ function handleFullscreenChange() {
                 }
                 examApp.fullscreenExitAttempts++;
 
-                console.log(`❌ FULLSCREEN EXIT DETECTED - Attempt ${examApp.fullscreenExitAttempts}/3`);
+                console.log(`FULLSCREEN EXIT DETECTED - Attempt ${examApp.fullscreenExitAttempts}/3`);
 
                 // Показваме диалог с предупреждение
                 showFullscreenExitWarning(examApp.fullscreenExitAttempts);
@@ -217,7 +210,7 @@ function handleFocusLoss() {
     const examApp = window.ExamApp;
     
     if (examApp.antiCheatActive && !examApp.completionInProgress) {
-        console.log('❌ WINDOW BLUR DETECTED (Alt+Tab/Cmd+Tab) - TERMINATING EXAM');
+        console.log('WINDOW BLUR DETECTED (Alt+Tab/Cmd+Tab) - TERMINATING EXAM');
         reportViolation('focus_loss');
     }
 }
@@ -244,7 +237,7 @@ function handleKeyDown(event) {
         return;
     }
     
-    // 🔥 AGGRESSIVE MODE: Block ALL modifier combinations first
+    // AGGRESSIVE MODE: Block ALL modifier combinations first
     if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) {
         
         // Check if we're in Monaco editor context
@@ -308,12 +301,12 @@ function handleKeyDown(event) {
             }
         }
         
-        // 🔥 BLOCK EVERYTHING ELSE WITH MODIFIERS
+        // BLOCK EVERYTHING ELSE WITH MODIFIERS
         if (!isAllowed) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
-            console.log(`🔥 AGGRESSIVE BLOCK: ${getKeyComboString(event)} - Custom combo blocked`);
+            console.log(`AGGRESSIVE BLOCK: ${getKeyComboString(event)} - Custom combo blocked`);
             reportViolation('custom_key_combination');
             return;
         }
@@ -329,12 +322,12 @@ function handleKeyDown(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log(`🔥 FUNCTION KEY BLOCKED: ${event.key}`);
+        console.log(`FUNCTION KEY BLOCKED: ${event.key}`);
         reportViolation('function_key_attempt');
         return;
     }
     
-    // 🔥 Block ALL system keys - ZERO mercy
+    // Block ALL system keys - ZERO mercy
     const systemKeys = [
         'Meta', 'OS', 'Super',           // Windows/Cmd key
         'ContextMenu', 'Apps',           // Menu key
@@ -350,17 +343,17 @@ function handleKeyDown(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log(`🔥 SYSTEM KEY DESTROYED: ${event.key}`);
+        console.log(`SYSTEM KEY DESTROYED: ${event.key}`);
         reportViolation('system_key_attempt');
         return;
     }
     
-    // 🔥 Block standalone modifier keys
+    // Block standalone modifier keys
     if (['Control', 'Alt', 'Shift', 'Meta', 'AltGraph'].includes(event.key)) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log(`🔥 MODIFIER KEY BLOCKED: ${event.key}`);
+        console.log(`MODIFIER KEY BLOCKED: ${event.key}`);
         reportViolation('modifier_key_attempt');
         return;
     }
@@ -394,7 +387,7 @@ function getKeyComboString(event) {
 }
 
 /**
- * 🔥 Apply aggressive CSS-based blocking rules
+ * Apply aggressive CSS-based blocking rules
  */
 function applyCSSBlockingRules() {
     const examApp = window.ExamApp;
@@ -405,7 +398,7 @@ function applyCSSBlockingRules() {
     const style = document.createElement('style');
     style.id = 'aggressive-anti-cheat-css';
     style.textContent = `
-        /* 🔥 DISABLE ALL SELECTION OUTSIDE EDITOR */
+        /* DISABLE ALL SELECTION OUTSIDE EDITOR */
         * {
             -webkit-user-select: none !important;
             -moz-user-select: none !important;
@@ -413,7 +406,7 @@ function applyCSSBlockingRules() {
             user-select: none !important;
         }
         
-        /* ✅ ALLOW SELECTION ONLY IN MONACO EDITOR */
+        /* ALLOW SELECTION ONLY IN MONACO EDITOR */
         .monaco-editor, .monaco-editor *, 
         #monaco-editor, #monaco-editor *,
         input, textarea {
@@ -423,7 +416,7 @@ function applyCSSBlockingRules() {
             user-select: text !important;
         }
         
-        /* 🔥 DISABLE DRAG AND DROP GLOBALLY */
+        /* DISABLE DRAG AND DROP GLOBALLY */
         * {
             -webkit-user-drag: none !important;
             -moz-user-drag: none !important;
@@ -431,7 +424,7 @@ function applyCSSBlockingRules() {
             draggable: false !important;
         }
         
-        /* 🔥 DISABLE ZOOM AND SCALING */
+        /* DISABLE ZOOM AND SCALING */
         body {
             zoom: 1 !important;
             -webkit-transform: scale(1) !important;
@@ -442,7 +435,7 @@ function applyCSSBlockingRules() {
             user-scalable: no !important;
         }
         
-        /* 🔥 HIDE SCROLLBARS TO PREVENT ESCAPE */
+        /* HIDE SCROLLBARS TO PREVENT ESCAPE */
         ::-webkit-scrollbar {
             width: 8px !important;
             height: 8px !important;
@@ -457,13 +450,13 @@ function applyCSSBlockingRules() {
             border-radius: 4px !important;
         }
         
-        /* 🔥 DISABLE OUTLINE AND FOCUS RINGS THAT COULD BE EXPLOITED */
+        /* DISABLE OUTLINE AND FOCUS RINGS THAT COULD BE EXPLOITED */
         *:focus {
             outline: none !important;
             box-shadow: none !important;
         }
         
-        /* ✅ ALLOW FOCUS ONLY IN EDITOR */
+        /* ALLOW FOCUS ONLY IN EDITOR */
         .monaco-editor *:focus,
         #monaco-editor *:focus,
         input:focus, textarea:focus,
@@ -471,12 +464,12 @@ function applyCSSBlockingRules() {
             outline: 1px solid #007acc !important;
         }
         
-        /* 🔥 DISABLE POINTER EVENTS ON POTENTIAL ESCAPE ELEMENTS */
+        /* DISABLE POINTER EVENTS ON POTENTIAL ESCAPE ELEMENTS */
         iframe:not(.monaco-editor iframe) {
             pointer-events: none !important;
         }
         
-        /* 🔥 PREVENT CONTEXT MENU STYLING TRICKS */
+        /* PREVENT CONTEXT MENU STYLING TRICKS */
         ::selection {
             background: rgba(0, 122, 204, 0.3) !important;
         }
@@ -485,7 +478,7 @@ function applyCSSBlockingRules() {
             background: rgba(0, 122, 204, 0.3) !important;
         }
         
-        /* 🔥 DISABLE PRINT STYLES */
+        /* DISABLE PRINT STYLES */
         @media print {
             * {
                 display: none !important;
@@ -500,7 +493,7 @@ function applyCSSBlockingRules() {
             }
         }
         
-        /* 🔥 FULLSCREEN ENFORCEMENT */
+        /* FULLSCREEN ENFORCEMENT */
         body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen) {
             filter: blur(20px) !important;
             opacity: 0.1 !important;
@@ -508,7 +501,7 @@ function applyCSSBlockingRules() {
         }
         
         body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen)::before {
-            content: "⚠️ RETURN TO FULLSCREEN TO CONTINUE EXAM" !important;
+            content: "RETURN TO FULLSCREEN TO CONTINUE EXAM" !important;
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
@@ -524,7 +517,7 @@ function applyCSSBlockingRules() {
             pointer-events: none !important;
         }
         
-        /* 🔥 PREVENT MANIPULATION OF ANTI-CHEAT ELEMENTS */
+        /* PREVENT MANIPULATION OF ANTI-CHEAT ELEMENTS */
         #aggressive-anti-cheat-css {
             display: none !important;
             visibility: hidden !important;
@@ -534,13 +527,13 @@ function applyCSSBlockingRules() {
     // Insert CSS into head
     document.head.appendChild(style);
     
-    // 🔥 PROTECT THE CSS FROM BEING REMOVED
+    // PROTECT THE CSS FROM BEING REMOVED
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'childList') {
                 const removedNodes = Array.from(mutation.removedNodes);
                 if (removedNodes.some(node => node.id === 'aggressive-anti-cheat-css')) {
-                    console.log('🔥 ANTI-CHEAT CSS TAMPERED - TERMINATING EXAM');
+                    console.log('ANTI-CHEAT CSS TAMPERED - TERMINATING EXAM');
                     reportViolation('css_tampering');
                 }
             }
@@ -549,7 +542,7 @@ function applyCSSBlockingRules() {
     
     observer.observe(document.head, { childList: true });
     
-    console.log('🔥 AGGRESSIVE CSS BLOCKING RULES APPLIED');
+    console.log('AGGRESSIVE CSS BLOCKING RULES APPLIED');
 }
 
 function handleKeyUp(event) {
@@ -587,7 +580,7 @@ function handleWindowResize() {
     const heightDiff = Math.abs(currentHeight - initial.height);
     
     if (widthDiff > 50 || heightDiff > 50) {
-        console.log(`❌ WINDOW RESIZE DETECTED: ${initial.width}x${initial.height} → ${currentWidth}x${currentHeight}`);
+        console.log(`WINDOW RESIZE DETECTED: ${initial.width}x${initial.height} → ${currentWidth}x${currentHeight}`);
         reportViolation('window_resize');
     }
 }
@@ -596,7 +589,7 @@ function handleOrientationChange() {
     const examApp = window.ExamApp;
     
     if (examApp.antiCheatActive && !examApp.completionInProgress) {
-        console.log('❌ SCREEN ORIENTATION CHANGE DETECTED - TERMINATING EXAM');
+        console.log('SCREEN ORIENTATION CHANGE DETECTED - TERMINATING EXAM');
         reportViolation('orientation_change');
     }
 }
@@ -623,14 +616,14 @@ function handleMouseMove(event) {
     
     if (nearTopEdge && !examApp.mouseWarnedTop) {
         examApp.mouseWarnedTop = true;
-        console.warn('⚠️ Mouse near top edge - potential macOS menu bar access');
+        console.warn('Mouse near top edge - potential macOS menu bar access');
         
         // On macOS, aggressive detection for menu bar access
         if (navigator.platform.toLowerCase().includes('mac')) {
             // If mouse stays at top edge for more than 500ms, terminate
             examApp.topEdgeTimer = setTimeout(() => {
                 if (examApp.antiCheatActive && !examApp.completionInProgress) {
-                    console.log('❌ MACOS MENU BAR ACCESS DETECTED - TERMINATING EXAM');
+                    console.log('MACOS MENU BAR ACCESS DETECTED - TERMINATING EXAM');
                     reportViolation('macos_menubar_access');
                 }
             }, 500);
@@ -664,14 +657,14 @@ function handleMouseLeave(event) {
     }
     
     // Mouse left the window - potential multi-monitor movement
-    console.log('❌ MOUSE LEFT WINDOW - Potential multi-monitor access');
+    console.log('MOUSE LEFT WINDOW - Potential multi-monitor access');
     
     // Give a short grace period in case it's accidental
     setTimeout(() => {
         if (examApp.antiCheatActive && !examApp.completionInProgress) {
             // Check if mouse is still outside after grace period
             if (document.querySelector(':hover') === null) {
-                console.log('❌ MOUSE OUTSIDE WINDOW CONFIRMED - TERMINATING EXAM');
+                console.log('MOUSE OUTSIDE WINDOW CONFIRMED - TERMINATING EXAM');
                 reportViolation('mouse_outside_window');
             }
         }
@@ -697,14 +690,14 @@ function startAggressiveFocusPolling() {
         
         // Detect focus loss
         if (lastFocusState && !currentFocus) {
-            console.log('❌ AGGRESSIVE FOCUS LOSS DETECTED');
+            console.log('AGGRESSIVE FOCUS LOSS DETECTED');
             reportViolation('aggressive_focus_loss');
             return;
         }
         
         // Detect visibility change
         if (lastVisibilityState === 'visible' && currentVisibility === 'hidden') {
-            console.log('❌ AGGRESSIVE VISIBILITY LOSS DETECTED');
+            console.log('AGGRESSIVE VISIBILITY LOSS DETECTED');
             reportViolation('aggressive_visibility_loss');
             return;
         }
@@ -715,7 +708,7 @@ function startAggressiveFocusPolling() {
             if (document.activeElement === null) {
                 consecutiveFailures++;
                 if (consecutiveFailures >= 3) {
-                    console.log('❌ ACTIVE ELEMENT LOST - SUSPICIOUS ACTIVITY');
+                    console.log('ACTIVE ELEMENT LOST - SUSPICIOUS ACTIVITY');
                     reportViolation('active_element_lost');
                     return;
                 }
@@ -742,7 +735,7 @@ function startAggressiveFocusPolling() {
                     
                     // Only report if change is significant AND we're not in fullscreen transition
                     if ((widthDiff > 200 || heightDiff > 200) && examApp.isFullscreen) {
-                        console.log(`❌ SUSPICIOUS DIMENSION CHANGE: ${JSON.stringify(examApp.lastDimensions)} → ${JSON.stringify(currentDimensions)}`);
+                        console.log(`SUSPICIOUS DIMENSION CHANGE: ${JSON.stringify(examApp.lastDimensions)} → ${JSON.stringify(currentDimensions)}`);
                         reportViolation('suspicious_dimension_change');
                         return;
                     }
@@ -760,7 +753,7 @@ function startAggressiveFocusPolling() {
         
     }, 100); // Check every 100ms
     
-    console.log('🔍 Aggressive focus polling started (100ms intervals)');
+    console.log('Aggressive focus polling started (100ms intervals)');
 }
 
 /**
@@ -779,7 +772,7 @@ function initializeMouseLock() {
     document.addEventListener('mozpointerlockchange', handlePointerLockChange);
     document.addEventListener('mozpointerlockerror', handlePointerLockError);
     
-    console.log('🔒 Mouse lock system initialized');
+    console.log('Mouse lock system initialized');
 }
 
 /**
@@ -802,7 +795,7 @@ function requestMouseLock() {
             element.mozRequestPointerLock();
         }
         
-        console.log('🔒 Mouse lock requested');
+        console.log('Mouse lock requested');
         
     } catch (error) {
         console.warn('Mouse lock request failed:', error);
@@ -824,10 +817,10 @@ function handlePointerLockChange() {
                          document.mozPointerLockElement;
     
     if (lockedElement) {
-        console.log('🔒 Mouse locked successfully');
+        console.log('Mouse locked successfully');
         examApp.mouseLocked = true;
     } else {
-        console.log('❌ MOUSE LOCK LOST - POTENTIAL ESCAPE ATTEMPT');
+        console.log('MOUSE LOCK LOST - POTENTIAL ESCAPE ATTEMPT');
         examApp.mouseLocked = false;
         
         // If we lost mouse lock during active exam, it's suspicious
@@ -842,7 +835,7 @@ function handlePointerLockChange() {
             // If mouse lock is lost multiple times, terminate
             examApp.mouseLockLossCount = (examApp.mouseLockLossCount || 0) + 1;
             if (examApp.mouseLockLossCount >= 3) {
-                console.log('❌ REPEATED MOUSE LOCK LOSS - TERMINATING EXAM');
+                console.log('REPEATED MOUSE LOCK LOSS - TERMINATING EXAM');
                 reportViolation('mouse_lock_lost');
             }
         }
@@ -855,7 +848,7 @@ function handlePointerLockChange() {
 function handlePointerLockError() {
     const examApp = window.ExamApp;
     
-    console.warn('⚠️ Mouse lock error occurred');
+    console.warn('Mouse lock error occurred');
     
     if (examApp.antiCheatActive && !examApp.completionInProgress) {
         // Some browsers don't support pointer lock, so don't terminate immediately
@@ -878,7 +871,7 @@ function handleMouseDown(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log('❌ MIDDLE MOUSE BUTTON BLOCKED');
+        console.log('MIDDLE MOUSE BUTTON BLOCKED');
         reportViolation('middle_mouse_button');
         return false;
     }
@@ -888,7 +881,7 @@ function handleMouseDown(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log('❌ RIGHT MOUSE BUTTON BLOCKED');
+        console.log('RIGHT MOUSE BUTTON BLOCKED');
         reportViolation('right_mouse_button');
         return false;
     }
@@ -898,7 +891,7 @@ function handleMouseDown(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        console.log('❌ NAVIGATION MOUSE BUTTON BLOCKED');
+        console.log('NAVIGATION MOUSE BUTTON BLOCKED');
         reportViolation('navigation_mouse_button');
         return false;
     }
@@ -936,7 +929,7 @@ function handleContextMenu(event) {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    console.log('❌ CONTEXT MENU BLOCKED');
+    console.log('CONTEXT MENU BLOCKED');
     reportViolation('context_menu_attempt');
     return false;
 }
@@ -961,7 +954,7 @@ function handleSelectStart(event) {
     if (!isInEditor) {
         event.preventDefault();
         event.stopPropagation();
-        console.log('❌ TEXT SELECTION BLOCKED (outside editor)');
+        console.log('TEXT SELECTION BLOCKED (outside editor)');
         return false;
     }
 }
@@ -983,7 +976,7 @@ function handleDragStart(event) {
     if (!isInEditor) {
         event.preventDefault();
         event.stopPropagation();
-        console.log('❌ DRAG AND DROP BLOCKED');
+        console.log('DRAG AND DROP BLOCKED');
         reportViolation('drag_drop_attempt');
         return false;
     }
@@ -1062,12 +1055,12 @@ export function initializeAdvancedAntiCheat() {
  */
 function showFullscreenExitWarning(attemptNumber) {
     const examApp = window.ExamApp;
-    const maxAttempts = 3;
+    const maxAttempts = 1;
     const remainingAttempts = maxAttempts - attemptNumber;
 
     // Ако е 3-ти опит → прекратяване
     if (attemptNumber >= maxAttempts) {
-        console.log('❌ MAX FULLSCREEN EXIT ATTEMPTS REACHED - TERMINATING EXAM');
+        console.log('MAX FULLSCREEN EXIT ATTEMPTS REACHED - TERMINATING EXAM');
         reportViolation('max_fullscreen_exit_attempts');
 
         // Показваме финален диалог
@@ -1128,7 +1121,7 @@ function showFullscreenExitWarning(attemptNumber) {
                 box-shadow: 0 4px 12px rgba(40,167,69,0.3);
                 transition: all 0.2s;
             ">
-                ✅ Продължи изпита
+                Продължи изпита
             </button>
             <button id="exit-exam-btn" style="
                 background: #6c757d;
@@ -1142,7 +1135,7 @@ function showFullscreenExitWarning(attemptNumber) {
                 box-shadow: 0 4px 12px rgba(108,117,125,0.3);
                 transition: all 0.2s;
             ">
-                🚪 Прекрати изпита
+                Прекрати изпита
             </button>
         </div>
     `;
@@ -1195,7 +1188,7 @@ function showFullscreenExitWarning(attemptNumber) {
 }
 
 /**
- * Show final termination dialog (3rd attempt)
+ * Show final termination dialog 
  */
 function showFinalTerminationDialog() {
     const overlay = document.createElement('div');
@@ -1240,10 +1233,10 @@ function showFinalTerminationDialog() {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Прекратяваме изпита след 3 секунди
+    // Прекратяваме изпита след 2 секунди
     setTimeout(() => {
         if (window.ExamApp && window.ExamApp.completeExam) {
             window.ExamApp.completeExam('max_fullscreen_exit_attempts');
         }
-    }, 3000);
+    }, 2000);
 }

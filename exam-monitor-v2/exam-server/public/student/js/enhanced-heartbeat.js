@@ -33,7 +33,7 @@ export class EnhancedHeartbeat {
         if (this.isActive) return;
         
         this.isActive = true;
-        console.log('🔄 Enhanced heartbeat started');
+        console.log('Enhanced heartbeat started');
         
         // Send immediate heartbeat
         this.sendHeartbeat();
@@ -57,7 +57,7 @@ export class EnhancedHeartbeat {
             this.heartbeatTimer = null;
         }
         
-        console.log('⏹️ Enhanced heartbeat stopped');
+        console.log('Enhanced heartbeat stopped');
     }
 
     /**
@@ -412,7 +412,7 @@ export class EnhancedHeartbeat {
         }
         
         // Clean up event listeners would require storing references
-        console.log('🧹 Enhanced heartbeat destroyed');
+        console.log('Enhanced heartbeat destroyed');
     }
 }
 

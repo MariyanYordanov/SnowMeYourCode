@@ -43,12 +43,7 @@ import {
 
 import { setupTabs } from './tabs.js';
 
-import {
-    isKioskMode,
-    launchKioskMode,
-    initializeKioskExam,
-    isKioskModeSupported
-} from './kiosk-mode.js';
+// Kiosk mode removed - no longer needed
 
 import {
     detectVirtualMachine,
