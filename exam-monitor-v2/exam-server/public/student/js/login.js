@@ -3,7 +3,6 @@ export function setupLoginForm(examApp) {
         const loginBtn = document.getElementById('login-btn');
         const studentName = document.getElementById('student-name');
         const studentClass = document.getElementById('student-class');
-        const termsContent = document.querySelector('.terms-content');
         const termsAgreement = document.getElementById('terms-agreement');
 
         if (!loginBtn || !studentName || !studentClass) {
@@ -118,7 +117,7 @@ export async function handleLogin(examApp) {
 
         // ПЪРВО: HTTP login за express session
         try {
-            console.log('🔄 Attempting HTTP login...', { name, studentClass });
+            console.log('Attempting HTTP login...', { name, studentClass });
             const response = await fetch('/api/student-login', {
                 method: 'POST',
                 headers: {
@@ -131,27 +130,24 @@ export async function handleLogin(examApp) {
                 })
             });
 
-            console.log('📡 HTTP Response:', response.status, response.statusText);
+            console.log('HTTP Response:', response.status, response.statusText);
             
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ HTTP Error:', response.status, errorText);
+                console.error('HTTP Error:', response.status, errorText);
                 handleLoginError(examApp, `Server error: ${response.status} - ${errorText.substring(0, 100)}`);
                 return;
             }
 
             const result = await response.json();
-            console.log('✅ Login result:', result);
+            console.log('Login result:', result);
 
             if (!result.success) {
-                console.error('❌ Login failed:', result.message);
+                console.error('Login failed:', result.message);
                 handleLoginError(examApp, result.message || 'Грешка при влизане');
                 return;
             }
 
-            // No need to emit 'student-join' here, HTTP login already handled session creation/restoration.
-            // The WebSocket connection is already established and will be used for real-time updates.
-            // Proceed directly to handling login success.
             handleLoginSuccess(examApp, result);
 
         } catch (error) {
@@ -226,9 +222,6 @@ export function handleLoginSuccess(examApp, data) {
 
         showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
 
-        // CRITICAL SECURITY: Do NOT save session to localStorage
-        // Session restore is disabled for kiosk mode security
-        // localStorage.setItem('examSession', ...) - REMOVED
 
         setTimeout(() => {
             if (examApp.startExam) {
