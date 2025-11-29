@@ -213,12 +213,23 @@ async function initializeMonaco() {
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
             finishBtn.addEventListener('click', async () => {
-                const confirmed = await confirm('Сигурни ли сте, че искате да приключите изпита?');
-                if (confirmed) {
-                    completeExam('student_submit');
+                console.log('Finish exam button clicked');
+                try {
+                    const confirmed = await confirm('Сигурни ли сте, че искате да приключите изпита?');
+                    console.log('Confirmation result:', confirmed);
+                    if (confirmed) {
+                        console.log('User confirmed - completing exam');
+                        completeExam('student_submit');
+                    } else {
+                        console.log('User cancelled exam completion');
+                    }
+                } catch (error) {
+                    console.error('Error in finish exam handler:', error);
                 }
             });
-            console.log('Finish exam button event listener attached');
+            console.log('✅ Finish exam button event listener attached');
+        } else {
+            console.error('❌ Finish exam button not found in DOM');
         }
 
         if (examApp.sessionId) {
@@ -407,6 +418,14 @@ function showCompletionScreen() {
         }
 
         completionComponent.style.display = 'block';
+
+        // Exit fullscreen when showing completion screen
+        if (document.fullscreenElement) {
+            console.log('Exiting fullscreen mode...');
+            document.exitFullscreen().catch(err => {
+                console.log('Failed to exit fullscreen:', err);
+            });
+        }
     }
 }
 
