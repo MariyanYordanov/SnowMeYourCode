@@ -116,15 +116,7 @@ function initializeApp() {
             console.log('✅ Real machine detected - proceeding');
         }
 
-        // Check if running in kiosk mode
-        if (isKioskMode()) {
-            console.log('🔒 Running in KIOSK MODE');
-            const kioskInitialized = initializeKioskExam();
-            if (!kioskInitialized) {
-                console.error('Failed to initialize kiosk exam');
-                return;
-            }
-        }
+        // Kiosk mode removed - using simpler fullscreen approach
 
         const examApp = window.ExamApp;
 

@@ -164,7 +164,7 @@ export class MDNViewer {
                         <div class="mdn-example-header">
                             <span>Пример ${index + 1}</span>
                             <button class="mdn-copy-btn" data-code="${this.escapeHtml(example)}">
-                                📋 Копирай
+                                Копирай
                             </button>
                         </div>
                         <pre><code>${this.escapeHtml(example)}</code></pre>
@@ -292,7 +292,7 @@ export class MDNViewer {
 
         detailsContainer.innerHTML = `
             <div class="mdn-search-info">
-                <h4>🔍 Резултати от търсенето</h4>
+                <h4>Резултати от търсенето</h4>
                 <p>Намерени: ${results.length} метода</p>
                 <p>Кликнете на резултат за подробности</p>
             </div>
