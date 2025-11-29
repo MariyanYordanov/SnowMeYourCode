@@ -1055,7 +1055,7 @@ export function initializeAdvancedAntiCheat() {
  */
 function showFullscreenExitWarning(attemptNumber) {
     const examApp = window.ExamApp;
-    const maxAttempts = 1;
+    const maxAttempts = 3;
     const remainingAttempts = maxAttempts - attemptNumber;
 
     // Ако е 3-ти опит → прекратяване
