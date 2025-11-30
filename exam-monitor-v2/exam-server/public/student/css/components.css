@@ -2831,10 +2831,18 @@ body.resizing * {
 
 /* ==================== Terms Component - Simple & Clean ==================== */
 #terms-component {
+    /* Override component-container positioning */
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+
+    /* Centering and sizing */
     max-width: 700px;
     margin: 2.5rem auto;
     padding: 2.5rem 3rem;
-    background: #ffffff;
+
+    /* Visual styling */
+    background: #ffffff !important;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
