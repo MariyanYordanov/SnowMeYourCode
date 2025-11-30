@@ -11,7 +11,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <link rel="stylesheet" href="/student/css/styles.css?v=20251130-2252">
+    <link rel="stylesheet" href="/student/css/styles.css?v=20251130-2330">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
@@ -40,55 +40,44 @@
     <div id="app-container" class="app-container">
         <!-- Terms Component (Screen 1) -->
         <div id="terms-component" class="component-container">
-            <div class="login-container">
-                <div class="terms-section">
-                    <div class="terms-content p-xxl">
-                        <div class="terms-text">
-                            <h4 class="text-md font-semibold mb-lg">Забранени действия по време на изпита:</h4>
+            <h4>Забранени действия по време на изпита:</h4>
 
-                            <ol class="violation-list">
-                                <li><strong>Смяна на прозорци/табове:</strong> Напускане на изпитния прозорец</li>
-                                <li><strong>Копиране от външни източници:</strong> Използване на clipboard от други
-                                    приложения</li>
-                                <li><strong>Отваряне на DevTools:</strong> F12, Ctrl+Shift+I или десен бутон</li>
-                                <li><strong>Използване на горещи клавиши:</strong> Alt+Tab, Win+Tab, Ctrl+Alt+Del</li>
-                                <li><strong>Достъп до други програми:</strong> IDE, браузъри, чат приложения</li>
-                                <li><strong>Връзка с други устройства:</strong> TeamViewer, AnyDesk, Remote Desktop</li>
-                                <li><strong>Използване на AI асистенти:</strong> ChatGPT, GitHub Copilot, Bard</li>
-                                <li><strong>Комуникация с други лица:</strong> По всякакъв начин</li>
-                            </ol>
+            <ol>
+                <li><strong>Смяна на прозорци/табове:</strong> Напускане на изпитния прозорец</li>
+                <li><strong>Копиране от външни източници:</strong> Използване на clipboard от други приложения</li>
+                <li><strong>Отваряне на DevTools:</strong> F12, Ctrl+Shift+I или десен бутон</li>
+                <li><strong>Използване на горещи клавиши:</strong> Alt+Tab, Win+Tab, Ctrl+Alt+Del</li>
+                <li><strong>Достъп до други програми:</strong> IDE, браузъри, чат приложения</li>
+                <li><strong>Връзка с други устройства:</strong> TeamViewer, AnyDesk, Remote Desktop</li>
+                <li><strong>Използване на AI асистенти:</strong> ChatGPT, GitHub Copilot, Bard</li>
+                <li><strong>Комуникация с други лица:</strong> По всякакъв начин</li>
+            </ol>
 
-                            <h4 class="text-md font-semibold mb-lg mt-xl">Позволени действия:</h4>
+            <h4>Позволени действия:</h4>
 
-                            <ol class="allowed-list">
-                                <li>Писане на код в предоставения редактор</li>
-                                <li>Използване на вградената конзола за дебъгване</li>
-                                <li>Преглед на MDN документация в Exam Dev Tools</li>
-                                <li>Създаване и редактиране на файлове в проекта</li>
-                            </ol>
+            <ol>
+                <li>Писане на код в предоставения редактор</li>
+                <li>Използване на вградената конзола за дебъгване</li>
+                <li>Преглед на MDN документация в Exam Dev Tools</li>
+                <li>Създаване и редактиране на файлове в проекта</li>
+            </ol>
 
-                            <p class="warning-text mt-xl">
-                                <strong>ВНИМАНИЕ:</strong> При установяване на нарушение, изпитът се прекратява
-                                автоматично и се оценява със слаба оценка!
-                            </p>
-                        </div>
+            <p>
+                <strong>ВНИМАНИЕ:</strong> При установяване на нарушение, изпитът се прекратява
+                автоматично и се оценява със слаба оценка!
+            </p>
 
-                        <div class="agreement-checkbox mt-xl">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="terms-agreement" class="checkbox">
-                                <span class="checkbox-text">
-                                    <strong>Прочетох и се съгласявам с условията.</strong>
-                                    Разбирам, че при нарушение изпитът се прекратява автоматично.
-                                </span>
-                            </label>
-                        </div>
+            <label>
+                <input type="checkbox" id="terms-agreement">
+                <span>
+                    <strong>Прочетох и се съгласявам с условията.</strong>
+                    Разбирам, че при нарушение изпитът се прекратява автоматично.
+                </span>
+            </label>
 
-                        <button id="continue-to-login-btn" class="btn btn-primary mt-lg" disabled>
-                            Продължи към вход
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <button id="continue-to-login-btn" disabled>
+                Продължи към вход
+            </button>
         </div>
 
         <!-- Login Component (Screen 2) -->
