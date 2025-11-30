@@ -747,6 +747,9 @@ function showMinimalFullscreenButton() {
                     examApp.sessionId
                 );
 
+                // Start timer IMMEDIATELY before Monaco initialization
+                startExamTimer(sessionData.timeLeft || examApp.examDuration);
+
                 await initializeMonaco();
                 setupTabs();
 
@@ -758,8 +761,6 @@ function showMinimalFullscreenButton() {
                     examApp.helpChat = new HelpChat(examApp.socket);
                     examApp.helpChat.requestNotificationPermission();
                 }
-
-                startExamTimer(sessionData.timeLeft || examApp.examDuration);
 
                 // Restore code for continuing sessions
                 if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
