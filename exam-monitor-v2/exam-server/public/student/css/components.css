@@ -2847,41 +2847,42 @@ body.resizing * {
 .terms-section {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
-    border-radius: 16px;
+    border-radius: 12px;
     box-shadow:
-        0 20px 40px -12px rgba(0, 0, 0, 0.25),
+        0 20px 40px -12px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(0, 0, 0, 0.05);
-    max-width: 700px;
+    max-width: 650px;
     width: 100%;
     position: relative;
     z-index: 1;
-    margin: 2rem 0;
+    margin: 1.5rem 0;
 }
 
 .terms-content {
-    padding: 2.5rem 2rem;
+    padding: 2rem 1.75rem;
 }
 
 .terms-text h4 {
     color: #0f172a;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     letter-spacing: -0.01em;
 }
 
 .violation-list,
 .allowed-list {
     list-style-position: inside;
-    line-height: 1.8;
+    line-height: 1.6;
     color: #475569;
-    margin-left: 0.5rem;
+    margin-left: 0.25rem;
+    font-size: 0.9rem;
 }
 
 .violation-list li,
 .allowed-list li {
-    margin-bottom: 0.75rem;
-    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
 }
 
 .violation-list li strong {
@@ -2896,25 +2897,25 @@ body.resizing * {
 .warning-text {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white;
-    padding: 1.25rem;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
 }
 
 .warning-text strong {
-    font-size: 1.1rem;
+    font-size: 1rem;
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 
 .agreement-checkbox {
     background: #f1f5f9;
-    padding: 1.25rem;
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
 }
 
 .agreement-checkbox:has(input:checked) {
@@ -2925,14 +2926,14 @@ body.resizing * {
 .checkbox-label {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.75rem;
     cursor: pointer;
     user-select: none;
 }
 
 .checkbox {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     margin-top: 2px;
     cursor: pointer;
     accent-color: #3b82f6;
@@ -2941,14 +2942,15 @@ body.resizing * {
 
 .checkbox-text {
     color: #334155;
-    line-height: 1.6;
-    font-size: 0.95rem;
+    line-height: 1.5;
+    font-size: 0.875rem;
 }
 
 .checkbox-text strong {
     color: #1e293b;
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
 }
 
 .login-form {
