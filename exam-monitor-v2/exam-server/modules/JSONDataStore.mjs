@@ -5,7 +5,6 @@ export class JSONDataStore {
     constructor(baseDir) {
         this.baseDir = baseDir;
         this.dataDir = path.join(baseDir, 'data');
-        this.sessionsDir = path.join(this.dataDir, 'sessions');
         this.classesDir = path.join(this.dataDir, 'classes');
 
         this.ensureDirectories();
@@ -17,7 +16,6 @@ export class JSONDataStore {
     async ensureDirectories() {
         const dirs = [
             this.dataDir,
-            this.sessionsDir,
             this.classesDir
         ];
 
@@ -31,27 +29,27 @@ export class JSONDataStore {
     }
 
     /**
-     * Get today's session directory
+     * Check if a date is today
      */
-    getTodaysSessionDir() {
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        return path.join(this.sessionsDir, today);
+    isToday(dateString) {
+        const today = new Date().toISOString().split('T')[0];
+        const checkDate = new Date(dateString).toISOString().split('T')[0];
+        return today === checkDate;
     }
 
     /**
-     * Save session to file with human-readable name
+     * Save session to student directory
      */
     async saveSession(session) {
         try {
-            const sessionDir = this.getTodaysSessionDir();
-            await fs.mkdir(sessionDir, { recursive: true });
+            const studentDir = await this.findStudentDirectoryBySession(session.sessionId);
+            if (!studentDir) {
+                throw new Error(`Student directory not found for session: ${session.sessionId}`);
+            }
 
-            // Use human-readable session ID as filename
-            const filename = `${session.sessionId}.json`;
-            const filePath = path.join(sessionDir, filename);
-
+            const filePath = path.join(studentDir, 'session.json');
             await fs.writeFile(filePath, JSON.stringify(session, null, 2));
-            console.log(`Session saved: ${filename}`);
+            console.log(`Session saved: ${session.sessionId}`);
 
         } catch (error) {
             console.error('Error saving session:', error);
@@ -60,13 +58,16 @@ export class JSONDataStore {
     }
 
     /**
-     * Load session by ID
+     * Load session by ID from student directory
      */
     async loadSession(sessionId) {
         try {
-            const sessionDir = this.getTodaysSessionDir();
-            const filePath = path.join(sessionDir, `${sessionId}.json`);
+            const studentDir = await this.findStudentDirectoryBySession(sessionId);
+            if (!studentDir) {
+                return null;
+            }
 
+            const filePath = path.join(studentDir, 'session.json');
             const data = await fs.readFile(filePath, 'utf8');
             return JSON.parse(data);
 
@@ -79,31 +80,47 @@ export class JSONDataStore {
     }
 
     /**
-     * Load all sessions for today
+     * Load all sessions for today by scanning student directories
      */
     async loadTodaysSessions() {
         try {
-            const sessionDir = this.getTodaysSessionDir();
+            const sessions = [];
 
-            // Check if directory exists
+            // Check if classes directory exists
             try {
-                await fs.access(sessionDir);
+                await fs.access(this.classesDir);
             } catch {
                 return []; // Directory doesn't exist yet
             }
 
-            const files = await fs.readdir(sessionDir);
-            const sessions = [];
+            // Scan all class directories
+            const classes = await fs.readdir(this.classesDir);
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
+            for (const className of classes) {
+                const classPath = path.join(this.classesDir, className);
+
+                // Check if it's a directory
+                const classStat = await fs.stat(classPath);
+                if (!classStat.isDirectory()) continue;
+
+                // Scan all student directories in this class
+                const students = await fs.readdir(classPath);
+
+                for (const studentFolder of students) {
+                    const studentPath = path.join(classPath, studentFolder);
+                    const sessionPath = path.join(studentPath, 'session.json');
+
                     try {
-                        const filePath = path.join(sessionDir, file);
-                        const data = await fs.readFile(filePath, 'utf8');
+                        const data = await fs.readFile(sessionPath, 'utf8');
                         const session = JSON.parse(data);
-                        sessions.push(session);
+
+                        // Only include today's sessions
+                        if (this.isToday(session.startTime)) {
+                            sessions.push(session);
+                        }
                     } catch (error) {
-                        console.error(`Error loading session file ${file}:`, error);
+                        // Skip if session.json doesn't exist or is invalid
+                        continue;
                     }
                 }
             }
@@ -128,24 +145,8 @@ export class JSONDataStore {
             const studentDirName = sessionId; // e.g., "11а-ivan-ivanov"
             const studentDir = path.join(this.classesDir, normalizedClass, studentDirName);
 
-            // Create directories
-            await fs.mkdir(path.join(studentDir, 'code'), { recursive: true });
-            await fs.mkdir(path.join(studentDir, 'code', 'backups'), { recursive: true });
+            // Create only necessary directories
             await fs.mkdir(path.join(studentDir, 'data'), { recursive: true });
-            await fs.mkdir(path.join(studentDir, 'activities'), { recursive: true });
-
-            // Save session info
-            const sessionInfoPath = path.join(studentDir, 'session-info.json');
-            const sessionInfo = {
-                sessionId,
-                studentName: studentInfo.name,
-                studentClass: normalizedClass, // Store normalized class
-                originalClass: studentInfo.class, // Keep original for reference
-                createdAt: new Date().toISOString(),
-                directoryPath: studentDir
-            };
-
-            await fs.writeFile(sessionInfoPath, JSON.stringify(sessionInfo, null, 2));
 
             // Copy practice server data for this student
             await this.copyPracticeData(studentDir);
@@ -194,59 +195,6 @@ export class JSONDataStore {
         }
     }
 
-    /**
-     * Save student code
-     */
-    async saveStudentCode(sessionId, codeData) {
-        try {
-            // Find student directory by session ID
-            const studentDir = await this.findStudentDirectoryBySession(sessionId);
-            if (!studentDir) {
-                throw new Error(`Student directory not found for session ${sessionId}`);
-            }
-
-            const codeDir = path.join(studentDir, 'code');
-            const filename = codeData.filename || 'main.js';
-            const filePath = path.join(codeDir, filename);
-
-            // Save current code
-            await fs.writeFile(filePath, codeData.code || '');
-
-            // Save timestamped backup
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const backupFilename = `${filename}.${timestamp}.backup`;
-            const backupPath = path.join(codeDir, 'backups', backupFilename);
-
-            await fs.writeFile(backupPath, codeData.code || '');
-
-            console.log(`Code saved: ${filename} for session ${sessionId}`);
-
-        } catch (error) {
-            console.error('Error saving student code:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Save suspicious activity log
-     */
-    async logSuspiciousActivity(sessionId, activity) {
-        try {
-            const studentDir = await this.findStudentDirectoryBySession(sessionId);
-            if (!studentDir) return;
-
-            const activitiesDir = path.join(studentDir, 'activities');
-            const logFile = path.join(activitiesDir, 'suspicious.log');
-
-            const logEntry = `${new Date().toISOString()} - ${activity.type} - ${activity.description || ''}\n`;
-
-            // Append to log file
-            await fs.appendFile(logFile, logEntry);
-
-        } catch (error) {
-            console.error('Error logging suspicious activity:', error);
-        }
-    }
 
     /**
      * Find student directory by session ID with proper case handling
@@ -271,18 +219,18 @@ export class JSONDataStore {
 
                 for (const studentDir of students) {
                     const studentPath = path.join(classPath, studentDir);
-                    const sessionInfoPath = path.join(studentPath, 'session-info.json');
+                    const sessionPath = path.join(studentPath, 'session.json');
 
                     try {
-                        const data = await fs.readFile(sessionInfoPath, 'utf8');
-                        const sessionInfo = JSON.parse(data);
+                        const data = await fs.readFile(sessionPath, 'utf8');
+                        const session = JSON.parse(data);
 
-                        if (sessionInfo.sessionId === sessionId) {
+                        if (session.sessionId === sessionId) {
                             console.log(`Found student directory: ${studentPath}`);
                             return studentPath;
                         }
                     } catch {
-                        // Skip if session-info.json doesn't exist or is invalid
+                        // Skip if session.json doesn't exist or is invalid
                         continue;
                     }
                 }

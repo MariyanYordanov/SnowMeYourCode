@@ -159,8 +159,7 @@ export class SessionManager {
             type: LOGIN_RESULTS.CONTINUE_SESSION,
             message: `Добре дошли обратно! Имате ${this.formatTimeLeft(timeLeft)} оставащо време`,
             sessionId: session.sessionId,
-            timeLeft: timeLeft,
-            lastCode: session.lastCode || ''
+            timeLeft: timeLeft
         };
     }
 
@@ -234,7 +233,6 @@ export class SessionManager {
             startTime: now.toISOString(),
             examEndTime: examEndTime.toISOString(),
             lastActivity: now.toISOString(),
-            lastCode: '',
             suspiciousActivities: [],
             terminationType: null
         };
@@ -276,10 +274,6 @@ export class SessionManager {
         // Update session data
         session.lastActivity = new Date().toISOString();
         session.status = SESSION_STATES.ACTIVE;
-
-        if (data.code !== undefined) {
-            session.lastCode = data.code;
-        }
 
         if (data.suspicious) {
             session.suspiciousActivities.push({
