@@ -30,19 +30,7 @@
     position: relative;
 }
 
-.login-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 60%);
-    pointer-events: none;
-}
+/* Removed gradient overlay for cleaner design */
 
 .login-card {
     background: white;
@@ -2867,7 +2855,12 @@ body.resizing * {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    margin-top: 1.75rem;
     letter-spacing: -0.01em;
+}
+
+.terms-text h4:first-of-type {
+    margin-top: 0;
 }
 
 .violation-list,
