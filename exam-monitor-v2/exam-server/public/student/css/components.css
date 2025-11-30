@@ -307,6 +307,28 @@
     background: var(--bg-darker);
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    gap: 0;
+    height: 34px;
+    align-items: stretch;
+}
+
+.tabs-container::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tabs-container::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+.tabs-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.tabs-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .tab {
@@ -332,10 +354,10 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: 6px 12px;
     cursor: pointer;
     border-right: 1px solid var(--border);
-    font-size: var(--font-sm);
+    font-size: 13px;
     white-space: nowrap;
     background: var(--bg-panel);
     color: var(--text-secondary);
@@ -343,7 +365,8 @@
     position: relative;
     min-width: 120px;
     max-width: 200px;
-    height: 32px;
+    height: 100%;
+    flex-shrink: 0;
 }
 
 .file-tab:hover {

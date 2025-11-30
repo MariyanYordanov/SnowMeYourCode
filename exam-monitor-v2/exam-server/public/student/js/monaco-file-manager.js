@@ -381,22 +381,29 @@ export class MonacoFileManager {
 
     getIconForItem(item) {
         if (item.type === 'folder') {
-            return '[DIR]';
+            return '📁';
         }
 
         const iconMap = {
-            'js': '[JS]',
-            'html': '[HTML]',
-            'css': '[CSS]',
-            'json': '[JSON]',
-            'md': '[MD]',
-            'txt': '[TXT]',
-            'png': '[IMG]',
-            'jpg': '[IMG]',
-            'gif': '[IMG]'
+            'js': '📄',
+            'mjs': '📄',
+            'html': '🌐',
+            'css': '🎨',
+            'json': '⚙️',
+            'md': '📝',
+            'txt': '📄',
+            'png': '🖼️',
+            'jpg': '🖼️',
+            'jpeg': '🖼️',
+            'gif': '🖼️',
+            'svg': '🖼️',
+            'xml': '📋',
+            'yml': '⚙️',
+            'yaml': '⚙️',
+            'lock': '🔒'
         };
 
-        return iconMap[item.extension] || '[FILE]';
+        return iconMap[item.extension] || '📄';
     }
 
     getFileIcon(path) {
