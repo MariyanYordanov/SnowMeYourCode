@@ -237,15 +237,15 @@ export class SessionManager {
             terminationType: null
         };
 
-        // Save to storage and cache
-        await this.dataStore.saveSession(session);
-        this.sessions.set(sessionId, session);
-
-        // Initialize student data directory
+        // Initialize student data directory FIRST
         await this.dataStore.initializeStudentDirectory(sessionId, {
             name: studentName,
             class: studentClass
         });
+
+        // THEN save to storage and cache
+        await this.dataStore.saveSession(session);
+        this.sessions.set(sessionId, session);
 
         console.log(`New session created: ${sessionId} for ${studentName} (${studentClass})`);
 
