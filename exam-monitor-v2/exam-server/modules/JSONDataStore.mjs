@@ -198,6 +198,7 @@ export class JSONDataStore {
 
     /**
      * Find student directory by session ID with proper case handling
+     * SIMPLIFIED: Direct path construction from sessionId
      */
     async findStudentDirectoryBySession(sessionId) {
         try {
@@ -211,38 +212,19 @@ export class JSONDataStore {
             // First part is class, normalize to uppercase for directory lookup
             const sessionClass = parts[0].toUpperCase(); // "11А"
 
-            // Look in the specific class directory
-            const classPath = path.join(this.classesDir, sessionClass);
+            // Construct direct path: data/classes/{CLASS}/{sessionId}/
+            const studentPath = path.join(this.classesDir, sessionClass, sessionId);
 
+            // Check if directory exists
             try {
-                const students = await fs.readdir(classPath);
-
-                for (const studentDir of students) {
-                    const studentPath = path.join(classPath, studentDir);
-                    const sessionPath = path.join(studentPath, 'session.json');
-
-                    try {
-                        const data = await fs.readFile(sessionPath, 'utf8');
-                        const session = JSON.parse(data);
-
-                        if (session.sessionId === sessionId) {
-                            console.log(`Found student directory: ${studentPath}`);
-                            return studentPath;
-                        }
-                    } catch {
-                        // Skip if session.json doesn't exist or is invalid
-                        continue;
-                    }
-                }
-
-                console.warn(`Student directory not found for session ${sessionId} in class ${sessionClass}`);
-                return null;
-
+                await fs.access(studentPath);
+                console.log(`Found student directory: ${studentPath}`);
+                return studentPath;
             } catch (error) {
                 if (error.code === 'ENOENT') {
-                    console.warn(`Class directory doesn't exist: ${classPath}`);
+                    console.warn(`Student directory not found: ${studentPath}`);
                 } else {
-                    console.error(`Error reading class directory ${classPath}:`, error);
+                    console.error(`Error accessing student directory ${studentPath}:`, error);
                 }
                 return null;
             }
