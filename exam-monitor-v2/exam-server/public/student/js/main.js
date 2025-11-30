@@ -689,17 +689,44 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
         z-index: 999999;
     `;
 
-    // Create dialog
+    // Create dialog with inline styles for guaranteed appearance
     const dialog = document.createElement('div');
-    dialog.className = 'custom-dialog';
+    dialog.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        min-width: 400px;
+        max-width: 600px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
     dialog.innerHTML = `
-        <div class="dialog-header">
-            <h2 class="dialog-title">Потвърдете действието</h2>
+        <div style="margin-bottom: 1.5rem;">
+            <h2 style="color: #2d3748; font-size: 1.5rem; font-weight: 600; margin: 0;">Потвърдете действието</h2>
         </div>
-        <p class="dialog-message">${message}</p>
-        <div class="dialog-buttons">
-            <button class="dialog-btn dialog-btn-cancel" id="confirm-cancel">Не</button>
-            <button class="dialog-btn dialog-btn-confirm" id="confirm-yes">Да</button>
+        <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">${message}</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-cancel" style="
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+                font-weight: 500;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                background: #e2e8f0;
+                color: #2d3748;
+                transition: all 0.2s;
+            ">Не</button>
+            <button id="confirm-yes" style="
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+                font-weight: 500;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                background: #667eea;
+                color: white;
+                transition: all 0.2s;
+            ">Да</button>
         </div>
     `;
 
@@ -713,6 +740,25 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
     const cleanup = () => {
         document.body.removeChild(overlay);
     };
+
+    // Add hover effects
+    yesBtn.addEventListener('mouseenter', () => {
+        yesBtn.style.background = '#5568d3';
+        yesBtn.style.transform = 'translateY(-1px)';
+        yesBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+    });
+    yesBtn.addEventListener('mouseleave', () => {
+        yesBtn.style.background = '#667eea';
+        yesBtn.style.transform = 'translateY(0)';
+        yesBtn.style.boxShadow = 'none';
+    });
+
+    noBtn.addEventListener('mouseenter', () => {
+        noBtn.style.background = '#cbd5e0';
+    });
+    noBtn.addEventListener('mouseleave', () => {
+        noBtn.style.background = '#e2e8f0';
+    });
 
     yesBtn.addEventListener('click', () => {
         cleanup();
