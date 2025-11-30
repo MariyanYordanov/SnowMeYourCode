@@ -2830,18 +2830,13 @@ body.resizing * {
 }
 
 /* ==================== Terms Component ==================== */
-.app-container {
-    overflow-y: auto;
-    height: 100vh;
-}
-
 #terms-component {
-    max-width: 800px;
-    margin: 4rem auto;
-    padding: 2rem;
+    max-width: 750px;
+    margin: 3rem auto;
+    padding: 2.5rem;
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 #terms-component h4 {
