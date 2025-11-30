@@ -212,24 +212,9 @@ async function initializeMonaco() {
         // Setup finish exam button event listener
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
-            finishBtn.addEventListener('click', async () => {
-                console.log('Finish exam button clicked');
-                console.log('customConfirm function available?', typeof customConfirm);
-
-                try {
-                    console.log('Calling custom confirm dialog...');
-                    const confirmed = await customConfirm('Сигурни ли сте, че искате да приключите изпита?');
-                    console.log('Confirmation result:', confirmed);
-                    if (confirmed) {
-                        console.log('User confirmed - completing exam');
-                        completeExam('student_submit');
-                    } else {
-                        console.log('User cancelled exam completion');
-                    }
-                } catch (error) {
-                    console.error('Error in finish exam handler:', error);
-                    console.error('Error stack:', error.stack);
-                }
+            finishBtn.addEventListener('click', () => {
+                console.log('🔴 Finish exam button clicked - completing exam immediately');
+                completeExam('student_submit');
             });
             console.log('✅ Finish exam button event listener attached');
         } else {
