@@ -40,7 +40,7 @@ import {
 import {
     showCompletionDialog,
     hideCustomDialogs,
-    confirm
+    confirm as customConfirm
 } from './dialogs.js';
 
 import { setupTabs } from './tabs.js';
@@ -214,8 +214,11 @@ async function initializeMonaco() {
         if (finishBtn) {
             finishBtn.addEventListener('click', async () => {
                 console.log('Finish exam button clicked');
+                console.log('customConfirm function available?', typeof customConfirm);
+
                 try {
-                    const confirmed = await confirm('Сигурни ли сте, че искате да приключите изпита?');
+                    console.log('Calling custom confirm dialog...');
+                    const confirmed = await customConfirm('Сигурни ли сте, че искате да приключите изпита?');
                     console.log('Confirmation result:', confirmed);
                     if (confirmed) {
                         console.log('User confirmed - completing exam');
@@ -225,6 +228,7 @@ async function initializeMonaco() {
                     }
                 } catch (error) {
                     console.error('Error in finish exam handler:', error);
+                    console.error('Error stack:', error.stack);
                 }
             });
             console.log('✅ Finish exam button event listener attached');
