@@ -345,8 +345,8 @@ export function getVMDetectionReport() {
         userAgent: navigator.userAgent,
         platform: navigator.platform,
         summary: result.isVM
-            ? `⚠️ VM DETECTED (${result.confidence}% confidence)`
-            : `✅ Real machine (${result.confidence}% VM probability)`
+            ? `WARNING: VM DETECTED (${result.confidence}% confidence)`
+            : `OK: Real machine (${result.confidence}% VM probability)`
     };
 }
 
@@ -367,12 +367,12 @@ export function shouldBlockLogin(result) {
  */
 export function formatVMMessage(result) {
     if (!result.isVM) {
-        return '✅ Устройството е валидирано';
+        return 'OK: Устройството е валидирано';
     }
 
     const indicators = result.indicators.join(', ');
 
-    return `⚠️ Засечена е виртуална машина!\n\n` +
+    return `WARNING: Засечена е виртуална машина!\n\n` +
            `Изпитът НЕ МОЖЕ да се провежда във виртуална среда.\n\n` +
            `Индикатори: ${indicators}\n\n` +
            `Моля, влезте от реално устройство.`;

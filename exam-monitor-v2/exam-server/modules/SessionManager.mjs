@@ -377,7 +377,7 @@ export class SessionManager {
                 // Remove from active sessions
                 this.sessions.delete(sessionId);
 
-                console.log(`🧹 Session cleared by teacher: ${sessionId}`);
+                console.log(`Session cleared by teacher: ${sessionId}`);
                 return true;
             }
 
@@ -515,7 +515,7 @@ export class SessionManager {
 
             // Only log if sessions were actually expired
             if (expiredCount > 0) {
-                console.log(`🧹 Expired ${expiredCount} sessions`);
+                console.log(`Expired ${expiredCount} sessions`);
             }
         }, 60000); // Check every minute
 

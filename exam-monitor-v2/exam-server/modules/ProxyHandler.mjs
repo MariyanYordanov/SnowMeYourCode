@@ -152,7 +152,7 @@ export class ProxyHandler {
                 timestamp: Date.now()
             };
 
-            console.log(`🔄 Proxying: ${req.method} ${req.url} for student ${req.studentInfo?.name}`);
+            console.log(`Proxying: ${req.method} ${req.url} for student ${req.studentInfo?.name}`);
 
         } catch (error) {
             console.error('Proxy request error:', error);

@@ -23,7 +23,7 @@ export class NetworkMonitor {
     init() {
         this.interceptFetch();
         this.interceptXHR();
-        console.log('📡 Network Monitor initialized');
+        console.log('Network Monitor initialized');
     }
 
     /**
@@ -31,7 +31,7 @@ export class NetworkMonitor {
      */
     start() {
         this.isMonitoring = true;
-        console.log('📡 Network monitoring started');
+        console.log('Network monitoring started');
     }
 
     /**
@@ -39,7 +39,7 @@ export class NetworkMonitor {
      */
     stop() {
         this.isMonitoring = false;
-        console.log('📡 Network monitoring stopped');
+        console.log('Network monitoring stopped');
     }
 
     /**

@@ -1097,7 +1097,7 @@ function showFullscreenExitWarning(attemptNumber) {
     `;
 
     dialog.innerHTML = `
-        <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+        <div style="font-size: 64px; margin-bottom: 20px;">[!]</div>
         <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 28px;">
             FULLSCREEN РЕЖИМ ИЗКЛЮЧЕН
         </h2>
@@ -1217,7 +1217,7 @@ function showFinalTerminationDialog() {
     `;
 
     dialog.innerHTML = `
-        <div style="font-size: 80px; margin-bottom: 20px;">❌</div>
+        <div style="font-size: 80px; margin-bottom: 20px;">[X]</div>
         <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 32px;">
             ИЗПИТЪТ Е ПРЕКРАТЕН
         </h2>

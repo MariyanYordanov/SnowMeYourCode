@@ -101,7 +101,7 @@ export class WebSocketHandler {
                 
                 if (!validation.valid) {
                     // Handle violation
-                    console.log(`🚨 Heartbeat validation failed: ${studentId} - ${validation.reason}`);
+                    console.log(`ALERT: Heartbeat validation failed: ${studentId} - ${validation.reason}`);
                     
                     if (validation.action === 'terminate') {
                         // Will be handled by anti-cheat termination event
@@ -174,7 +174,7 @@ export class WebSocketHandler {
                 timestamp: Date.now()
             });
 
-            console.log(`🛑 Anti-cheat termination: ${studentId} - ${reason}`);
+            console.log(`STOP: Anti-cheat termination: ${studentId} - ${reason}`);
 
         } catch (error) {
             console.error('Error handling anti-cheat termination:', error);
@@ -338,7 +338,7 @@ export class WebSocketHandler {
             );
 
             if (!codeValidation.valid) {
-                console.log(`🚨 Code validation failed: ${sessionId} - ${codeValidation.reason}`);
+                console.log(`ALERT: Code validation failed: ${sessionId} - ${codeValidation.reason}`);
                 
                 // Notify teacher of suspicious code
                 this.broadcastToTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
@@ -502,7 +502,7 @@ export class WebSocketHandler {
      * Handle disconnection
      */
     async handleDisconnection(socket, reason) {
-        console.log(`🔌 Disconnection: ${socket.id} - ${reason}. Student Info: ${socket.studentInfo ? JSON.stringify(socket.studentInfo) : 'N/A'}`);
+        console.log(`Disconnection: ${socket.id} - ${reason}. Student Info: ${socket.studentInfo ? JSON.stringify(socket.studentInfo) : 'N/A'}`);
 
         // Handle student disconnection
         if (socket.studentInfo) {
@@ -950,7 +950,7 @@ export class WebSocketHandler {
                 return;
             }
 
-            console.log(`👨‍🏫 Teacher requesting session restart for: ${sessionId}`);
+            console.log(`Teacher requesting session restart for: ${sessionId}`);
 
             // Clear session from SessionManager
             const cleared = await this.sessionManager.clearSession(sessionId);
@@ -982,7 +982,7 @@ export class WebSocketHandler {
                     message: 'Session restarted successfully. Student can now log in again.'
                 });
 
-                console.log(`✅ Session restarted: ${sessionId}`);
+                console.log(`OK: Session restarted: ${sessionId}`);
             } else {
                 socket.emit('session-restart-error', {
                     success: false,

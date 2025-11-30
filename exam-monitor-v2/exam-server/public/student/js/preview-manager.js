@@ -14,7 +14,7 @@ export class PreviewManager {
 
     init() {
         // Preview frame is no longer needed as we open directly in new tab
-        console.log('🖼️ Preview Manager initialized');
+        console.log('Preview Manager initialized');
     }
 
 
@@ -143,7 +143,7 @@ export class PreviewManager {
             </head>
             <body>
                 <div class="message">
-                    <div class="icon">🖼️</div>
+                    <div class="icon">[PREVIEW]</div>
                     <p>${message}</p>
                 </div>
             </body>

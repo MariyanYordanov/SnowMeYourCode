@@ -45,7 +45,7 @@ function handleSocketConnect() {
     // Clear any stored session data
     localStorage.removeItem('examSession');
 
-    console.log('⚠️ Session restore disabled - student must login again');
+    console.log('WARNING: Session restore disabled - student must login again');
 }
 
 function handleSocketDisconnect(reason) {
@@ -74,7 +74,7 @@ function handleNewSession(data) {
 }
 
 function handleSessionRestored(data) {
-    console.log('⚠️ Session restore attempt blocked for security');
+    console.log('WARNING: Session restore attempt blocked for security');
 
     // CRITICAL SECURITY: Disable session restore in kiosk mode
     // Student MUST login again to open new kiosk window
@@ -108,7 +108,7 @@ function showSessionRestoreBlocked() {
                 max-width: 600px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠️</h1>
+                <h1 style="font-size: 64px; margin-bottom: 20px;">[!]</h1>
                 <h2 style="margin-bottom: 20px; font-size: 28px; color: #dc3545;">
                     Сесията е прекъсната
                 </h2>
@@ -150,7 +150,7 @@ function showSessionRestoreBlocked() {
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'"
                 >
-                    🔄 Презареди и влез отново
+                    Презареди и влез отново
                 </button>
 
                 <p style="margin-top: 30px; opacity: 0.7; font-size: 14px; color: #6c757d;">

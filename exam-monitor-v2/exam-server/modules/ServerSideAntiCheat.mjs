@@ -54,7 +54,7 @@ export class ServerSideAntiCheat {
         this.studentProfiles.set(studentId, profile);
         this.heartbeatExpected.set(studentId, Date.now() + this.heartbeatInterval);
         
-        console.log(`📊 Student profile initialized: ${studentId}`);
+        console.log(`Student profile initialized: ${studentId}`);
         return profile;
     }
 
@@ -440,7 +440,7 @@ export class ServerSideAntiCheat {
         }
         this.suspiciousActivities.get(studentId).push(violation);
 
-        console.log(`🚨 Violation recorded: ${studentId} - ${violationType} (${suspicionLevel})`);
+        console.log(`ALERT: Violation recorded: ${studentId} - ${violationType} (${suspicionLevel})`);
 
         // Check for termination conditions
         if (this.shouldTerminateStudent(studentId)) {
@@ -485,7 +485,7 @@ export class ServerSideAntiCheat {
         profile.terminationReason = reason;
         profile.terminationTime = Date.now();
 
-        console.log(`🛑 Student terminated: ${studentId} - Reason: ${reason}`);
+        console.log(`STOP: Student terminated: ${studentId} - Reason: ${reason}`);
 
         // Emit termination event
         this.emit('student-terminated', {
@@ -566,7 +566,7 @@ export class ServerSideAntiCheat {
             if (now > expectedTime + this.heartbeatTolerance) {
                 const profile = this.studentProfiles.get(studentId);
                 if (profile && profile.examState === 'active') {
-                    console.log(`⚠️ Missed heartbeat: ${studentId}`);
+                    console.log(`WARNING: Missed heartbeat: ${studentId}`);
                     this.recordViolation(studentId, 'heartbeatMissed', 0.5);
                     
                     // Update expected time to prevent spam
@@ -654,7 +654,7 @@ export class ServerSideAntiCheat {
     emit(event, data) {
         // This would be connected to the main WebSocket handler
         // For now, just log
-        console.log(`📡 Anti-cheat event: ${event}`, data);
+        console.log(`Anti-cheat event: ${event}`, data);
     }
 
     /**
@@ -666,7 +666,7 @@ export class ServerSideAntiCheat {
         this.heartbeatExpected.delete(studentId);
         this.lastHeartbeat.delete(studentId);
         
-        console.log(`🧹 Cleaned up student: ${studentId}`);
+        console.log(`Cleaned up student: ${studentId}`);
     }
 }
 

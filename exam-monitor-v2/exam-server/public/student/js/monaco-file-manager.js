@@ -307,7 +307,7 @@ export class MonacoFileManager {
             return;
         }
 
-        console.log('📁 Creating new file:', fileName);
+        console.log('Creating new file:', fileName);
 
         const content = this.getTemplateForFile(fileName);
         this.createFileModel(fileName, content);
@@ -381,22 +381,22 @@ export class MonacoFileManager {
 
     getIconForItem(item) {
         if (item.type === 'folder') {
-            return '📁';
+            return '[DIR]';
         }
 
         const iconMap = {
-            'js': '📜',
-            'html': '🌐',
-            'css': '🎨',
-            'json': '📋',
-            'md': '📝',
-            'txt': '📄',
-            'png': '🖼️',
-            'jpg': '🖼️',
-            'gif': '🖼️'
+            'js': '[JS]',
+            'html': '[HTML]',
+            'css': '[CSS]',
+            'json': '[JSON]',
+            'md': '[MD]',
+            'txt': '[TXT]',
+            'png': '[IMG]',
+            'jpg': '[IMG]',
+            'gif': '[IMG]'
         };
 
-        return iconMap[item.extension] || '📄';
+        return iconMap[item.extension] || '[FILE]';
     }
 
     getFileIcon(path) {

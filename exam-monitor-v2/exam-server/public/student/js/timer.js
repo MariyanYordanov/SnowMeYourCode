@@ -381,7 +381,7 @@ export function extendExamTime(additionalMinutes) {
         examApp.examEndTime += additionalTime;
         examApp.examDuration += additionalTime;
 
-        console.log(`⏰ Exam time extended by ${additionalMinutes} minutes`);
+        console.log(`Exam time extended by ${additionalMinutes} minutes`);
 
         // Show notification
         if (examApp.showNotification) {

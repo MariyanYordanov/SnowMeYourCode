@@ -111,11 +111,11 @@ function initializeApp() {
         console.log('VM Detection Report:', vmReport);
 
         if (shouldBlockLogin(vmDetection)) {
-            console.error('❌ VIRTUAL MACHINE DETECTED - BLOCKING ACCESS');
+            console.error('ERROR: VIRTUAL MACHINE DETECTED - BLOCKING ACCESS');
             blockVMAccess(vmDetection);
             return; // Stop initialization
         } else {
-            console.log('✅ Real machine detected - proceeding');
+            console.log('OK: Real machine detected - proceeding');
         }
 
         // Kiosk mode removed - using simpler fullscreen approach
@@ -156,7 +156,7 @@ async function startExam(sessionData) {
             throw new Error('Invalid session data');
         }
 
-        console.log('✅ Starting exam');
+        console.log('OK: Starting exam');
 
         examApp.isLoggedIn = true;
         examApp.examStartTime = sessionData.examStartTime || Date.now();
@@ -213,7 +213,7 @@ async function initializeMonaco() {
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
             finishBtn.addEventListener('click', () => {
-                console.log('🔴 Finish exam button clicked');
+                console.log('Finish exam button clicked');
 
                 // Show confirmation dialog using custom HTML dialog
                 showSimpleConfirm(
@@ -227,9 +227,9 @@ async function initializeMonaco() {
                     }
                 );
             });
-            console.log('✅ Finish exam button event listener attached');
+            console.log('OK: Finish exam button event listener attached');
         } else {
-            console.error('❌ Finish exam button not found in DOM');
+            console.error('ERROR: Finish exam button not found in DOM');
         }
 
         if (examApp.sessionId) {
@@ -575,7 +575,7 @@ function blockMobileAccess() {
                 border-radius: 10px;
                 max-width: 500px;
             ">
-                <h1 style="font-size: 48px; margin-bottom: 20px;">📱❌</h1>
+                <h1 style="font-size: 48px; margin-bottom: 20px;">[MOBILE] [X]</h1>
                 <h2 style="margin-bottom: 20px;">Мобилни устройства не се поддържат</h2>
                 <p style="font-size: 18px; line-height: 1.6;">
                     Изпитът може да се провежда само на лаптоп или настолен компютър.
@@ -622,7 +622,7 @@ function blockVMAccess(vmDetection) {
                 border-radius: 10px;
                 max-width: 600px;
             ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠️</h1>
+                <h1 style="font-size: 64px; margin-bottom: 20px;">[!]</h1>
                 <h2 style="margin-bottom: 20px; font-size: 32px;">Виртуална машина засечена!</h2>
                 <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
                     Изпитът <strong>НЕ МОЖЕ</strong> да се провежда във виртуална среда.
@@ -826,7 +826,7 @@ function showMinimalFullscreenButton() {
 
     const startExamFullscreen = async () => {
         if (examStarting) {
-            console.log('⚠️ Exam already starting, ignoring duplicate call');
+            console.log('WARNING: Exam already starting, ignoring duplicate call');
             return;
         }
 

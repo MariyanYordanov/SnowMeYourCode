@@ -27,10 +27,10 @@ export class DevToolsUI {
         panelContainer.innerHTML = `
             <div class="devtools-container">
                 <div class="devtools-tabs">
-                    <button class="devtools-tab active" data-tab="network">🌐 Network</button>
-                    <button class="devtools-tab" data-tab="console">📝 Console</button>
-                    <button class="devtools-tab" data-tab="storage">💾 Storage</button>
-                    <button class="devtools-tab" data-tab="elements">🏗️ Elements</button>
+                    <button class="devtools-tab active" data-tab="network">[NET] Network</button>
+                    <button class="devtools-tab" data-tab="console">[LOG] Console</button>
+                    <button class="devtools-tab" data-tab="storage">[DB] Storage</button>
+                    <button class="devtools-tab" data-tab="elements">[DOM] Elements</button>
                 </div>
                 
                 <div class="devtools-content">
@@ -634,12 +634,12 @@ export class DevToolsUI {
 
     getConsoleIcon(type) {
         const icons = {
-            log: 'ℹ️',
-            error: '❌',
-            warn: '⚠️',
-            info: 'ℹ️'
+            log: '[i]',
+            error: '[X]',
+            warn: '[!]',
+            info: '[i]'
         };
-        return icons[type] || 'ℹ️';
+        return icons[type] || '[i]';
     }
 }
 

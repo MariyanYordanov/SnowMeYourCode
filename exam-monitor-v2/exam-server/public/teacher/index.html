@@ -1110,7 +1110,7 @@
         <div class="header-content">
             <div class="header-title">
                 <h1>Teacher Dashboard - Exam Monitor v2</h1>
-                <div class="subtitle">🔒 Fullscreen Mode • Smart reconnection & session management</div>
+                <div class="subtitle">[SECURE] Fullscreen Mode • Smart reconnection & session management</div>
             </div>
             <div class="header-user">
                 <div class="user-info">
@@ -1118,7 +1118,7 @@
                     <span class="user-session" id="session-info">Session active</span>
                 </div>
                 <button class="logout-btn" id="logout-btn" title="Logout">
-                    🚪 Logout
+                    Logout
                 </button>
             </div>
         </div>
@@ -1134,16 +1134,16 @@
 
         <div class="session-controls">
             <button class="control-btn btn-success" id="new-session-btn" title="Start new exam session">
-                🆕 New Session
+                [+] New Session
             </button>
             <button class="control-btn btn-primary" id="refresh-btn" title="Refresh data">
-                🔄 Refresh
+                [R] Refresh
             </button>
             <button class="control-btn btn-warning" id="export-btn" title="Export exam data">
-                📊 Export
+                [EXPORT] Export
             </button>
             <button class="control-btn btn-danger" id="emergency-stop-btn" title="Emergency stop all exams">
-                🛑 Emergency Stop
+                [STOP] Emergency Stop
             </button>
         </div>
     </div>
@@ -1151,13 +1151,13 @@
     <!-- Exam Settings -->
     <div class="exam-settings-section">
         <div class="section-header">
-            <h2>⏱️ Exam Settings</h2>
+            <h2>[TIMER] Exam Settings</h2>
         </div>
         
         <div class="settings-container">
             <div class="setting-group">
                 <div class="info-box">
-                    <div class="info-icon">⏱️</div>
+                    <div class="info-icon">[TIMER]</div>
                     <div class="info-content">
                         <h3>Exam Duration: 180 minutes</h3>
                         <p>To change exam duration, edit <strong>config/exam-config.json</strong></p>
@@ -1171,21 +1171,21 @@
     <!-- Project Files Info -->
     <div class="file-management-section">
         <div class="section-header">
-            <h2>📁 Exam Project Files</h2>
+            <h2>[FILES] Exam Project Files</h2>
         </div>
         
         <div class="files-info-panel">
             <div class="info-box">
-                <div class="info-icon">📂</div>
+                <div class="info-icon">[DIR]</div>
                 <div class="info-content">
                     <h3>Files served from: practice-server/exam-files/</h3>
                     <p>To add/modify exam files, place them in the <strong>practice-server/exam-files/</strong> directory.</p>
                     <p>Students will automatically receive these files when they start the exam.</p>
                 </div>
             </div>
-            
+
             <div class="current-files">
-                <h3>📋 Available Project Files</h3>
+                <h3>[LIST] Available Project Files</h3>
                 <div class="files-grid" id="current-files-grid">
                     <div class="loading-message">
                         Loading project files...
@@ -1224,13 +1224,13 @@
     <!-- Help Chat Section -->
     <div class="help-chat-section" id="help-chat-section" style="display: none;">
         <div class="section-header">
-            <h2>💬 Help Chat</h2>
+            <h2>[CHAT] Help Chat</h2>
             <div class="chat-controls">
                 <button class="control-btn btn-secondary" id="minimize-chat-btn">
-                    📉 Minimize
+                    [-] Minimize
                 </button>
                 <button class="control-btn btn-danger" id="close-chat-btn">
-                    ❌ Close
+                    [X] Close
                 </button>
             </div>
         </div>
@@ -1242,7 +1242,7 @@
                     <span class="student-class" id="chat-student-class">Class</span>
                 </div>
                 <div class="chat-status">
-                    <span class="connection-status" id="chat-connection-status">🟢 Connected</span>
+                    <span class="connection-status" id="chat-connection-status">[ONLINE] Connected</span>
                 </div>
             </div>
             
@@ -1270,7 +1270,7 @@
                     <div class="chat-input-actions">
                         <span class="char-counter" id="chat-char-counter">0/1000</span>
                         <button id="send-response-btn" class="control-btn btn-primary" disabled>
-                            📤 Send
+                            [SEND] Send
                         </button>
                     </div>
                 </div>
@@ -1427,7 +1427,7 @@
                 // Initialize exam settings
                 this.initializeExamSettings();
 
-                console.log('✅ Smart Teacher Dashboard UI initialized');
+                console.log('OK: Smart Teacher Dashboard UI initialized');
             }
 
             /**
@@ -1596,7 +1596,7 @@
              * Handle successful connection
              */
             handleConnection() {
-                console.log('✅ Connected to server');
+                console.log('OK: Connected to server');
                 this.updateConnectionStatus('connected');
                 this.reconnectAttempts = 0;
 
@@ -1616,7 +1616,7 @@
              * Handle disconnection
              */
             handleDisconnection(reason) {
-                console.warn('🔌 Disconnected:', reason);
+                console.warn('Disconnected:', reason);
                 this.updateConnectionStatus('disconnected');
                 this.clearIntervals();
 
@@ -1634,7 +1634,7 @@
              * Handle connection errors
              */
             handleConnectionError(error) {
-                console.error('❌ Connection error:', error);
+                console.error('ERROR: Connection error:', error);
                 this.updateConnectionStatus('error');
                 this.attemptReconnection();
             }
@@ -1653,7 +1653,7 @@
 
                 const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
 
-                console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+                console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
                 setTimeout(() => {
                     this.connectToServer();
@@ -1700,7 +1700,7 @@
              */
             requestDataUpdate() {
                 if (this.socket?.connected) {
-                    console.log('🔄 Requesting data update');
+                    console.log('Requesting data update');
                     this.socket.emit('teacher-join'); // This will trigger 'all-students' response
                 }
             }
@@ -1892,7 +1892,7 @@
                     this.updateStats();
 
                     if (data.severity === 'high' || data.severity === 'critical') {
-                        this.showNotification(`⚠️ ${data.activity}: ${student.studentName}`, 'warning');
+                        this.showNotification(`WARNING: ${data.activity}: ${student.studentName}`, 'warning');
                     }
                 }
             }
@@ -1937,7 +1937,7 @@
 
                     this.renderStudent(student);
                     this.updateStats();
-                    this.showNotification(`🚨 Fullscreen violation: ${student.studentName}`, 'error');
+                    this.showNotification(`ALERT: Fullscreen violation: ${student.studentName}`, 'error');
                 }
             }
 
@@ -2045,7 +2045,7 @@
                 if (student.violationCount > 0 && student.status !== 'terminated') {
                     return `
                         <div class="violation-alert">
-                            ⚠️ ${student.violationCount} security violation${student.violationCount > 1 ? 's' : ''} detected
+                            [!] ${student.violationCount} security violation${student.violationCount > 1 ? 's' : ''} detected
                             ${student.lastViolation ? `• ${student.lastViolation}` : ''}
                         </div>
                     `;
@@ -2058,10 +2058,10 @@
              */
             renderFullscreenStatus(student) {
                 const statusConfig = {
-                    'entered': { class: 'active', icon: '🔒', text: 'Fullscreen Active' },
-                    'violation': { class: 'violation', icon: '⚠️', text: 'Fullscreen Violation' },
-                    'entering': { class: 'inactive', icon: '⏳', text: 'Entering Fullscreen' },
-                    'unknown': { class: 'inactive', icon: '❓', text: 'Fullscreen Unknown' }
+                    'entered': { class: 'active', icon: '[OK]', text: 'Fullscreen Active' },
+                    'violation': { class: 'violation', icon: '[!]', text: 'Fullscreen Violation' },
+                    'entering': { class: 'inactive', icon: '[...]', text: 'Entering Fullscreen' },
+                    'unknown': { class: 'inactive', icon: '[?]', text: 'Fullscreen Unknown' }
                 };
 
                 const config = statusConfig[student.fullscreenStatus] || statusConfig.unknown;
@@ -2110,7 +2110,7 @@
                     return `
                         <div class="controls">
                             <button class="btn btn-success" onclick="teacherDashboard.restartStudentSession('${student.sessionId}', '${student.studentName}')">
-                                🔄 Restart Session
+                                [R] Restart Session
                             </button>
                         </div>
                     `;
@@ -2118,7 +2118,7 @@
 
                 const hasHelpRequest = student.hasHelpRequest || false;
                 const chatButtonClass = hasHelpRequest ? 'btn-primary pulse' : 'btn-secondary';
-                const chatButtonText = hasHelpRequest ? '💬 Reply to Help' : '💬 Open Chat';
+                const chatButtonText = hasHelpRequest ? '[CHAT] Reply to Help' : '[CHAT] Open Chat';
 
                 return `
                     <div class="controls">
@@ -2126,13 +2126,13 @@
                             ${chatButtonText}
                         </button>
                         <button class="btn btn-warning" onclick="teacherDashboard.warnStudent('${student.sessionId}')">
-                            ⚠️ Send Warning
+                            [!] Send Warning
                         </button>
                         <button class="btn btn-success" onclick="teacherDashboard.restartStudentSession('${student.sessionId}', '${student.studentName}')">
-                            🔄 Restart Session
+                            [R] Restart Session
                         </button>
                         <button class="btn btn-danger" onclick="teacherDashboard.terminateStudent('${student.sessionId}')">
-                            🚫 Terminate Exam
+                            [X] Terminate Exam
                         </button>
                     </div>
                 `;

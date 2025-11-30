@@ -444,7 +444,7 @@ export async function runCode() {
         const runBtn = document.getElementById('run-btn');
         if (runBtn) {
             runBtn.disabled = true;
-            runBtn.innerHTML = '⏳ Running...';
+            runBtn.innerHTML = '[...] Running...';
         }
 
         // Console output is now handled by DevTools only
