@@ -2830,9 +2830,14 @@ body.resizing * {
 }
 
 /* ==================== Terms Component ==================== */
+.app-container {
+    overflow-y: auto;
+    height: 100vh;
+}
+
 #terms-component {
     max-width: 800px;
-    margin: 2rem auto;
+    margin: 4rem auto;
     padding: 2rem;
     background: #ffffff;
     border-radius: 12px;
