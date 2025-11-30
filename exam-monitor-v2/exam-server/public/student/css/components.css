@@ -30,6 +30,21 @@
     position: relative;
 }
 
+.login-form {
+    background: #ffffff;
+    padding: 3rem 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-width: 450px;
+    width: 100%;
+}
+
+.login-form h2 {
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
 .login-card {
     background: white;
     padding: 40px;
