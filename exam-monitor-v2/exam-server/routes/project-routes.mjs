@@ -38,24 +38,35 @@ router.get('/files', async (req, res) => {
         let useExamFiles = false;
         let sourceDir = projectDir;
 
-        // Check if project directory exists, if not use exam-files
+        // Check if project directory exists AND has files
+        let needsCopy = false;
         try {
             await fs.access(projectDir);
+            // Directory exists, check if it has files
+            const files = await fs.readdir(projectDir);
+            if (files.length === 0) {
+                needsCopy = true;
+            }
         } catch {
+            // Directory doesn't exist
+            needsCopy = true;
+        }
+
+        if (needsCopy) {
             try {
                 await fs.access(examFilesDir);
                 useExamFiles = true;
                 sourceDir = examFilesDir;
-                
+
                 // Copy exam files to student directory
                 await fs.mkdir(projectDir, { recursive: true });
                 await copyDirectory(examFilesDir, projectDir);
-                
+
                 // Install npm dependencies if package.json exists
                 await installProjectDependencies(projectDir, sessionId);
-                
+
                 console.log(`Initialized project files for session ${sessionId} from exam-files`);
-                
+
             } catch {
                 return res.json({ success: false, error: 'No project files available' });
             }
@@ -333,11 +344,11 @@ async function installProjectDependencies(projectDir, sessionId) {
                 }
             });
             
-            // Timeout after 30 seconds
+            // Timeout after 90 seconds
             setTimeout(() => {
                 npmProcess.kill('SIGTERM');
                 reject(new Error('npm install timeout'));
-            }, 30000);
+            }, 90000);
         });
         
     } catch (error) {
