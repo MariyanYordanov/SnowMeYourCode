@@ -213,8 +213,19 @@ async function initializeMonaco() {
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
             finishBtn.addEventListener('click', () => {
-                console.log('🔴 Finish exam button clicked - completing exam immediately');
-                completeExam('student_submit');
+                console.log('🔴 Finish exam button clicked');
+
+                // Show confirmation dialog using custom HTML dialog
+                showSimpleConfirm(
+                    'Сигурни ли сте, че искате да приключите изпита?',
+                    () => {
+                        console.log('User confirmed - completing exam');
+                        window.ExamApp.completeExam('student_submit');
+                    },
+                    () => {
+                        console.log('User cancelled');
+                    }
+                );
             });
             console.log('✅ Finish exam button event listener attached');
         } else {
@@ -656,6 +667,65 @@ function blockVMAccess(vmDetection) {
 
     // Log to console for debugging
     console.log('VM Detection blocked access:', vmDetection);
+}
+
+/**
+ * Simple confirmation dialog that works in fullscreen
+ */
+function showSimpleConfirm(message, onConfirm, onCancel) {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-dialog-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+    `;
+
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'custom-dialog';
+    dialog.innerHTML = `
+        <div class="dialog-header">
+            <h2 class="dialog-title">Потвърдете действието</h2>
+        </div>
+        <p class="dialog-message">${message}</p>
+        <div class="dialog-buttons">
+            <button class="dialog-btn dialog-btn-cancel" id="confirm-cancel">Не</button>
+            <button class="dialog-btn dialog-btn-confirm" id="confirm-yes">Да</button>
+        </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // Handle button clicks
+    const yesBtn = document.getElementById('confirm-yes');
+    const noBtn = document.getElementById('confirm-cancel');
+
+    const cleanup = () => {
+        document.body.removeChild(overlay);
+    };
+
+    yesBtn.addEventListener('click', () => {
+        cleanup();
+        if (onConfirm) onConfirm();
+    });
+
+    noBtn.addEventListener('click', () => {
+        cleanup();
+        if (onCancel) onCancel();
+    });
+
+    // Focus yes button
+    setTimeout(() => yesBtn.focus(), 100);
 }
 
 /**
