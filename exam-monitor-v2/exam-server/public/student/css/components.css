@@ -2829,103 +2829,188 @@ body.resizing * {
     }
 }
 
-/* ==================== Terms Component ==================== */
+/* ==================== Terms Component - Modern 2025 Design ==================== */
 #terms-component {
-    max-width: 750px;
-    margin: 3rem auto;
-    padding: 2.5rem;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 680px;
+    margin: 2rem auto 3rem;
+    padding: 0;
+    background: transparent;
 }
 
+/* Header with title */
+#terms-component::before {
+    content: 'Условия на изпита';
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+/* Subtitle */
+#terms-component::after {
+    content: 'Моля, прочетете внимателно преди да започнете изпита';
+    display: block;
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+/* Section headers */
 #terms-component h4 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    margin-top: 2rem;
-    color: #1e293b;
+    margin-top: 2.5rem;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #terms-component h4:first-of-type {
     margin-top: 0;
 }
 
+/* Add icons to headers using pseudo-elements */
+#terms-component h4:first-of-type::before {
+    content: '⛔';
+    font-size: 1.25rem;
+}
+
+#terms-component h4:nth-of-type(2)::before {
+    content: '✅';
+    font-size: 1.25rem;
+}
+
+/* Lists with modern spacing */
 #terms-component ol {
-    margin-bottom: 1.5rem;
-    padding-left: 1.5rem;
-    line-height: 1.6;
+    margin-bottom: 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: item;
 }
 
 #terms-component ol li {
-    margin-bottom: 0.5rem;
-    color: #475569;
+    margin-bottom: 0.85rem;
+    color: #334155;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    padding-left: 2rem;
+    position: relative;
+    counter-increment: item;
+}
+
+#terms-component ol li::before {
+    content: counter(item) ".";
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+    color: #64748b;
 }
 
 #terms-component ol li strong {
-    color: #1e293b;
+    color: #0f172a;
+    font-weight: 600;
 }
 
+/* Warning box - modern alert style */
 #terms-component p {
-    background: #fef2f2;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
     color: #991b1b;
-    padding: 1rem;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-    border: 1px solid #fecaca;
-    line-height: 1.6;
+    padding: 1.25rem 1.5rem;
+    border-radius: 10px;
+    margin: 2rem 0 2.5rem;
+    border-left: 4px solid #dc2626;
+    line-height: 1.7;
+    font-size: 0.9375rem;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
 }
 
+#terms-component p strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+}
+
+/* Checkbox agreement - card style */
 #terms-component label {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    margin: 1.5rem 0;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    margin: 0 0 1.5rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 #terms-component label:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    border-color: #3b82f6;
+    background: #f8fafc;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 }
 
 #terms-component label input[type="checkbox"] {
-    margin-top: 0.2rem;
+    margin-top: 0.15rem;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #3b82f6;
 }
 
 #terms-component label span {
     flex: 1;
-    color: #334155;
-    line-height: 1.5;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 0.9375rem;
 }
 
+#terms-component label span strong {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Button - modern solid style */
 #terms-component button {
     display: block;
-    margin: 1rem auto 0;
-    padding: 0.75rem 2rem;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    padding: 0.875rem 2rem;
     background: #3b82f6;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    letter-spacing: -0.01em;
 }
 
 #terms-component button:hover:not(:disabled) {
     background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+
+#terms-component button:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 #terms-component button:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    background: #94a3b8;
+    box-shadow: none;
 }
