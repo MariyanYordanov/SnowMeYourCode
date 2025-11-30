@@ -1,8 +1,8 @@
 .app-container {
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
     background: var(--bg-dark);
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .component-container {
