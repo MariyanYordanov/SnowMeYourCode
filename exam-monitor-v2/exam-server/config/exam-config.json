@@ -55,14 +55,6 @@
     "logLevel": "info",
     "enableDetailedLogging": true
   },
-  "storage": {
-    "dataRetentionDays": 30,
-    "backupEnabled": true,
-    "backupInterval": 60,
-    "backupIntervalUnit": "minutes",
-    "maxBackups": 24,
-    "compressionEnabled": true
-  },
   "teacher": {
     "dashboard": {
       "refreshInterval": 5,
