@@ -1,6 +1,6 @@
 {
   "exam": {
-    "duration": 360,
+    "duration": 180,
     "durationUnit": "minutes",
     "title": "Програмиране - Практически изпит",
     "instructions": "Решете задачите използвайки JavaScript. Времето за изпита е 3 часа.",
