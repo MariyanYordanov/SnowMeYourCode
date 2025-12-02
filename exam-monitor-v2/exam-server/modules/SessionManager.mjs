@@ -522,8 +522,7 @@ export class SessionManager {
     getExamConfig() {
         return {
             duration: Math.floor(this.EXAM_DURATION / (60 * 1000)), // Convert to minutes
-            gracePeriod: Math.floor(this.GRACE_PERIOD / (60 * 1000)),
-            developmentMode: this.developmentMode !== false
+            gracePeriod: Math.floor(this.GRACE_PERIOD / (60 * 1000))
         };
     }
 

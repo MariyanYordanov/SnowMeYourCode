@@ -110,9 +110,7 @@
   "environment": {
     "nodeVersion": "18.0.0",
     "timezone": "Europe/Sofia",
-    "locale": "bg-BG",
-    "debugMode": false,
-    "developmentMode": false
+    "locale": "bg-BG"
   },
   "version": "2.0.0",
   "lastUpdated": "2025-06-14T10:00:00.000Z",
