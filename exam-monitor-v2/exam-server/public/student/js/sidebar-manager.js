@@ -113,30 +113,6 @@ export class SidebarManager {
         return this.mdnViewer;
     }
 
-    /**
-     * Quick search in MDN
-     */
-    searchMDN(query) {
-        if (this.mdnViewer) {
-            this.switchPanel('mdn');
-            setTimeout(() => {
-                this.mdnViewer.quickSearch(query);
-            }, 100);
-        }
-    }
-
-    /**
-     * Show specific MDN method
-     */
-    showMDNMethod(objectName, methodName, category = 'javascript') {
-        if (this.mdnViewer) {
-            this.switchPanel('mdn');
-            setTimeout(() => {
-                this.mdnViewer.showMethod(objectName, methodName, category);
-            }, 100);
-        }
-    }
-
     saveState() {
         localStorage.setItem('sidebarState', JSON.stringify({
             currentPanel: this.currentPanel,
