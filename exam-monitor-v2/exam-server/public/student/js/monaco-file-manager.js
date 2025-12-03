@@ -1,3 +1,5 @@
+import { prompt, showInfoDialog } from './dialogs.js';
+
 export class MonacoFileManager {
     constructor(editorInstance) {
         this.editor = editorInstance;
@@ -290,20 +292,26 @@ export class MonacoFileManager {
 
     async createNewFile(fileName) {
         if (!fileName) {
-            fileName = prompt('File name (e.g. app.js, style.css, index.html):');
+            fileName = await prompt('Име на файл (напр. app.js, style.css, index.html):');
             if (!fileName) return;
         }
 
         // Validate and sanitize filename
         fileName = this.sanitizeFileName(fileName);
         if (!fileName) {
-            alert('Invalid file name. Please use only letters, numbers, dots, and hyphens.');
+            await showInfoDialog({
+                title: 'Невалидно име',
+                message: 'Моля използвайте само букви, цифри, точки и тирета.'
+            });
             return;
         }
 
         // Check if file already exists
         if (this.models.has(fileName)) {
-            alert(`File "${fileName}" already exists!`);
+            await showInfoDialog({
+                title: 'Файлът съществува',
+                message: `Файл "${fileName}" вече съществува!`
+            });
             return;
         }
 
