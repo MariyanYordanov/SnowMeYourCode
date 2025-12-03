@@ -1,5 +1,4 @@
 import { MDNViewer } from './mdn-viewer.js';
-import { DevToolsUI } from './devtools-ui.js';
 
 export class SidebarManager {
     constructor() {
@@ -11,7 +10,6 @@ export class SidebarManager {
         this.currentPanel = 'files';
         this.isExpanded = false;
         this.mdnViewer = null;
-        this.devToolsUI = null;
 
         this.init();
     }
@@ -47,10 +45,6 @@ export class SidebarManager {
                         e.preventDefault();
                         this.switchPanel('mdn');
                         break;
-                    case '3':
-                        e.preventDefault();
-                        this.switchPanel('devtools');
-                        break;
                 }
             }
         });
@@ -69,18 +63,14 @@ export class SidebarManager {
 
         this.currentPanel = panelName;
 
-        if (panelName === 'mdn' || panelName === 'devtools') {
+        if (panelName === 'mdn') {
             this.expandSidebar();
         } else {
             this.collapseSidebar();
         }
 
-        if (panelName === 'devtools') {
-            this.initDevTools();
-        } else if (panelName === 'mdn') {
+        if (panelName === 'mdn') {
             this.initMDN();
-        } else if (panelName === 'devtools') {
-            this.initDevTools();
         }
 
         this.saveState();
@@ -99,21 +89,6 @@ export class SidebarManager {
         if (this.isExpanded) {
             this.container.classList.remove('sidebar-expanded');
             this.isExpanded = false;
-        }
-    }
-
-    async initDevTools() {
-        if (!this.devToolsUI) {
-            this.devToolsUI = new DevToolsUI();
-        }
-
-        const devtoolsPanel = document.getElementById('devtools-panel');
-        if (devtoolsPanel && !devtoolsPanel.querySelector('.devtools-container')) {
-            // Clear existing content and initialize DevTools UI
-            devtoolsPanel.innerHTML = '';
-            this.devToolsUI.initializeInPanel(devtoolsPanel);
-        } else if (!devtoolsPanel) {
-            console.warn('DevTools panel element not found in DOM');
         }
     }
 
