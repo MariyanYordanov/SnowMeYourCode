@@ -11,7 +11,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-minimal">
+    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-clean-footer">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
@@ -209,23 +209,8 @@
                 </main>
         
                 <footer class="exam-footer">
-                    <div class="footer-left d-flex items-center gap-md">
-                        <span class="connection-status d-flex items-center gap-xs">
-                            <span class="status-indicator"></span>
-                            <span class="status-text text-xs">Connected</span>
-                        </span>
-                        <span class="server-info text-xs text-muted">Server: exam-server:8080</span>
-                    </div>
-        
-                    <div class="footer-center">
-                        <span class="exam-progress text-xs">
-                            <span id="completed-tasks">0</span> / <span id="total-tasks">5</span> tasks completed
-                        </span>
-                    </div>
-        
-                    <div class="footer-right d-flex items-center gap-md">
+                    <div class="footer-right d-flex items-center gap-md" style="margin-left: auto;">
                         <button class="btn btn-sm" id="help-btn">Help</button>
-                        <span class="version-info text-xs text-muted">v2.0.0</span>
                     </div>
                 </footer>
             </div>
