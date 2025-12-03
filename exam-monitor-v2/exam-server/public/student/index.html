@@ -11,7 +11,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-clean-footer">
+    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-preview-panel">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
@@ -192,16 +192,24 @@
                         <div class="editor-split-container">
                             <div id="monaco-editor" class="editor-main-panel"></div>
 
-                            <div id="console-resize-handle" class="console-resize-handle"></div>
+                            <div id="bottom-panel-resize-handle" class="console-resize-handle"></div>
 
-                            <div id="console-panel" class="console-panel">
-                                <div class="console-header">
-                                    <span class="console-title">Console</span>
-                                    <div class="console-actions">
-                                        <button id="clear-console-btn" class="btn-icon" title="Clear Console">✕</button>
+                            <div id="bottom-panel" class="console-panel">
+                                <div class="bottom-panel-tabs">
+                                    <button class="bottom-tab active" data-panel="console">Console</button>
+                                    <button class="bottom-tab" data-panel="preview">Preview</button>
+                                    <div class="bottom-tab-actions">
+                                        <button id="clear-bottom-btn" class="btn-icon" title="Clear">✕</button>
                                     </div>
                                 </div>
-                                <div id="console-output" class="console-output"></div>
+
+                                <div id="console-content" class="bottom-content active">
+                                    <div id="console-output" class="console-output"></div>
+                                </div>
+
+                                <div id="preview-content" class="bottom-content">
+                                    <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts"></iframe>
+                                </div>
                             </div>
                         </div>
                     </div>

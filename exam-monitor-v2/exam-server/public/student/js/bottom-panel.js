@@ -1,9 +1,15 @@
-export class ConsoleManager {
+export class BottomPanelManager {
   constructor() {
-    this.consolePanel = document.getElementById('console-panel');
+    this.bottomPanel = document.getElementById('bottom-panel');
     this.consoleOutput = document.getElementById('console-output');
-    this.resizeHandle = document.getElementById('console-resize-handle');
-    this.clearButton = document.getElementById('clear-console-btn');
+    this.resizeHandle = document.getElementById('bottom-panel-resize-handle');
+    this.clearButton = document.getElementById('clear-bottom-btn');
+    this.previewFrame = document.getElementById('preview-frame');
+
+    // Tab management
+    this.currentTab = 'console';
+    this.tabs = document.querySelectorAll('.bottom-tab');
+    this.contentDivs = document.querySelectorAll('.bottom-content');
 
     // Icons for different message types
     this.icons = {
@@ -15,8 +21,47 @@ export class ConsoleManager {
     };
 
     // Initialize
+    this.setupTabs();
     this.setupResizing();
     this.setupClearButton();
+  }
+
+  /**
+   * Setup tab switching functionality
+   */
+  setupTabs() {
+    this.tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        this.switchTab(tabName);
+      });
+    });
+  }
+
+  /**
+   * Switch between tabs
+   * @param {string} tabName - Name of the tab ('console' or 'preview')
+   */
+  switchTab(tabName) {
+    this.currentTab = tabName;
+
+    // Update tab buttons
+    this.tabs.forEach(tab => {
+      if (tab.dataset.tab === tabName) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update content divs
+    this.contentDivs.forEach(content => {
+      if (content.id === `${tabName}-content`) {
+        content.classList.add('active');
+      } else {
+        content.classList.remove('active');
+      }
+    });
   }
 
   /**
@@ -25,7 +70,7 @@ export class ConsoleManager {
    */
   executeCode(code) {
     // Clear previous output
-    this.clear();
+    this.clearConsole();
 
     // Create a sandboxed execution context
     const capturedLogs = [];
@@ -132,19 +177,119 @@ export class ConsoleManager {
   }
 
   /**
-   * Clear all messages from console output
+   * Clear console output
    */
-  clear() {
+  clearConsole() {
     if (this.consoleOutput) {
       this.consoleOutput.innerHTML = '';
     }
   }
 
   /**
-   * Setup resizing functionality for console panel
+   * Clear preview frame
+   */
+  clearPreview() {
+    if (this.previewFrame) {
+      this.previewFrame.srcdoc = '';
+    }
+  }
+
+  /**
+   * Update preview with HTML content
+   * @param {string} htmlContent - Complete HTML document to display
+   */
+  updatePreview(htmlContent) {
+    if (!this.previewFrame) return;
+    this.previewFrame.srcdoc = htmlContent;
+  }
+
+  /**
+   * Refresh preview by collecting files from Monaco models
+   * This method should be called with Monaco editor instance
+   * @param {object} monaco - Monaco editor instance
+   */
+  refreshPreview(monaco) {
+    if (!monaco) return;
+
+    const models = monaco.editor.getModels();
+    let htmlContent = '';
+    let cssContent = '';
+    let jsContent = '';
+
+    // Collect content from all models
+    models.forEach(model => {
+      const uri = model.uri.path;
+      const content = model.getValue();
+
+      if (uri.endsWith('.html')) {
+        htmlContent = content;
+      } else if (uri.endsWith('.css')) {
+        cssContent += content + '\n';
+      } else if (uri.endsWith('.js')) {
+        jsContent += content + '\n';
+      }
+    });
+
+    // Generate complete HTML document
+    const completeHTML = this.generatePreviewHTML(htmlContent, cssContent, jsContent);
+    this.updatePreview(completeHTML);
+  }
+
+  /**
+   * Generate complete HTML document with inline CSS and JS
+   * @param {string} html - HTML content
+   * @param {string} css - CSS content
+   * @param {string} js - JavaScript content
+   * @returns {string} Complete HTML document
+   */
+  generatePreviewHTML(html, css, js) {
+    // If HTML contains a full document, inject CSS and JS into it
+    if (html.includes('<!DOCTYPE') || html.includes('<html')) {
+      // Find head tag and inject CSS
+      let result = html;
+
+      if (css) {
+        const styleTag = `<style>${css}</style>`;
+        if (result.includes('</head>')) {
+          result = result.replace('</head>', `${styleTag}\n</head>`);
+        } else {
+          result = result.replace('<html>', `<html>\n<head>${styleTag}</head>`);
+        }
+      }
+
+      if (js) {
+        const scriptTag = `<script>${js}</script>`;
+        if (result.includes('</body>')) {
+          result = result.replace('</body>', `${scriptTag}\n</body>`);
+        } else {
+          result = result.replace('</html>', `<body>${scriptTag}</body>\n</html>`);
+        }
+      }
+
+      return result;
+    }
+
+    // Otherwise, create a complete document
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  ${css ? `<style>${css}</style>` : ''}
+</head>
+<body>
+  ${html}
+  ${js ? `<script>${js}</script>` : ''}
+</body>
+</html>`;
+  }
+
+  /**
+   * Setup resizing functionality for bottom panel
    */
   setupResizing() {
-    if (!this.resizeHandle || !this.consolePanel) return;
+    if (!this.resizeHandle || !this.bottomPanel) return;
 
     let isResizing = false;
     let startY = 0;
@@ -153,7 +298,7 @@ export class ConsoleManager {
     const onMouseDown = (e) => {
       isResizing = true;
       startY = e.clientY;
-      startHeight = this.consolePanel.offsetHeight;
+      startHeight = this.bottomPanel.offsetHeight;
 
       // Prevent text selection during drag
       document.body.style.userSelect = 'none';
@@ -173,7 +318,7 @@ export class ConsoleManager {
       const maxHeight = window.innerHeight * 0.8; // 80% of viewport
 
       if (newHeight >= minHeight && newHeight <= maxHeight) {
-        this.consolePanel.style.height = `${newHeight}px`;
+        this.bottomPanel.style.height = `${newHeight}px`;
       }
     };
 
@@ -197,7 +342,11 @@ export class ConsoleManager {
     if (!this.clearButton) return;
 
     this.clearButton.addEventListener('click', () => {
-      this.clear();
+      if (this.currentTab === 'console') {
+        this.clearConsole();
+      } else if (this.currentTab === 'preview') {
+        this.clearPreview();
+      }
     });
   }
 

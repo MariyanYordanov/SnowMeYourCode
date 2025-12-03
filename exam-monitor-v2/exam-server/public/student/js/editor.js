@@ -372,8 +372,9 @@ export function setupEditorControls() {
         if (previewBtn) {
             previewBtn.addEventListener('click', () => {
                 const examApp = window.ExamApp;
-                if (examApp?.previewManager) {
-                    examApp.previewManager.openPreviewInNewTab();
+                if (examApp?.bottomPanel && examApp?.editor) {
+                    examApp.bottomPanel.refreshPreview(monaco);
+                    examApp.bottomPanel.switchTab('preview');
                 }
             });
             console.log('Preview button setup complete');
@@ -433,11 +434,12 @@ export async function runCode() {
             runBtn.innerHTML = 'Running...';
         }
 
-        // Execute code using ConsoleManager terminal
-        if (examApp?.consoleManager) {
-            examApp.consoleManager.executeCode(code);
+        // Execute code using BottomPanel terminal
+        if (examApp?.bottomPanel) {
+            examApp.bottomPanel.executeCode(code);
+            examApp.bottomPanel.switchTab('console'); // Auto-switch to console tab
         } else {
-            console.error('ConsoleManager not initialized');
+            console.error('BottomPanel not initialized');
         }
 
         // Save code after execution
