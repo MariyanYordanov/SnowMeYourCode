@@ -181,9 +181,8 @@
                         <div class="editor-header">
                             <div class="editor-actions d-flex gap-xs">
                                 <button id="run-btn" class="btn btn-sm btn-primary">Run</button>
-                                <button id="preview-btn" class="btn btn-sm">Preview</button>
                                 <button id="start-server-btn" class="btn btn-sm btn-success">Start Server</button>
-                                <button id="format-btn" class="btn btn-sm">Format</button>
+                                <button id="format-btn" class="btn btn-sm btn-secondary">Format</button>
                             </div>
                         </div>
                         
@@ -197,15 +196,10 @@
                             <div id="bottom-panel" class="console-panel">
                                 <div class="bottom-panel-tabs">
                                     <button class="bottom-tab active" data-panel="console">Console</button>
-                                    <button class="bottom-tab" data-panel="preview">Preview</button>
                                 </div>
 
                                 <div id="console-content" class="bottom-content active">
                                     <div id="console-output" class="console-output"></div>
-                                </div>
-
-                                <div id="preview-content" class="bottom-content">
-                                    <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts"></iframe>
                                 </div>
                             </div>
                         </div>

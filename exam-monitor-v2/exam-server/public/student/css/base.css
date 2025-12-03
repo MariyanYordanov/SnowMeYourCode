@@ -191,6 +191,17 @@ pre {
     filter: brightness(110%);
 }
 
+.btn-secondary {
+    background: var(--bg-lighter);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-light);
+    border-color: var(--text-muted);
+}
+
 .btn-danger {
     background: var(--danger);
     border-color: var(--danger);

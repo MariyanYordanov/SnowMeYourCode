@@ -367,19 +367,6 @@ export function setupEditorControls() {
             });
         }
 
-        // Preview button
-        const previewBtn = document.getElementById('preview-btn');
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => {
-                const examApp = window.ExamApp;
-                if (examApp?.bottomPanel && examApp?.editor) {
-                    examApp.bottomPanel.refreshPreview(monaco);
-                    examApp.bottomPanel.switchTab('preview');
-                }
-            });
-            console.log('Preview button setup complete');
-        }
-
         // Start Server button
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
