@@ -1,8 +1,9 @@
 import { MonacoFileManager } from './monaco-file-manager.js';
-import { updateEditorIntegration, loadStarterProject } from './editor-integration.js'; 
+import { updateEditorIntegration, loadStarterProject } from './editor-integration.js';
 import { SidebarManager } from './sidebar-manager.js';
 import { previewManager } from './preview-manager.js';
 import { HelpChat } from './help-chat.js';
+import { PanelResizer } from './panel-resizer.js';
 
 import {
     setupTermsAgreement,
@@ -139,6 +140,7 @@ function initializeApp() {
         setupWindowFunctions();
 
         examApp.sidebarManager = new SidebarManager();
+        examApp.panelResizer = new PanelResizer();
 
         console.log('App initialized successfully');
 
