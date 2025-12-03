@@ -273,9 +273,6 @@ export class MonacoFileManager {
         if (!this.currentFile || !this.editor) return false;
 
         try {
-            // Show saving state
-            this.updateSaveStatus('saving', 'Записва...');
-
             const content = this.editor.getValue();
             const filename = encodeURIComponent(this.currentFile);
 
@@ -293,33 +290,17 @@ export class MonacoFileManager {
             if (result.success) {
                 this.unmarkFileAsModified(this.currentFile);
 
-                // Show saved state
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('bg-BG', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
-                this.updateSaveStatus('saved', `Записано ${timeStr}`);
-
                 // Notify preview manager of file change
                 if (window.ExamApp?.previewManager) {
                     window.ExamApp.previewManager.onFileChanged(this.currentFile);
                 }
 
-                // Reset to ready after 2 seconds
-                setTimeout(() => {
-                    this.updateSaveStatus('ready', 'Готов');
-                }, 2000);
-
                 return true;
             }
 
-            this.updateSaveStatus('error', 'Грешка при запис');
             return false;
         } catch (error) {
             console.error('Save failed:', error);
-            this.updateSaveStatus('error', 'Грешка при запис');
             this.showNotification('Грешка при запазване', 'error');
             return false;
         }
@@ -614,22 +595,6 @@ export class MonacoFileManager {
         } else {
             console.log(`[${type}] ${message}`);
         }
-    }
-
-    updateSaveStatus(state, text) {
-        const statusEl = document.getElementById('save-status');
-        const textEl = document.getElementById('save-text');
-
-        if (!statusEl || !textEl) return;
-
-        // Remove all state classes
-        statusEl.classList.remove('saving', 'saved', 'error', 'ready');
-
-        // Add current state class
-        statusEl.classList.add(state);
-
-        // Update text
-        textEl.textContent = text;
     }
 
     getAllOpenFiles() {
