@@ -160,7 +160,7 @@ export class ConsoleManager {
     const onMouseMove = (e) => {
       if (!isResizing) return;
 
-      const deltaY = e.clientY - startY;
+      const deltaY = startY - e.clientY;
       const newHeight = startHeight + deltaY;
 
       // Set minimum and maximum height constraints

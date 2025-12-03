@@ -2334,26 +2334,51 @@ body.resizing * {
 .console-message-content {
     flex: 1;
     word-break: break-word;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.console-log {
+.console-message-text {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+}
+
+.console-message-timestamp {
+    font-size: 10px;
+    opacity: 0.6;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+}
+
+.console-message-content-log .console-message-text {
     color: var(--text-primary);
 }
 
-.console-info {
+.console-message-content-info .console-message-text {
     color: #4fc3f7;
 }
 
-.console-warn {
-    color: #ffb74d;
+.console-message-content-warn {
+    padding: 4px 8px;
+    border-radius: 4px;
     background: rgba(255, 183, 77, 0.1);
 }
 
-.console-error {
-    color: #f44336;
+.console-message-content-warn .console-message-text {
+    color: #ffb74d;
+}
+
+.console-message-content-error {
+    padding: 4px 8px;
+    border-radius: 4px;
     background: rgba(244, 67, 54, 0.1);
 }
 
-.console-success {
+.console-message-content-error .console-message-text {
+    color: #f44336;
+}
+
+.console-message-content-success .console-message-text {
     color: #66bb6a;
 }
