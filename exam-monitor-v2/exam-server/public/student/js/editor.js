@@ -430,7 +430,7 @@ export async function runCode() {
         const runBtn = document.getElementById('run-btn');
         if (runBtn) {
             runBtn.disabled = true;
-            runBtn.innerHTML = '[...] Running...';
+            runBtn.innerHTML = 'Running...';
         }
 
         // Execute code using ConsoleManager terminal
@@ -451,7 +451,7 @@ export async function runCode() {
         const runBtn = document.getElementById('run-btn');
         if (runBtn) {
             runBtn.disabled = false;
-            runBtn.innerHTML = '▶ Run';
+            runBtn.innerHTML = 'Run';
         }
     }
 }

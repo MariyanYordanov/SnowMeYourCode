@@ -179,7 +179,7 @@ async function startExam(sessionData) {
 
     } catch (error) {
         console.error('Failed to start exam:', error);
-        showError('[ERROR] Грешка при стартиране на изпита');
+        showError('ERROR: Грешка при стартиране на изпита');
 
         setTimeout(() => {
             if (window.ExamApp.isLoggedIn) {
@@ -579,7 +579,7 @@ function blockMobileAccess() {
                 border-radius: 10px;
                 max-width: 500px;
             ">
-                <h1 style="font-size: 48px; margin-bottom: 20px;">[MOBILE] [X]</h1>
+                <h1 style="font-size: 48px; margin-bottom: 20px;">Mobile ×</h1>
                 <h2 style="margin-bottom: 20px;">Мобилни устройства не се поддържат</h2>
                 <p style="font-size: 18px; line-height: 1.6;">
                     Изпитът може да се провежда само на лаптоп или настолен компютър.
@@ -626,7 +626,7 @@ function blockVMAccess(vmDetection) {
                 border-radius: 10px;
                 max-width: 600px;
             ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">[!]</h1>
+                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠</h1>
                 <h2 style="margin-bottom: 20px; font-size: 32px;">Виртуална машина засечена!</h2>
                 <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
                     Изпитът <strong>НЕ МОЖЕ</strong> да се провежда във виртуална среда.

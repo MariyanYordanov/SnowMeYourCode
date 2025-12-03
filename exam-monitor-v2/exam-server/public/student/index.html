@@ -11,7 +11,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-terminal">
+    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-clean-ui">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
@@ -140,13 +140,12 @@
                             <div class="panel-header">
                                 <h3 class="text-sm font-medium m-0">Project Files</h3>
                                 <div class="file-toolbar d-flex gap-xs">
-                                    <button id="new-file-btn" class="btn btn-icon btn-sm" title="New File">[+]</button>
-                                    <button class="btn btn-icon btn-sm" title="Refresh">[R]</button>
+                                    <button id="new-file-btn" class="btn btn-icon btn-sm" title="New File">+</button>
+                                    <button class="btn btn-icon btn-sm" title="Refresh">⟳</button>
                                 </div>
                             </div>
                             <div id="file-tree" class="file-tree">
                                 <div class="file-tree-empty text-center text-muted p-xl">
-                                    <div class="empty-icon text-xxl mb-md opacity-50">[FOLDER]</div>
                                     <div class="empty-title font-medium mb-sm">No Project Files</div>
                                     <div class="empty-subtitle text-sm">Create or upload files to start</div>
                                 </div>
@@ -269,7 +268,7 @@
                         font-size: 5rem;
                         margin-bottom: 1.5rem;
                         animation: bounceIn 1s ease-out;
-                    ">[OK]</div>
+                    ">✓</div>
 
                     <h1 style="
                         color: #2d3748;
@@ -341,7 +340,7 @@
 
     <div id="violation-overlay" class="violation-overlay d-none">
         <div class="violation-content">
-            <div class="violation-icon">[!]</div>
+            <div class="violation-icon">⚠</div>
             <h2 class="violation-title">Изпитът е прекратен!</h2>
             <p class="violation-message mb-xl"></p>
             <button class="btn btn-danger" onclick="window.location.reload()">Затвори</button>

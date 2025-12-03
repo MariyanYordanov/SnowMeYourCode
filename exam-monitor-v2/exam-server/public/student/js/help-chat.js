@@ -48,7 +48,7 @@ export class HelpChat {
         chatWindow.innerHTML = `
             <div class="chat-header">
                 <div class="chat-title">
-                    <span class="chat-icon">[CHAT]</span>
+                    <span class="chat-icon">Chat</span>
                     <span>Помощ от учителя</span>
                 </div>
                 <div class="chat-controls">
@@ -567,7 +567,7 @@ export class HelpChat {
             
             const statusElement = document.createElement('span');
             statusElement.className = `teacher-status ${isOnline ? 'online' : 'offline'}`;
-            statusElement.textContent = isOnline ? '[ONLINE]' : '[OFFLINE]';
+            statusElement.textContent = isOnline ? 'Online' : 'Offline';
             statusElement.title = isOnline ? 'Учителят е онлайн' : 'Учителят е офлайн';
             chatTitle.appendChild(statusElement);
         }
@@ -596,10 +596,10 @@ export class HelpChat {
 
     getStatusIcon(status) {
         switch (status) {
-            case 'sending': return '[...]';
-            case 'sent': return '[OK]';
-            case 'delivered': return '[OK]';
-            case 'read': return '[READ]';
+            case 'sending': return '...';
+            case 'sent': return '✓';
+            case 'delivered': return '✓';
+            case 'read': return 'Read';
             default: return '';
         }
     }

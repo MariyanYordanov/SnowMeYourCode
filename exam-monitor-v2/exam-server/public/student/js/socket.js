@@ -108,7 +108,7 @@ function showSessionRestoreBlocked() {
                 max-width: 600px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">[!]</h1>
+                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠</h1>
                 <h2 style="margin-bottom: 20px; font-size: 28px; color: #dc3545;">
                     Сесията е прекъсната
                 </h2>

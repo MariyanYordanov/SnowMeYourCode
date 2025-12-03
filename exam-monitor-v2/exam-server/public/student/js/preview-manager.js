@@ -143,7 +143,7 @@ export class PreviewManager {
             </head>
             <body>
                 <div class="message">
-                    <div class="icon">[PREVIEW]</div>
+                    <div class="icon">Preview</div>
                     <p>${message}</p>
                 </div>
             </body>

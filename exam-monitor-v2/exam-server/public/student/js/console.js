@@ -7,11 +7,11 @@ export class ConsoleManager {
 
     // Icons for different message types
     this.icons = {
-      log: '📝',
-      info: 'ℹ️',
-      warn: '⚠️',
-      error: '❌',
-      success: '✅'
+      log: '>',
+      info: 'i',
+      warn: '!',
+      error: 'x',
+      success: '✓'
     };
 
     // Initialize
