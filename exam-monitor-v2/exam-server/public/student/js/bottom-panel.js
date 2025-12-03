@@ -32,7 +32,7 @@ export class BottomPanelManager {
   setupTabs() {
     this.tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        const tabName = tab.dataset.tab;
+        const tabName = tab.dataset.panel;
         this.switchTab(tabName);
       });
     });
@@ -47,7 +47,7 @@ export class BottomPanelManager {
 
     // Update tab buttons
     this.tabs.forEach(tab => {
-      if (tab.dataset.tab === tabName) {
+      if (tab.dataset.panel === tabName) {
         tab.classList.add('active');
       } else {
         tab.classList.remove('active');
