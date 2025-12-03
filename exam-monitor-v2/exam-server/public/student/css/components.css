@@ -148,6 +148,7 @@
     font-size: var(--font-xs);
     border-bottom: 2px solid transparent;
     transition: all var(--transition);
+    background: transparent;
 }
 
 .sidebar-tab:hover {
