@@ -2228,3 +2228,132 @@ body.resizing * {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* ==================== Console Panel Styles ==================== */
+.editor-split-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.editor-main-panel {
+    flex: 1;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+.console-resize-handle {
+    height: 4px;
+    background: var(--border);
+    cursor: ns-resize;
+    position: relative;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.console-resize-handle:hover,
+.console-resize-handle:active {
+    background: var(--primary);
+}
+
+.console-panel {
+    height: 200px;
+    min-height: 100px;
+    max-height: 600px;
+    background: var(--bg-darker);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+}
+
+.console-title {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.console-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.console-actions .btn-icon {
+    padding: var(--space-xs);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.console-actions .btn-icon:hover {
+    background: var(--bg-darker);
+    color: var(--text-primary);
+}
+
+.console-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm);
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.console-message {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.console-message:last-child {
+    border-bottom: none;
+}
+
+.console-message-icon {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+
+.console-message-content {
+    flex: 1;
+    word-break: break-word;
+}
+
+.console-log {
+    color: var(--text-primary);
+}
+
+.console-info {
+    color: #4fc3f7;
+}
+
+.console-warn {
+    color: #ffb74d;
+    background: rgba(255, 183, 77, 0.1);
+}
+
+.console-error {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.console-success {
+    color: #66bb6a;
+}

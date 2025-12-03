@@ -11,7 +11,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
 
-    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-0002">
+    <link rel="stylesheet" href="/student/css/styles.css?v=20251203-console">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css">
@@ -189,9 +189,23 @@
                         </div>
                         
                         <div id="file-tabs-container" class="tabs-container"></div>
-        
-                        <div id="monaco-editor" class="flex-1"></div>
-        
+
+                        <div class="editor-split-container">
+                            <div id="monaco-editor" class="editor-main-panel"></div>
+
+                            <div id="console-resize-handle" class="console-resize-handle"></div>
+
+                            <div id="console-panel" class="console-panel">
+                                <div class="console-header">
+                                    <span class="console-title">Console</span>
+                                    <div class="console-actions">
+                                        <button id="clear-console-btn" class="btn-icon" title="Clear Console">✕</button>
+                                    </div>
+                                </div>
+                                <div id="console-output" class="console-output"></div>
+                            </div>
+                        </div>
+
                         <div class="editor-footer d-flex justify-between items-center px-md py-xs bg-panel border-top">
                             <div class="editor-status d-flex gap-lg text-xs text-muted">
                                 <span id="cursor-position">Ln 1, Col 1</span>

@@ -4,6 +4,7 @@ import { SidebarManager } from './sidebar-manager.js';
 import { previewManager } from './preview-manager.js';
 import { HelpChat } from './help-chat.js';
 import { PanelResizer } from './panel-resizer.js';
+import { ConsoleManager } from './console.js';
 
 import {
     setupTermsAgreement,
@@ -141,6 +142,7 @@ function initializeApp() {
 
         examApp.sidebarManager = new SidebarManager();
         examApp.panelResizer = new PanelResizer();
+        examApp.consoleManager = new ConsoleManager();
 
         console.log('App initialized successfully');
 
