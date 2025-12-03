@@ -2236,6 +2236,89 @@ body.resizing * {
     width: 100%;
 }
 
+/* Save Status Indicator */
+.save-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--bg-darker);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+.save-indicator {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.save-status.saving .save-indicator {
+    animation: pulse 1s infinite;
+}
+
+.save-status.saved .save-indicator {
+    color: var(--success);
+}
+
+.save-status.error .save-indicator {
+    color: var(--danger);
+}
+
+.save-text {
+    font-size: var(--font-xs);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* File Tree Action Buttons */
+.tree-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.tree-actions {
+    margin-left: auto;
+    display: none;
+    gap: var(--space-xs);
+}
+
+.tree-item:hover .tree-actions {
+    display: flex;
+}
+
+.tree-action-btn {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.tree-action-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.tree-action-btn:active {
+    transform: scale(0.95);
+}
+
+.delete-btn:hover {
+    filter: brightness(1.2);
+}
+
+.rename-btn:hover {
+    filter: brightness(1.2);
+}
+
 /* ==================== Console Panel Styles ==================== */
 .editor-split-container {
     display: flex;

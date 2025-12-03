@@ -1,4 +1,4 @@
-import { prompt, showInfoDialog } from './dialogs.js';
+import { prompt, showInfoDialog, confirm } from './dialogs.js';
 
 export class MonacoFileManager {
     constructor(editorInstance) {
@@ -93,12 +93,18 @@ export class MonacoFileManager {
             const itemClass = item.type === 'file' ? 'file-item' : 'folder-item';
 
             html += `
-                <div class="tree-item ${itemClass}" 
-                     data-path="${item.path}" 
+                <div class="tree-item ${itemClass}"
+                     data-path="${item.path}"
                      data-type="${item.type}"
                      style="padding-left: ${indent * 20}px">
                     <span class="tree-icon">${icon}</span>
                     <span class="tree-name">${name}</span>
+                    ${item.type === 'file' ? `
+                        <span class="tree-actions">
+                            <button class="tree-action-btn rename-btn" data-path="${item.path}" title="Преименуване">✏️</button>
+                            <button class="tree-action-btn delete-btn" data-path="${item.path}" title="Изтриване">🗑️</button>
+                        </span>
+                    ` : ''}
                 </div>
             `;
 
@@ -115,12 +121,37 @@ export class MonacoFileManager {
 
         items.forEach(item => {
             item.addEventListener('click', async (e) => {
+                // Ignore clicks on action buttons
+                if (e.target.closest('.tree-action-btn')) {
+                    return;
+                }
+
                 const path = item.getAttribute('data-path');
                 const type = item.getAttribute('data-type');
 
                 if (type === 'file') {
                     await this.openFile(path);
                 }
+            });
+        });
+
+        // Attach delete button listeners
+        const deleteButtons = this.fileTreeContainer.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const path = btn.getAttribute('data-path');
+                await this.deleteFile(path);
+            });
+        });
+
+        // Attach rename button listeners
+        const renameButtons = this.fileTreeContainer.querySelectorAll('.rename-btn');
+        renameButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const path = btn.getAttribute('data-path');
+                await this.renameFile(path);
             });
         });
     }
@@ -242,6 +273,9 @@ export class MonacoFileManager {
         if (!this.currentFile || !this.editor) return false;
 
         try {
+            // Show saving state
+            this.updateSaveStatus('saving', 'Записва...');
+
             const content = this.editor.getValue();
             const filename = encodeURIComponent(this.currentFile);
 
@@ -258,19 +292,34 @@ export class MonacoFileManager {
 
             if (result.success) {
                 this.unmarkFileAsModified(this.currentFile);
-                this.showNotification('Файлът е запазен', 'success');
-                
+
+                // Show saved state
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('bg-BG', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                this.updateSaveStatus('saved', `Записано ${timeStr}`);
+
                 // Notify preview manager of file change
                 if (window.ExamApp?.previewManager) {
                     window.ExamApp.previewManager.onFileChanged(this.currentFile);
                 }
-                
+
+                // Reset to ready after 2 seconds
+                setTimeout(() => {
+                    this.updateSaveStatus('ready', 'Готов');
+                }, 2000);
+
                 return true;
             }
 
+            this.updateSaveStatus('error', 'Грешка при запис');
             return false;
         } catch (error) {
             console.error('Save failed:', error);
+            this.updateSaveStatus('error', 'Грешка при запис');
             this.showNotification('Грешка при запазване', 'error');
             return false;
         }
@@ -323,6 +372,134 @@ export class MonacoFileManager {
         this.addTab(fileName);
 
         await this.saveCurrentFile();
+    }
+
+    async deleteFile(path) {
+        try {
+            const confirmed = await confirm(`Сигурни ли сте, че искате да изтриете "${path}"?`);
+
+            if (!confirmed) return;
+
+            // Delete from server
+            const response = await fetch(`/api/project/file/${encodeURIComponent(path)}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: window.ExamApp?.sessionId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Close file if open
+                this.closeFile(path);
+
+                // Remove from file tree
+                await this.loadProjectStructure(window.ExamApp?.sessionId);
+
+                await showInfoDialog({
+                    title: 'Успех',
+                    message: `Файлът "${path}" е изтрит.`
+                });
+            } else {
+                await showInfoDialog({
+                    title: 'Грешка',
+                    message: 'Не може да се изтрие файлът.'
+                });
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            await showInfoDialog({
+                title: 'Грешка',
+                message: 'Грешка при изтриване на файл.'
+            });
+        }
+    }
+
+    async renameFile(oldPath) {
+        try {
+            const fileName = oldPath.split('/').pop();
+            const newName = await prompt(`Ново име за "${fileName}":`, fileName);
+
+            if (!newName || newName === fileName) return;
+
+            const sanitized = this.sanitizeFileName(newName);
+            if (!sanitized) {
+                await showInfoDialog({
+                    title: 'Невалидно име',
+                    message: 'Моля използвайте само букви, цифри, точки и тирета.'
+                });
+                return;
+            }
+
+            // Build new path
+            const pathParts = oldPath.split('/');
+            pathParts[pathParts.length - 1] = sanitized;
+            const newPath = pathParts.join('/');
+
+            // Check if new name already exists
+            if (this.models.has(newPath)) {
+                await showInfoDialog({
+                    title: 'Файлът съществува',
+                    message: `Файл "${newPath}" вече съществува!`
+                });
+                return;
+            }
+
+            // Rename on server
+            const response = await fetch(`/api/project/file/rename`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: window.ExamApp?.sessionId,
+                    oldPath: oldPath,
+                    newPath: newPath
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update local state
+                const model = this.models.get(oldPath);
+                if (model) {
+                    this.models.delete(oldPath);
+                    this.models.set(newPath, model);
+                }
+
+                const tab = this.tabs.get(oldPath);
+                if (tab) {
+                    this.tabs.delete(oldPath);
+                    this.tabs.set(newPath, tab);
+                    tab.setAttribute('data-path', newPath);
+                    tab.querySelector('.tab-name').textContent = sanitized;
+                }
+
+                if (this.currentFile === oldPath) {
+                    this.currentFile = newPath;
+                }
+
+                // Reload file tree
+                await this.loadProjectStructure(window.ExamApp?.sessionId);
+
+                await showInfoDialog({
+                    title: 'Успех',
+                    message: `Файлът е преименуван на "${sanitized}".`
+                });
+            } else {
+                await showInfoDialog({
+                    title: 'Грешка',
+                    message: 'Не може да се преименува файлът.'
+                });
+            }
+        } catch (error) {
+            console.error('Rename failed:', error);
+            await showInfoDialog({
+                title: 'Грешка',
+                message: 'Грешка при преименуване на файл.'
+            });
+        }
     }
 
     /**
@@ -437,6 +614,22 @@ export class MonacoFileManager {
         } else {
             console.log(`[${type}] ${message}`);
         }
+    }
+
+    updateSaveStatus(state, text) {
+        const statusEl = document.getElementById('save-status');
+        const textEl = document.getElementById('save-text');
+
+        if (!statusEl || !textEl) return;
+
+        // Remove all state classes
+        statusEl.classList.remove('saving', 'saved', 'error', 'ready');
+
+        // Add current state class
+        statusEl.classList.add(state);
+
+        // Update text
+        textEl.textContent = text;
     }
 
     getAllOpenFiles() {
