@@ -426,20 +426,6 @@ export async function runCode() {
             return;
         }
 
-        // Clear console before execution
-        clearOutput();
-        
-        // Switch to DevTools console tab if available
-        if (examApp?.sidebarManager) {
-            examApp.sidebarManager.switchPanel('devtools');
-            // Wait a bit for panel to switch, then switch to console tab
-            setTimeout(() => {
-                if (window.devToolsUI) {
-                    window.devToolsUI.switchTab('console');
-                }
-            }, 100);
-        }
-
         // Show loading state
         const runBtn = document.getElementById('run-btn');
         if (runBtn) {
@@ -447,45 +433,11 @@ export async function runCode() {
             runBtn.innerHTML = '[...] Running...';
         }
 
-        // Console output is now handled by DevTools only
-        // No need to show in bottom panel
-
-        try {
-            // Check if this is Node.js server code
-            if (isNodeJSCode(code)) {
-                // This is Node.js code - show info message
-                if (window.devToolsUI) {
-                    window.devToolsUI.addConsoleMessage('info', ['🚀 Това е Node.js код за сървъра. Използвайте "Start Server" бутона за да го стартирате.']);
-                }
-                return;
-            }
-            
-            // Execute code in secure sandbox
-            const result = await executeSafeCode(code);
-            
-            if (result.success) {
-                // Send output to DevTools console instead of bottom panel
-                if (window.devToolsUI && result.output && result.output.length > 0) {
-                    result.output.forEach(entry => {
-                        const args = entry.content || [];
-                        window.devToolsUI.addConsoleMessage(entry.type || 'log', args);
-                    });
-                }
-                
-                // Show execution stats
-                showExecutionStats(result);
-            } else {
-                // Send error to DevTools console
-                if (window.devToolsUI) {
-                    window.devToolsUI.addConsoleMessage('error', [result.error]);
-                }
-            }
-
-        } catch (error) {
-            // Send error to DevTools console
-            if (window.devToolsUI) {
-                window.devToolsUI.addConsoleMessage('error', ['Грешка при изпълнение: ' + error.message]);
-            }
+        // Execute code using ConsoleManager terminal
+        if (examApp?.consoleManager) {
+            examApp.consoleManager.executeCode(code);
+        } else {
+            console.error('ConsoleManager not initialized');
         }
 
         // Save code after execution

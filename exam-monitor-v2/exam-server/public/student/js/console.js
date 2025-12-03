@@ -5,12 +5,6 @@ export class ConsoleManager {
     this.resizeHandle = document.getElementById('console-resize-handle');
     this.clearButton = document.getElementById('clear-console-btn');
 
-    // Store original console methods
-    this.originalLog = console.log;
-    this.originalInfo = console.info;
-    this.originalWarn = console.warn;
-    this.originalError = console.error;
-
     // Icons for different message types
     this.icons = {
       log: '📝',
@@ -21,34 +15,45 @@ export class ConsoleManager {
     };
 
     // Initialize
-    this.interceptConsole();
     this.setupResizing();
     this.setupClearButton();
   }
 
   /**
-   * Override console methods to capture output
+   * Execute code and capture output
+   * This method should be called by the "Run" button
    */
-  interceptConsole() {
-    console.log = (...args) => {
-      this.addMessage('log', this.formatArguments(args));
-      this.originalLog.apply(console, args);
+  executeCode(code) {
+    // Clear previous output
+    this.clear();
+
+    // Create a sandboxed execution context
+    const capturedLogs = [];
+
+    // Create a mock console object
+    const mockConsole = {
+      log: (...args) => capturedLogs.push({ type: 'log', args }),
+      info: (...args) => capturedLogs.push({ type: 'info', args }),
+      warn: (...args) => capturedLogs.push({ type: 'warn', args }),
+      error: (...args) => capturedLogs.push({ type: 'error', args })
     };
 
-    console.info = (...args) => {
-      this.addMessage('info', this.formatArguments(args));
-      this.originalInfo.apply(console, args);
-    };
+    try {
+      // Execute code with sandboxed console
+      const func = new Function('console', code);
+      func(mockConsole);
 
-    console.warn = (...args) => {
-      this.addMessage('warn', this.formatArguments(args));
-      this.originalWarn.apply(console, args);
-    };
-
-    console.error = (...args) => {
-      this.addMessage('error', this.formatArguments(args));
-      this.originalError.apply(console, args);
-    };
+      // Display captured output
+      if (capturedLogs.length === 0) {
+        this.addMessage('success', 'Code executed successfully (no output)');
+      } else {
+        capturedLogs.forEach(log => {
+          this.addMessage(log.type, this.formatArguments(log.args));
+        });
+      }
+    } catch (error) {
+      this.addMessage('error', `Error: ${error.message}`);
+    }
   }
 
   /**
@@ -196,13 +201,4 @@ export class ConsoleManager {
     });
   }
 
-  /**
-   * Restore original console methods
-   */
-  restoreConsole() {
-    console.log = this.originalLog;
-    console.info = this.originalInfo;
-    console.warn = this.originalWarn;
-    console.error = this.originalError;
-  }
 }
