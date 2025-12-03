@@ -2485,25 +2485,26 @@ body.resizing * {
 
 .bottom-tab {
     padding: var(--space-xs) var(--space-md);
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
+    background: #94a3b8;
+    border: 1px solid #94a3b8;
+    color: white;
     cursor: pointer;
     font-size: 12px;
     font-weight: 500;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
+    border-radius: var(--radius);
+    transition: all var(--transition);
 }
 
 .bottom-tab:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: transparent;
+    border-color: #94a3b8;
+    color: #94a3b8;
 }
 
 .bottom-tab.active {
-    background: var(--bg-darker);
-    color: var(--primary);
-    border-bottom: 2px solid var(--primary);
+    background: #94a3b8;
+    border-color: #94a3b8;
+    color: white;
 }
 
 .bottom-tab-actions {

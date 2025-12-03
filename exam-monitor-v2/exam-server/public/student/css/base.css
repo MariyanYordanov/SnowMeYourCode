@@ -167,8 +167,9 @@ pre {
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
+    background: transparent;
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .btn-success {
@@ -178,7 +179,9 @@ pre {
 }
 
 .btn-success:hover:not(:disabled) {
-    filter: brightness(110%);
+    background: transparent;
+    border-color: var(--success);
+    color: var(--success);
 }
 
 .btn-warning {
@@ -188,18 +191,33 @@ pre {
 }
 
 .btn-warning:hover:not(:disabled) {
-    filter: brightness(110%);
+    background: transparent;
+    border-color: #f59e0b;
+    color: #f59e0b;
 }
 
 .btn-secondary {
-    background: var(--bg-lighter);
-    border-color: var(--border);
-    color: var(--text);
+    background: #94a3b8;
+    border-color: #94a3b8;
+    color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: var(--bg-light);
-    border-color: var(--text-muted);
+    background: transparent;
+    border-color: #94a3b8;
+    color: #94a3b8;
+}
+
+.btn-purple {
+    background: #a855f7;
+    border-color: #a855f7;
+    color: white;
+}
+
+.btn-purple:hover:not(:disabled) {
+    background: transparent;
+    border-color: #a855f7;
+    color: #a855f7;
 }
 
 .btn-danger {
