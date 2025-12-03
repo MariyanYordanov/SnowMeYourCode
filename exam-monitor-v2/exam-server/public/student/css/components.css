@@ -2282,6 +2282,30 @@ body.resizing * {
     gap: var(--space-xs);
 }
 
+.tree-item-wrapper {
+    width: 100%;
+}
+
+.folder-toggle {
+    cursor: pointer;
+    user-select: none;
+    font-size: 10px;
+    width: 12px;
+    display: inline-block;
+    text-align: center;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.folder-toggle:hover {
+    opacity: 1;
+}
+
+.folder-children {
+    display: block;
+    width: 100%;
+}
+
 .tree-actions {
     margin-left: auto;
     display: none;

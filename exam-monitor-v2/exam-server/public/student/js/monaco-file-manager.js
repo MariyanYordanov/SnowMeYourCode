@@ -91,25 +91,41 @@ export class MonacoFileManager {
         for (const [name, item] of level) {
             const icon = this.getIconForItem(item);
             const itemClass = item.type === 'file' ? 'file-item' : 'folder-item';
+            const hasChildren = item.type === 'folder' && item.children && item.children.size > 0;
 
-            html += `
-                <div class="tree-item ${itemClass}"
-                     data-path="${item.path}"
-                     data-type="${item.type}"
-                     style="padding-left: ${indent * 20}px">
-                    <span class="tree-icon">${icon}</span>
-                    <span class="tree-name">${name}</span>
-                    ${item.type === 'file' ? `
+            if (item.type === 'folder') {
+                // Folder with collapse/expand
+                html += `
+                    <div class="tree-item-wrapper" data-path="${item.path}">
+                        <div class="tree-item ${itemClass}"
+                             data-path="${item.path}"
+                             data-type="${item.type}"
+                             style="padding-left: ${indent * 20}px">
+                            <span class="folder-toggle">${hasChildren ? '▼' : '▶'}</span>
+                            <span class="tree-icon">${icon}</span>
+                            <span class="tree-name">${name}</span>
+                            <span class="tree-actions">
+                                <button class="tree-action-btn new-file-btn" data-path="${item.path}" title="Нов файл">+</button>
+                            </span>
+                        </div>
+                        ${hasChildren ? `<div class="folder-children">${this.renderTreeLevel(item.children, indent + 1)}</div>` : ''}
+                    </div>
+                `;
+            } else {
+                // File
+                html += `
+                    <div class="tree-item ${itemClass}"
+                         data-path="${item.path}"
+                         data-type="${item.type}"
+                         style="padding-left: ${indent * 20}px">
+                        <span class="tree-icon">${icon}</span>
+                        <span class="tree-name">${name}</span>
                         <span class="tree-actions">
                             <button class="tree-action-btn rename-btn" data-path="${item.path}" title="Преименуване">✏️</button>
                             <button class="tree-action-btn delete-btn" data-path="${item.path}" title="Изтриване">🗑️</button>
                         </span>
-                    ` : ''}
-                </div>
-            `;
-
-            if (item.type === 'folder' && item.children) {
-                html += this.renderTreeLevel(item.children, indent + 1);
+                    </div>
+                `;
             }
         }
 
@@ -121,6 +137,13 @@ export class MonacoFileManager {
 
         items.forEach(item => {
             item.addEventListener('click', async (e) => {
+                // Check if clicking on folder toggle
+                if (e.target.classList.contains('folder-toggle')) {
+                    e.stopPropagation();
+                    this.toggleFolder(item);
+                    return;
+                }
+
                 // Ignore clicks on action buttons
                 if (e.target.closest('.tree-action-btn')) {
                     return;
@@ -131,6 +154,9 @@ export class MonacoFileManager {
 
                 if (type === 'file') {
                     await this.openFile(path);
+                } else if (type === 'folder') {
+                    // Toggle folder on click
+                    this.toggleFolder(item);
                 }
             });
         });
@@ -154,6 +180,39 @@ export class MonacoFileManager {
                 await this.renameFile(path);
             });
         });
+
+        // Attach new file button listeners
+        const newFileButtons = this.fileTreeContainer.querySelectorAll('.new-file-btn');
+        newFileButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const folderPath = btn.getAttribute('data-path');
+                await this.createFileInFolder(folderPath);
+            });
+        });
+    }
+
+    /**
+     * Toggle folder collapse/expand
+     */
+    toggleFolder(folderItem) {
+        const wrapper = folderItem.closest('.tree-item-wrapper');
+        if (!wrapper) return;
+
+        const children = wrapper.querySelector('.folder-children');
+        const toggle = folderItem.querySelector('.folder-toggle');
+
+        if (!children || !toggle) return;
+
+        const isCollapsed = children.style.display === 'none';
+
+        if (isCollapsed) {
+            children.style.display = 'block';
+            toggle.textContent = '▼';
+        } else {
+            children.style.display = 'none';
+            toggle.textContent = '▶';
+        }
     }
 
     async openFile(path) {
@@ -353,6 +412,84 @@ export class MonacoFileManager {
         this.addTab(fileName);
 
         await this.saveCurrentFile();
+    }
+
+    /**
+     * Create a new file inside a specific folder
+     */
+    async createFileInFolder(folderPath) {
+        const fileName = await prompt('Име на файл (напр. app.js, style.css):');
+        if (!fileName) return;
+
+        // Sanitize filename
+        const sanitized = this.sanitizeFileName(fileName);
+        if (!sanitized) {
+            await showInfoDialog({
+                title: 'Невалидно име',
+                message: 'Моля използвайте само букви, цифри, точки и тирета.'
+            });
+            return;
+        }
+
+        // Build full path: folderPath/fileName
+        const fullPath = folderPath ? `${folderPath}/${sanitized}` : sanitized;
+
+        // Check if file already exists
+        if (this.models.has(fullPath)) {
+            await showInfoDialog({
+                title: 'Файлът съществува',
+                message: `Файл "${fullPath}" вече съществува!`
+            });
+            return;
+        }
+
+        console.log('Creating new file in folder:', fullPath);
+
+        // Create and save file
+        const content = this.getTemplateForFile(sanitized);
+        this.createFileModel(fullPath, content);
+        this.switchToFile(fullPath);
+        this.addTab(fullPath);
+        await this.saveCurrentFile();
+    }
+
+    /**
+     * Create a new folder
+     */
+    async createNewFolder() {
+        const folderName = await prompt('Име на папка (напр. src, utils, components):');
+        if (!folderName) return;
+
+        // Sanitize folder name
+        const sanitized = this.sanitizeFileName(folderName);
+        if (!sanitized) {
+            await showInfoDialog({
+                title: 'Невалидно име',
+                message: 'Моля използвайте само букви, цифри и тирета.'
+            });
+            return;
+        }
+
+        // Create a placeholder file in the folder to ensure it exists
+        // (Folders are virtual in this system, defined by file paths)
+        const placeholderPath = `${sanitized}/.gitkeep`;
+
+        if (this.models.has(placeholderPath)) {
+            await showInfoDialog({
+                title: 'Папката съществува',
+                message: `Папка "${sanitized}" вече съществува!`
+            });
+            return;
+        }
+
+        console.log('Creating new folder:', sanitized);
+
+        // Create placeholder file to establish the folder
+        this.createFileModel(placeholderPath, '');
+        await this.saveFile(placeholderPath, '');
+
+        // Refresh the file tree to show the new folder
+        await this.loadProjectFiles();
     }
 
     async deleteFile(path) {

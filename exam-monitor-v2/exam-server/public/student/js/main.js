@@ -270,10 +270,10 @@ function setupFileManagerCommands() {
             return;
         }
 
-        const newFileBtn = document.getElementById('new-file-btn');
-        if (newFileBtn) {
-            newFileBtn.addEventListener('click', () => {
-                fileManager.createNewFile();
+        const newFolderBtn = document.getElementById('new-folder-btn');
+        if (newFolderBtn) {
+            newFolderBtn.addEventListener('click', () => {
+                fileManager.createNewFolder();
             });
         }
 
