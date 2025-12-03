@@ -208,16 +208,16 @@ pre {
     color: #94a3b8;
 }
 
-.btn-purple {
-    background: #a855f7;
-    border-color: #a855f7;
+.btn-cyan {
+    background: #06b6d4;
+    border-color: #06b6d4;
     color: white;
 }
 
-.btn-purple:hover:not(:disabled) {
+.btn-cyan:hover:not(:disabled) {
     background: transparent;
-    border-color: #a855f7;
-    color: #a855f7;
+    border-color: #06b6d4;
+    color: #06b6d4;
 }
 
 .btn-danger {
