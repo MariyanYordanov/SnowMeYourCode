@@ -219,6 +219,16 @@ export function handleLoginSuccess(examApp, data) {
         examApp.isLoggedIn = true;
         console.log(`handleLoginSuccess: examApp.isLoggedIn set to true. Session ID: ${examApp.sessionId}`);
 
+        // CRITICAL: Send student-join event to establish socket.studentInfo on server
+        // This is required for chat system and other socket-based features
+        if (examApp.socket && examApp.socket.connected) {
+            console.log('[LOGIN] Sending student-join event to server');
+            examApp.socket.emit('student-join', {
+                studentName: examApp.studentName,
+                studentClass: examApp.studentClass
+            });
+        }
+
         showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
 
 

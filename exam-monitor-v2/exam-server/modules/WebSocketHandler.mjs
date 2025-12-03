@@ -822,12 +822,15 @@ export class WebSocketHandler {
      * Handle help request from student
      */
     async handleHelpRequest(socket, data) {
-        if (!socket.studentInfo) return;
+        if (!socket.studentInfo) {
+            console.log('[CHAT ERROR] Help request received but no student info on socket');
+            return;
+        }
 
         try {
             const { sessionId, name, class: studentClass } = socket.studentInfo;
-            
-            console.log(`Help request from ${name}: ${data.message}`);
+
+            console.log(`[CHAT] Help request from ${name} (${sessionId}): ${data.message}`);
 
             // Store help request in session (optional)
             await this.sessionManager.updateSessionActivity(sessionId, {
@@ -844,8 +847,7 @@ export class WebSocketHandler {
                 timestamp: Date.now()
             });
 
-            // Notify all teachers
-            this.notifyTeachers('student-help-request', {
+            const notificationData = {
                 sessionId: sessionId,
                 studentName: name,
                 studentClass: studentClass,
@@ -853,10 +855,17 @@ export class WebSocketHandler {
                 timestamp: data.timestamp,
                 messageId: data.id,
                 socketId: socket.id
-            });
+            };
+
+            console.log('[CHAT] Notifying teachers of help request:', notificationData);
+
+            // Notify all teachers
+            this.notifyTeachers('student-help-request', notificationData);
+
+            console.log('[CHAT] Teachers notified - count:', this.teacherSockets.size);
 
         } catch (error) {
-            console.error('Error handling help request:', error);
+            console.error('[CHAT ERROR] Error handling help request:', error);
         }
     }
 
@@ -866,10 +875,18 @@ export class WebSocketHandler {
     async handleHelpResponse(socket, data) {
         try {
             const { studentId, message, messageId } = data;
-            
+
+            console.log('[CHAT] Teacher sending help response:', {
+                studentId,
+                messageLength: message?.length,
+                messageId
+            });
+
             // Find student socket
             const studentSocket = this.studentSockets.get(studentId);
             if (!studentSocket) {
+                console.log('[CHAT ERROR] Student not found:', studentId);
+                console.log('[CHAT] Available students:', Array.from(this.studentSockets.keys()));
                 socket.emit('help-response-error', {
                     messageId: messageId,
                     error: 'Student not connected'
@@ -877,14 +894,18 @@ export class WebSocketHandler {
                 return;
             }
 
-            // Send response to student
-            studentSocket.emit('help-response', {
+            const responseData = {
                 id: messageId || Date.now(),
                 message: message,
                 timestamp: Date.now(),
                 teacherName: data.teacherName || 'Учител',
                 type: 'response'
-            });
+            };
+
+            console.log('[CHAT] Sending response to student:', studentSocket.studentInfo?.name);
+
+            // Send response to student
+            studentSocket.emit('help-response', responseData);
 
             // Confirm to teacher
             socket.emit('help-response-sent', {
@@ -893,10 +914,10 @@ export class WebSocketHandler {
                 timestamp: Date.now()
             });
 
-            console.log(`Help response sent to ${studentSocket.studentInfo?.name}: ${message}`);
+            console.log(`[CHAT] Help response sent to ${studentSocket.studentInfo?.name}: ${message.substring(0, 50)}...`);
 
         } catch (error) {
-            console.error('Error handling help response:', error);
+            console.error('[CHAT ERROR] Error handling help response:', error);
             socket.emit('help-response-error', {
                 messageId: data.messageId,
                 error: 'Failed to send response'

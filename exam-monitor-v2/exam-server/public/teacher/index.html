@@ -1557,20 +1557,24 @@
                     this.handleStudentTermination(data);
                 });
 
-                // Help chat events
+                // Help chat events - WITH DEBUG LOGGING
                 this.socket.on('student-help-request', (data) => {
+                    console.log('[CHAT] Received help request:', data);
                     this.handleHelpRequest(data);
                 });
 
                 this.socket.on('student-typing', (data) => {
+                    console.log('[CHAT] Student typing:', data);
                     this.handleStudentTyping(data);
                 });
 
                 this.socket.on('help-response-sent', (data) => {
+                    console.log('[CHAT] Help response sent confirmation:', data);
                     this.handleResponseSent(data);
                 });
 
                 this.socket.on('help-response-error', (data) => {
+                    console.log('[CHAT ERROR] Help response failed:', data);
                     this.handleResponseError(data);
                 });
 
@@ -1589,7 +1593,7 @@
                     this.manualRefresh();
                 });
 
-                console.log('🔗 Socket handlers configured');
+                console.log('OK: Socket handlers configured (including chat with debug logging)');
             }
 
             /**
@@ -2308,13 +2312,18 @@
              * Handle help request from student
              */
             handleHelpRequest(data) {
+                console.log('[CHAT] Processing help request from student:', data);
+
                 // Mark student as having help request
                 const student = this.students.get(data.sessionId);
                 if (student) {
                     student.hasHelpRequest = true;
                     this.renderStudent(student);
+                    console.log('[CHAT] Student marked with help request:', data.studentName);
+                } else {
+                    console.log('[CHAT WARNING] Student not found in students map:', data.sessionId);
                 }
-                
+
                 this.showHelpNotification(data);
                 this.openHelpChat(data);
                 this.addChatMessage(data, 'student');
@@ -2471,17 +2480,27 @@
             sendHelpResponse() {
                 const input = document.getElementById('chat-input');
                 const message = input.value.trim();
-                
-                if (!message || !this.currentChatStudentId) return;
+
+                if (!message || !this.currentChatStudentId) {
+                    console.log('[CHAT ERROR] Cannot send - missing message or studentId:', {
+                        hasMessage: !!message,
+                        studentId: this.currentChatStudentId
+                    });
+                    return;
+                }
 
                 this.lastSentMessage = message;
-                
-                this.socket.emit('help-response', {
+
+                const responseData = {
                     studentId: this.currentChatStudentId,
                     message: message,
                     messageId: Date.now(),
-                    teacherName: this.teacherInfo?.name || 'Teacher'
-                });
+                    teacherName: this.teacherInfo?.displayName || this.teacherInfo?.username || 'Teacher'
+                };
+
+                console.log('[CHAT] Sending help response:', responseData);
+
+                this.socket.emit('help-response', responseData);
 
                 input.value = '';
                 this.updateCharCounter();

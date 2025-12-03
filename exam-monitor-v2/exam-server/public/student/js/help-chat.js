@@ -259,8 +259,15 @@ export class HelpChat {
     sendMessage() {
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
-        
-        if (!message || !this.socket) return;
+
+        if (!message || !this.socket) {
+            console.log('[CHAT ERROR] Cannot send message:', {
+                hasMessage: !!message,
+                hasSocket: !!this.socket,
+                socketConnected: this.socket?.connected
+            });
+            return;
+        }
 
         const messageData = {
             id: this.generateMessageId(),
@@ -271,6 +278,8 @@ export class HelpChat {
             type: 'question'
         };
 
+        console.log('[CHAT] Student sending help request:', messageData);
+
         // Add to local messages
         this.addMessage({
             ...messageData,
@@ -280,6 +289,7 @@ export class HelpChat {
 
         // Send to server
         this.socket.emit('help-request', messageData);
+        console.log('[CHAT] Help request emitted to server');
 
         // Clear input
         input.value = '';
