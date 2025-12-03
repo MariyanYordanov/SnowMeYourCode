@@ -380,22 +380,13 @@ export function setupEditorControls() {
             console.log('Preview button setup complete');
         }
 
-        // Start Server button  
+        // Start Server button
         const startServerBtn = document.getElementById('start-server-btn');
         if (startServerBtn) {
             startServerBtn.addEventListener('click', () => {
                 startExpressServer();
             });
             console.log('Start Server button setup complete');
-        }
-
-
-        // Theme selector
-        const themeSelector = document.getElementById('theme-selector');
-        if (themeSelector) {
-            themeSelector.addEventListener('change', (e) => {
-                changeTheme(e);
-            });
         }
 
         console.log('Editor controls setup completed');
@@ -583,32 +574,6 @@ export function clearOutput() {
     }
 }
 
-/**
- * Change editor theme
- */
-export function changeTheme(event) {
-    try {
-        const examApp = window.ExamApp;
-        if (!examApp.editor) {
-            console.warn('Editor not available');
-            return;
-        }
-
-        const theme = event.target ? event.target.value : event;
-        // Only allow dark themes for exam security
-        const allowedThemes = ['vs-dark', 'hc-black'];
-        if (allowedThemes.includes(theme)) {
-            monaco.editor.setTheme(theme);
-            console.log(`Editor theme changed to: ${theme}`);
-        } else {
-            console.warn(`Theme ${theme} not allowed, using vs-dark`);
-            monaco.editor.setTheme('vs-dark');
-        }
-
-    } catch (error) {
-        console.error('Failed to change theme:', error);
-    }
-}
 
 /**
  * Update last saved timestamp

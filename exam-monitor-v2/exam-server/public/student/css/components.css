@@ -26,7 +26,7 @@
     justify-content: center;
     padding: 2rem 1rem;
     overflow-y: auto;
-    background: #1e293b;
+    background: var(--bg-dark);
     position: relative;
 }
 
@@ -2227,6 +2227,11 @@ body.resizing * {
 #terms-component button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Login button full width */
+#login-btn {
+    width: 100%;
 }
 
 /* ==================== Console Panel Styles ==================== */
