@@ -205,7 +205,7 @@ router.put('/file/:filename', async (req, res) => {
  */
 router.delete('/file/:filename', async (req, res) => {
     try {
-        const { sessionId } = req.query;
+        const { sessionId } = req.body;
         const { filename } = req.params;
 
         if (!sessionId) {
@@ -231,6 +231,61 @@ router.delete('/file/:filename', async (req, res) => {
     } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ success: false, error: 'Failed to delete file' });
+    }
+});
+
+/**
+ * POST /api/project/file/rename - Rename file
+ */
+router.post('/file/rename', async (req, res) => {
+    try {
+        const { sessionId, oldPath, newPath } = req.body;
+
+        if (!sessionId || !oldPath || !newPath) {
+            return res.status(400).json({ success: false, error: 'Session ID, oldPath, and newPath required' });
+        }
+
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const oldFilePath = path.join(projectDir, oldPath);
+        const newFilePath = path.join(projectDir, newPath);
+
+        // Security checks
+        if (!oldFilePath.startsWith(projectDir) || !newFilePath.startsWith(projectDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        // Check if old file exists
+        try {
+            await fs.access(oldFilePath);
+        } catch {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
+
+        // Check if new file already exists
+        try {
+            await fs.access(newFilePath);
+            return res.status(409).json({ success: false, error: 'File already exists' });
+        } catch {
+            // File doesn't exist - good to proceed
+        }
+
+        // Ensure target directory exists
+        await fs.mkdir(path.dirname(newFilePath), { recursive: true });
+
+        // Rename the file
+        await fs.rename(oldFilePath, newFilePath);
+
+        res.json({
+            success: true,
+            message: 'File renamed successfully',
+            oldPath,
+            newPath
+        });
+
+    } catch (error) {
+        console.error('Error renaming file:', error);
+        res.status(500).json({ success: false, error: 'Failed to rename file' });
     }
 });
 
