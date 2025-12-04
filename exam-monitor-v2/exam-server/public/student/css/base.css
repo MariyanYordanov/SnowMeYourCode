@@ -252,10 +252,10 @@ pre {
 .input {
     width: 100%;
     padding: var(--space-sm) var(--space-md);
-    background: var(--bg-darker);
-    border: 1px solid var(--border);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: var(--radius-sm);
-    color: var(--text-primary);
+    color: #2d3748;
     font-size: var(--font-base);
     transition: all var(--transition);
     height: 40px;
@@ -264,7 +264,7 @@ pre {
 .input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
 }
 
 .input:disabled {

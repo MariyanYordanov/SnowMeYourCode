@@ -1,6 +1,6 @@
 export class BottomPanelManager {
   constructor() {
-    this.bottomPanel = document.getElementById('bottom-panel');
+    this.bottomPanel = document.getElementById('console-panel');
     this.consoleOutput = document.getElementById('console-output');
     this.resizeHandle = document.getElementById('bottom-panel-resize-handle');
     this.clearButton = document.getElementById('clear-bottom-btn');
@@ -289,7 +289,13 @@ export class BottomPanelManager {
    * Setup resizing functionality for bottom panel
    */
   setupResizing() {
-    if (!this.resizeHandle || !this.bottomPanel) return;
+    if (!this.resizeHandle || !this.bottomPanel) {
+      console.warn('Resize handle or bottom panel not found:', {
+        resizeHandle: this.resizeHandle,
+        bottomPanel: this.bottomPanel
+      });
+      return;
+    }
 
     let isResizing = false;
     let startY = 0;
@@ -333,6 +339,7 @@ export class BottomPanelManager {
     };
 
     this.resizeHandle.addEventListener('mousedown', onMouseDown);
+    console.log('✅ Bottom panel resizing initialized');
   }
 
   /**

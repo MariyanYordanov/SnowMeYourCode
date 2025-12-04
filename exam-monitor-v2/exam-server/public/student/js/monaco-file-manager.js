@@ -8,6 +8,7 @@ export class MonacoFileManager {
         this.tabs = new Map();
         this.fileTree = new Map();
         this.projectRoot = '';
+        this.collapsedFolders = new Set();  // Track collapsed folders
 
         this.initializeElements();
         this.setupEventListeners();
@@ -94,6 +95,11 @@ export class MonacoFileManager {
             const hasChildren = item.type === 'folder' && item.children && item.children.size > 0;
 
             if (item.type === 'folder') {
+                // Check if folder should be collapsed
+                const isCollapsed = this.collapsedFolders.has(item.path);
+                const toggleIcon = hasChildren ? (isCollapsed ? '▶' : '▼') : '▶';
+                const childrenStyle = isCollapsed ? ' style="display: none;"' : '';
+
                 // Folder with collapse/expand
                 html += `
                     <div class="tree-item-wrapper" data-path="${item.path}">
@@ -101,14 +107,16 @@ export class MonacoFileManager {
                              data-path="${item.path}"
                              data-type="${item.type}"
                              style="padding-left: ${indent * 20}px">
-                            <span class="folder-toggle">${hasChildren ? '▼' : '▶'}</span>
+                            <span class="folder-toggle">${toggleIcon}</span>
                             <span class="tree-icon">${icon}</span>
                             <span class="tree-name">${name}</span>
                             <span class="tree-actions">
-                                <button class="tree-action-btn new-file-btn" data-path="${item.path}" title="Нов файл">+</button>
+                                <button class="tree-action-btn new-folder-btn" data-path="${item.path}" title="Нова папка">📁</button>
+                                <button class="tree-action-btn new-file-btn" data-path="${item.path}" title="Нов файл">📄</button>
+                                <button class="tree-action-btn delete-folder-btn" data-path="${item.path}" title="Изтриване на папка">🗑️</button>
                             </span>
                         </div>
-                        ${hasChildren ? `<div class="folder-children">${this.renderTreeLevel(item.children, indent + 1)}</div>` : ''}
+                        ${hasChildren ? `<div class="folder-children"${childrenStyle}>${this.renderTreeLevel(item.children, indent + 1)}</div>` : ''}
                     </div>
                 `;
             } else {
@@ -190,6 +198,26 @@ export class MonacoFileManager {
                 await this.createFileInFolder(folderPath);
             });
         });
+
+        // Attach new folder button listeners
+        const newFolderButtons = this.fileTreeContainer.querySelectorAll('.new-folder-btn');
+        newFolderButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const parentFolderPath = btn.getAttribute('data-path');
+                await this.createSubFolder(parentFolderPath);
+            });
+        });
+
+        // Attach delete folder button listeners
+        const deleteFolderButtons = this.fileTreeContainer.querySelectorAll('.delete-folder-btn');
+        deleteFolderButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const folderPath = btn.getAttribute('data-path');
+                await this.deleteFolder(folderPath);
+            });
+        });
     }
 
     /**
@@ -201,17 +229,22 @@ export class MonacoFileManager {
 
         const children = wrapper.querySelector('.folder-children');
         const toggle = folderItem.querySelector('.folder-toggle');
+        const folderPath = folderItem.getAttribute('data-path');
 
         if (!children || !toggle) return;
 
         const isCollapsed = children.style.display === 'none';
 
         if (isCollapsed) {
+            // Expand folder
             children.style.display = 'block';
             toggle.textContent = '▼';
+            this.collapsedFolders.delete(folderPath);
         } else {
+            // Collapse folder
             children.style.display = 'none';
             toggle.textContent = '▶';
+            this.collapsedFolders.add(folderPath);
         }
     }
 
@@ -451,6 +484,9 @@ export class MonacoFileManager {
         this.switchToFile(fullPath);
         this.addTab(fullPath);
         await this.saveCurrentFile();
+
+        // Refresh file tree to show the new file
+        await this.loadProjectStructure(window.ExamApp?.sessionId);
     }
 
     /**
@@ -461,7 +497,7 @@ export class MonacoFileManager {
         if (!folderName) return;
 
         // Sanitize folder name
-        const sanitized = this.sanitizeFileName(folderName);
+        const sanitized = this.sanitizeFolderName(folderName);
         if (!sanitized) {
             await showInfoDialog({
                 title: 'Невалидно име',
@@ -470,26 +506,123 @@ export class MonacoFileManager {
             return;
         }
 
-        // Create a placeholder file in the folder to ensure it exists
-        // (Folders are virtual in this system, defined by file paths)
-        const placeholderPath = `${sanitized}/.gitkeep`;
+        console.log('Creating new folder:', sanitized);
 
-        if (this.models.has(placeholderPath)) {
+        // Call API to create folder directly
+        const response = await fetch('/api/project/folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: window.ExamApp?.sessionId,
+                folderPath: sanitized
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
             await showInfoDialog({
-                title: 'Папката съществува',
-                message: `Папка "${sanitized}" вече съществува!`
+                title: 'Грешка',
+                message: `Грешка при създаване на папка: ${result.error}`
             });
             return;
         }
 
-        console.log('Creating new folder:', sanitized);
-
-        // Create placeholder file to establish the folder
-        this.createFileModel(placeholderPath, '');
-        await this.saveFile(placeholderPath, '');
+        console.log('✅ Folder created on server:', sanitized);
 
         // Refresh the file tree to show the new folder
-        await this.loadProjectFiles();
+        await this.loadProjectStructure(window.ExamApp?.sessionId);
+    }
+
+    /**
+     * Create a subfolder inside an existing folder
+     */
+    async createSubFolder(parentFolderPath) {
+        console.log('🔍 createSubFolder called with path:', parentFolderPath);
+
+        const folderName = await prompt('Име на папка (напр. utils, helpers):');
+        if (!folderName) return;
+
+        console.log('📝 User entered folder name:', folderName);
+
+        // Remove file extension if user accidentally added one
+        let cleanFolderName = folderName;
+        if (cleanFolderName.includes('.')) {
+            const lastDot = cleanFolderName.lastIndexOf('.');
+            const extension = cleanFolderName.substring(lastDot);
+            // Common file extensions to remove
+            const fileExtensions = ['.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.json', '.txt', '.md'];
+            if (fileExtensions.includes(extension.toLowerCase())) {
+                cleanFolderName = cleanFolderName.substring(0, lastDot);
+                console.warn('⚠️ Removed file extension from folder name:', {
+                    original: folderName,
+                    cleaned: cleanFolderName
+                });
+            }
+        }
+
+        // Sanitize folder name
+        const sanitized = this.sanitizeFolderName(cleanFolderName);
+        if (!sanitized) {
+            await showInfoDialog({
+                title: 'Невалидно име',
+                message: 'Моля използвайте само букви, цифри и тирета.'
+            });
+            return;
+        }
+
+        console.log('✅ Sanitized folder name:', sanitized);
+
+        // If parentFolderPath is a file path, extract the directory
+        let actualParentPath = parentFolderPath;
+
+        // Check if this looks like a file (has extension after last /)
+        const lastSlash = parentFolderPath?.lastIndexOf('/') || -1;
+        const afterLastSlash = lastSlash >= 0 ? parentFolderPath.substring(lastSlash + 1) : parentFolderPath;
+        const hasExtension = afterLastSlash && afterLastSlash.includes('.');
+
+        if (hasExtension) {
+            // It's a file path, get the parent directory
+            if (lastSlash > 0) {
+                actualParentPath = parentFolderPath.substring(0, lastSlash);
+            } else {
+                actualParentPath = ''; // Root level
+            }
+            console.warn('⚠️ File path detected, extracting parent folder:', {
+                original: parentFolderPath,
+                extracted: actualParentPath
+            });
+        }
+
+        // Build full path: parentFolder/newFolder
+        const fullFolderPath = actualParentPath ? `${actualParentPath}/${sanitized}` : sanitized;
+
+        console.log('Creating subfolder:', fullFolderPath);
+
+        // Call API to create folder directly
+        const response = await fetch('/api/project/folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: window.ExamApp?.sessionId,
+                folderPath: fullFolderPath
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            await showInfoDialog({
+                title: 'Грешка',
+                message: `Грешка при създаване на папка: ${result.error}`
+            });
+            return;
+        }
+
+        console.log('✅ Folder created on server:', fullFolderPath);
+
+        // Refresh the file tree to show the new folder
+        await this.loadProjectStructure(window.ExamApp?.sessionId);
     }
 
     async deleteFile(path) {
@@ -531,6 +664,55 @@ export class MonacoFileManager {
             await showInfoDialog({
                 title: 'Грешка',
                 message: 'Грешка при изтриване на файл.'
+            });
+        }
+    }
+
+    async deleteFolder(folderPath) {
+        try {
+            const confirmed = await confirm(`Сигурни ли сте, че искате да изтриете папката "${folderPath}" и цялото ѝ съдържание?`);
+
+            if (!confirmed) return;
+
+            // Delete from server
+            const response = await fetch(`/api/project/folder/${encodeURIComponent(folderPath)}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: window.ExamApp?.sessionId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Close all files in this folder
+                const modelsToClose = [];
+                for (const [modelPath] of this.models) {
+                    if (modelPath.startsWith(folderPath + '/') || modelPath === folderPath) {
+                        modelsToClose.push(modelPath);
+                    }
+                }
+                modelsToClose.forEach(p => this.closeFile(p));
+
+                // Refresh file tree
+                await this.loadProjectStructure(window.ExamApp?.sessionId);
+
+                await showInfoDialog({
+                    title: 'Успех',
+                    message: `Папката "${folderPath}" е изтрита.`
+                });
+            } else {
+                await showInfoDialog({
+                    title: 'Грешка',
+                    message: 'Не може да се изтрие папката.'
+                });
+            }
+        } catch (error) {
+            console.error('Delete folder failed:', error);
+            await showInfoDialog({
+                title: 'Грешка',
+                message: 'Грешка при изтриване на папка.'
             });
         }
     }
@@ -621,27 +803,47 @@ export class MonacoFileManager {
     }
 
     /**
+     * Sanitize folder name
+     */
+    sanitizeFolderName(folderName) {
+        if (!folderName || typeof folderName !== 'string') return null;
+
+        // Remove non-ASCII characters and invalid chars
+        folderName = folderName
+            .trim()
+            .replace(/[^\w-]/g, '') // Only allow word chars and hyphens (no dots for folders)
+            .toLowerCase();
+
+        // Limit length
+        if (folderName.length > 50) {
+            folderName = folderName.substring(0, 50);
+        }
+
+        return folderName || null;
+    }
+
+    /**
      * Sanitize filename
      */
     sanitizeFileName(fileName) {
         if (!fileName || typeof fileName !== 'string') return null;
-        
+
         // Remove non-ASCII characters and invalid chars
         fileName = fileName
             .trim()
             .replace(/[^\w\.-]/g, '') // Only allow word chars, dots, hyphens
             .toLowerCase();
-        
+
         // Ensure it has an extension
         if (!fileName.includes('.')) {
             fileName += '.js'; // Default to .js
         }
-        
+
         // Limit length
         if (fileName.length > 50) {
             fileName = fileName.substring(0, 47) + fileName.substring(fileName.lastIndexOf('.'));
         }
-        
+
         return fileName;
     }
 
@@ -684,60 +886,64 @@ export class MonacoFileManager {
 
     getIconForItem(item) {
         if (item.type === 'folder') {
-            return '<span style="color: #f59e0b;">📁</span>';
+            return '🟧';  // Orange folder icon
         }
 
-        // VS Code-style file icons based on extension
+        // VS Code-style file type indicators
         const iconMap = {
             // JavaScript / TypeScript
-            'js': '<span style="color: #f7df1e;">JS</span>',
-            'mjs': '<span style="color: #f7df1e;">JS</span>',
-            'jsx': '<span style="color: #61dafb;">JSX</span>',
-            'ts': '<span style="color: #3178c6;">TS</span>',
-            'tsx': '<span style="color: #3178c6;">TSX</span>',
+            'js': 'JS',      // Text indicator for JS
+            'mjs': 'MJS',
+            'jsx': '⚛️',     // React
+            'ts': 'TS',      // Text indicator for TS
+            'tsx': '⚛️',
 
             // Web
-            'html': '<span style="color: #e34c26;">HTML</span>',
-            'htm': '<span style="color: #e34c26;">HTML</span>',
-            'css': '<span style="color: #563d7c;">CSS</span>',
-            'scss': '<span style="color: #cc6699;">SCSS</span>',
-            'sass': '<span style="color: #cc6699;">SASS</span>',
-            'less': '<span style="color: #1d365d;">LESS</span>',
+            'html': '🌐',
+            'htm': '🌐',
+            'css': '🎨',
+            'scss': '💅',
+            'sass': '💅',
+            'less': '💄',
 
             // Data formats
-            'json': '<span style="color: #f7df1e;">{ }</span>',
-            'xml': '<span style="color: #f57842;">XML</span>',
-            'yml': '<span style="color: #cb171e;">YML</span>',
-            'yaml': '<span style="color: #cb171e;">YAML</span>',
+            'json': '{ }',
+            'xml': '📋',
+            'yml': '⚙️',
+            'yaml': '⚙️',
 
             // Python
-            'py': '<span style="color: #3776ab;">PY</span>',
+            'py': '🐍',
 
             // Markdown & Docs
-            'md': '<span style="color: #083fa1;">MD</span>',
-            'txt': '<span style="color: #6c757d;">TXT</span>',
-            'pdf': '<span style="color: #dc3545;">PDF</span>',
+            'md': '📝',
+            'txt': '📄',
+            'pdf': '📕',
 
             // Images
-            'png': '<span style="color: #8b4513;">PNG</span>',
-            'jpg': '<span style="color: #8b4513;">JPG</span>',
-            'jpeg': '<span style="color: #8b4513;">JPEG</span>',
-            'gif': '<span style="color: #8b4513;">GIF</span>',
-            'svg': '<span style="color: #ffb13b;">SVG</span>',
-            'ico': '<span style="color: #8b4513;">ICO</span>',
+            'png': '🖼️',
+            'jpg': '🖼️',
+            'jpeg': '🖼️',
+            'gif': '🖼️',
+            'svg': '🔶',
+            'ico': '🖼️',
 
             // Config files
-            'gitignore': '<span style="color: #f05032;">GIT</span>',
-            'gitkeep': '<span style="color: #6c757d;">·</span>',
-            'env': '<span style="color: #ecd53f;">ENV</span>',
-            'lock': '<span style="color: #6c757d;">🔒</span>',
+            'gitignore': '📌',
+            'gitkeep': '·',
+            'env': '🔐',
+            'lock': '🔒',
+
+            // Handlebars
+            'hbs': '{{ }}',
+            'handlebars': '{{ }}',
 
             // Other
-            'zip': '<span style="color: #6c757d;">ZIP</span>',
-            'rar': '<span style="color: #6c757d;">RAR</span>'
+            'zip': '📦',
+            'rar': '📦'
         };
 
-        return iconMap[item.extension] || '<span style="color: #6c757d;">📄</span>';
+        return iconMap[item.extension] || '📄';
     }
 
     getFileIcon(path) {

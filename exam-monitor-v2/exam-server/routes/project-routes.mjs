@@ -186,17 +186,108 @@ router.put('/file/:filename', async (req, res) => {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
+        // Ensure parent directory exists
+        const parentDir = path.dirname(filePath);
+        console.log('📁 Creating parent directory:', parentDir);
+        await fs.mkdir(parentDir, { recursive: true });
+
         // Update file
+        console.log('💾 Writing file:', filePath);
         await fs.writeFile(filePath, content, 'utf8');
 
+        console.log('✅ File saved successfully:', filename);
         res.json({
             success: true,
             message: 'File updated successfully'
         });
 
     } catch (error) {
-        console.error('Error updating file:', error);
-        res.status(500).json({ success: false, error: 'Failed to update file' });
+        console.error('❌ Error updating file:', error);
+        console.error('   File path:', filePath);
+        console.error('   Error details:', error.message, error.code);
+        res.status(500).json({ success: false, error: 'Failed to update file', details: error.message });
+    }
+});
+
+/**
+ * POST /api/project/folder - Create a new folder
+ */
+router.post('/folder', async (req, res) => {
+    try {
+        const { sessionId, folderPath } = req.body;
+
+        if (!sessionId || !folderPath) {
+            return res.status(400).json({ success: false, error: 'Session ID and folder path required' });
+        }
+
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const fullFolderPath = path.join(projectDir, folderPath);
+
+        // Security check
+        if (!fullFolderPath.startsWith(projectDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        console.log('📁 Creating folder:', fullFolderPath);
+
+        // Create the directory
+        await fs.mkdir(fullFolderPath, { recursive: true });
+
+        console.log('✅ Folder created successfully:', folderPath);
+
+        res.json({
+            success: true,
+            message: 'Folder created successfully',
+            folderPath: folderPath
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating folder:', error);
+        console.error('   Folder path:', folderPath);
+        console.error('   Error details:', error.message, error.code);
+        res.status(500).json({ success: false, error: 'Failed to create folder', details: error.message });
+    }
+});
+
+/**
+ * DELETE /api/project/folder/:folderPath - Delete folder
+ */
+router.delete('/folder/:folderPath(*)', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        const folderPath = decodeURIComponent(req.params.folderPath);
+
+        if (!sessionId || !folderPath) {
+            return res.status(400).json({ success: false, error: 'Session ID and folder path required' });
+        }
+
+        const classFromSession = sessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const fullFolderPath = path.join(projectDir, folderPath);
+
+        // Security check
+        if (!fullFolderPath.startsWith(projectDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        console.log('🗑️  Deleting folder:', fullFolderPath);
+
+        // Delete the directory and all its contents
+        await fs.rm(fullFolderPath, { recursive: true, force: true });
+
+        console.log('✅ Folder deleted successfully:', folderPath);
+
+        res.json({
+            success: true,
+            message: 'Folder deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('❌ Error deleting folder:', error);
+        console.error('   Folder path:', folderPath);
+        console.error('   Error details:', error.message, error.code);
+        res.status(500).json({ success: false, error: 'Failed to delete folder', details: error.message });
     }
 });
 
@@ -296,23 +387,31 @@ router.post('/file/rename', async (req, res) => {
  */
 
 async function getFileStructure(dirPath, relativePath = '') {
-    const files = [];
+    const items = [];
 
     try {
-        const items = await fs.readdir(dirPath);
+        const dirItems = await fs.readdir(dirPath);
 
-        for (const item of items) {
+        for (const item of dirItems) {
             const fullPath = path.join(dirPath, item);
             const stats = await fs.stat(fullPath);
             const relativeItemPath = path.posix.join(relativePath, item);
 
             if (stats.isDirectory()) {
+                // Add folder to the list
+                items.push({
+                    path: relativeItemPath,
+                    name: item,
+                    modified: stats.mtime.getTime(),
+                    type: 'folder'
+                });
+
                 // Recursively get subdirectory contents
-                const subFiles = await getFileStructure(fullPath, relativeItemPath);
-                files.push(...subFiles);
+                const subItems = await getFileStructure(fullPath, relativeItemPath);
+                items.push(...subItems);
             } else {
                 // Add file info
-                files.push({
+                items.push({
                     path: relativeItemPath,
                     name: item,
                     size: stats.size,
@@ -325,7 +424,7 @@ async function getFileStructure(dirPath, relativePath = '') {
         console.error('Error reading directory:', error);
     }
 
-    return files;
+    return items;
 }
 
 async function getProjectType(projectDir) {
