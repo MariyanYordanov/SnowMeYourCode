@@ -250,16 +250,16 @@ export function requireTeacherAuth(req, res, next) {
         return res.status(401).json({
             success: false,
             error: 'authentication_required',
-            redirectTo: '/teacher/login.html'
+            message: 'Authentication required. Please contact administrator.'
         });
     }
     next();
 }
 
-// Middleware to redirect unauthenticated requests to login page
+// Middleware to redirect unauthenticated requests
 export function redirectToLogin(req, res, next) {
     if (!req.session?.teacher) {
-        return res.redirect('/teacher/login.html');
+        return res.status(401).send('<html><head><title>Access Denied</title></head><body style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; margin: 0;"><div style="text-align: center;"><h1>Access Denied</h1><p>Authentication required. Please contact administrator.</p></div></body></html>');
     }
     next();
 }

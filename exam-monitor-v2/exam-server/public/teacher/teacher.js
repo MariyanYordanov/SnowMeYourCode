@@ -39,13 +39,13 @@ class SmartTeacherDashboard {
                 this.teacherInfo = data.teacher;
                 this.updateTeacherInfo();
             } else {
-                // Not authenticated, redirect to login
-                window.location.href = '/teacher/login.html';
+                // Not authenticated
+                document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Access Denied</h1><p>You are not authenticated. Please contact administrator.</p></div></div>';
                 return;
             }
         } catch (error) {
             console.error('Authentication check failed:', error);
-            window.location.href = '/teacher/login.html';
+            document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Authentication Error</h1><p>Failed to verify authentication. Please contact administrator.</p></div></div>';
         }
     }
 
@@ -95,8 +95,8 @@ class SmartTeacherDashboard {
                     clearInterval(this.heartbeatInterval);
                 }
 
-                // Redirect to login
-                window.location.href = '/teacher/login.html';
+                // Show logout message
+                document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Logged Out</h1><p>You have been successfully logged out.</p></div></div>';
             } else {
                 this.showNotification('Logout failed', 'error');
             }
