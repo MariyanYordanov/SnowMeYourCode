@@ -19,13 +19,12 @@ class SmartTeacherDashboard {
             completed: 0
         };
 
+        // Check if already authenticated
         this.checkAuthentication();
-        this.initializeUI();
-        this.connectToServer();
     }
 
     /**
-     * Check if teacher is authenticated
+     * Check if teacher is authenticated, show login form if not
      */
     async checkAuthentication() {
         try {
@@ -36,17 +35,98 @@ class SmartTeacherDashboard {
             const data = await response.json();
 
             if (data.authenticated) {
+                // Already logged in, show dashboard
                 this.teacherInfo = data.teacher;
-                this.updateTeacherInfo();
+                this.showDashboard();
             } else {
-                // Not authenticated
-                document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Access Denied</h1><p>You are not authenticated. Please contact administrator.</p></div></div>';
-                return;
+                // Not logged in, show login form
+                this.showLoginForm();
             }
         } catch (error) {
             console.error('Authentication check failed:', error);
-            document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Authentication Error</h1><p>Failed to verify authentication. Please contact administrator.</p></div></div>';
+            this.showLoginForm();
         }
+    }
+
+    /**
+     * Show login form
+     */
+    showLoginForm() {
+        const loginOverlay = document.getElementById('login-overlay');
+        const dashboardContent = document.getElementById('dashboard-content');
+
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        if (dashboardContent) dashboardContent.style.display = 'none';
+
+        // Setup login form handler
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+    }
+
+    /**
+     * Handle login form submission
+     */
+    async handleLogin(event) {
+        event.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('login-btn');
+        const loginError = document.getElementById('login-error');
+
+        // Disable button during login
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+        loginError.style.display = 'none';
+
+        try {
+            const response = await fetch('/api/teacher/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.teacherInfo = data.teacher;
+                this.showDashboard();
+            } else {
+                loginError.textContent = data.message || 'Invalid credentials';
+                loginError.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            loginError.textContent = 'Login failed. Please try again.';
+            loginError.style.display = 'block';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+    }
+
+    /**
+     * Show dashboard after successful login
+     */
+    showDashboard() {
+        const loginOverlay = document.getElementById('login-overlay');
+        const dashboardContent = document.getElementById('dashboard-content');
+
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        if (dashboardContent) dashboardContent.style.display = 'block';
+
+        // Update teacher info in header
+        this.updateTeacherInfo();
+
+        // Initialize dashboard
+        this.initializeUI();
+        this.connectToServer();
     }
 
     /**
@@ -82,7 +162,7 @@ class SmartTeacherDashboard {
             const data = await response.json();
 
             if (data.success) {
-                // Disconnect socket before redirect
+                // Disconnect socket
                 if (this.socket) {
                     this.socket.disconnect();
                 }
@@ -95,8 +175,17 @@ class SmartTeacherDashboard {
                     clearInterval(this.heartbeatInterval);
                 }
 
-                // Show logout message
-                document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;"><div style="text-align: center;"><h1>Logged Out</h1><p>You have been successfully logged out.</p></div></div>';
+                // Clear teacher info
+                this.teacherInfo = null;
+
+                // Show login form again
+                this.showLoginForm();
+
+                // Clear form fields
+                const usernameField = document.getElementById('username');
+                const passwordField = document.getElementById('password');
+                if (usernameField) usernameField.value = '';
+                if (passwordField) passwordField.value = '';
             } else {
                 this.showNotification('Logout failed', 'error');
             }
