@@ -684,6 +684,12 @@ class SmartTeacherDashboard {
     renderStudents() {
         const container = document.getElementById('students-container');
 
+        // Check if container exists (may be null if DOM was replaced due to auth failure)
+        if (!container) {
+            console.warn('Students container not found - likely unauthenticated');
+            return;
+        }
+
         if (this.students.size === 0) {
             container.innerHTML = `
                 <div class="no-students">
