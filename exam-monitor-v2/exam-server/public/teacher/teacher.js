@@ -497,6 +497,12 @@ class SmartTeacherDashboard {
         const indicator = document.getElementById('connection-indicator');
         const text = document.getElementById('connection-text');
 
+        // Check if elements exist (may be null if DOM was replaced due to auth failure)
+        if (!indicator || !text) {
+            console.warn('Connection status elements not found - likely unauthenticated');
+            return;
+        }
+
         indicator.className = 'connection-indicator';
 
         switch (status) {
