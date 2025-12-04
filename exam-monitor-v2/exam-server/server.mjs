@@ -8,7 +8,7 @@ import { SessionManager } from './modules/SessionManager.mjs';
 import { WebSocketHandler } from './modules/WebSocketHandler.mjs';
 import { ProxyHandler } from './modules/ProxyHandler.mjs';
 import projectRoutes from './routes/project-routes.mjs';
-import teacherAuthRoutes, { requireTeacherAuth, redirectToLogin } from './routes/teacher-auth.mjs';
+import teacherAuthRoutes, { requireTeacherAuth } from './routes/teacher-auth.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -92,8 +92,8 @@ app.get('/', (req, res) => {
 // Teacher authentication routes
 app.use('/api/teacher', teacherAuthRoutes);
 
-// Protected teacher dashboard (requires authentication)
-app.get('/teacher', redirectToLogin, (req, res) => {
+// Teacher dashboard (authentication handled in client-side JS)
+app.get('/teacher', (req, res) => {
     res.sendFile(join(__dirname, 'public/teacher/index.html'));
 });
 
