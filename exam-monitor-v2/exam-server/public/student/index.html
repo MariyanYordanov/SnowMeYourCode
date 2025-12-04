@@ -129,7 +129,7 @@
                     </div>
                 </header>
         
-                <aside class="exam-sidebar">
+                <aside id="exam-sidebar" class="exam-sidebar">
                     <div class="sidebar-tabs">
                         <button class="sidebar-tab active" data-panel="files">Files</button>
                         <button class="sidebar-tab" data-panel="mdn">MDN</button>
@@ -139,9 +139,6 @@
                         <div id="files-panel" class="sidebar-panel active">
                             <div class="panel-header">
                                 <h3 class="text-sm font-medium m-0">Project Files</h3>
-                                <div class="file-toolbar d-flex gap-xs">
-                                    <button id="new-folder-btn" class="btn btn-icon btn-sm btn-cyan" title="New Folder">📁</button>
-                                </div>
                             </div>
                             <div id="file-tree" class="file-tree">
                                 <div class="file-tree-empty text-center text-muted p-xl">
@@ -188,7 +185,7 @@
 
                             <div id="bottom-panel-resize-handle" class="console-resize-handle"></div>
 
-                            <div id="bottom-panel" class="console-panel">
+                            <div id="console-panel" class="console-panel">
                                 <div class="bottom-panel-tabs">
                                     <button class="bottom-tab active" data-panel="console">Console</button>
                                     <button class="bottom-tab" data-panel="preview">Preview</button>

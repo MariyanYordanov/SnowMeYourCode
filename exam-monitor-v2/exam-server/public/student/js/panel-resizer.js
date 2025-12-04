@@ -40,16 +40,19 @@ export class PanelResizer {
      */
     createHandle(handleId, targetId, direction) {
         const target = document.getElementById(targetId);
-        if (!target) return;
+        if (!target) {
+            console.warn(`Panel resize target not found: ${targetId}`);
+            return;
+        }
 
         const handle = document.createElement('div');
         handle.id = handleId;
         handle.className = `resize-handle resize-handle-${direction}`;
         handle.dataset.target = targetId;
         handle.dataset.direction = direction;
-        
+
         // Add visual indicator
-        handle.innerHTML = direction === 'horizontal' ? 
+        handle.innerHTML = direction === 'horizontal' ?
             '<div class="resize-indicator horizontal-indicator"></div>' :
             '<div class="resize-indicator vertical-indicator"></div>';
 
@@ -58,9 +61,12 @@ export class PanelResizer {
             // Insert before console panel
             target.parentNode.insertBefore(handle, target);
         } else {
-            // Insert after sidebar
-            target.parentNode.insertBefore(handle, target.nextSibling);
+            // For vertical handles (sidebar), append to the target as the last child
+            // This puts it on the right edge of the sidebar
+            target.appendChild(handle);
         }
+
+        console.log(`✅ Resize handle created: ${handleId} for ${targetId}`);
     }
 
     /**
@@ -108,17 +114,17 @@ export class PanelResizer {
      */
     startResize(e) {
         e.preventDefault();
-        
+
         const handle = e.target.closest('.resize-handle');
         if (!handle) return;
 
         this.isResizing = true;
         this.currentHandle = handle;
-        
+
         const targetId = handle.dataset.target;
         const direction = handle.dataset.direction;
         const target = document.getElementById(targetId);
-        
+
         if (!target) return;
 
         // Store initial values
@@ -127,13 +133,17 @@ export class PanelResizer {
             this.startSize = target.offsetHeight;
         } else {
             this.startPos = e.clientX;
-            this.startSize = target.offsetWidth;
+            // For sidebar, get the current width from grid
+            const examContainer = document.querySelector('.exam-container');
+            const computedStyle = window.getComputedStyle(examContainer);
+            const columns = computedStyle.gridTemplateColumns.split(' ');
+            this.startSize = parseInt(columns[0]);
         }
 
         // Add visual feedback
         document.body.classList.add('resizing');
         handle.classList.add('active');
-        
+
         // Change cursor
         document.body.style.cursor = direction === 'horizontal' ? 'ns-resize' : 'ew-resize';
     }
@@ -147,11 +157,11 @@ export class PanelResizer {
         const targetId = this.currentHandle.dataset.target;
         const direction = this.currentHandle.dataset.direction;
         const target = document.getElementById(targetId);
-        
+
         if (!target) return;
 
         let delta, newSize;
-        
+
         if (direction === 'horizontal') {
             delta = e.clientY - this.startPos;
             newSize = this.startSize - delta; // Subtract because console grows upward
@@ -162,11 +172,11 @@ export class PanelResizer {
 
         // Apply constraints
         newSize = Math.max(this.minSize, Math.min(this.maxSize, newSize));
-        
+
         // Apply the new size
         if (direction === 'horizontal') {
             target.style.height = newSize + 'px';
-            
+
             // Also update the editor height
             const editorContainer = document.querySelector('.editor-container');
             if (editorContainer) {
@@ -175,7 +185,11 @@ export class PanelResizer {
                 editorContainer.style.height = Math.max(200, editorHeight) + 'px';
             }
         } else {
-            target.style.width = newSize + 'px';
+            // For sidebar, update the grid-template-columns
+            const examContainer = document.querySelector('.exam-container');
+            if (examContainer) {
+                examContainer.style.gridTemplateColumns = `${newSize}px 1fr`;
+            }
         }
 
         // Trigger Monaco editor layout update

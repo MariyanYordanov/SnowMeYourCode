@@ -184,8 +184,8 @@ export function confirm(message) {
             </div>
             <p class="dialog-message">${message}</p>
             <div class="dialog-buttons">
-                <button class="dialog-btn dialog-btn-cancel" data-action="cancel">Не</button>
-                <button class="dialog-btn dialog-btn-confirm dialog-btn-info" data-action="confirm">Да</button>
+                <button class="dialog-btn dialog-btn-cancel dialog-btn-success" data-action="cancel">Не</button>
+                <button class="dialog-btn dialog-btn-confirm dialog-btn-danger" data-action="confirm">Да</button>
             </div>
         `;
 
