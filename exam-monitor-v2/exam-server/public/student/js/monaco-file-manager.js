@@ -684,29 +684,60 @@ export class MonacoFileManager {
 
     getIconForItem(item) {
         if (item.type === 'folder') {
-            return '📁';
+            return '<span style="color: #f59e0b;">📁</span>';
         }
 
+        // VS Code-style file icons based on extension
         const iconMap = {
-            'js': '📄',
-            'mjs': '📄',
-            'html': '🌐',
-            'css': '🎨',
-            'json': '⚙️',
-            'md': '📝',
-            'txt': '📄',
-            'png': '🖼️',
-            'jpg': '🖼️',
-            'jpeg': '🖼️',
-            'gif': '🖼️',
-            'svg': '🖼️',
-            'xml': '📋',
-            'yml': '⚙️',
-            'yaml': '⚙️',
-            'lock': '🔒'
+            // JavaScript / TypeScript
+            'js': '<span style="color: #f7df1e;">JS</span>',
+            'mjs': '<span style="color: #f7df1e;">JS</span>',
+            'jsx': '<span style="color: #61dafb;">JSX</span>',
+            'ts': '<span style="color: #3178c6;">TS</span>',
+            'tsx': '<span style="color: #3178c6;">TSX</span>',
+
+            // Web
+            'html': '<span style="color: #e34c26;">HTML</span>',
+            'htm': '<span style="color: #e34c26;">HTML</span>',
+            'css': '<span style="color: #563d7c;">CSS</span>',
+            'scss': '<span style="color: #cc6699;">SCSS</span>',
+            'sass': '<span style="color: #cc6699;">SASS</span>',
+            'less': '<span style="color: #1d365d;">LESS</span>',
+
+            // Data formats
+            'json': '<span style="color: #f7df1e;">{ }</span>',
+            'xml': '<span style="color: #f57842;">XML</span>',
+            'yml': '<span style="color: #cb171e;">YML</span>',
+            'yaml': '<span style="color: #cb171e;">YAML</span>',
+
+            // Python
+            'py': '<span style="color: #3776ab;">PY</span>',
+
+            // Markdown & Docs
+            'md': '<span style="color: #083fa1;">MD</span>',
+            'txt': '<span style="color: #6c757d;">TXT</span>',
+            'pdf': '<span style="color: #dc3545;">PDF</span>',
+
+            // Images
+            'png': '<span style="color: #8b4513;">PNG</span>',
+            'jpg': '<span style="color: #8b4513;">JPG</span>',
+            'jpeg': '<span style="color: #8b4513;">JPEG</span>',
+            'gif': '<span style="color: #8b4513;">GIF</span>',
+            'svg': '<span style="color: #ffb13b;">SVG</span>',
+            'ico': '<span style="color: #8b4513;">ICO</span>',
+
+            // Config files
+            'gitignore': '<span style="color: #f05032;">GIT</span>',
+            'gitkeep': '<span style="color: #6c757d;">·</span>',
+            'env': '<span style="color: #ecd53f;">ENV</span>',
+            'lock': '<span style="color: #6c757d;">🔒</span>',
+
+            // Other
+            'zip': '<span style="color: #6c757d;">ZIP</span>',
+            'rar': '<span style="color: #6c757d;">RAR</span>'
         };
 
-        return iconMap[item.extension] || '📄';
+        return iconMap[item.extension] || '<span style="color: #6c757d;">📄</span>';
     }
 
     getFileIcon(path) {

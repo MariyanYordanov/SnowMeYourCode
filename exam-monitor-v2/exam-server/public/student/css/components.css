@@ -2306,6 +2306,23 @@ body.resizing * {
     width: 100%;
 }
 
+.tree-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tree-icon span {
+    display: inline-block;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+}
+
 .tree-actions {
     margin-left: auto;
     display: none;
@@ -2336,13 +2353,18 @@ body.resizing * {
 }
 
 .new-file-btn {
-    color: #06b6d4;
-    font-weight: bold;
-    font-size: 16px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 600;
+    font-size: 11px;
+    border: 1px solid #4CAF50;
 }
 
 .new-file-btn:hover {
-    color: #0891b2;
+    background: #45a049;
+    border-color: #45a049;
 }
 
 .delete-btn:hover {
