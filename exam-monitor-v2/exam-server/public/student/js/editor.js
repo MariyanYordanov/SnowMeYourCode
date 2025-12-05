@@ -24,13 +24,13 @@ const consoleState = {
 export function initializeMonacoEditor(initialCode = '') {
     return new Promise((resolve, reject) => {
         try {
-            // Configure Monaco paths
-            require.config({
-                paths: {
-                    'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
-                }
-            });
+            // Check if require is available (loaded by loader.min.js in HTML)
+            if (typeof require === 'undefined') {
+                reject(new Error('Monaco loader not available. Please ensure loader.min.js is loaded.'));
+                return;
+            }
 
+            // Use the global require that's already configured in index.html
             require(['vs/editor/editor.main'], function () {
                 try {
                     const defaultCode = initialCode || getDefaultCode();
