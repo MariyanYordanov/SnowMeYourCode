@@ -75,16 +75,24 @@ class AntiCheatTester {
 
     async loginToExam() {
         console.log('🔑 Logging into exam system...'.cyan);
-        
+
         await this.page.goto(config.examUrl, { waitUntil: 'networkidle2' });
-        
+
         // Wait for page to load
         await this.page.waitForTimeout(1000);
-        
+
         // Accept terms
         await this.page.waitForSelector('#terms-agreement', { visible: true });
         await this.page.click('#terms-agreement');
-        
+
+        // Click continue to login button
+        await this.page.waitForSelector('#continue-to-login-btn', { visible: true });
+        await this.page.waitForTimeout(500);
+        await this.page.click('#continue-to-login-btn');
+
+        // Wait for login component to appear
+        await this.page.waitForTimeout(1000);
+
         // Fill login form
         await this.page.waitForSelector('#student-name', { visible: true });
         await this.page.type('#student-name', config.testStudent.name);
