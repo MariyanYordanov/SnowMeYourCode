@@ -325,38 +325,4 @@ pre {
     overflow-y: auto;
 }
 
-/* === FULLSCREEN EXIT WARNING OVERLAY === */
-/* Shows red warning screen ONLY when anti-cheat is active AND student exits fullscreen */
-body.anti-cheat-active:not(:fullscreen)::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(220, 38, 38, 0.95);
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-/* Warning message on red screen */
-body.anti-cheat-active:not(:fullscreen)::after {
-    content: '⚠️\A\AИЗПИТЪТ Е ПАУЗИРАН\A\AВърнете се в пълноекранен режим\A\AНатиснете F11 или Escape';
-    white-space: pre;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 2.5rem;
-    font-weight: bold;
-    text-align: center;
-    z-index: 10000;
-    pointer-events: none;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    line-height: 1.6;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
+/* Red screen warning REMOVED per user request */
