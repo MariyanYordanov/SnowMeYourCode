@@ -311,7 +311,26 @@
 
     </div>
 
-    <!-- Violation overlay REMOVED - not needed, red screen handles warnings -->
+    <!-- Fullscreen Warning Overlay -->
+    <div class="fullscreen-warning-overlay" id="fullscreen-warning-overlay">
+        <div class="fullscreen-warning-content">
+            <div class="fullscreen-warning-icon">⚠️</div>
+            <h1 class="fullscreen-warning-title">ИЗПИТЪТ Е ПАУЗИРАН</h1>
+            <p class="fullscreen-warning-message">
+                Излязохте от пълноекранен режим.<br>
+                Това е нарушение опит <span id="attempt-counter">1</span>/3.<br><br>
+                Изберете дали да продължите или да напуснете изпита.
+            </p>
+            <div class="fullscreen-warning-buttons">
+                <button class="fullscreen-warning-btn fullscreen-warning-btn-continue" id="continue-exam-btn">
+                    Продължи изпита
+                </button>
+                <button class="fullscreen-warning-btn fullscreen-warning-btn-exit" id="exit-exam-btn">
+                    Напусни изпита
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/student/js/main.js"></script>
 </body>

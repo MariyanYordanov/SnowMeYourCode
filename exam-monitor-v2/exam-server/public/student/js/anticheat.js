@@ -1045,19 +1045,72 @@ export function initializeAdvancedAntiCheat() {
 }
 
 /**
- * Show fullscreen exit warning - RED SCREEN ONLY
- * CSS handles the visual warning via body.anti-cheat-active:not(:fullscreen)::before
+ * Show fullscreen exit warning with continue/exit buttons
+ * Updates attempt counter and sets up button handlers
  * On 3rd attempt: terminate exam via server force-disconnect
  */
 function showFullscreenExitWarning(attemptNumber) {
     const maxAttempts = 3;
 
+    // Update attempt counter in the overlay
+    const attemptCounter = document.getElementById('attempt-counter');
+    if (attemptCounter) {
+        attemptCounter.textContent = attemptNumber;
+    }
+
     if (attemptNumber >= maxAttempts) {
         console.log('MAX FULLSCREEN EXIT ATTEMPTS REACHED - Server will force-disconnect');
         // Server handles termination after 3rd attempt
-        // No dialog needed - red screen remains visible until server disconnects
+        // Overlay remains visible until server disconnects
     } else {
-        // CSS red screen is already visible via :not(:fullscreen)::before
-        console.log(`Fullscreen exit attempt ${attemptNumber}/${maxAttempts} - Red screen active`);
+        // CSS red screen with buttons is already visible
+        console.log(`Fullscreen exit attempt ${attemptNumber}/${maxAttempts} - Red screen with buttons active`);
+
+        // Setup button event listeners (only once)
+        setupFullscreenWarningButtons();
+    }
+}
+
+/**
+ * Setup event listeners for fullscreen warning buttons
+ */
+function setupFullscreenWarningButtons() {
+    const continueBtn = document.getElementById('continue-exam-btn');
+    const exitBtn = document.getElementById('exit-exam-btn');
+
+    // Remove existing listeners to prevent duplicates
+    if (continueBtn) {
+        continueBtn.replaceWith(continueBtn.cloneNode(true));
+    }
+    if (exitBtn) {
+        exitBtn.replaceWith(exitBtn.cloneNode(true));
+    }
+
+    // Get fresh references after cloning
+    const freshContinueBtn = document.getElementById('continue-exam-btn');
+    const freshExitBtn = document.getElementById('exit-exam-btn');
+
+    // Continue button: re-enter fullscreen
+    if (freshContinueBtn) {
+        freshContinueBtn.addEventListener('click', () => {
+            console.log('Student chose to continue exam - re-entering fullscreen');
+            enterFullscreenMode();
+        });
+    }
+
+    // Exit button: complete exam
+    if (freshExitBtn) {
+        freshExitBtn.addEventListener('click', async () => {
+            console.log('Student chose to exit exam');
+            const examApp = window.ExamApp;
+            examApp.completionInProgress = true;
+
+            // Call completeExam function from main.js
+            if (typeof window.completeExam === 'function') {
+                await window.completeExam();
+            } else {
+                console.error('completeExam function not available');
+            }
+        });
     }
 }
