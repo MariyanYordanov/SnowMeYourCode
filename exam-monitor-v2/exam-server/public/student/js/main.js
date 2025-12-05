@@ -306,6 +306,13 @@ function completeExam(reason = 'unknown') {
             examApp.fileManager.saveCurrentFile();
         }
 
+        // Close help chat window if open
+        const helpChatWindow = document.querySelector('.help-chat-window');
+        if (helpChatWindow) {
+            helpChatWindow.style.display = 'none';
+            console.log('[CHAT] Help chat window closed on exam completion');
+        }
+
         deactivateAntiCheat();
 
         if (examApp.timerInterval) {
@@ -337,6 +344,13 @@ function exitExam(reason = 'unknown') {
     try {
         const examApp = window.ExamApp;
         examApp.completionInProgress = true;
+
+        // Close help chat window if open
+        const helpChatWindow = document.querySelector('.help-chat-window');
+        if (helpChatWindow) {
+            helpChatWindow.style.display = 'none';
+            console.log('[CHAT] Help chat window closed on exam exit');
+        }
 
         deactivateAntiCheat();
 

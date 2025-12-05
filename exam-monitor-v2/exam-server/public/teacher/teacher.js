@@ -341,7 +341,9 @@ class SmartTeacherDashboard {
         });
 
         this.socket.on('student-disconnected', (data) => {
-            this.updateStudentStatus(data.sessionId, 'disconnected', data);
+            // Check if this is a completion or disconnection
+            const status = data.reason === 'completed' ? 'completed' : 'disconnected';
+            this.updateStudentStatus(data.sessionId, status, data);
         });
 
         this.socket.on('student-code-update', (data) => {
@@ -368,6 +370,11 @@ class SmartTeacherDashboard {
         this.socket.on('student-help-request', (data) => {
             console.log('[CHAT] Received help request:', data);
             this.handleHelpRequest(data);
+        });
+
+        this.socket.on('student-message', (data) => {
+            console.log('[CHAT] Received student message:', data);
+            this.handleStudentMessage(data);
         });
 
         this.socket.on('student-typing', (data) => {
@@ -625,13 +632,26 @@ class SmartTeacherDashboard {
      * Update all students data
      */
     updateAllStudents(students) {
-        this.students.clear();
         students.forEach(student => {
+            const existingStudent = this.students.get(student.sessionId);
+
+            // Preserve chat-related fields if they exist
+            const preservedFields = existingStudent ? {
+                chatMessages: existingStudent.chatMessages || [],
+                chatOpen: existingStudent.chatOpen || false,
+                hasHelpRequest: existingStudent.hasHelpRequest || false
+            } : {
+                chatMessages: [],
+                chatOpen: false,
+                hasHelpRequest: false
+            };
+
             this.students.set(student.sessionId, {
                 ...student,
                 fullscreenStatus: 'unknown',
                 violationCount: 0,
-                activities: []
+                activities: [],
+                ...preservedFields  // Keep chat state
             });
         });
         this.renderStudents();
@@ -651,7 +671,10 @@ class SmartTeacherDashboard {
             violationCount: 0,
             activities: [],
             code: '',
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            chatMessages: [],
+            chatOpen: false,
+            hasHelpRequest: false
         });
         this.renderStudents();
         this.updateStats();
@@ -795,6 +818,7 @@ class SmartTeacherDashboard {
             return;
         }
 
+        // Show all students (no filtering)
         const studentsArray = Array.from(this.students.values());
         studentsArray.sort((a, b) => b.lastActivity - a.lastActivity);
 
@@ -821,6 +845,7 @@ class SmartTeacherDashboard {
     renderStudentCard(student) {
         const timeAgo = this.formatTimeAgo(student.lastActivity);
         const codePreview = student.code ? student.code.substring(0, 200) + (student.code.length > 200 ? '...' : '') : 'No code yet';
+        const chatOpen = student.chatOpen || false;
 
         return `
             <div class="student-card" data-session-id="${student.sessionId}">
@@ -856,6 +881,7 @@ class SmartTeacherDashboard {
                 <div class="code-preview">${codePreview}</div>
 
                 ${this.renderActivityLog(student)}
+                ${this.renderInlineChat(student, chatOpen)}
                 ${this.renderControls(student)}
             </div>
         `;
@@ -925,6 +951,45 @@ class SmartTeacherDashboard {
     }
 
     /**
+     * Render inline chat section within student card
+     */
+    renderInlineChat(student, chatOpen) {
+        if (!chatOpen) {
+            return '';
+        }
+
+        const messages = student.chatMessages || [];
+        const messagesHTML = messages.length > 0
+            ? messages.map(msg => `
+                <div class="inline-chat-message ${msg.sender}">
+                    <div class="inline-msg-time">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+                    <div class="inline-msg-text">${this.escapeHtml(msg.message)}</div>
+                </div>
+            `).join('')
+            : '<div class="inline-chat-empty">No messages yet</div>';
+
+        return `
+            <div class="inline-chat-section">
+                <div class="inline-chat-header">
+                    <span>💬 Chat</span>
+                    <button class="inline-chat-close" onclick="teacherDashboard.toggleStudentChat('${student.sessionId}')">✕</button>
+                </div>
+                <div class="inline-chat-messages" id="inline-chat-${student.sessionId}">
+                    ${messagesHTML}
+                </div>
+                <div class="inline-chat-input">
+                    <input type="text"
+                        placeholder="Type message..."
+                        id="inline-input-${student.sessionId}"
+                        onkeypress="if(event.key==='Enter') teacherDashboard.sendInlineMessage('${student.sessionId}')"
+                    />
+                    <button onclick="teacherDashboard.sendInlineMessage('${student.sessionId}')">Send</button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
      * Render student controls
      */
     renderControls(student) {
@@ -941,11 +1006,11 @@ class SmartTeacherDashboard {
 
         const hasHelpRequest = student.hasHelpRequest || false;
         const chatButtonClass = hasHelpRequest ? 'btn-primary pulse' : 'btn-secondary';
-        const chatButtonText = hasHelpRequest ? '[CHAT] Reply to Help' : '[CHAT] Open Chat';
+        const chatButtonText = student.chatOpen ? '[CHAT] Close' : (hasHelpRequest ? '[CHAT] Reply' : '[CHAT] Open');
 
         return `
             <div class="controls">
-                <button class="btn ${chatButtonClass}" onclick="teacherDashboard.openStudentChat('${student.sessionId}', '${student.studentName}', '${student.studentClass}')">
+                <button class="btn ${chatButtonClass}" onclick="teacherDashboard.toggleStudentChat('${student.sessionId}')">
                     ${chatButtonText}
                 </button>
                 <button class="btn btn-warning" onclick="teacherDashboard.warnStudent('${student.sessionId}')">
@@ -1058,6 +1123,11 @@ class SmartTeacherDashboard {
     }
 
     formatTimeAgo(timestamp) {
+        // Handle invalid/missing timestamps
+        if (!timestamp || isNaN(timestamp)) {
+            return 'Unknown';
+        }
+
         const now = Date.now();
         const diff = now - timestamp;
         const seconds = Math.floor(diff / 1000);
@@ -1110,21 +1180,85 @@ class SmartTeacherDashboard {
     }
 
     /**
-     * Open chat with specific student
+     * Toggle inline chat for student
      */
-    openStudentChat(sessionId, studentName, studentClass) {
-        this.openHelpChat({
-            sessionId: sessionId,
-            studentName: studentName,
-            studentClass: studentClass
+    toggleStudentChat(sessionId) {
+        const student = this.students.get(sessionId);
+        if (!student) return;
+
+        student.chatOpen = !student.chatOpen;
+
+        // Mark help request as addressed when opening chat
+        if (student.chatOpen && student.hasHelpRequest) {
+            student.hasHelpRequest = false;
+        }
+
+        // Initialize chat messages array if needed
+        if (!student.chatMessages) {
+            student.chatMessages = [];
+        }
+
+        this.renderStudent(student);
+
+        // Auto-scroll to chat messages if opened
+        if (student.chatOpen) {
+            setTimeout(() => {
+                const chatMessages = document.getElementById(`inline-chat-${sessionId}`);
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }, 100);
+        }
+    }
+
+    /**
+     * Send inline message to student
+     */
+    sendInlineMessage(sessionId) {
+        const input = document.getElementById(`inline-input-${sessionId}`);
+        if (!input || !input.value.trim()) return;
+
+        const message = input.value.trim();
+        const student = this.students.get(sessionId);
+        if (!student) return;
+
+        // Add message to local array
+        if (!student.chatMessages) {
+            student.chatMessages = [];
+        }
+
+        student.chatMessages.push({
+            sender: 'teacher',
+            message: message,
+            timestamp: Date.now()
         });
 
-        // Mark help request as addressed
-        const student = this.students.get(sessionId);
-        if (student && student.hasHelpRequest) {
-            student.hasHelpRequest = false;
-            this.renderStudent(student);
-        }
+        // Send via socket
+        this.socket.emit('teacher-message', {
+            sessionId: sessionId,
+            message: message,
+            timestamp: Date.now()
+        });
+
+        // Clear input and re-render
+        input.value = '';
+        this.renderStudent(student);
+
+        // Auto-scroll
+        setTimeout(() => {
+            const chatMessages = document.getElementById(`inline-chat-${sessionId}`);
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }, 100);
+    }
+
+    /**
+     * Open chat with specific student (legacy - redirects to toggle)
+     */
+    openStudentChat(sessionId, studentName, studentClass) {
+        // Just toggle the inline chat instead
+        this.toggleStudentChat(sessionId);
     }
 
     /**
@@ -1137,15 +1271,59 @@ class SmartTeacherDashboard {
         const student = this.students.get(data.sessionId);
         if (student) {
             student.hasHelpRequest = true;
-            this.renderStudent(student);
+            student.chatOpen = true;  // Auto-open chat for help requests
+
             console.log('[CHAT] Student marked with help request:', data.studentName);
+
+            // Note: Message will be added by handleStudentMessage which is also triggered
+            // No need to add it here to avoid duplicates
         } else {
             console.log('[CHAT WARNING] Student not found in students map:', data.sessionId);
         }
 
         this.showHelpNotification(data);
-        this.openHelpChat(data);
-        this.addChatMessage(data, 'student');
+    }
+
+    /**
+     * Handle incoming student message for inline chat
+     */
+    handleStudentMessage(data) {
+        console.log('[CHAT] Processing student message:', data);
+
+        const student = this.students.get(data.sessionId);
+        if (!student) {
+            console.log('[CHAT WARNING] Student not found:', data.sessionId);
+            return;
+        }
+
+        // Initialize chat messages array if needed
+        if (!student.chatMessages) {
+            student.chatMessages = [];
+        }
+
+        // Add message to student's chat history
+        student.chatMessages.push({
+            sender: 'student',
+            message: data.message,
+            timestamp: data.timestamp || Date.now()
+        });
+
+        // Auto-open chat if it's not open yet (first message from student)
+        if (!student.chatOpen) {
+            student.chatOpen = true;
+            console.log('[CHAT] Auto-opening chat for first student message');
+        }
+
+        // Re-render student card to show new message
+        this.renderStudent(student);
+
+        // Auto-scroll to latest message
+        setTimeout(() => {
+            const chatMessages = document.getElementById(`inline-chat-${data.sessionId}`);
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }, 100);
     }
 
     /**

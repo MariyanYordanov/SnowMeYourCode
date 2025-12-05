@@ -181,6 +181,11 @@ export class HelpChat {
             this.receiveMessage(data);
         });
 
+        // Receive teacher message (inline chat)
+        this.socket.on('teacher-message', (data) => {
+            this.receiveMessage(data);
+        });
+
         // Teacher typing indicator
         this.socket.on('teacher-typing', (data) => {
             this.showTypingIndicator(data.isTyping);

@@ -1257,7 +1257,7 @@
     right: var(--space-lg);
     width: 380px;
     height: 500px;
-    background: var(--bg-primary);
+    background: #f5f5f5;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
