@@ -322,4 +322,51 @@ pre {
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
-    overflow-y: auto; }
+    overflow-y: auto;
+}
+
+/* === FULLSCREEN EXIT WARNING OVERLAY === */
+/* Shows red warning screen when student exits fullscreen during exam */
+body:not(:fullscreen)::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(220, 38, 38, 0.95);
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Show red screen only during exam (when #exam-component is visible and not in fullscreen) */
+body:has(#exam-component:not([style*="display: none"])):not(:fullscreen)::before {
+    opacity: 1;
+}
+
+/* Warning message on red screen */
+body:not(:fullscreen)::after {
+    content: '⚠️\A\AИЗПИТЪТ Е ПАУЗИРАН\A\AВърнете се в пълноекранен режим\A\AОпит: Вижте конзолата';
+    white-space: pre;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+    z-index: 10000;
+    pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Show message only during exam */
+body:has(#exam-component:not([style*="display: none"])):not(:fullscreen)::after {
+    opacity: 1;
+}
