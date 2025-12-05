@@ -411,15 +411,19 @@ export class WebSocketHandler {
                 suspicious: data.activity
             });
 
-            // Notify teachers
+            // Notify teachers (include fullscreen exit attempts and heartbeat data)
             this.notifyTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
                 sessionId,
                 studentName: socket.studentInfo.name,
                 studentClass: socket.studentInfo.class,
                 socketId: socket.id,
                 activity: data.activity,
+                activityType: data.activityType,
                 timestamp: Date.now(),
-                severity: data.severity || 'medium'
+                severity: data.severity || 'medium',
+                // Pass violation-specific details for teacher dashboard visibility
+                fullscreenExitAttempts: data.details?.attemptNumber,
+                heartbeatMissed: data.activityType === 'heartbeat_missed' ? (data.details?.count || 1) : undefined
             });
 
             console.log(`Suspicious activity: ${socket.studentInfo.name} - ${data.activityType || data.activity}`);

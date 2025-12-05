@@ -876,6 +876,18 @@ class SmartTeacherDashboard {
                         <span class="info-label">Violations:</span>
                         <span class="info-value ${student.violationCount > 0 ? 'warning' : ''}">${student.violationCount || 0}</span>
                     </div>
+                    ${student.fullscreenExitAttempts ? `
+                    <div class="info-row">
+                        <span class="info-label">Fullscreen Exits:</span>
+                        <span class="info-value warning">${student.fullscreenExitAttempts}/3</span>
+                    </div>
+                    ` : ''}
+                    ${student.heartbeatMissed ? `
+                    <div class="info-row">
+                        <span class="info-label">Heartbeat Missed:</span>
+                        <span class="info-value warning">${student.heartbeatMissed}/2</span>
+                    </div>
+                    ` : ''}
                 </div>
 
                 <div class="code-preview">${codePreview}</div>
