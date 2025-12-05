@@ -161,8 +161,13 @@ export class WebSocketHandler {
                 timestamp: Date.now()
             });
 
-            // Force disconnect student
-            this.forceDisconnectStudent(studentId, `Exam terminated: ${reason}`);
+            // Force disconnect student - FIX: Get socket object first
+            const socket = this.studentSockets.get(studentId);
+            if (socket) {
+                this.forceDisconnectStudent(socket, `Exam terminated: ${reason}`);
+            } else {
+                console.warn(`Socket not found for student: ${studentId} - cannot force disconnect`);
+            }
 
             // Notify teachers
             this.broadcastToTeachers(SOCKET_EVENTS.STUDENT_SUSPICIOUS, {
@@ -227,6 +232,10 @@ export class WebSocketHandler {
         // Teacher help chat events
         socket.on('help-response', async (data) => {
             await this.handleHelpResponse(socket, data);
+        });
+
+        socket.on('teacher-message', async (data) => {
+            await this.handleTeacherMessage(socket, data);
         });
 
         socket.on('teacher-typing', (data) => {
@@ -859,8 +868,16 @@ export class WebSocketHandler {
 
             console.log('[CHAT] Notifying teachers of help request:', notificationData);
 
-            // Notify all teachers
+            // Notify all teachers about help request (for badge/notification)
             this.notifyTeachers('student-help-request', notificationData);
+
+            // Also send as a regular message for inline chat
+            this.notifyTeachers('student-message', {
+                sessionId: sessionId,
+                message: data.message,
+                timestamp: data.timestamp,
+                sender: 'student'
+            });
 
             console.log('[CHAT] Teachers notified - count:', this.teacherSockets.size);
 
@@ -922,6 +939,44 @@ export class WebSocketHandler {
                 messageId: data.messageId,
                 error: 'Failed to send response'
             });
+        }
+    }
+
+    /**
+     * Handle teacher message (for inline chat)
+     */
+    async handleTeacherMessage(socket, data) {
+        try {
+            const { sessionId, message, timestamp } = data;
+
+            console.log('[CHAT] Teacher sending message to student:', {
+                sessionId,
+                messageLength: message?.length,
+                timestamp
+            });
+
+            // Find student socket by sessionId
+            const studentSocket = this.studentSockets.get(sessionId);
+            if (!studentSocket) {
+                console.log('[CHAT ERROR] Student not found for sessionId:', sessionId);
+                console.log('[CHAT] Available students:', Array.from(this.studentSockets.keys()));
+                return;
+            }
+
+            // Send message to student
+            const messageData = {
+                message: message,
+                timestamp: timestamp || Date.now(),
+                sender: 'teacher'
+            };
+
+            console.log('[CHAT] Sending message to student:', studentSocket.studentInfo?.name);
+            studentSocket.emit('teacher-message', messageData);
+
+            console.log(`[CHAT] Message sent to ${studentSocket.studentInfo?.name}: ${message.substring(0, 50)}...`);
+
+        } catch (error) {
+            console.error('[CHAT ERROR] Error handling teacher message:', error);
         }
     }
 
