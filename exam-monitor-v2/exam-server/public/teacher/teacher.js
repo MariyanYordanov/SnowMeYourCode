@@ -640,23 +640,27 @@ class SmartTeacherDashboard {
         students.forEach(student => {
             const existingStudent = this.students.get(student.sessionId);
 
-            // Preserve chat-related fields if they exist
+            // Preserve chat-related and violation fields if they exist
             const preservedFields = existingStudent ? {
                 chatMessages: existingStudent.chatMessages || [],
                 chatOpen: existingStudent.chatOpen || false,
-                hasHelpRequest: existingStudent.hasHelpRequest || false
+                hasHelpRequest: existingStudent.hasHelpRequest || false,
+                violationCount: existingStudent.violationCount || 0,
+                fullscreenExitAttempts: existingStudent.fullscreenExitAttempts,
+                heartbeatMissed: existingStudent.heartbeatMissed,
+                activities: existingStudent.activities || []
             } : {
                 chatMessages: [],
                 chatOpen: false,
-                hasHelpRequest: false
+                hasHelpRequest: false,
+                violationCount: 0,
+                activities: []
             };
 
             this.students.set(student.sessionId, {
                 ...student,
-                fullscreenStatus: 'unknown',
-                violationCount: 0,
-                activities: [],
-                ...preservedFields  // Keep chat state
+                fullscreenStatus: existingStudent ? existingStudent.fullscreenStatus : 'unknown',
+                ...preservedFields  // Keep chat state and violation data
             });
         });
         this.renderStudents();
