@@ -24,122 +24,132 @@ const consoleState = {
 export function initializeMonacoEditor(initialCode = '') {
     return new Promise((resolve, reject) => {
         try {
-            // Check if require is available (loaded by loader.min.js in HTML)
-            if (typeof require === 'undefined') {
+            // Wait for Monaco loader to be ready (using global waitForMonaco from index.html)
+            if (typeof window.waitForMonaco === 'function') {
+                window.waitForMonaco(() => {
+                    // Monaco is now loaded, initialize the editor
+                    createMonacoEditor(initialCode, resolve, reject);
+                });
+            } else if (typeof require !== 'undefined') {
+                // Fallback: require is already available
+                require(['vs/editor/editor.main'], function () {
+                    createMonacoEditor(initialCode, resolve, reject);
+                });
+            } else {
                 reject(new Error('Monaco loader not available. Please ensure loader.min.js is loaded.'));
-                return;
             }
-
-            // Use the global require that's already configured in index.html
-            require(['vs/editor/editor.main'], function () {
-                try {
-                    const defaultCode = initialCode || getDefaultCode();
-                    const examApp = window.ExamApp;
-
-                    const editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-                        value: defaultCode,
-                        language: 'javascript',
-                        theme: 'vs-dark',
-                        automaticLayout: true,
-                        minimap: { enabled: true },
-                        scrollBeyondLastLine: false,
-                        fontSize: 14,
-                        lineNumbers: 'on',
-                        renderWhitespace: 'selection',
-                        wordWrap: 'on',
-                        bracketPairColorization: { enabled: true },
-                        suggestOnTriggerCharacters: true,
-                        quickSuggestions: true,
-                        parameterHints: { enabled: true },
-                        folding: true,
-                        formatOnPaste: false,
-                        formatOnType: false,
-                        autoClosingBrackets: 'languageDefined',
-                        autoClosingQuotes: 'languageDefined',
-                        autoSurround: 'languageDefined',
-                        autoIndent: 'advanced',
-                        dragAndDrop: true,
-                        smoothScrolling: true,
-                        cursorBlinking: 'smooth',
-                        cursorSmoothCaretAnimation: true,
-                        contextmenu: true,
-                        links: true,
-                        colorDecorators: true,
-                        inlineSuggest: { enabled: true },
-                        suggest: {
-                            showWords: true,
-                            showVariables: true,
-                            showFunctions: true,
-                            showConstants: true,
-                            showClasses: true,
-                            showInterfaces: true,
-                            insertMode: 'replace',
-                            filterGraceful: true,
-                            localityBonus: true,
-                            shareSuggestSelections: true,
-                            showIcons: true,
-                            maxVisibleSuggestions: 12
-                        },
-                        acceptSuggestionOnCommitCharacter: true,
-                        acceptSuggestionOnEnter: 'on',
-                        tabCompletion: 'on',
-                        wordBasedSuggestions: true,
-                        semanticHighlighting: { enabled: true },
-                        occurrencesHighlight: true,
-                        codeLens: true,
-                        inlayHints: { enabled: true },
-                        hover: { enabled: true, delay: 300 },
-                        definitionLinkOpensInPeek: true,
-                        quickSuggestionsDelay: 10,
-                        suggestSelection: 'first',
-                        suggestFontSize: 14,
-                        suggestLineHeight: 20,
-                        tabSize: 2,
-                        insertSpaces: true,
-                        detectIndentation: true,
-                        trimAutoWhitespace: true,
-                        largeFileOptimizations: true,
-                        renderValidationDecorations: 'on',
-                        diffEditorCodeComparison: false,
-                        accessibilitySupport: 'auto',
-                        screenReaderAnnounceInlineSuggestion: true
-                    });
-
-                    // CRITICAL: Store editor in global state immediately
-                    examApp.editor = editor;
-
-                    // Setup language features
-                    setupLanguageFeatures(editor);
-
-                    // Setup auto-save
-                    setupAutoSave(editor);
-
-                    // Setup enhanced features integration
-                    setupEditorIntegrations(editor);
-
-                    // Setup keyboard shortcuts
-                    setupKeyboardShortcuts(editor);
-
-                    // Setup error detection and highlighting
-                    setupErrorDetection(editor);
-
-                    // Setup code quality hints
-                    setupCodeQualityHints(editor);
-
-                    console.log('Enhanced Monaco Editor initialized');
-                    resolve(editor);
-
-                } catch (error) {
-                    console.error('Monaco Editor creation failed:', error);
-                    reject(error);
-                }
-            });
-
         } catch (error) {
             console.error('Monaco Editor initialization failed:', error);
             reject(error);
         }
     });
+}
+
+/**
+ * Create Monaco editor instance
+ */
+function createMonacoEditor(initialCode, resolve, reject) {
+    try {
+        const defaultCode = initialCode || getDefaultCode();
+        const examApp = window.ExamApp;
+
+        const editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+            value: defaultCode,
+            language: 'javascript',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: true },
+            scrollBeyondLastLine: false,
+            fontSize: 14,
+            lineNumbers: 'on',
+            renderWhitespace: 'selection',
+            wordWrap: 'on',
+            bracketPairColorization: { enabled: true },
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: true,
+            parameterHints: { enabled: true },
+            folding: true,
+            formatOnPaste: false,
+            formatOnType: false,
+            autoClosingBrackets: 'languageDefined',
+            autoClosingQuotes: 'languageDefined',
+            autoSurround: 'languageDefined',
+            autoIndent: 'advanced',
+            dragAndDrop: true,
+            smoothScrolling: true,
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: true,
+            contextmenu: true,
+            links: true,
+            colorDecorators: true,
+            inlineSuggest: { enabled: true },
+            suggest: {
+                showWords: true,
+                showVariables: true,
+                showFunctions: true,
+                showConstants: true,
+                showClasses: true,
+                showInterfaces: true,
+                insertMode: 'replace',
+                filterGraceful: true,
+                localityBonus: true,
+                shareSuggestSelections: true,
+                showIcons: true,
+                maxVisibleSuggestions: 12
+            },
+            acceptSuggestionOnCommitCharacter: true,
+            acceptSuggestionOnEnter: 'on',
+            tabCompletion: 'on',
+            wordBasedSuggestions: true,
+            semanticHighlighting: { enabled: true },
+            occurrencesHighlight: true,
+            codeLens: true,
+            inlayHints: { enabled: true },
+            hover: { enabled: true, delay: 300 },
+            definitionLinkOpensInPeek: true,
+            quickSuggestionsDelay: 10,
+            suggestSelection: 'first',
+            suggestFontSize: 14,
+            suggestLineHeight: 20,
+            tabSize: 2,
+            insertSpaces: true,
+            detectIndentation: true,
+            trimAutoWhitespace: true,
+            largeFileOptimizations: true,
+            renderValidationDecorations: 'on',
+            diffEditorCodeComparison: false,
+            accessibilitySupport: 'auto',
+            screenReaderAnnounceInlineSuggestion: true
+        });
+
+        // CRITICAL: Store editor in global state immediately
+        examApp.editor = editor;
+
+        // Setup language features
+        setupLanguageFeatures(editor);
+
+        // Setup auto-save
+        setupAutoSave(editor);
+
+        // Setup enhanced features integration
+        setupEditorIntegrations(editor);
+
+        // Setup keyboard shortcuts
+        setupKeyboardShortcuts(editor);
+
+        // Setup error detection and highlighting
+        setupErrorDetection(editor);
+
+        // Setup code quality hints
+        setupCodeQualityHints(editor);
+
+        console.log('Enhanced Monaco Editor initialized');
+        resolve(editor);
+
+    } catch (error) {
+        console.error('Monaco Editor creation failed:', error);
+        reject(error);
+    }
 }
 
 /**

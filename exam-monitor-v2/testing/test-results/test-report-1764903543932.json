@@ -1,0 +1,391 @@
+{
+  "summary": {
+    "total": 23,
+    "passed": 1,
+    "failed": 14,
+    "errors": 8
+  },
+  "tests": [
+    {
+      "name": "Function Key F1",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903528462,
+      "endTime": 1764903529484,
+      "duration": 1022,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F2",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903529484,
+      "endTime": 1764903530491,
+      "duration": 1007,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F3",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903530491,
+      "endTime": 1764903531496,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F4",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903531496,
+      "endTime": 1764903532500,
+      "duration": 1004,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F5",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903532500,
+      "endTime": 1764903533507,
+      "duration": 1007,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F11",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903533508,
+      "endTime": 1764903534513,
+      "duration": 1005,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Function Key F12",
+      "category": "keyboard",
+      "status": "failed",
+      "startTime": 1764903534513,
+      "endTime": 1764903535519,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: DevTools",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535519,
+      "endTime": 1764903535528,
+      "duration": 9,
+      "error": "Unknown key: \"Control+Shift+I\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: Console",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535528,
+      "endTime": 1764903535529,
+      "duration": 1,
+      "error": "Unknown key: \"Control+Shift+J\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: Refresh",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535529,
+      "endTime": 1764903535529,
+      "duration": 0,
+      "error": "Unknown key: \"Control+R\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: New Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535529,
+      "endTime": 1764903535529,
+      "duration": 0,
+      "error": "Unknown key: \"Control+T\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: Close Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535529,
+      "endTime": 1764903535530,
+      "duration": 1,
+      "error": "Unknown key: \"Control+W\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: Alt+Tab",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535530,
+      "endTime": 1764903535530,
+      "duration": 0,
+      "error": "Unknown key: \"Alt+Tab\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Key Combo: View Source",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535530,
+      "endTime": 1764903535530,
+      "duration": 0,
+      "error": "Unknown key: \"Control+U\"",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Allowed Combo: Ctrl+C in Editor",
+      "category": "keyboard",
+      "status": "error",
+      "startTime": 1764903535530,
+      "endTime": 1764903535642,
+      "duration": 112,
+      "error": "Node is either not clickable or not an Element",
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Right Click",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1764903535643,
+      "endTime": 1764903536727,
+      "duration": 1084,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Middle Click",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1764903536727,
+      "endTime": 1764903537763,
+      "duration": 1036,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Mouse Leave Window",
+      "category": "mouse",
+      "status": "failed",
+      "startTime": 1764903537764,
+      "endTime": 1764903538770,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "ESC Key - Exit Fullscreen",
+      "category": "fullscreen",
+      "status": "failed",
+      "startTime": 1764903538770,
+      "endTime": 1764903539776,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "F11 - Toggle Fullscreen",
+      "category": "fullscreen",
+      "status": "failed",
+      "startTime": 1764903539776,
+      "endTime": 1764903540782,
+      "duration": 1006,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Programmatic Fullscreen Exit",
+      "category": "fullscreen",
+      "status": "passed",
+      "startTime": 1764903540782,
+      "endTime": 1764903541852,
+      "duration": 1070,
+      "error": null,
+      "violationDetected": true,
+      "expectedViolation": true,
+      "logs": [
+        "FULLSCREEN EXIT DETECTED - Attempt 1/3",
+        "Violation reported: fullscreen_exit JSHandle@object",
+        "Fullscreen exit attempt 1/3 - CSS red screen active"
+      ]
+    },
+    {
+      "name": "Window Blur",
+      "category": "focus",
+      "status": "failed",
+      "startTime": 1764903541869,
+      "endTime": 1764903542896,
+      "duration": 1027,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    },
+    {
+      "name": "Visibility Change",
+      "category": "focus",
+      "status": "failed",
+      "startTime": 1764903542896,
+      "endTime": 1764903543904,
+      "duration": 1008,
+      "error": null,
+      "violationDetected": false,
+      "expectedViolation": true,
+      "logs": []
+    }
+  ],
+  "browser": "",
+  "timestamp": "2025-12-05T02:58:24.514Z",
+  "coverage": {},
+  "config": {
+    "examUrl": "http://localhost:8080/student",
+    "testStudent": {
+      "name": "Test Student",
+      "class": "11Б"
+    },
+    "browsers": [
+      "chromium"
+    ],
+    "headless": false,
+    "timeout": 30000,
+    "outputDir": "./test-results"
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "platform": "MacIntel",
+    "language": "en-GB"
+  }
+}
