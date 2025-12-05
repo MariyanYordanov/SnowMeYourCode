@@ -504,29 +504,8 @@ function applyCSSBlockingRules() {
             }
         }
         
-        /* FULLSCREEN ENFORCEMENT */
-        body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen) {
-            filter: blur(20px) !important;
-            opacity: 0.1 !important;
-            pointer-events: none !important;
-        }
-        
-        body:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen)::before {
-            content: "RETURN TO FULLSCREEN TO CONTINUE EXAM" !important;
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            font-size: 48px !important;
-            color: red !important;
-            font-weight: bold !important;
-            z-index: 999999 !important;
-            text-align: center !important;
-            background: rgba(0,0,0,0.9) !important;
-            padding: 40px !important;
-            border-radius: 10px !important;
-            pointer-events: none !important;
-        }
+        /* FULLSCREEN ENFORCEMENT - Removed to avoid conflicts with base.css red screen */
+        /* Red screen warning handled by base.css body.anti-cheat-active:not(:fullscreen)::before */
         
         /* PREVENT MANIPULATION OF ANTI-CHEAT ELEMENTS */
         #aggressive-anti-cheat-css {
