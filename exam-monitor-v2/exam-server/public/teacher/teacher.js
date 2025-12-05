@@ -341,8 +341,13 @@ class SmartTeacherDashboard {
         });
 
         this.socket.on('student-disconnected', (data) => {
-            // Check if this is a completion or disconnection
-            const status = data.reason === 'completed' ? 'completed' : 'disconnected';
+            // Determine status based on reason
+            let status = 'disconnected';
+            if (data.reason === 'completed') {
+                status = 'completed';
+            } else if (data.reason === 'forced_violations' || data.reason === 'terminated') {
+                status = 'terminated';
+            }
             this.updateStudentStatus(data.sessionId, status, data);
         });
 
@@ -722,6 +727,17 @@ class SmartTeacherDashboard {
                 severity: data.severity,
                 timestamp: Date.now()
             });
+
+            // Increment violation count
+            student.violationCount = (student.violationCount || 0) + 1;
+
+            // Update specific counters if provided
+            if (data.fullscreenExitAttempts) {
+                student.fullscreenExitAttempts = data.fullscreenExitAttempts;
+            }
+            if (data.heartbeatMissed) {
+                student.heartbeatMissed = data.heartbeatMissed;
+            }
 
             // Keep only last 10 activities
             if (student.activities.length > 10) {
