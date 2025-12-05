@@ -197,6 +197,13 @@ function handleFullscreenChange() {
 
                 console.log(`FULLSCREEN EXIT DETECTED - Attempt ${examApp.fullscreenExitAttempts}/3`);
 
+                // CHANGED: Report EVERY fullscreen exit to teacher (severity = high, not critical)
+                reportViolation('fullscreen_exit', {
+                    severity: 'high',
+                    attemptNumber: examApp.fullscreenExitAttempts,
+                    maxAttempts: 3
+                });
+
                 // Показваме диалог с предупреждение
                 showFullscreenExitWarning(examApp.fullscreenExitAttempts);
             }
@@ -982,23 +989,27 @@ function handleDragStart(event) {
     }
 }
 
-function reportViolation(violationType) {
+function reportViolation(violationType, customDetails = {}) {
     try {
         const examApp = window.ExamApp;
         if (examApp.socket && examApp.socket.connected) {
+            // Merge custom details with defaults
+            const details = {
+                timestamp: Date.now(),
+                userAgent: navigator.userAgent,
+                severity: customDetails.severity || 'critical',
+                ...customDetails
+            };
+
             examApp.socket.emit('suspicious-activity', {
                 sessionId: examApp.sessionId,
                 activityType: violationType,
-                details: {
-                    timestamp: Date.now(),
-                    userAgent: navigator.userAgent,
-                    severity: 'critical'
-                },
+                details: details,
                 timestamp: Date.now()
             });
         }
 
-        console.warn('Violation reported:', violationType);
+        console.warn('Violation reported:', violationType, customDetails);
 
     } catch (error) {
         console.error('Failed to report violation:', error);
@@ -1061,7 +1072,7 @@ function showFullscreenExitWarning(attemptNumber) {
     // Ако е 3-ти опит → прекратяване
     if (attemptNumber >= maxAttempts) {
         console.log('MAX FULLSCREEN EXIT ATTEMPTS REACHED - TERMINATING EXAM');
-        reportViolation('max_fullscreen_exit_attempts');
+        // No need to call reportViolation here - already reported in handleFullscreenChange()
 
         // Показваме финален диалог
         showFinalTerminationDialog();
