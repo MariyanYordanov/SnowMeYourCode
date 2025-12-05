@@ -326,8 +326,8 @@ pre {
 }
 
 /* === FULLSCREEN EXIT WARNING OVERLAY === */
-/* Shows red warning screen with continue/exit buttons when anti-cheat is active AND student exits fullscreen */
-body.anti-cheat-active:not(:fullscreen) .fullscreen-warning-overlay {
+/* Shows red warning screen ONLY when student has exited fullscreen (not on initial load) */
+body.fullscreen-exited .fullscreen-warning-overlay {
     display: flex !important;
 }
 

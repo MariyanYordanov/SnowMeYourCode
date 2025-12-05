@@ -176,10 +176,13 @@ function handleFullscreenChange() {
         if (isFullscreen) {
             updateFullscreenStatus('Fullscreen активен');
 
+            // Remove fullscreen-exited class when re-entering fullscreen
+            document.body.classList.remove('fullscreen-exited');
+
             if (!wasFullscreen && examApp.isLoggedIn && !examApp.antiCheatActive) {
                 console.log('Fullscreen entered - activating anti-cheat');
                 activateAntiCheat();
-                
+
                 // Show subtle notification that exam has started
                 if (typeof showNotification === 'function') {
                     showNotification('Изпитът започна успешно!', 'success');
@@ -192,6 +195,9 @@ function handleFullscreenChange() {
                 examApp.isLoggedIn &&
                 examApp.antiCheatActive &&
                 !examApp.completionInProgress) {
+
+                // Add fullscreen-exited class to trigger red screen overlay
+                document.body.classList.add('fullscreen-exited');
 
                 // Увеличаваме брояча на опити
                 if (!examApp.fullscreenExitAttempts) {
