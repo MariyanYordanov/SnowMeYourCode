@@ -1063,11 +1063,12 @@ export function initializeAdvancedAntiCheat() {
 
 /**
  * Show fullscreen exit warning dialog
+ * SIMPLIFIED: CSS red screen handles the visual warning automatically
+ * This function now just handles 3rd attempt termination
  */
 function showFullscreenExitWarning(attemptNumber) {
     const examApp = window.ExamApp;
     const maxAttempts = 3;
-    const remainingAttempts = maxAttempts - attemptNumber;
 
     // Ако е 3-ти опит → прекратяване
     if (attemptNumber >= maxAttempts) {
@@ -1079,123 +1080,9 @@ function showFullscreenExitWarning(attemptNumber) {
         return;
     }
 
-    // Създаваме overlay за диалога
-    const overlay = document.createElement('div');
-    overlay.id = 'fullscreen-exit-warning-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999999;
-        animation: fadeIn 0.3s ease-in-out;
-    `;
-
-    const dialog = document.createElement('div');
-    dialog.style.cssText = `
-        background: white;
-        padding: 40px;
-        border-radius: 16px;
-        max-width: 600px;
-        text-align: center;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        animation: scaleIn 0.3s ease-in-out;
-    `;
-
-    dialog.innerHTML = `
-        <div style="font-size: 64px; margin-bottom: 20px;">⚠</div>
-        <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 28px;">
-            FULLSCREEN РЕЖИМ ИЗКЛЮЧЕН
-        </h2>
-        <p style="font-size: 18px; line-height: 1.6; margin-bottom: 20px; color: #333;">
-            Опитахте да излезете от fullscreen режим.<br>
-            Това е <strong style="color: #dc3545;">ОПИТ ${attemptNumber} от ${maxAttempts}</strong>.
-        </p>
-        <p style="font-size: 20px; font-weight: bold; color: #dc3545; margin-bottom: 30px;">
-            ${remainingAttempts} ${remainingAttempts === 1 ? 'опит' : 'опита'} до прекратяване на изпита!
-        </p>
-        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
-            <button id="continue-exam-btn" style="
-                background: #28a745;
-                color: white;
-                border: none;
-                padding: 15px 40px;
-                font-size: 18px;
-                font-weight: bold;
-                border-radius: 8px;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(40,167,69,0.3);
-                transition: all 0.2s;
-            ">
-                Продължи изпита
-            </button>
-            <button id="exit-exam-btn" style="
-                background: #6c757d;
-                color: white;
-                border: none;
-                padding: 15px 40px;
-                font-size: 18px;
-                font-weight: bold;
-                border-radius: 8px;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(108,117,125,0.3);
-                transition: all 0.2s;
-            ">
-                Прекрати изпита
-            </button>
-        </div>
-    `;
-
-    // Add CSS animations
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        #continue-exam-btn:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(40,167,69,0.4);
-        }
-        #exit-exam-btn:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(108,117,125,0.4);
-        }
-    `;
-    document.head.appendChild(style);
-
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-
-    // Button handlers
-    document.getElementById('continue-exam-btn').addEventListener('click', () => {
-        overlay.remove();
-        style.remove();
-
-        // Връщаме се в fullscreen
-        enterFullscreenMode();
-    });
-
-    document.getElementById('exit-exam-btn').addEventListener('click', () => {
-        overlay.remove();
-        style.remove();
-
-        // Прекратяваме изпита
-        if (window.ExamApp && window.ExamApp.completeExam) {
-            window.ExamApp.completeExam('student_voluntary_exit');
-        }
-    });
+    // For attempts 1-2: CSS red screen is already visible via :not(:fullscreen)::before
+    // No JavaScript overlay needed - student just needs to return to fullscreen
+    console.log(`Fullscreen exit attempt ${attemptNumber}/${maxAttempts} - CSS red screen active`);
 }
 
 /**
