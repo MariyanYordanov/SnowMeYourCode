@@ -466,7 +466,8 @@ export class ServerSideAntiCheat {
 
         // Accumulated violations
         if (violations.keystrokeAnomaly >= this.violationThresholds.keystrokeAnomalies) return true;
-        if (violations.heartbeatMissed >= this.violationThresholds.heartbeatMissed) return true;
+        // DISABLED: Heartbeat missed should NOT terminate exam (only monitors connection health)
+        // if (violations.heartbeatMissed >= this.violationThresholds.heartbeatMissed) return true;
 
         // Total suspicion score
         if (violations.totalScore >= 3.0) return true;
