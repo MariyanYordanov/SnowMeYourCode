@@ -189,10 +189,12 @@ async function handleForceDisconnect(data) {
     console.error('Force disconnect:', data);
 
     const message = data.message || 'Изпитът е прекратен поради нарушение на правилата.';
-    await showViolationExitDialog(message);
+    const userConfirmed = await showViolationExitDialog(message);
 
-    if (window.exitExam) {
+    if (userConfirmed && window.exitExam) {
         window.exitExam(data.reason || 'force_disconnect');
+    } else {
+        console.log('User chose to continue despite violation warning');
     }
 }
 
