@@ -820,11 +820,12 @@ export class WebSocketHandler {
      */
     isCriticalViolation(activityType) {
         const instantTermination = [
-            'fullscreen_exit',
+            // NOTE: 'fullscreen_exit' is NOT instant termination
+            // Students get 3 attempts, handled by anticheat.js
             'focus_loss',
             'tab_hidden',
             // Keep legacy names for compatibility
-            'fullscreen_exit_violation',
+            'fullscreen_exit_violation',  // Only 3rd attempt from anticheat.js
             'document_hidden_violation'
         ];
 
