@@ -195,6 +195,16 @@ async function handleForceDisconnect(data) {
         window.exitExam(data.reason || 'force_disconnect');
     } else {
         console.log('User chose to continue despite violation warning');
+
+        // Re-enter fullscreen if user chose to continue
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                console.log('Re-entered fullscreen after user chose to continue');
+            }
+        } catch (error) {
+            console.error('Failed to re-enter fullscreen:', error);
+        }
     }
 }
 
