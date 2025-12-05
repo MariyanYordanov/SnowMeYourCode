@@ -798,18 +798,21 @@ export class WebSocketHandler {
      * Assess the severity of suspicious activity
      */
     assessSeverity(activityType, details = {}) {
-        // Simple approach - any focus loss or fullscreen exit is critical
+        // NOTE: 'fullscreen_exit' gets 3 attempts, so it's NOT critical (unless it's the 3rd attempt)
+        // Only instant termination activities are critical
         const criticalActivities = [
-            'fullscreen_exit',
             'focus_loss',
             'tab_hidden',
             // Keep legacy names for compatibility
-            'fullscreen_exit_violation',
+            'fullscreen_exit_violation',  // This is sent only on 3rd attempt by anticheat.js
             'document_hidden_violation'
         ];
 
         if (criticalActivities.includes(activityType)) {
             return 'critical';
+        } else if (activityType === 'fullscreen_exit') {
+            // Fullscreen exits are high severity but NOT critical (allow 3 attempts)
+            return 'high';
         } else {
             return 'medium';
         }
