@@ -38,6 +38,10 @@ export function activateAntiCheat() {
 
         examApp.antiCheatActive = true;
         examApp.antiCheatActivationTime = Date.now(); // Store activation time for grace period
+
+        // Add CSS class to body for red screen warning
+        document.body.classList.add('anti-cheat-active');
+
         console.log('Anti-cheat activated');
         return true;
     } catch (error) {
@@ -1062,79 +1066,19 @@ export function initializeAdvancedAntiCheat() {
 }
 
 /**
- * Show fullscreen exit warning dialog
- * SIMPLIFIED: CSS red screen handles the visual warning automatically
- * This function now just handles 3rd attempt termination
+ * Show fullscreen exit warning - RED SCREEN ONLY
+ * CSS handles the visual warning via body.anti-cheat-active:not(:fullscreen)::before
+ * On 3rd attempt: terminate exam via server force-disconnect
  */
 function showFullscreenExitWarning(attemptNumber) {
-    const examApp = window.ExamApp;
     const maxAttempts = 3;
 
-    // Ако е 3-ти опит → прекратяване
     if (attemptNumber >= maxAttempts) {
-        console.log('MAX FULLSCREEN EXIT ATTEMPTS REACHED - TERMINATING EXAM');
-        // No need to call reportViolation here - already reported in handleFullscreenChange()
-
-        // Показваме финален диалог
-        showFinalTerminationDialog();
-        return;
+        console.log('MAX FULLSCREEN EXIT ATTEMPTS REACHED - Server will force-disconnect');
+        // Server handles termination after 3rd attempt
+        // No dialog needed - red screen remains visible until server disconnects
+    } else {
+        // CSS red screen is already visible via :not(:fullscreen)::before
+        console.log(`Fullscreen exit attempt ${attemptNumber}/${maxAttempts} - Red screen active`);
     }
-
-    // For attempts 1-2: CSS red screen is already visible via :not(:fullscreen)::before
-    // No JavaScript overlay needed - student just needs to return to fullscreen
-    console.log(`Fullscreen exit attempt ${attemptNumber}/${maxAttempts} - CSS red screen active`);
-}
-
-/**
- * Show final termination dialog 
- */
-function showFinalTerminationDialog() {
-    const overlay = document.createElement('div');
-    overlay.id = 'final-termination-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999999;
-    `;
-
-    const dialog = document.createElement('div');
-    dialog.style.cssText = `
-        background: white;
-        padding: 50px;
-        border-radius: 16px;
-        max-width: 600px;
-        text-align: center;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    `;
-
-    dialog.innerHTML = `
-        <div style="font-size: 80px; margin-bottom: 20px;">×</div>
-        <h2 style="color: #dc3545; margin-bottom: 20px; font-size: 32px;">
-            ИЗПИТЪТ Е ПРЕКРАТЕН
-        </h2>
-        <p style="font-size: 20px; line-height: 1.6; color: #333;">
-            Направихте <strong>3 опита</strong> да излезете от fullscreen режим.<br>
-            Изпитът е автоматично прекратен.
-        </p>
-        <p style="font-size: 16px; margin-top: 30px; color: #666;">
-            Свържете се с преподавателя за повече информация.
-        </p>
-    `;
-
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-
-    // Прекратяваме изпита след 2 секунди
-    setTimeout(() => {
-        if (window.ExamApp && window.ExamApp.completeExam) {
-            window.ExamApp.completeExam('max_fullscreen_exit_attempts');
-        }
-    }, 2000);
 }
