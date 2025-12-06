@@ -120,7 +120,18 @@ export function setupFocusMonitoring() {
         document.addEventListener('contextmenu', handleContextMenu, true);
         document.addEventListener('selectstart', handleSelectStart, true);
         document.addEventListener('dragstart', handleDragStart, true);
-        
+
+        // CRITICAL: Block trackpad gestures and wheel events
+        document.addEventListener('wheel', handleWheelEvent, { capture: true, passive: false });
+        document.addEventListener('gesturestart', handleGestureEvent, { capture: true, passive: false });
+        document.addEventListener('gesturechange', handleGestureEvent, { capture: true, passive: false });
+        document.addEventListener('gestureend', handleGestureEvent, { capture: true, passive: false });
+
+        // CRITICAL: Block touch events that could trigger gestures
+        document.addEventListener('touchstart', handleTouchEvent, { capture: true, passive: false });
+        document.addEventListener('touchmove', handleTouchEvent, { capture: true, passive: false });
+        document.addEventListener('touchend', handleTouchEvent, { capture: true, passive: false });
+
         // Start aggressive focus polling
         startAggressiveFocusPolling();
 
@@ -129,7 +140,7 @@ export function setupFocusMonitoring() {
 
         // AGGRESSIVE: Apply CSS-based blocking
         applyCSSBlockingRules();
-        
+
         console.log('AGGRESSIVE FOCUS MONITORING ESTABLISHED - NO ESCAPE!');
     } catch (error) {
         console.error('Failed to setup focus monitoring:', error);
@@ -997,6 +1008,128 @@ function handleDragStart(event) {
         event.stopPropagation();
         console.log('DRAG AND DROP BLOCKED');
         reportViolation('drag_drop_attempt');
+        return false;
+    }
+}
+
+// CRITICAL: Block wheel events with modifiers (pinch zoom, gesture scrolling)
+function handleWheelEvent(event) {
+    const examApp = window.ExamApp;
+
+    if (!examApp.antiCheatActive || examApp.completionInProgress) {
+        return;
+    }
+
+    // Block wheel events with Ctrl key (zoom gestures)
+    if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        console.log('⚠️ TRACKPAD ZOOM GESTURE BLOCKED');
+
+        // Show red screen immediately
+        if (!document.body.classList.contains('fullscreen-exited')) {
+            document.body.classList.add('fullscreen-exited');
+        }
+
+        reportViolation('trackpad_zoom_gesture', {
+            severity: 'high',
+            deltaX: event.deltaX,
+            deltaY: event.deltaY,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey
+        });
+        return false;
+    }
+
+    // Detect rapid horizontal wheel movements (swipe gestures)
+    if (Math.abs(event.deltaX) > 50) {
+        console.log('⚠️ POSSIBLE SWIPE GESTURE DETECTED:', event.deltaX);
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!document.body.classList.contains('fullscreen-exited')) {
+            document.body.classList.add('fullscreen-exited');
+        }
+
+        reportViolation('trackpad_swipe_gesture', {
+            severity: 'high',
+            deltaX: event.deltaX,
+            direction: event.deltaX > 0 ? 'right' : 'left'
+        });
+        return false;
+    }
+}
+
+// CRITICAL: Block all gesture events (pinch, rotate, swipe on trackpad)
+function handleGestureEvent(event) {
+    const examApp = window.ExamApp;
+
+    if (!examApp.antiCheatActive || examApp.completionInProgress) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    console.log(`⛔ GESTURE BLOCKED: ${event.type}`, {
+        scale: event.scale,
+        rotation: event.rotation
+    });
+
+    // Show red screen immediately
+    if (!document.body.classList.contains('fullscreen-exited')) {
+        document.body.classList.add('fullscreen-exited');
+    }
+
+    reportViolation('trackpad_gesture', {
+        severity: 'critical',
+        gestureType: event.type,
+        scale: event.scale,
+        rotation: event.rotation
+    });
+
+    return false;
+}
+
+// CRITICAL: Block multi-finger touch gestures
+function handleTouchEvent(event) {
+    const examApp = window.ExamApp;
+
+    if (!examApp.antiCheatActive || examApp.completionInProgress) {
+        return;
+    }
+
+    // Allow single-touch for Monaco editor scrolling
+    if (event.touches.length === 1) {
+        // Allow in editor only
+        const target = event.target;
+        const isInEditor = target.closest('.monaco-editor') ||
+                          target.closest('#monaco-editor') ||
+                          target.closest('.view-lines');
+        if (isInEditor) {
+            return; // Allow single-touch scrolling in editor
+        }
+    }
+
+    // Block multi-touch gestures (2+ fingers = swipe/pinch)
+    if (event.touches.length > 1) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        console.log(`⛔ MULTI-TOUCH BLOCKED: ${event.touches.length} fingers`);
+
+        // Show red screen immediately
+        if (!document.body.classList.contains('fullscreen-exited')) {
+            document.body.classList.add('fullscreen-exited');
+        }
+
+        reportViolation('multi_touch_gesture', {
+            severity: 'critical',
+            touchCount: event.touches.length,
+            eventType: event.type
+        });
+
         return false;
     }
 }

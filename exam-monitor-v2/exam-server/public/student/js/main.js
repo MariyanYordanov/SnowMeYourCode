@@ -37,7 +37,7 @@ import {
     enterFullscreenMode,
     deactivateAntiCheat,
     initializeAdvancedAntiCheat
-} from './anticheat.js?v=1764998127';
+} from './anticheat.js?v=1764999675';
 
 import {
     showCompletionDialog,
