@@ -162,13 +162,20 @@ export function enterFullscreenMode() {
 
 function handleFullscreenChange() {
     try {
+        const examApp = window.ExamApp;
+
+        // CRITICAL: Stop processing if exam is over
+        if (examApp.completionInProgress || !examApp.isLoggedIn) {
+            console.log('Exam is over - ignoring fullscreen change');
+            return;
+        }
+
         const isFullscreen = !!(
             document.fullscreenElement ||
             document.webkitFullscreenElement ||
             document.mozFullScreenElement ||
             document.msFullscreenElement
         );
-        const examApp = window.ExamApp;
 
         const wasFullscreen = examApp.isFullscreen;
         examApp.isFullscreen = isFullscreen;
@@ -207,15 +214,31 @@ function handleFullscreenChange() {
 
                 console.log(`FULLSCREEN EXIT DETECTED - Attempt ${examApp.fullscreenExitAttempts}/3`);
 
-                // CHANGED: Report EVERY fullscreen exit to teacher (severity = high, not critical)
-                reportViolation('fullscreen_exit', {
-                    severity: 'high',
-                    attemptNumber: examApp.fullscreenExitAttempts,
-                    maxAttempts: 3
-                });
+                // Report fullscreen exit to teacher FIRST (before blocking)
+                if (examApp.fullscreenExitAttempts >= 3) {
+                    // Send critical violation to server FIRST
+                    reportViolation('fullscreen_exit_violation', {
+                        severity: 'critical',
+                        attemptNumber: examApp.fullscreenExitAttempts,
+                        maxAttempts: 3
+                    });
 
-                // Показваме диалог с предупреждение
-                showFullscreenExitWarning(examApp.fullscreenExitAttempts);
+                    // THEN mark exam as over to block further events
+                    examApp.completionInProgress = true;
+                    examApp.isLoggedIn = false;
+                    examApp.antiCheatActive = false;
+                    console.log('3rd attempt - exam termination initiated');
+                } else {
+                    // For attempts 1 and 2
+                    reportViolation('fullscreen_exit', {
+                        severity: 'high',
+                        attemptNumber: examApp.fullscreenExitAttempts,
+                        maxAttempts: 3
+                    });
+
+                    // Show warning dialog
+                    showFullscreenExitWarning(examApp.fullscreenExitAttempts);
+                }
             }
         }
     } catch (error) {
@@ -981,6 +1004,13 @@ function handleDragStart(event) {
 function reportViolation(violationType, customDetails = {}) {
     try {
         const examApp = window.ExamApp;
+
+        // CRITICAL: Don't report violations if exam is over
+        if (examApp.completionInProgress || !examApp.isLoggedIn) {
+            console.log('Exam is over - not reporting violation:', violationType);
+            return;
+        }
+
         if (examApp.socket && examApp.socket.connected) {
             // Merge custom details with defaults
             const details = {

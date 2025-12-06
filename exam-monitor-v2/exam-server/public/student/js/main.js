@@ -37,7 +37,7 @@ import {
     enterFullscreenMode,
     deactivateAntiCheat,
     initializeAdvancedAntiCheat
-} from './anticheat.js';
+} from './anticheat.js?v=1764998127';
 
 import {
     showCompletionDialog,
@@ -344,6 +344,8 @@ function exitExam(reason = 'unknown') {
     try {
         const examApp = window.ExamApp;
         examApp.completionInProgress = true;
+        examApp.isLoggedIn = false;
+        examApp.antiCheatActive = false;
 
         // Close help chat window if open
         const helpChatWindow = document.querySelector('.help-chat-window');
@@ -353,6 +355,20 @@ function exitExam(reason = 'unknown') {
         }
 
         deactivateAntiCheat();
+
+        // CRITICAL: Hide fullscreen warning overlay immediately
+        const warningOverlay = document.querySelector('.fullscreen-warning-overlay');
+        if (warningOverlay) {
+            warningOverlay.style.display = 'none';
+            console.log('Fullscreen warning overlay hidden');
+        }
+
+        // CRITICAL: Exit fullscreen immediately
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => {
+                console.log('Failed to exit fullscreen:', err);
+            });
+        }
 
         if (examApp.timerInterval) {
             clearInterval(examApp.timerInterval);
@@ -370,21 +386,30 @@ function exitExam(reason = 'unknown') {
             });
         }
 
-        examApp.isLoggedIn = false;
-        examApp.antiCheatActive = false;
+        // For force-disconnect, show screen IMMEDIATELY (no delay)
+        const isForceDisconnect = reason.includes('force') || reason.includes('violation') || reason.includes('suspicious');
 
-        setTimeout(() => {
+        if (isForceDisconnect) {
             hideExamComponent();
-            showCompletionScreen();
+            showCompletionScreen(reason);
             examApp.completionInProgress = false;
-        }, 2000);
-
-        console.log(`Exam exited: ${reason}`);
+            console.log(`❌ EXAM TERMINATED: ${reason}`);
+        } else {
+            setTimeout(() => {
+                hideExamComponent();
+                showCompletionScreen(reason);
+                examApp.completionInProgress = false;
+            }, 2000);
+            console.log(`Exam exited: ${reason}`);
+        }
 
     } catch (error) {
         console.error('Error during exam exit:', error);
     }
 }
+
+// CRITICAL: Export exitExam to global scope so socket.js can call it
+window.exitExam = exitExam;
 
 function showLoginComponent() {
     const loginComponent = document.getElementById('login-component');
@@ -418,7 +443,7 @@ function hideExamComponent() {
     }
 }
 
-function showCompletionScreen() {
+function showCompletionScreen(reason = 'unknown') {
     const examApp = window.ExamApp;
     const completionComponent = document.getElementById('completion-component');
 
@@ -433,6 +458,34 @@ function showCompletionScreen() {
         if (completionTimeEl) {
             const now = new Date();
             completionTimeEl.textContent = now.toLocaleString('bg-BG');
+        }
+
+        // Change title and message based on reason
+        const titleEl = document.getElementById('completion-title');
+        const messageEl = document.getElementById('completion-message');
+
+        const isForceDisconnect = reason && (reason.includes('force') || reason.includes('violation') || reason.includes('suspicious'));
+
+        if (isForceDisconnect) {
+            if (titleEl) {
+                titleEl.textContent = '❌ ИЗПИТЪТ Е ПРЕКРАТЕН';
+                titleEl.style.color = '#dc2626';
+            }
+            if (messageEl) {
+                messageEl.textContent = 'Изпитът беше прекратен поради нарушение на правилата на изпита (напускане от fullscreen 3 пъти).';
+                messageEl.style.color = '#dc2626';
+                messageEl.style.fontWeight = 'bold';
+                messageEl.style.fontSize = '1.4rem';
+            }
+        } else {
+            if (titleEl) {
+                titleEl.textContent = '✅ Изпитът приключи успешно!';
+                titleEl.style.color = '#059669';
+            }
+            if (messageEl) {
+                messageEl.textContent = 'Вашето решение е изпратено успешно.';
+                messageEl.style.color = '#4a5568';
+            }
         }
 
         completionComponent.style.display = 'block';

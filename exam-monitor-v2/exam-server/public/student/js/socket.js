@@ -1,5 +1,37 @@
 import { showViolationExitDialog } from './dialogs.js';
 
+/**
+ * Report anti-cheat violation to server
+ * Called by anticheat.js when violations are detected
+ */
+export function reportViolation(violationType, metadata = {}) {
+    const examApp = window.ExamApp;
+
+    if (!examApp.socket || !examApp.socket.connected) {
+        console.error('Cannot report violation - socket not connected');
+        return;
+    }
+
+    if (!examApp.sessionId) {
+        console.error('Cannot report violation - no session ID');
+        return;
+    }
+
+    const violationData = {
+        type: violationType,
+        timestamp: Date.now(),
+        metadata: metadata
+    };
+
+    console.log(`Reporting violation to server: ${violationType}`, violationData);
+
+    examApp.socket.emit('suspicious-activity', {
+        activity: violationType,
+        details: violationData.metadata,
+        timestamp: violationData.timestamp
+    });
+}
+
 export function setupSocket() {
     try {
         const socket = io('/', {
@@ -187,6 +219,22 @@ function handleExamExpired() {
 
 async function handleForceDisconnect(data) {
     console.error('Force disconnect:', data);
+
+    // CRITICAL: Hide red screen IMMEDIATELY (before anything else)
+    const warningOverlay = document.querySelector('.fullscreen-warning-overlay');
+    if (warningOverlay) {
+        warningOverlay.style.display = 'none';
+        warningOverlay.remove();
+        console.log('Red screen hidden immediately on force disconnect');
+    }
+
+    // Remove fullscreen-exited class from body
+    document.body.classList.remove('fullscreen-exited');
+
+    // Exit fullscreen immediately
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    }
 
     // NO DIALOG - Just exit immediately
     if (window.exitExam) {
