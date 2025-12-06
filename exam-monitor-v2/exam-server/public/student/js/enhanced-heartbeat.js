@@ -66,6 +66,9 @@ export class EnhancedHeartbeat {
     sendHeartbeat() {
         if (!this.socket || !this.isActive) return;
 
+        // Check if student is on red warning screen
+        const isOnWarningScreen = document.body.classList.contains('fullscreen-exited');
+
         const heartbeatData = {
             timestamp: Date.now(),
             focusHistory: this.getRecentFocusHistory(),
@@ -73,11 +76,12 @@ export class EnhancedHeartbeat {
             screenInfo: this.screenInfo,
             performanceInfo: this.getPerformanceInfo(),
             windowInfo: this.getWindowInfo(),
-            browserInfo: this.getBrowserInfo()
+            browserInfo: this.getBrowserInfo(),
+            isOnWarningScreen: isOnWarningScreen // IMPORTANT: Don't count missed heartbeats when on warning screen
         };
 
         this.socket.emit('heartbeat', heartbeatData);
-        
+
         // Clean up old data to prevent memory buildup
         this.cleanupOldData();
     }

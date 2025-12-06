@@ -12,7 +12,7 @@ export class ServerSideAntiCheat {
         this.violationThresholds = {
             focusViolations: 0, // Instant termination for focus loss
             keystrokeAnomalies: 3,
-            heartbeatMissed: 10000, // DISABLED: Don't terminate on heartbeat miss (fullscreen violations handle termination)
+            heartbeatMissed: 3, // Track app switching via missed heartbeats (ignores warning screen)
             codeInjection: 1,
             timeManipulation: 1
         };
@@ -71,13 +71,20 @@ export class ServerSideAntiCheat {
         const lastHeartbeat = this.lastHeartbeat.get(studentId) || profile.sessionStart;
         const timeSinceLastHeartbeat = now - lastHeartbeat;
 
+        // Store warning screen status
+        profile.isOnWarningScreen = heartbeatData.isOnWarningScreen || false;
+
         // Update last heartbeat
         this.lastHeartbeat.set(studentId, now);
         this.heartbeatExpected.set(studentId, now + this.heartbeatInterval);
 
-        // Validate heartbeat timing
+        // Validate heartbeat timing (SKIP if student is on warning screen)
         if (timeSinceLastHeartbeat > this.heartbeatInterval + this.heartbeatTolerance) {
-            this.recordViolation(studentId, 'heartbeatMissed', 0.6);
+            if (!heartbeatData.isOnWarningScreen) {
+                this.recordViolation(studentId, 'heartbeatMissed', 0.6);
+            } else {
+                console.log(`INFO: Heartbeat late but student on warning screen: ${studentId}`);
+            }
         }
 
         // Validate client claims about focus
@@ -562,14 +569,19 @@ export class ServerSideAntiCheat {
      */
     checkMissedHeartbeats() {
         const now = Date.now();
-        
+
         for (const [studentId, expectedTime] of this.heartbeatExpected.entries()) {
             if (now > expectedTime + this.heartbeatTolerance) {
                 const profile = this.studentProfiles.get(studentId);
                 if (profile && profile.examState === 'active') {
-                    console.log(`WARNING: Missed heartbeat: ${studentId}`);
-                    this.recordViolation(studentId, 'heartbeatMissed', 0.5);
-                    
+                    // DON'T count as violation if student is on warning screen
+                    if (!profile.isOnWarningScreen) {
+                        console.log(`WARNING: Missed heartbeat: ${studentId}`);
+                        this.recordViolation(studentId, 'heartbeatMissed', 0.5);
+                    } else {
+                        console.log(`INFO: Heartbeat missed but student on warning screen: ${studentId}`);
+                    }
+
                     // Update expected time to prevent spam
                     this.heartbeatExpected.set(studentId, now + this.heartbeatInterval);
                 }
