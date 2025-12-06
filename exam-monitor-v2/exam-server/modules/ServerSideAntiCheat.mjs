@@ -12,7 +12,7 @@ export class ServerSideAntiCheat {
         this.violationThresholds = {
             focusViolations: 0, // Instant termination for focus loss
             keystrokeAnomalies: 3,
-            heartbeatMissed: 2, // CHANGED: from 3 to 2 (stricter monitoring)
+            heartbeatMissed: 10000, // DISABLED: Don't terminate on heartbeat miss (fullscreen violations handle termination)
             codeInjection: 1,
             timeManipulation: 1
         };
