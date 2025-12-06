@@ -59,6 +59,10 @@ app.use('/student', express.static(join(__dirname, 'public/student'), {
         }
         if (path.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
+            // CRITICAL: Disable cache for JS files during development
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
         }
     }
 }));
