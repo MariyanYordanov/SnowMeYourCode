@@ -1,37 +1,5 @@
 import { showViolationExitDialog } from './dialogs.js';
 
-/**
- * Report anti-cheat violation to server
- * Called by anticheat.js when violations are detected
- */
-export function reportViolation(violationType, metadata = {}) {
-    const examApp = window.ExamApp;
-
-    if (!examApp.socket || !examApp.socket.connected) {
-        console.error('Cannot report violation - socket not connected');
-        return;
-    }
-
-    if (!examApp.sessionId) {
-        console.error('Cannot report violation - no session ID');
-        return;
-    }
-
-    const violationData = {
-        type: violationType,
-        timestamp: Date.now(),
-        metadata: metadata
-    };
-
-    console.log(`Reporting violation to server: ${violationType}`, violationData);
-
-    examApp.socket.emit('suspicious-activity', {
-        activity: violationType,
-        details: violationData.metadata,
-        timestamp: violationData.timestamp
-    });
-}
-
 export function setupSocket() {
     try {
         const socket = io('/', {
