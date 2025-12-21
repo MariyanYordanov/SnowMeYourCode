@@ -8,9 +8,9 @@ export class PanelResizer {
         this.currentHandle = null;
         this.startPos = 0;
         this.startSize = 0;
-        this.minSize = 200;
+        this.minSize = 32;
         this.maxSize = 800;
-        
+
         this.init();
     }
 
@@ -30,9 +30,6 @@ export class PanelResizer {
     createResizeHandles() {
         // Console resize handle (between editor and console)
         this.createHandle('console-resize-handle', 'console-panel', 'horizontal');
-        
-        // Sidebar resize handle (between main content and sidebar)
-        this.createHandle('sidebar-resize-handle', 'exam-sidebar', 'vertical');
     }
 
     /**
@@ -51,20 +48,8 @@ export class PanelResizer {
         handle.dataset.target = targetId;
         handle.dataset.direction = direction;
 
-        // Add visual indicator
-        handle.innerHTML = direction === 'horizontal' ?
-            '<div class="resize-indicator horizontal-indicator"></div>' :
-            '<div class="resize-indicator vertical-indicator"></div>';
-
-        // Position the handle
-        if (direction === 'horizontal') {
-            // Insert before console panel
-            target.parentNode.insertBefore(handle, target);
-        } else {
-            // For vertical handles (sidebar), append to the target as the last child
-            // This puts it on the right edge of the sidebar
-            target.appendChild(handle);
-        }
+        // Insert before target panel
+        target.parentNode.insertBefore(handle, target);
 
         console.log(`Resize handle created: ${handleId} for ${targetId}`);
     }
@@ -89,6 +74,27 @@ export class PanelResizer {
 
         // Handle mouse up to end resize
         document.addEventListener('mouseup', () => {
+            if (this.isResizing) {
+                this.endResize();
+            }
+        });
+
+        // Also listen on window for mouseup (catches releases outside document)
+        window.addEventListener('mouseup', () => {
+            if (this.isResizing) {
+                this.endResize();
+            }
+        });
+
+        // Handle mouse leaving the window
+        document.addEventListener('mouseleave', () => {
+            if (this.isResizing) {
+                this.endResize();
+            }
+        });
+
+        // Handle losing focus (e.g., alt-tab)
+        window.addEventListener('blur', () => {
             if (this.isResizing) {
                 this.endResize();
             }
@@ -128,24 +134,15 @@ export class PanelResizer {
         if (!target) return;
 
         // Store initial values
-        if (direction === 'horizontal') {
-            this.startPos = e.clientY;
-            this.startSize = target.offsetHeight;
-        } else {
-            this.startPos = e.clientX;
-            // For sidebar, get the current width from grid
-            const examContainer = document.querySelector('.exam-container');
-            const computedStyle = window.getComputedStyle(examContainer);
-            const columns = computedStyle.gridTemplateColumns.split(' ');
-            this.startSize = parseInt(columns[0]);
-        }
+        this.startPos = e.clientY;
+        this.startSize = target.offsetHeight;
 
         // Add visual feedback
         document.body.classList.add('resizing');
         handle.classList.add('active');
 
         // Change cursor
-        document.body.style.cursor = direction === 'horizontal' ? 'ns-resize' : 'ew-resize';
+        document.body.style.cursor = 'ns-resize';
     }
 
     /**
@@ -155,41 +152,25 @@ export class PanelResizer {
         if (!this.isResizing || !this.currentHandle) return;
 
         const targetId = this.currentHandle.dataset.target;
-        const direction = this.currentHandle.dataset.direction;
         const target = document.getElementById(targetId);
 
         if (!target) return;
 
-        let delta, newSize;
-
-        if (direction === 'horizontal') {
-            delta = e.clientY - this.startPos;
-            newSize = this.startSize - delta; // Subtract because console grows upward
-        } else {
-            delta = e.clientX - this.startPos;
-            newSize = this.startSize + delta;
-        }
+        const delta = e.clientY - this.startPos;
+        let newSize = this.startSize - delta; // Subtract because console grows upward
 
         // Apply constraints
         newSize = Math.max(this.minSize, Math.min(this.maxSize, newSize));
 
         // Apply the new size
-        if (direction === 'horizontal') {
-            target.style.height = newSize + 'px';
+        target.style.height = newSize + 'px';
 
-            // Also update the editor height
-            const editorContainer = document.querySelector('.editor-container');
-            if (editorContainer) {
-                const availableHeight = window.innerHeight - 120; // Account for header/toolbar
-                const editorHeight = availableHeight - newSize - 20; // 20px for gap
-                editorContainer.style.height = Math.max(200, editorHeight) + 'px';
-            }
-        } else {
-            // For sidebar, update the grid-template-columns
-            const examContainer = document.querySelector('.exam-container');
-            if (examContainer) {
-                examContainer.style.gridTemplateColumns = `${newSize}px 1fr`;
-            }
+        // Also update the editor height
+        const editorContainer = document.querySelector('.editor-container');
+        if (editorContainer) {
+            const availableHeight = window.innerHeight - 120; // Account for header/toolbar
+            const editorHeight = availableHeight - newSize - 20; // 20px for gap
+            editorContainer.style.height = Math.max(200, editorHeight) + 'px';
         }
 
         // Trigger Monaco editor layout update
@@ -230,22 +211,17 @@ export class PanelResizer {
         if (!handle) return;
 
         const targetId = handle.dataset.target;
-        const direction = handle.dataset.direction;
         const target = document.getElementById(targetId);
-        
+
         if (!target) return;
 
-        // Set default sizes
-        if (direction === 'horizontal') {
-            target.style.height = '300px'; // Default console height
-            
-            // Reset editor height
-            const editorContainer = document.querySelector('.editor-container');
-            if (editorContainer) {
-                editorContainer.style.height = 'calc(100vh - 420px)';
-            }
-        } else {
-            target.style.width = '300px'; // Default sidebar width
+        // Set default console height
+        target.style.height = '200px';
+
+        // Reset editor height
+        const editorContainer = document.querySelector('.editor-container');
+        if (editorContainer) {
+            editorContainer.style.height = 'calc(100vh - 420px)';
         }
 
         // Trigger Monaco editor layout update
@@ -263,19 +239,13 @@ export class PanelResizer {
      */
     saveSizes() {
         const sizes = {};
-        
+
         // Save console height
         const consolePanel = document.getElementById('console-panel');
         if (consolePanel && consolePanel.style.height) {
             sizes.consoleHeight = consolePanel.style.height;
         }
-        
-        // Save sidebar width
-        const sidebar = document.getElementById('exam-sidebar');
-        if (sidebar && sidebar.style.width) {
-            sizes.sidebarWidth = sidebar.style.width;
-        }
-        
+
         try {
             localStorage.setItem('exam-panel-sizes', JSON.stringify(sizes));
         } catch (error) {
@@ -290,15 +260,15 @@ export class PanelResizer {
         try {
             const saved = localStorage.getItem('exam-panel-sizes');
             if (!saved) return;
-            
+
             const sizes = JSON.parse(saved);
-            
+
             // Restore console height
             if (sizes.consoleHeight) {
                 const consolePanel = document.getElementById('console-panel');
                 if (consolePanel) {
                     consolePanel.style.height = sizes.consoleHeight;
-                    
+
                     // Update editor height accordingly
                     const editorContainer = document.querySelector('.editor-container');
                     if (editorContainer) {
@@ -309,22 +279,14 @@ export class PanelResizer {
                     }
                 }
             }
-            
-            // Restore sidebar width
-            if (sizes.sidebarWidth) {
-                const sidebar = document.getElementById('exam-sidebar');
-                if (sidebar) {
-                    sidebar.style.width = sizes.sidebarWidth;
-                }
-            }
-            
+
             // Trigger Monaco layout update after restore
             setTimeout(() => {
                 if (window.ExamApp?.editor) {
                     window.ExamApp.editor.layout();
                 }
             }, 100);
-            
+
         } catch (error) {
             console.warn('Failed to load panel sizes:', error);
         }
@@ -335,11 +297,9 @@ export class PanelResizer {
      */
     getSizes() {
         const consolePanel = document.getElementById('console-panel');
-        const sidebar = document.getElementById('exam-sidebar');
-        
+
         return {
-            consoleHeight: consolePanel ? consolePanel.offsetHeight : 0,
-            sidebarWidth: sidebar ? sidebar.offsetWidth : 0
+            consoleHeight: consolePanel ? consolePanel.offsetHeight : 0
         };
     }
 
@@ -353,21 +313,14 @@ export class PanelResizer {
                 consolePanel.style.height = sizes.consoleHeight + 'px';
             }
         }
-        
-        if (sizes.sidebarWidth) {
-            const sidebar = document.getElementById('exam-sidebar');
-            if (sidebar) {
-                sidebar.style.width = sizes.sidebarWidth + 'px';
-            }
-        }
-        
+
         // Trigger layout update
         setTimeout(() => {
             if (window.ExamApp?.editor) {
                 window.ExamApp.editor.layout();
             }
         }, 0);
-        
+
         this.saveSizes();
     }
 
@@ -402,17 +355,12 @@ export class PanelResizer {
     handleWindowResize() {
         // Recalculate sizes on window resize
         const sizes = this.getSizes();
-        
-        // Ensure panels don't exceed window bounds
+
+        // Ensure console doesn't exceed window bounds
         const maxConsoleHeight = window.innerHeight - 200;
-        const maxSidebarWidth = window.innerWidth - 300;
-        
+
         if (sizes.consoleHeight > maxConsoleHeight) {
             this.setSizes({ consoleHeight: maxConsoleHeight });
-        }
-        
-        if (sizes.sidebarWidth > maxSidebarWidth) {
-            this.setSizes({ sidebarWidth: maxSidebarWidth });
         }
     }
 
@@ -429,16 +377,4 @@ export class PanelResizer {
         console.log('Panel Resizer destroyed');
     }
 }
-
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.ExamApp = window.ExamApp || {};
-        window.ExamApp.panelResizer = new PanelResizer();
-    });
-} else {
-    window.ExamApp = window.ExamApp || {};
-    window.ExamApp.panelResizer = new PanelResizer();
-}
-
 export default PanelResizer;

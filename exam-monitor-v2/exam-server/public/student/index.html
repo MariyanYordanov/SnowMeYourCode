@@ -49,28 +49,26 @@
                     <h2 class="text-center mb-xxl">Programming Exam Login</h2>
 
                     <div class="form-group mb-lg">
-                        <label class="form-label">Select Class</label>
                         <select id="student-class" class="input select" required>
-                            <option value="">-- Select Class --</option>
-                            <option value="11А">11A</option>
-                            <option value="11Б">11B</option>
-                            <option value="12А">12A</option>
-                            <option value="12Б">12B</option>
+                            <option value="">Select Class</option>
+                            <option value="11А">11А</option>
+                            <option value="11Б">11Б</option>
+                            <option value="12А">12А</option>
+                            <option value="12Б">12Б</option>
                         </select>
                     </div>
 
                     <div class="form-group mb-lg">
-                        <label class="form-label">Select Student</label>
                         <select id="student-name" class="input select" required disabled>
-                            <option value="">-- First select a class --</option>
+                            <option value="">Select Your Name</option>
                         </select>
                     </div>
 
-                    <button id="login-btn" class="btn btn-primary" disabled>
+                    <button id="login-btn" class="btn btn-primary w-full" disabled>
                         Start Exam
                     </button>
 
-                    <div id="login-status" class="status-message mt-lg"></div>
+                    <div id="login-status" class="status-message mt-xl"></div>
                 </div>
             </div>
         </div>
@@ -116,8 +114,9 @@
                         <div class="editor-header">
                             <div class="editor-actions d-flex gap-xs">
                                 <button id="run-btn" class="btn btn-sm btn-primary">Run</button>
-                                <button id="start-server-btn" class="btn btn-sm btn-success">Start Server</button>
-                                <button id="format-btn" class="btn btn-sm btn-blue">Format</button>
+                                <button id="start-server-btn" class="btn btn-sm btn-warning">Start Server</button>
+                                <button id="format-btn" class="btn btn-sm btn-secondary">Format</button>
+                                <button id="preview-btn" class="btn btn-sm btn-blue">Preview</button>
                             </div>
                         </div>
                         
@@ -126,21 +125,12 @@
                         <div class="editor-split-container">
                             <div id="monaco-editor" class="editor-main-panel"></div>
 
-                            <div id="bottom-panel-resize-handle" class="console-resize-handle"></div>
-
                             <div id="console-panel" class="console-panel">
-                                <div class="bottom-panel-tabs">
-                                    <button class="bottom-tab active" data-panel="console">Console</button>
-                                    <button class="bottom-tab" data-panel="preview">Preview</button>
+                                <div class="console-header">
+                                    <span class="console-title">Console</span>
+                                    <button id="clear-console-btn" class="btn btn-xs btn-secondary">Clear</button>
                                 </div>
-
-                                <div id="console-content" class="bottom-content active">
-                                    <div id="console-output" class="console-output"></div>
-                                </div>
-
-                                <div id="preview-content" class="bottom-content">
-                                    <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
-                                </div>
+                                <div id="console-output" class="console-output"></div>
                             </div>
                         </div>
                     </div>

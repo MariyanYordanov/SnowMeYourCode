@@ -386,6 +386,17 @@ export function setupEditorControls() {
             console.log('Start Server button setup complete');
         }
 
+        // Save button (for Safe Browser mode where Ctrl+S is blocked)
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                if (window.ExamApp?.fileManager) {
+                    window.ExamApp.fileManager.saveCurrentFile();
+                }
+            });
+            console.log('Save button setup complete');
+        }
+
         console.log('Editor controls setup completed');
 
     } catch (error) {
@@ -526,12 +537,17 @@ export function saveCode() {
         }
 
         const code = examApp.editor.getValue();
+        const currentFile = examApp.fileManager?.currentFile || 'main.js';
 
-        // Send to server via socket
-        const success = sendCodeUpdate(code, 'main.js');
+        // Send to server via socket with correct filename
+        const success = sendCodeUpdate(code, currentFile);
 
         if (success) {
             updateLastSaved();
+            // Mark file as saved (cyan color) in tab
+            if (examApp.fileManager) {
+                examApp.fileManager.markFileAsSaved(currentFile);
+            }
         }
 
         return success;
@@ -1358,9 +1374,10 @@ export async function startExpressServer() {
         const editor = examApp?.editor;
         if (editor) {
             const currentCode = editor.getValue();
-            // Auto-save current code
+            // Auto-save current code with correct filename
             if (examApp?.sessionId) {
-                sendCodeUpdate(currentCode, examApp.sessionId);
+                const currentFile = examApp.fileManager?.currentFile || 'main.js';
+                sendCodeUpdate(currentCode, currentFile);
             }
         }
 

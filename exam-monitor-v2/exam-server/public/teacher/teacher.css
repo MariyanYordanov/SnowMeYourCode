@@ -314,18 +314,65 @@ body {
     color: #6c757d;
 }
 
-.code-preview {
+/* Files Preview Section */
+.files-preview {
+    margin-bottom: 15px;
+}
+
+.files-preview .no-files {
     background: #f8f8f8;
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     padding: 12px;
+    color: #888;
+    font-style: italic;
+    text-align: center;
+}
+
+.file-item {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.file-item:last-child {
+    margin-bottom: 0;
+}
+
+.file-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2d2d2d;
+    padding: 6px 10px;
+    border-bottom: 1px solid #333;
+}
+
+.file-name {
     font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 12px;
-    max-height: 150px;
+    font-size: 11px;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.file-stats {
+    font-size: 10px;
+    color: #888;
+}
+
+.file-code {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #d4d4d4;
+    padding: 8px 10px;
+    margin: 0;
+    max-height: 120px;
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-all;
-    margin-bottom: 15px;
 }
 
 .activity-log {

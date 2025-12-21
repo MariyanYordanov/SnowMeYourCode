@@ -9,6 +9,7 @@ export class MonacoFileManager {
         this.fileTree = new Map();
         this.projectRoot = '';
         this.collapsedFolders = new Set();  // Track collapsed folders
+        this.lastFileBeforePreview = null;  // Track last file before switching to preview
 
         this.initializeElements();
         this.setupEventListeners();
@@ -281,16 +282,6 @@ export class MonacoFileManager {
         });
     }
 
-    switchToFile(path) {
-        const model = this.models.get(path);
-        if (model && this.editor) {
-            this.editor.setModel(model);
-            this.currentFile = path;
-            this.updateActiveTab(path);
-            this.editor.focus();
-        }
-    }
-
     addTab(path) {
         if (this.tabs.has(path)) {
             this.updateActiveTab(path);
@@ -403,6 +394,7 @@ export class MonacoFileManager {
         const tab = this.tabs.get(path);
         if (tab) {
             tab.classList.add('modified');
+            tab.classList.remove('saved');
         }
     }
 
@@ -410,6 +402,18 @@ export class MonacoFileManager {
         const tab = this.tabs.get(path);
         if (tab) {
             tab.classList.remove('modified');
+        }
+    }
+
+    markFileAsSaved(path) {
+        const tab = this.tabs.get(path);
+        if (tab) {
+            tab.classList.remove('modified');
+            tab.classList.add('saved');
+            // Remove saved class after 2 seconds
+            setTimeout(() => {
+                tab.classList.remove('saved');
+            }, 2000);
         }
     }
 
@@ -1041,5 +1045,217 @@ export class MonacoFileManager {
         this.models.clear();
         this.tabs.clear();
         this.fileTree.clear();
+    }
+
+    /**
+     * Open preview as a tab in the editor area
+     */
+    openPreviewTab() {
+        const previewPath = '__preview__';
+
+        // If preview tab already exists, just switch to it
+        if (this.tabs.has(previewPath)) {
+            this.switchToPreviewTab();
+            return;
+        }
+
+        // Create preview tab
+        const tab = document.createElement('div');
+        tab.className = 'file-tab preview-tab';
+        tab.setAttribute('data-path', previewPath);
+        tab.innerHTML = `
+            <span class="tab-icon">${this.getPreviewIcon()}</span>
+            <span class="tab-name">Preview</span>
+            <span class="tab-close" data-path="${previewPath}">×</span>
+        `;
+
+        this.tabsContainer.appendChild(tab);
+        this.tabs.set(previewPath, tab);
+
+        tab.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('tab-close')) {
+                this.switchToPreviewTab();
+            }
+        });
+
+        tab.querySelector('.tab-close').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closePreviewTab();
+        });
+
+        this.switchToPreviewTab();
+    }
+
+    /**
+     * Switch to preview tab view
+     */
+    switchToPreviewTab() {
+        const previewPath = '__preview__';
+
+        // Remember the file that was open before switching to preview
+        if (this.currentFile && this.currentFile !== previewPath) {
+            this.lastFileBeforePreview = this.currentFile;
+        }
+
+        // Update active tab styling
+        this.tabs.forEach((tab, tabPath) => {
+            tab.classList.toggle('active', tabPath === previewPath);
+        });
+
+        // Hide Monaco editor, show preview container
+        const editorContainer = document.getElementById('monaco-editor');
+        let previewContainer = document.getElementById('preview-tab-container');
+
+        if (!previewContainer) {
+            // Create preview container if it doesn't exist
+            previewContainer = document.createElement('div');
+            previewContainer.id = 'preview-tab-container';
+            previewContainer.className = 'preview-tab-container';
+            previewContainer.innerHTML = `
+                <iframe id="preview-tab-frame" class="preview-tab-frame" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+            `;
+            editorContainer.parentNode.insertBefore(previewContainer, editorContainer.nextSibling);
+        }
+
+        editorContainer.style.display = 'none';
+        previewContainer.style.display = 'flex';
+
+        this.currentFile = previewPath;
+        this.refreshPreviewContent();
+    }
+
+    /**
+     * Refresh preview content - shows the currently open HTML file or index.html
+     */
+    async refreshPreviewContent() {
+        const previewFrame = document.getElementById('preview-tab-frame');
+        if (!previewFrame) return;
+
+        const sessionId = window.ExamApp?.sessionId;
+        if (!sessionId) {
+            previewFrame.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;"><p>No session available</p></body></html>';
+            return;
+        }
+
+        try {
+            // First, check if the last opened file (before switching to preview) is an HTML file
+            let htmlPath = null;
+
+            // If we have a remembered file and it's an HTML file, use it
+            if (this.lastFileBeforePreview && this.lastFileBeforePreview.endsWith('.html')) {
+                htmlPath = this.lastFileBeforePreview;
+            }
+
+            // If not, find the last HTML tab that's open
+            if (!htmlPath) {
+                const openTabs = Array.from(this.tabs.keys()).filter(p => p !== '__preview__');
+                for (let i = openTabs.length - 1; i >= 0; i--) {
+                    if (openTabs[i].endsWith('.html')) {
+                        htmlPath = openTabs[i];
+                        break;
+                    }
+                }
+            }
+
+            // If no HTML tab is open, look for index.html in project
+            if (!htmlPath) {
+                const response = await fetch(`/api/project/files?sessionId=${sessionId}`);
+                const result = await response.json();
+
+                if (!result.success || !result.files) {
+                    previewFrame.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;"><p>No project files found</p></body></html>';
+                    return;
+                }
+
+                const htmlFile = result.files.find(f => f.name === 'index.html' || f.path === 'index.html') ||
+                                 result.files.find(f => f.name.endsWith('.html'));
+
+                if (!htmlFile) {
+                    previewFrame.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;"><p>No HTML file found. Create an index.html file.</p></body></html>';
+                    return;
+                }
+
+                htmlPath = htmlFile.path || htmlFile.name;
+            }
+
+            // Load the preview
+            const encodedPath = htmlPath.split('/').map(part => encodeURIComponent(part)).join('/');
+            const previewUrl = `/api/project/preview/${encodeURIComponent(sessionId)}/${encodedPath}`;
+            previewFrame.src = previewUrl;
+
+        } catch (error) {
+            console.error('Preview error:', error);
+            previewFrame.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;"><p>Error loading preview</p></body></html>';
+        }
+    }
+
+    /**
+     * Close preview tab
+     */
+    closePreviewTab() {
+        const previewPath = '__preview__';
+
+        const tab = this.tabs.get(previewPath);
+        if (tab) {
+            tab.remove();
+            this.tabs.delete(previewPath);
+        }
+
+        // Hide preview container, show editor
+        const editorContainer = document.getElementById('monaco-editor');
+        const previewContainer = document.getElementById('preview-tab-container');
+
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+        if (editorContainer) {
+            editorContainer.style.display = 'block';
+        }
+
+        // Switch to another open tab if available
+        if (this.currentFile === previewPath) {
+            const remainingTabs = Array.from(this.tabs.keys());
+            if (remainingTabs.length > 0) {
+                this.switchToFile(remainingTabs[remainingTabs.length - 1]);
+            } else {
+                this.currentFile = null;
+            }
+        }
+    }
+
+    /**
+     * Override switchToFile to handle preview tab
+     */
+    switchToFile(path) {
+        // If switching away from preview, hide preview container
+        if (this.currentFile === '__preview__' && path !== '__preview__') {
+            const editorContainer = document.getElementById('monaco-editor');
+            const previewContainer = document.getElementById('preview-tab-container');
+
+            if (previewContainer) {
+                previewContainer.style.display = 'none';
+            }
+            if (editorContainer) {
+                editorContainer.style.display = 'block';
+            }
+        }
+
+        const model = this.models.get(path);
+        if (model && this.editor) {
+            this.editor.setModel(model);
+            this.currentFile = path;
+            this.updateActiveTab(path);
+            this.editor.focus();
+        }
+    }
+
+    /**
+     * Get preview icon SVG
+     */
+    getPreviewIcon() {
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 3C4 3 1 8 1 8s3 5 7 5 7-5 7-5-3-5-7-5zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" stroke="currentColor" stroke-width="1" fill="none"/>
+            <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+        </svg>`;
     }
 }

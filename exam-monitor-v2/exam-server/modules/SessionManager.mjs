@@ -287,8 +287,17 @@ export class SessionManager {
 
         // Save code if provided (no logging - too frequent)
         if (data.code !== undefined) {
+            // Use filename or default to main.js (handle empty string too)
+            const filename = (data.filename && data.filename.trim()) ? data.filename : 'main.js';
+            // Initialize files object if not exists
+            if (!session.files) {
+                session.files = {};
+            }
+            // Store code per file
+            session.files[filename] = data.code;
+
             await this.dataStore.saveStudentCode(sessionId, {
-                filename: data.filename || 'main.js',
+                filename: filename,
                 code: data.code
             });
         }

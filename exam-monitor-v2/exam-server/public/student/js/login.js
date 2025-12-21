@@ -89,7 +89,7 @@ async function loadStudentsForClass(selectedClass) {
         const data = await response.json();
 
         if (data.success && data.students && data.students.length > 0) {
-            studentNameSelect.innerHTML = '<option value="">-- Select Student --</option>';
+            studentNameSelect.innerHTML = '<option value="">Select Your Name</option>';
             data.students.forEach(student => {
                 const option = document.createElement('option');
                 option.value = student;

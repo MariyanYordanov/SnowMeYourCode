@@ -2,14 +2,7 @@ export class BottomPanelManager {
   constructor() {
     this.bottomPanel = document.getElementById('console-panel');
     this.consoleOutput = document.getElementById('console-output');
-    this.resizeHandle = document.getElementById('bottom-panel-resize-handle');
-    this.clearButton = document.getElementById('clear-bottom-btn');
-    this.previewFrame = document.getElementById('preview-frame');
-
-    // Tab management
-    this.currentTab = 'console';
-    this.tabs = document.querySelectorAll('.bottom-tab');
-    this.contentDivs = document.querySelectorAll('.bottom-content');
+    this.clearButton = document.getElementById('clear-console-btn');
 
     // Icons for different message types
     this.icons = {
@@ -21,10 +14,9 @@ export class BottomPanelManager {
     };
 
     // Initialize
-    this.setupTabs();
-    this.setupResizing();
     this.setupClearButton();
     this.setupPreviewConsoleListener();
+    this.setupPreviewButton();
   }
 
   /**
@@ -36,65 +28,29 @@ export class BottomPanelManager {
         const { method, args } = event.data;
         const message = args.join(' ');
         this.addMessage(method, message);
-
-        // Auto-switch to console tab when there's output
-        if (this.currentTab !== 'console') {
-          this.switchTab('console');
-        }
       }
     });
   }
 
   /**
-   * Setup tab switching functionality
+   * Setup Preview button in toolbar
    */
-  setupTabs() {
-    this.tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabName = tab.dataset.panel;
-        this.switchTab(tabName);
+  setupPreviewButton() {
+    const previewBtn = document.getElementById('preview-btn');
+    if (previewBtn) {
+      previewBtn.addEventListener('click', () => {
+        this.openPreviewTab();
       });
-    });
-  }
-
-  /**
-   * Switch between tabs
-   * @param {string} tabName - Name of the tab ('console' or 'preview')
-   */
-  switchTab(tabName) {
-    this.currentTab = tabName;
-
-    // Update tab buttons
-    this.tabs.forEach(tab => {
-      if (tab.dataset.panel === tabName) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-    });
-
-    // Update content divs
-    this.contentDivs.forEach(content => {
-      if (content.id === `${tabName}-content`) {
-        content.classList.add('active');
-      } else {
-        content.classList.remove('active');
-      }
-    });
-
-    // Auto-refresh preview when switching to preview tab
-    if (tabName === 'preview') {
-      this.triggerPreviewRefresh();
     }
   }
 
   /**
-   * Trigger preview refresh using the PreviewManager
+   * Open preview as a tab in the editor tabs area
    */
-  triggerPreviewRefresh() {
-    // Use the PreviewManager from ExamApp if available
-    if (window.ExamApp?.previewManager) {
-      window.ExamApp.previewManager.refreshPreview();
+  openPreviewTab() {
+    const fileManager = window.ExamApp?.fileManager;
+    if (fileManager) {
+      fileManager.openPreviewTab();
     }
   }
 
@@ -320,74 +276,13 @@ export class BottomPanelManager {
   }
 
   /**
-   * Setup resizing functionality for bottom panel
-   */
-  setupResizing() {
-    if (!this.resizeHandle || !this.bottomPanel) {
-      console.warn('Resize handle or bottom panel not found:', {
-        resizeHandle: this.resizeHandle,
-        bottomPanel: this.bottomPanel
-      });
-      return;
-    }
-
-    let isResizing = false;
-    let startY = 0;
-    let startHeight = 0;
-
-    const onMouseDown = (e) => {
-      isResizing = true;
-      startY = e.clientY;
-      startHeight = this.bottomPanel.offsetHeight;
-
-      // Prevent text selection during drag
-      document.body.style.userSelect = 'none';
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    const onMouseMove = (e) => {
-      if (!isResizing) return;
-
-      const deltaY = startY - e.clientY;
-      const newHeight = startHeight + deltaY;
-
-      // Set minimum and maximum height constraints
-      const minHeight = 100; // pixels
-      const maxHeight = window.innerHeight * 0.8; // 80% of viewport
-
-      if (newHeight >= minHeight && newHeight <= maxHeight) {
-        this.bottomPanel.style.height = `${newHeight}px`;
-      }
-    };
-
-    const onMouseUp = () => {
-      isResizing = false;
-
-      // Restore text selection
-      document.body.style.userSelect = '';
-
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    this.resizeHandle.addEventListener('mousedown', onMouseDown);
-    console.log('Bottom panel resizing initialized');
-  }
-
-  /**
    * Setup clear button click handler
    */
   setupClearButton() {
     if (!this.clearButton) return;
 
     this.clearButton.addEventListener('click', () => {
-      if (this.currentTab === 'console') {
-        this.clearConsole();
-      } else if (this.currentTab === 'preview') {
-        this.clearPreview();
-      }
+      this.clearConsole();
     });
   }
 

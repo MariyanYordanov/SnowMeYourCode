@@ -509,7 +509,8 @@ export class WebSocketHandler {
             formattedTimeLeft: session.formattedTimeLeft,
             lastActivity: session.lastActivity,
             suspiciousCount: session.suspiciousActivities?.length || 0,
-            socketId: this.getSocketIdBySession(session.sessionId)
+            socketId: this.getSocketIdBySession(session.sessionId),
+            files: session.files || {}
         }));
 
         socket.emit(SOCKET_EVENTS.ALL_STUDENTS, studentsData);

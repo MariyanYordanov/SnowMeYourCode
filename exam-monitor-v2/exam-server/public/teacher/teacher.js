@@ -199,21 +199,9 @@ class SmartTeacherDashboard {
      * Initialize UI event handlers
      */
     initializeUI() {
-        // Control buttons
-        document.getElementById('new-session-btn').addEventListener('click', () => {
-            this.startNewSession();
-        });
-
+        // Refresh button
         document.getElementById('refresh-btn').addEventListener('click', () => {
             this.manualRefresh();
-        });
-
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.exportData();
-        });
-
-        document.getElementById('emergency-stop-btn').addEventListener('click', () => {
-            this.emergencyStop();
         });
 
         // Logout button
@@ -544,49 +532,6 @@ class SmartTeacherDashboard {
     }
 
     /**
-     * Start new exam session
-     */
-    startNewSession() {
-        if (confirm('Start a new exam session? This will clear current session data.')) {
-            // Implementation for starting new session
-            this.showNotification('New session started', 'success');
-            this.socket.emit('new-exam-session');
-        }
-    }
-
-    /**
-     * Export exam data
-     */
-    exportData() {
-        // Implementation for exporting data
-        this.showNotification('Exporting data...', 'info');
-        // Create and download export file
-        const data = {
-            timestamp: new Date().toISOString(),
-            students: Array.from(this.students.values()),
-            stats: this.stats
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `exam-data-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    /**
-     * Emergency stop all exams
-     */
-    emergencyStop() {
-        if (confirm('EMERGENCY STOP: This will terminate all active exams. Are you sure?')) {
-            this.socket.emit('emergency-stop-all');
-            this.showNotification('Emergency stop initiated', 'warning');
-        }
-    }
-
-    /**
      * Update connection status UI
      */
     updateConnectionStatus(status) {
@@ -636,7 +581,7 @@ class SmartTeacherDashboard {
         students.forEach(student => {
             const existingStudent = this.students.get(student.sessionId);
 
-            // Preserve chat-related and violation fields if they exist
+            // Preserve client-only fields (NOT sent by server)
             const preservedFields = existingStudent ? {
                 chatMessages: existingStudent.chatMessages || [],
                 chatOpen: existingStudent.chatOpen || false,
@@ -653,10 +598,11 @@ class SmartTeacherDashboard {
                 activities: []
             };
 
+            // Merge: preserved client-only fields first, then server data (including code)
             this.students.set(student.sessionId, {
+                ...preservedFields,
                 ...student,
-                fullscreenStatus: existingStudent ? existingStudent.fullscreenStatus : 'unknown',
-                ...preservedFields  // Keep chat state and violation data
+                fullscreenStatus: existingStudent ? existingStudent.fullscreenStatus : 'unknown'
             });
         });
         this.renderStudents();
@@ -708,7 +654,13 @@ class SmartTeacherDashboard {
     updateStudentCode(data) {
         const student = this.students.get(data.sessionId);
         if (student) {
-            student.code = data.code;
+            // Store code per file
+            if (!student.files) {
+                student.files = {};
+            }
+            // Handle empty string filename
+            const filename = (data.filename && data.filename.trim()) ? data.filename : 'main.js';
+            student.files[filename] = data.code;
             student.lastActivity = Date.now();
             this.renderStudent(student);
         }
@@ -836,15 +788,13 @@ class SmartTeacherDashboard {
      */
     renderStudentCard(student) {
         const timeAgo = this.formatTimeAgo(student.lastActivity);
-        const codePreview = student.code ? student.code.substring(0, 200) + (student.code.length > 200 ? '...' : '') : 'No code yet';
         const chatOpen = student.chatOpen || false;
 
         return `
             <div class="student-card" data-session-id="${student.sessionId}">
                 <div class="student-header">
                     <div>
-                        <div class="student-name">${student.studentName}</div>
-                        <div class="student-class">${student.studentClass} • ${student.sessionId}</div>
+                        <div class="student-name">${student.sessionId}</div>
                     </div>
                     <div class="student-status">
                         <div class="status-indicator ${student.status}"></div>
@@ -882,13 +832,44 @@ class SmartTeacherDashboard {
                     ` : ''}
                 </div>
 
-                <div class="code-preview">${codePreview}</div>
+                ${this.renderFilesPreview(student)}
 
                 ${this.renderActivityLog(student)}
                 ${this.renderInlineChat(student, chatOpen)}
                 ${this.renderControls(student)}
             </div>
         `;
+    }
+
+    /**
+     * Render files preview section
+     */
+    renderFilesPreview(student) {
+        const escapeHtml = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const files = student.files || {};
+        const fileNames = Object.keys(files);
+
+        if (fileNames.length === 0) {
+            return '<div class="files-preview"><div class="no-files">No code yet</div></div>';
+        }
+
+        const filesHtml = fileNames.map(filename => {
+            const code = files[filename] || '';
+            const preview = escapeHtml(code.substring(0, 300)) + (code.length > 300 ? '...' : '');
+            const lines = code.split('\n').length;
+            const displayName = filename || 'main.js';
+            return `
+                <div class="file-item">
+                    <div class="file-header">
+                        <span class="file-name">${escapeHtml(displayName)}</span>
+                        <span class="file-stats">${lines} lines, ${code.length} chars</span>
+                    </div>
+                    <pre class="file-code">${preview}</pre>
+                </div>
+            `;
+        }).join('');
+
+        return `<div class="files-preview">${filesHtml}</div>`;
     }
 
     /**
