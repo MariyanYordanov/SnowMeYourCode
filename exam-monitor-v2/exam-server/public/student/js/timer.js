@@ -145,7 +145,7 @@ function checkTimeWarnings(timeLeft) {
  */
 export function showTimeWarning(minutes) {
     try {
-        const message = `Внимание! Остават ${minutes} минути до края на изпита!`;
+        const message = `Warning! ${minutes} minutes remaining until the end of the exam!`;
         const examApp = window.ExamApp;
 
         // Show notification
@@ -245,7 +245,7 @@ export function handleExamExpired() {
 
         // Show expiration screen
         if (examApp.showViolationScreen) {
-            examApp.showViolationScreen('Времето за изпита изтече!');
+            examApp.showViolationScreen('Exam time has expired!');
         }
 
         // Auto-close after 10 seconds
@@ -385,7 +385,7 @@ export function extendExamTime(additionalMinutes) {
 
         // Show notification
         if (examApp.showNotification) {
-            examApp.showNotification(`Времето за изпита е удължено с ${additionalMinutes} минути`, 'success');
+            examApp.showNotification(`Exam time extended by ${additionalMinutes} minutes`, 'success');
         }
 
         return true;

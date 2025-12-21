@@ -309,11 +309,6 @@ body {
     color: #155724;
 }
 
-.fullscreen-status.violation {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
 .fullscreen-status.inactive {
     background-color: #e2e3e5;
     color: #6c757d;

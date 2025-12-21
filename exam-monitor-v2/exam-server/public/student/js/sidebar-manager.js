@@ -1,5 +1,3 @@
-import { MDNViewer } from './mdn-viewer.js';
-
 export class SidebarManager {
     constructor() {
         this.container = document.querySelector('.exam-container');
@@ -9,7 +7,6 @@ export class SidebarManager {
 
         this.currentPanel = 'files';
         this.isExpanded = false;
-        this.mdnViewer = null;
 
         this.init();
     }
@@ -35,17 +32,9 @@ export class SidebarManager {
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.altKey) {
-                switch (e.key) {
-                    case '1':
-                        e.preventDefault();
-                        this.switchPanel('files');
-                        break;
-                    case '2':
-                        e.preventDefault();
-                        this.switchPanel('mdn');
-                        break;
-                }
+            if (e.altKey && e.key === '1') {
+                e.preventDefault();
+                this.switchPanel('files');
             }
         });
     }
@@ -62,17 +51,6 @@ export class SidebarManager {
         });
 
         this.currentPanel = panelName;
-
-        if (panelName === 'mdn') {
-            this.expandSidebar();
-        } else {
-            this.collapseSidebar();
-        }
-
-        if (panelName === 'mdn') {
-            this.initMDN();
-        }
-
         this.saveState();
 
         console.log(`Switched to ${panelName} panel`);
@@ -90,27 +68,6 @@ export class SidebarManager {
             this.container.classList.remove('sidebar-expanded');
             this.isExpanded = false;
         }
-    }
-
-    async initMDN() {
-        if (!this.mdnViewer) {
-            this.mdnViewer = new MDNViewer();
-            await this.mdnViewer.loadReference();
-        }
-
-        const mdnPanel = document.getElementById('mdn-panel');
-        if (mdnPanel && !mdnPanel.querySelector('.mdn-viewer')) {
-            // Clear existing content and initialize MDN viewer
-            mdnPanel.innerHTML = '';
-            this.mdnViewer.initializeViewer();
-        }
-    }
-
-    /**
-     * Get MDN viewer instance for external use
-     */
-    getMDNViewer() {
-        return this.mdnViewer;
     }
 
     saveState() {

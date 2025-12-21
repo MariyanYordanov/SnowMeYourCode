@@ -13,7 +13,7 @@ Exam Monitor is a web-based system for conducting programming exams in a control
 - **Auto-save** functionality
 - **Practice Server** with JSONStore API for exercises
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 exam-monitor-v2/

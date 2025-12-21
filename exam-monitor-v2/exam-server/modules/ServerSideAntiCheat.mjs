@@ -19,8 +19,9 @@ export class ServerSideAntiCheat {
         
         this.heartbeatInterval = 30000; // 30 seconds
         this.heartbeatTolerance = 10000; // 10 seconds tolerance
-        
-        this.startHeartbeatMonitoring();
+
+        // DISABLED: SEB handles security, no need for heartbeat monitoring
+        // this.startHeartbeatMonitoring();
     }
 
     /**

@@ -246,6 +246,15 @@ export class WebSocketHandler {
         socket.on('teacher-restart-session', async (data) => {
             await this.handleTeacherRestartSession(socket, data);
         });
+
+        // Teacher warning and termination
+        socket.on('send-warning', async (data) => {
+            await this.handleSendWarning(socket, data);
+        });
+
+        socket.on('terminate-student', async (data) => {
+            await this.handleTerminateStudent(socket, data);
+        });
     }
 
     /**
@@ -257,7 +266,7 @@ export class WebSocketHandler {
 
             if (!studentName || !studentClass) {
                 socket.emit(SOCKET_EVENTS.LOGIN_ERROR, {
-                    message: 'Име и клас са задължителни'
+                    message: 'Name and class are required'
                 });
                 return;
             }
@@ -798,21 +807,15 @@ export class WebSocketHandler {
      * Assess the severity of suspicious activity
      */
     assessSeverity(activityType, details = {}) {
-        // NOTE: 'fullscreen_exit' gets 3 attempts, so it's NOT critical (unless it's the 3rd attempt)
         // Only instant termination activities are critical
         const criticalActivities = [
             'focus_loss',
             'tab_hidden',
-            // Keep legacy names for compatibility
-            'fullscreen_exit_violation',  // This is sent only on 3rd attempt by anticheat.js
             'document_hidden_violation'
         ];
 
         if (criticalActivities.includes(activityType)) {
             return 'critical';
-        } else if (activityType === 'fullscreen_exit') {
-            // Fullscreen exits are high severity but NOT critical (allow 3 attempts)
-            return 'high';
         } else {
             return 'medium';
         }
@@ -823,12 +826,8 @@ export class WebSocketHandler {
      */
     isCriticalViolation(activityType) {
         const instantTermination = [
-            // NOTE: 'fullscreen_exit' is NOT instant termination
-            // Students get 3 attempts, handled by anticheat.js
             'focus_loss',
             'tab_hidden',
-            // Keep legacy names for compatibility
-            'fullscreen_exit_violation',  // Only 3rd attempt from anticheat.js
             'document_hidden_violation'
         ];
 
@@ -1079,6 +1078,116 @@ export class WebSocketHandler {
             socket.emit('session-restart-error', {
                 success: false,
                 message: 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Handle send warning from teacher to student
+     */
+    async handleSendWarning(socket, data) {
+        try {
+            const { sessionId, message } = data;
+
+            if (!sessionId) {
+                console.log('[WARNING] No sessionId provided for warning');
+                return;
+            }
+
+            console.log(`[WARNING] Teacher sending warning to: ${sessionId}`);
+
+            // Find student socket
+            const studentSocket = this.studentSockets.get(sessionId);
+            if (!studentSocket) {
+                console.log('[WARNING] Student not connected:', sessionId);
+                socket.emit('warning-error', {
+                    sessionId: sessionId,
+                    error: 'Student not connected'
+                });
+                return;
+            }
+
+            // Send warning to student
+            studentSocket.emit('teacher-warning', {
+                message: message || 'Please follow exam rules',
+                timestamp: Date.now(),
+                type: 'warning'
+            });
+
+            // Log suspicious activity
+            await this.sessionManager.updateSessionActivity(sessionId, {
+                suspicious: 'teacher_warning_received',
+                description: message || 'Warning from teacher',
+                severity: 'medium'
+            });
+
+            // Confirm to teacher
+            socket.emit('warning-sent', {
+                sessionId: sessionId,
+                timestamp: Date.now()
+            });
+
+            console.log(`[WARNING] Warning sent to ${studentSocket.studentInfo?.name}: ${message}`);
+
+        } catch (error) {
+            console.error('[WARNING ERROR] Failed to send warning:', error);
+        }
+    }
+
+    /**
+     * Handle terminate student from teacher
+     */
+    async handleTerminateStudent(socket, data) {
+        try {
+            const { sessionId, reason } = data;
+
+            if (!sessionId) {
+                console.log('[TERMINATE] No sessionId provided');
+                return;
+            }
+
+            console.log(`[TERMINATE] Teacher terminating student: ${sessionId} - Reason: ${reason}`);
+
+            // Find student socket
+            const studentSocket = this.studentSockets.get(sessionId);
+
+            // Complete session as terminated
+            await this.sessionManager.completeSession(sessionId, reason || 'instructor_action');
+
+            if (studentSocket) {
+                // Send termination notice to student
+                studentSocket.emit('exam-terminated', {
+                    reason: reason || 'instructor_action',
+                    message: 'Your exam has been terminated by your teacher!',
+                    timestamp: Date.now()
+                });
+
+                // Force disconnect after short delay
+                setTimeout(() => {
+                    this.forceDisconnectStudent(studentSocket, 'admin_action');
+                }, 1000);
+
+                console.log(`[TERMINATE] Student ${studentSocket.studentInfo?.name} terminated by teacher`);
+            }
+
+            // Notify all teachers about termination
+            this.notifyTeachers('student-terminated', {
+                sessionId: sessionId,
+                reason: reason || 'instructor_action',
+                timestamp: Date.now()
+            });
+
+            // Confirm to requesting teacher
+            socket.emit('terminate-success', {
+                sessionId: sessionId,
+                timestamp: Date.now()
+            });
+
+        } catch (error) {
+            console.error('[TERMINATE ERROR] Failed to terminate student:', error);
+            socket.emit('terminate-error', {
+                sessionId: data.sessionId,
+                error: 'Failed to terminate student'
             });
         }
     }

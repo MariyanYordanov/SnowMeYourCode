@@ -67,7 +67,7 @@ export class SessionManager {
                 return {
                     success: false,
                     type: LOGIN_RESULTS.INVALID_STUDENT,
-                    message: 'Име и клас са задължителни'
+                    message: 'Name and class are required'
                 };
             }
 
@@ -97,7 +97,7 @@ export class SessionManager {
                 return {
                     success: false,
                     type: LOGIN_RESULTS.STUDENT_EXISTS,
-                    message: 'Студент вече участва в изпита'
+                    message: 'Student is already participating in the exam'
                 };
             }
 
@@ -109,7 +109,7 @@ export class SessionManager {
             return {
                 success: false,
                 type: 'error',
-                message: 'Възникна грешка при влизане в изпита'
+                message: 'An error occurred while joining the exam'
             };
         }
     }
@@ -128,7 +128,7 @@ export class SessionManager {
             return {
                 success: false,
                 type: LOGIN_RESULTS.EXAM_EXPIRED,
-                message: `Изпитът е приключен: ${terminationReason}. Няма възможност за връщане.`,
+                message: `Exam ended: ${terminationReason}. No re-entry allowed.`,
                 examEndedAt: session.endTime || session.examEndTime,
                 terminationType: session.terminationType
             };
@@ -142,7 +142,7 @@ export class SessionManager {
             return {
                 success: false,
                 type: LOGIN_RESULTS.EXAM_EXPIRED,
-                message: 'Времето за изпита е изтекло',
+                message: 'Exam time has expired',
                 examEndedAt: session.examEndTime
             };
         }
@@ -157,7 +157,7 @@ export class SessionManager {
         return {
             success: true,
             type: LOGIN_RESULTS.CONTINUE_SESSION,
-            message: `Добре дошли обратно! Имате ${this.formatTimeLeft(timeLeft)} оставащо време`,
+            message: `Welcome back! You have ${this.formatTimeLeft(timeLeft)} remaining`,
             sessionId: session.sessionId,
             timeLeft: timeLeft
         };
@@ -168,16 +168,15 @@ export class SessionManager {
      */
     getTerminationMessage(terminationType) {
         const messages = {
-            'graceful': 'Нормално приключване',
-            'timeout': 'Изтекло време',
-            'forced_violations': 'Нарушения на правилата',
-            'violation': 'Нарушение на правилата',
-            'fullscreen_violation': 'Излизане от fullscreen режим',
-            'document_hidden_violation': 'Скриване на прозореца',
-            'admin_action': 'Прекратен от преподавател'
+            'graceful': 'Normal completion',
+            'timeout': 'Time expired',
+            'forced_violations': 'Rule violations',
+            'violation': 'Rule violation',
+            'document_hidden_violation': 'Window was hidden',
+            'admin_action': 'Terminated by instructor'
         };
 
-        return messages[terminationType] || 'Неизвестна причина';
+        return messages[terminationType] || 'Unknown reason';
     }
 
     /**
@@ -252,7 +251,7 @@ export class SessionManager {
         return {
             success: true,
             type: LOGIN_RESULTS.SUCCESS,
-            message: `Изпитът започна! Имате 3 часа за решаване`,
+            message: `Exam started! You have 3 hours to complete`,
             sessionId: sessionId,
             timeLeft: this.EXAM_DURATION
         };
@@ -384,16 +383,24 @@ export class SessionManager {
 
     /**
      * Get all active sessions for teacher dashboard
+     * Now includes completed/terminated sessions for visibility
      */
     getActiveSessions() {
-        const active = [];
+        const sessions = [];
         for (const session of this.sessions.values()) {
+            // Skip cleared sessions
+            if (session.status === 'CLEARED') {
+                continue;
+            }
+
+            const timeLeft = this.calculateRemainingTime(session);
+
+            // For active/disconnected sessions, check time
             if (session.status === SESSION_STATES.ACTIVE ||
                 session.status === SESSION_STATES.DISCONNECTED) {
 
-                const timeLeft = this.calculateRemainingTime(session);
                 if (timeLeft > 0) {
-                    active.push({
+                    sessions.push({
                         ...session,
                         timeLeft: timeLeft,
                         formattedTimeLeft: this.formatTimeLeft(timeLeft)
@@ -403,8 +410,19 @@ export class SessionManager {
                     this.expireSession(session.sessionId);
                 }
             }
+            // Include completed/expired/terminated sessions
+            else if (session.status === SESSION_STATES.COMPLETED ||
+                     session.status === SESSION_STATES.EXPIRED ||
+                     session.terminationType) {
+                sessions.push({
+                    ...session,
+                    timeLeft: 0,
+                    formattedTimeLeft: '00:00:00',
+                    status: session.terminationType ? 'terminated' : session.status
+                });
+            }
         }
-        return active;
+        return sessions;
     }
 
     /**

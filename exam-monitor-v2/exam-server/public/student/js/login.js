@@ -45,17 +45,20 @@ export function setupLoginForm(examApp) {
 
         loginBtn.addEventListener('click', () => handleLogin(examApp));
 
-        [studentName, studentClass].forEach(input => {
-            input.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    handleLogin(examApp);
-                }
-            });
+        // Setup cascading dropdown - when class changes, load students for that class
+        studentClass.addEventListener('change', async () => {
+            const selectedClass = studentClass.value;
+            await loadStudentsForClass(selectedClass);
+            validateLoginForm();
         });
 
-        [studentName, studentClass].forEach(input => {
-            input.addEventListener('change', validateLoginForm);
-            input.addEventListener('input', validateLoginForm);
+        studentName.addEventListener('change', validateLoginForm);
+
+        // Handle enter key on name select
+        studentName.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleLogin(examApp);
+            }
         });
 
         validateLoginForm();
@@ -65,6 +68,43 @@ export function setupLoginForm(examApp) {
     } catch (error) {
         console.error('Failed to setup login form:', error);
         return false;
+    }
+}
+
+// Load students for a specific class from server
+async function loadStudentsForClass(selectedClass) {
+    const studentNameSelect = document.getElementById('student-name');
+
+    if (!selectedClass) {
+        studentNameSelect.innerHTML = '<option value="">-- First select a class --</option>';
+        studentNameSelect.disabled = true;
+        return;
+    }
+
+    try {
+        studentNameSelect.innerHTML = '<option value="">Loading students...</option>';
+        studentNameSelect.disabled = true;
+
+        const response = await fetch(`/api/students/${encodeURIComponent(selectedClass)}`);
+        const data = await response.json();
+
+        if (data.success && data.students && data.students.length > 0) {
+            studentNameSelect.innerHTML = '<option value="">-- Select Student --</option>';
+            data.students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student;
+                option.textContent = student;
+                studentNameSelect.appendChild(option);
+            });
+            studentNameSelect.disabled = false;
+        } else {
+            studentNameSelect.innerHTML = '<option value="">No students found</option>';
+            studentNameSelect.disabled = true;
+        }
+    } catch (error) {
+        console.error('Failed to load students:', error);
+        studentNameSelect.innerHTML = '<option value="">Error loading students</option>';
+        studentNameSelect.disabled = true;
     }
 }
 
@@ -78,20 +118,22 @@ function validateLoginForm() {
             return false;
         }
 
-        const name = studentName.value.trim();
+        const name = studentName.value;
         const selectedClass = studentClass.value;
 
-        const isNameValid = name.length >= 3;
-        const isClassValid = selectedClass !== '';
+        const isNameValid = name && name !== '';
+        const isClassValid = selectedClass && selectedClass !== '';
 
         const isFormValid = isNameValid && isClassValid;
 
         loginBtn.disabled = !isFormValid;
 
-        if (!isNameValid || !isClassValid) {
-            loginBtn.textContent = 'Попълнете данните';
+        if (!isClassValid) {
+            loginBtn.textContent = 'Select a class';
+        } else if (!isNameValid) {
+            loginBtn.textContent = 'Select a student';
         } else {
-            loginBtn.textContent = 'Влез в изпита';
+            loginBtn.textContent = 'Start Exam';
         }
 
         return isFormValid;
@@ -111,7 +153,7 @@ export async function handleLogin(examApp) {
             return;
         }
 
-        showLoginStatus('Влизане в изпита...', 'info');
+        showLoginStatus('Logging in...', 'info');
         setLoginButtonState(true);
 
         examApp.studentName = name;
@@ -148,7 +190,7 @@ export async function handleLogin(examApp) {
 
             if (!result.success) {
                 console.error('Login failed:', result.message);
-                handleLoginError(examApp, result.message || 'Грешка при влизане');
+                handleLoginError(examApp, result.message || 'Login error');
                 return;
             }
 
@@ -156,35 +198,24 @@ export async function handleLogin(examApp) {
 
         } catch (error) {
             console.error('HTTP login error:', error);
-            handleLoginError(examApp, 'Грешка при връзка със сървъра');
+            handleLoginError(examApp, 'Server connection error');
         }
 
     } catch (error) {
         console.error('Login error:', error);
-        handleLoginError(examApp, 'Грешка при влизане');
+        handleLoginError(examApp, 'Login error');
     }
 }
 
 function validateLoginInput(name, studentClass) {
     if (!name || !studentClass) {
-        showLoginStatus('Моля въведете име и изберете клас', 'error');
-        return false;
-    }
-
-    if (name.length < 3) {
-        showLoginStatus('Името трябва да е поне 3 символа', 'error');
-        return false;
-    }
-
-    const cyrillicPattern = /^[А-Яа-я\s]+$/;
-    if (!cyrillicPattern.test(name)) {
-        showLoginStatus('Името трябва да съдържа само български букви', 'error');
+        showLoginStatus('Please select a class and student', 'error');
         return false;
     }
 
     const validClasses = ['11А', '11Б', '12А', '12Б'];
     if (!validClasses.includes(studentClass)) {
-        showLoginStatus('Невалиден клас', 'error');
+        showLoginStatus('Invalid class', 'error');
         return false;
     }
 
@@ -229,7 +260,7 @@ export function handleLoginSuccess(examApp, data) {
             });
         }
 
-        showLoginStatus('Успешен вход! Стартиране на изпита...', 'success');
+        showLoginStatus('Login successful! Starting exam...', 'success');
 
 
         setTimeout(() => {
@@ -240,14 +271,14 @@ export function handleLoginSuccess(examApp, data) {
 
     } catch (error) {
         console.error('Error handling login success:', error);
-        showLoginStatus('Грешка при стартиране на изпита', 'error');
+        showLoginStatus('Error starting exam', 'error');
     }
 }
 
 export function handleLoginError(examApp, error) {
     console.error('Login error:', error);
 
-    const errorMessage = error.message || error.error || 'Грешка при влизане';
+    const errorMessage = error.message || error.error || 'Login error';
     showLoginStatus(errorMessage, 'error');
 
     setLoginButtonState(false);
@@ -285,7 +316,7 @@ export function updateStudentDisplay(studentName, studentClass, sessionId) {
         for (const [selector, value] of Object.entries(elements)) {
             const el = document.querySelector(selector);
             if (el) {
-                el.textContent = value || 'Неизвестен';
+                el.textContent = value || 'Unknown';
             }
         }
 

@@ -48,31 +48,15 @@ export class HelpChat {
         chatWindow.innerHTML = `
             <div class="chat-header">
                 <div class="chat-title">
-                    <span class="chat-icon">Chat</span>
-                    <span>Помощ от учителя</span>
+                    <span>Teacher Help</span>
                 </div>
                 <div class="chat-controls">
-                    <button id="chat-minimize" class="chat-control-btn">–</button>
-                    <button id="chat-close" class="chat-control-btn">✖</button>
+                    <button id="chat-minimize" class="chat-control-btn">-</button>
+                    <button id="chat-close" class="chat-control-btn">X</button>
                 </div>
             </div>
             
             <div class="chat-messages" id="chat-messages">
-                <div class="welcome-message">
-                    <div class="system-message">
-                        <span class="system-icon">ℹ️</span>
-                        <div class="system-text">
-                            <p>Добре дошли в системата за помощ!</p>
-                            <p>Можете да задавате въпроси на учителя по време на изпита.</p>
-                            <p><strong>Правила:</strong></p>
-                            <ul>
-                                <li>Задавайте само въпроси свързани с изпита</li>
-                                <li>Бъдете кратки и ясни</li>
-                                <li>Учителят ще отговори възможно най-скоро</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <div class="chat-typing-indicator" id="chat-typing" style="display: none;">
@@ -81,20 +65,20 @@ export class HelpChat {
                     <span></span>
                     <span></span>
                 </span>
-                <span class="typing-text">Учителят пише...</span>
+                <span class="typing-text">Teacher is typing...</span>
             </div>
             
             <div class="chat-input-container">
                 <div class="chat-input-wrapper">
                     <textarea 
                         id="chat-input" 
-                        placeholder="Напишете въпроса си тук..."
+                        placeholder="Type your question here..."
                         rows="1"
                         maxlength="500"
                     ></textarea>
                     <div class="chat-input-actions">
                         <span class="char-counter" id="char-counter">0/500</span>
-                        <button id="chat-send" class="chat-send-btn" disabled>Изпрати</button>
+                        <button id="chat-send" class="chat-send-btn" disabled>Send</button>
                     </div>
                 </div>
             </div>
@@ -324,7 +308,7 @@ export class HelpChat {
             sender: 'teacher',
             message: data.message,
             timestamp: data.timestamp || Date.now(),
-            teacherName: data.teacherName || 'Учител',
+            teacherName: data.teacherName || 'Teacher',
             type: data.type || 'response'
         });
 
@@ -374,7 +358,7 @@ export class HelpChat {
             messageElement.innerHTML = `
                 <div class="message-content">
                     <div class="message-info">
-                        <span class="sender-name">${this.escapeHtml(messageData.teacherName || 'Учител')}</span>
+                        <span class="sender-name">${this.escapeHtml(messageData.teacherName || 'Teacher')}</span>
                         <span class="message-time">${this.formatTime(messageData.timestamp)}</span>
                     </div>
                     <div class="message-bubble teacher-bubble">
@@ -505,7 +489,7 @@ export class HelpChat {
      */
     showNotification(message) {
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Нов отговор от учителя', {
+            new Notification('New response from teacher', {
                 body: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
                 icon: '/student/images/chat-icon.png'
             });
@@ -547,7 +531,7 @@ export class HelpChat {
             const statusElement = messageElement.querySelector('.message-status');
             if (statusElement) {
                 statusElement.className = 'message-status delivered';
-                statusElement.textContent = '✓';
+                statusElement.textContent = 'OK';
             }
         }
         
@@ -583,7 +567,7 @@ export class HelpChat {
             const statusElement = document.createElement('span');
             statusElement.className = `teacher-status ${isOnline ? 'online' : 'offline'}`;
             statusElement.textContent = isOnline ? 'Online' : 'Offline';
-            statusElement.title = isOnline ? 'Учителят е онлайн' : 'Учителят е офлайн';
+            statusElement.title = isOnline ? 'Teacher is online' : 'Teacher is offline';
             chatTitle.appendChild(statusElement);
         }
     }
@@ -612,8 +596,8 @@ export class HelpChat {
     getStatusIcon(status) {
         switch (status) {
             case 'sending': return '...';
-            case 'sent': return '✓';
-            case 'delivered': return '✓';
+            case 'sent': return 'OK';
+            case 'delivered': return 'OK';
             case 'read': return 'Read';
             default: return '';
         }

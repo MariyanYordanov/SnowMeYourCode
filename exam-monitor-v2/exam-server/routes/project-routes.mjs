@@ -31,8 +31,10 @@ router.get('/files', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        // Decode session ID and extract class (handles Cyrillic)
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const examFilesDir = path.join(__dirname, '..', '..', 'practice-server', 'exam-files');
 
         let useExamFiles = false;
@@ -101,8 +103,9 @@ router.get('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -138,8 +141,9 @@ router.post('/file', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and filename required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const filePath = path.join(projectDir, filename);
 
         // Security check
@@ -177,8 +181,9 @@ router.put('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and content required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -188,21 +193,21 @@ router.put('/file/:filename', async (req, res) => {
 
         // Ensure parent directory exists
         const parentDir = path.dirname(filePath);
-        console.log('📁 Creating parent directory:', parentDir);
+        console.log('Creating parent directory:', parentDir);
         await fs.mkdir(parentDir, { recursive: true });
 
         // Update file
-        console.log('💾 Writing file:', filePath);
+        console.log('Writing file:', filePath);
         await fs.writeFile(filePath, content, 'utf8');
 
-        console.log('✅ File saved successfully:', filename);
+        console.log('File saved successfully:', filename);
         res.json({
             success: true,
             message: 'File updated successfully'
         });
 
     } catch (error) {
-        console.error('❌ Error updating file:', error);
+        console.error('Error updating file:', error);
         console.error('   File path:', filePath);
         console.error('   Error details:', error.message, error.code);
         res.status(500).json({ success: false, error: 'Failed to update file', details: error.message });
@@ -220,8 +225,9 @@ router.post('/folder', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and folder path required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const fullFolderPath = path.join(projectDir, folderPath);
 
         // Security check
@@ -229,12 +235,12 @@ router.post('/folder', async (req, res) => {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
-        console.log('📁 Creating folder:', fullFolderPath);
+        console.log('Creating folder:', fullFolderPath);
 
         // Create the directory
         await fs.mkdir(fullFolderPath, { recursive: true });
 
-        console.log('✅ Folder created successfully:', folderPath);
+        console.log('Folder created successfully:', folderPath);
 
         res.json({
             success: true,
@@ -243,7 +249,7 @@ router.post('/folder', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error creating folder:', error);
+        console.error('Error creating folder:', error);
         console.error('   Folder path:', folderPath);
         console.error('   Error details:', error.message, error.code);
         res.status(500).json({ success: false, error: 'Failed to create folder', details: error.message });
@@ -262,8 +268,9 @@ router.delete('/folder/:folderPath(*)', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID and folder path required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const fullFolderPath = path.join(projectDir, folderPath);
 
         // Security check
@@ -271,12 +278,12 @@ router.delete('/folder/:folderPath(*)', async (req, res) => {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
-        console.log('🗑️  Deleting folder:', fullFolderPath);
+        console.log('Deleting folder:', fullFolderPath);
 
         // Delete the directory and all its contents
         await fs.rm(fullFolderPath, { recursive: true, force: true });
 
-        console.log('✅ Folder deleted successfully:', folderPath);
+        console.log('Folder deleted successfully:', folderPath);
 
         res.json({
             success: true,
@@ -284,7 +291,7 @@ router.delete('/folder/:folderPath(*)', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error deleting folder:', error);
+        console.error('Error deleting folder:', error);
         console.error('   Folder path:', folderPath);
         console.error('   Error details:', error.message, error.code);
         res.status(500).json({ success: false, error: 'Failed to delete folder', details: error.message });
@@ -303,8 +310,9 @@ router.delete('/file/:filename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
@@ -336,8 +344,9 @@ router.post('/file/rename', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID, oldPath, and newPath required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const oldFilePath = path.join(projectDir, oldPath);
         const newFilePath = path.join(projectDir, newPath);
 
@@ -466,7 +475,7 @@ async function installProjectDependencies(projectDir, sessionId) {
         const packageJsonPath = path.join(projectDir, 'package.json');
         await fs.access(packageJsonPath);
         
-        console.log(`📦 Installing dependencies for session ${sessionId}...`);
+        console.log(`Installing dependencies for session ${sessionId}...`);
         
         // Run npm install using spawn
         const { spawn } = await import('child_process');
@@ -644,8 +653,9 @@ router.post('/start', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Session ID required' });
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         
         // Check if this is an Express project
         const projectType = await getProjectType(projectDir);
@@ -705,8 +715,9 @@ router.get('/preview/:sessionId/*', async (req, res) => {
             return res.status(400).send('Session ID required');
         }
 
-        const classFromSession = sessionId.split('-')[0].toUpperCase();
-        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, sessionId, 'project-files');
+        const decodedSessionId = decodeURIComponent(sessionId);
+        const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
+        const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
         const fullPath = path.join(projectDir, filePath);
 
         // Security check
@@ -735,7 +746,74 @@ router.get('/preview/:sessionId/*', async (req, res) => {
             res.type(contentTypes[ext]);
         }
 
-        // Serve the file
+        // For HTML files, inject console interceptor
+        if (ext === '.html') {
+            let htmlContent = await fs.readFile(fullPath, 'utf8');
+
+            // Console interceptor script
+            const consoleInterceptor = `
+<script>
+(function() {
+    const originalConsole = {
+        log: console.log.bind(console),
+        info: console.info.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console)
+    };
+
+    function sendToParent(type, args) {
+        try {
+            window.parent.postMessage({
+                type: 'preview-console',
+                method: type,
+                args: Array.from(args).map(arg => {
+                    if (typeof arg === 'object') {
+                        try { return JSON.stringify(arg); }
+                        catch { return String(arg); }
+                    }
+                    return String(arg);
+                })
+            }, '*');
+        } catch (e) {}
+    }
+
+    console.log = function(...args) {
+        originalConsole.log(...args);
+        sendToParent('log', args);
+    };
+    console.info = function(...args) {
+        originalConsole.info(...args);
+        sendToParent('info', args);
+    };
+    console.warn = function(...args) {
+        originalConsole.warn(...args);
+        sendToParent('warn', args);
+    };
+    console.error = function(...args) {
+        originalConsole.error(...args);
+        sendToParent('error', args);
+    };
+
+    window.onerror = function(msg, url, line, col, error) {
+        sendToParent('error', ['Error: ' + msg + ' (line ' + line + ')']);
+        return false;
+    };
+})();
+</script>`;
+
+            // Inject after <head> tag
+            if (htmlContent.includes('<head>')) {
+                htmlContent = htmlContent.replace('<head>', '<head>' + consoleInterceptor);
+            } else if (htmlContent.includes('<html>')) {
+                htmlContent = htmlContent.replace('<html>', '<html><head>' + consoleInterceptor + '</head>');
+            } else {
+                htmlContent = consoleInterceptor + htmlContent;
+            }
+
+            return res.send(htmlContent);
+        }
+
+        // Serve other files directly
         res.sendFile(fullPath);
 
     } catch (error) {

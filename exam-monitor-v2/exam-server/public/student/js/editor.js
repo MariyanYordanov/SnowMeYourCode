@@ -289,8 +289,8 @@ function setupCodeQualityHints(editor) {
  */
 function getDefaultCode() {
     return `
-    // Напишете вашият код тук
-    console.log("Здравей, свят!");
+    // Write your code here
+    console.log("Hello, world!");
     `;
 }
 
@@ -402,7 +402,7 @@ export async function runCode() {
         const editor = examApp?.editor;
         if (!editor) {
             console.error('Editor not initialized');
-            showError('Редакторът не е готов');
+            showError('Editor is not ready');
             return;
         }
 
@@ -411,7 +411,7 @@ export async function runCode() {
 
         if (!sessionId) {
             console.error('No valid session ID');
-            showError('Няма валидна сесия. Моля влезте отново.');
+            showError('No valid session. Please log in again.');
             return;
         }
 
@@ -435,7 +435,7 @@ export async function runCode() {
 
     } catch (error) {
         console.error('Execution error:', error);
-        displayError('Грешка при изпълнение: ' + error.message);
+        displayError('Execution error: ' + error.message);
     } finally {
         // Reset button state
         const runBtn = document.getElementById('run-btn');
@@ -504,14 +504,14 @@ export function formatCode() {
         const examApp = window.ExamApp;
         if (!examApp.editor) {
             console.warn('Editor not available');
-            showError('Редакторът не е готов.');
+            showError('Editor is not ready.');
             return;
         }
 
         examApp.editor.getAction('editor.action.formatDocument').run();
     } catch (error) {
         console.error('Code formatting failed:', error);
-        showError('Грешка при форматиране на кода');
+        showError('Error formatting code');
     }
 }
 
@@ -581,7 +581,7 @@ function updateLastSaved() {
         examApp.lastSaveTime = Date.now();
         const lastSavedEl = document.getElementById('last-saved');
         if (lastSavedEl) {
-            lastSavedEl.textContent = `Запазено: ${new Date().toLocaleTimeString('bg-BG')}`;
+            lastSavedEl.textContent = `Saved: ${new Date().toLocaleTimeString('en-US')}`;
         }
     } catch (error) {
         console.error('Failed to update last saved:', error);
@@ -1344,7 +1344,7 @@ export async function startExpressServer() {
         const sessionId = examApp?.sessionId;
 
         if (!sessionId) {
-            showError('Няма валидна сесия. Моля влезте отново.');
+            showError('No valid session. Please log in again.');
             return;
         }
 
@@ -1393,7 +1393,7 @@ export async function startExpressServer() {
             // DO NOT auto-open in new tab - anti-cheat will terminate exam!
             // Show URL in console instead
             if (window.devToolsUI) {
-                window.devToolsUI.addConsoleMessage('info', [`📌 Server URL: ${result.url} (Use Preview button or copy URL)`]);
+                window.devToolsUI.addConsoleMessage('info', [`Server URL: ${result.url} (Use Preview button or copy URL)`]);
             }
 
         } else {
@@ -1425,7 +1425,7 @@ export async function stopExpressServer() {
         const sessionId = examApp?.sessionId;
 
         if (!sessionId) {
-            showError('Няма валидна сесия. Моля влезте отново.');
+            showError('No valid session. Please log in again.');
             return;
         }
 

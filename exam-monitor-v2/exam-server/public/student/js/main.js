@@ -7,7 +7,6 @@ import { PanelResizer } from './panel-resizer.js';
 import { BottomPanelManager } from './bottom-panel.js';
 
 import {
-    setupTermsAgreement,
     setupLoginForm,
     handleLogin,
     handleLoginSuccess,
@@ -33,28 +32,12 @@ import {
 } from './timer.js';
 
 import {
-    setupAntiCheat,
-    enterFullscreenMode,
-    deactivateAntiCheat,
-    initializeAdvancedAntiCheat
-} from './anticheat.js?v=1764999675';
-
-import {
     showCompletionDialog,
     hideCustomDialogs,
     confirm as customConfirm
 } from './dialogs.js';
 
 import { setupTabs } from './tabs.js';
-
-// Kiosk mode removed - no longer needed
-
-import {
-    detectVirtualMachine,
-    getVMDetectionReport,
-    shouldBlockLogin,
-    formatVMMessage
-} from './vm-detection.js';
 
 window.ExamApp = {
     socket: null,
@@ -73,9 +56,6 @@ window.ExamApp = {
     timeLeft: 0,
     timerInterval: null,
 
-    isFullscreen: false,
-    violationCount: 0,
-    antiCheatActive: false,
     isLoggedIn: false,
     lastSaveTime: null,
     isCompletionInProgress: false,
@@ -97,58 +77,32 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 function initializeApp() {
     try {
-        console.log('Initializing Exam Monitor App...');
+        console.log('Initializing Exam Monitor App (SEB Mode)...');
 
         // Check for mobile/tablet devices and block access
         if (detectMobileDevice()) {
             blockMobileAccess();
-            return; // Stop initialization
+            return;
         }
-
-        // CRITICAL: Check for Virtual Machine
-        console.log('🔍 Checking for Virtual Machine...');
-        const vmDetection = detectVirtualMachine();
-        const vmReport = getVMDetectionReport();
-
-        console.log('VM Detection Report:', vmReport);
-
-        if (shouldBlockLogin(vmDetection)) {
-            console.error('ERROR: VIRTUAL MACHINE DETECTED - BLOCKING ACCESS');
-            blockVMAccess(vmDetection);
-            return; // Stop initialization
-        } else {
-            console.log('OK: Real machine detected - proceeding');
-        }
-
-        // Kiosk mode removed - using simpler fullscreen approach
 
         const examApp = window.ExamApp;
 
         updateEditorIntegration();
-
-        setupTermsAgreement();
-
         setupLoginForm(examApp);
-
         setupSocket();
-
-        setupAntiCheat();
-
         setupGlobalErrorHandler();
-
         preventDefaultBehaviors();
-
         setupWindowFunctions();
 
         examApp.sidebarManager = new SidebarManager();
         examApp.panelResizer = new PanelResizer();
         examApp.bottomPanel = new BottomPanelManager();
 
-        console.log('App initialized successfully');
+        console.log('App initialized successfully (SEB Mode - No Anticheat)');
 
     } catch (error) {
         console.error('Failed to initialize app:', error);
-        showError('Грешка при инициализация на приложението');
+        showError('Application initialization error');
     }
 }
 
@@ -160,7 +114,7 @@ async function startExam(sessionData) {
             throw new Error('Invalid session data');
         }
 
-        console.log('OK: Starting exam');
+        console.log('Starting exam (SEB Mode)...');
 
         examApp.isLoggedIn = true;
         examApp.examStartTime = sessionData.examStartTime || Date.now();
@@ -168,28 +122,44 @@ async function startExam(sessionData) {
         examApp.examEndTime = new Date(examApp.examStartTime + examApp.examDuration);
 
         hideLoginComponent();
+        showExamComponent();
 
-        // Store session data for later initialization (after fullscreen)
-        examApp.pendingSessionData = sessionData;
+        // Update student display
+        updateStudentDisplay(
+            examApp.studentName,
+            examApp.studentClass,
+            examApp.sessionId
+        );
 
-        // Show fullscreen button - exam will initialize AFTER fullscreen is entered
-        showMinimalFullscreenButton();
+        // Start timer
+        startExamTimer(sessionData.timeLeft || examApp.examDuration);
 
-        console.log('Exam initialization completed - waiting for fullscreen');
+        // Initialize Monaco editor
+        await initializeMonaco();
+        setupTabs();
+
+        // Initialize help chat
+        if (examApp.socket) {
+            examApp.helpChat = new HelpChat(examApp.socket);
+            examApp.helpChat.requestNotificationPermission();
+        }
+
+        // Restore code for continuing sessions
+        if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
+            examApp.editor.setValue(sessionData.lastCode);
+            const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
+            showNotification(`Session restored. ${minutesLeft} minutes remaining`, 'info');
+        } else {
+            showNotification('Exam started successfully!', 'success');
+        }
+
+        console.log('Exam started successfully');
 
     } catch (error) {
         console.error('Failed to start exam:', error);
-        showError('ERROR: Грешка при стартиране на изпита');
-
-        setTimeout(() => {
-            if (window.ExamApp.isLoggedIn) {
-                exitExam('start_error');
-            }
-        }, 3000);
+        showError('Failed to start exam');
     }
 }
-
-// OLD FUNCTION REMOVED - Now using showMinimalFullscreenButton with embedded startExamFullscreen
 
 async function initializeMonaco() {
     try {
@@ -213,17 +183,13 @@ async function initializeMonaco() {
             setupFileManagerCommands();
         }
 
-        // Setup finish exam button event listener
+        // Setup finish exam button
         const finishBtn = document.getElementById('finish-exam-btn');
         if (finishBtn) {
             finishBtn.addEventListener('click', () => {
-                console.log('Finish exam button clicked');
-
-                // Show confirmation dialog using custom HTML dialog
                 showSimpleConfirm(
-                    'Сигурни ли сте, че искате да приключите изпита?',
+                    'Are you sure you want to submit your exam?',
                     () => {
-                        console.log('User confirmed - completing exam');
                         window.ExamApp.completeExam('student_submit');
                     },
                     () => {
@@ -231,16 +197,13 @@ async function initializeMonaco() {
                     }
                 );
             });
-            console.log('OK: Finish exam button event listener attached');
-        } else {
-            console.error('ERROR: Finish exam button not found in DOM');
         }
 
+        // Load project files
         if (examApp.sessionId) {
             try {
                 const success = await fileManager.loadProjectStructure(examApp.sessionId);
                 if (!success) {
-                    console.log('No existing project found, loading starter files');
                     loadStarterProject();
                 }
             } catch (error) {
@@ -266,7 +229,6 @@ function setupFileManagerCommands() {
         const editor = examApp.editor;
 
         if (!fileManager || !editor || typeof monaco === 'undefined') {
-            console.warn('Cannot setup file manager commands - missing dependencies');
             return;
         }
 
@@ -276,7 +238,6 @@ function setupFileManagerCommands() {
                 fileManager.createNewFolder();
             });
         }
-
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
             fileManager.saveCurrentFile();
@@ -290,35 +251,34 @@ function setupFileManagerCommands() {
             fileManager.createNewFile();
         });
 
-        console.log('File manager commands setup complete');
-
     } catch (error) {
         console.error('Failed to setup file manager commands:', error);
     }
 }
 
-function completeExam(reason = 'unknown') {
+async function completeExam(reason = 'unknown') {
     try {
         const examApp = window.ExamApp;
         examApp.completionInProgress = true;
 
+        // Save current file before completing
         if (examApp.fileManager) {
-            examApp.fileManager.saveCurrentFile();
+            await examApp.fileManager.saveCurrentFile();
         }
 
         // Close help chat window if open
         const helpChatWindow = document.querySelector('.help-chat-window');
         if (helpChatWindow) {
             helpChatWindow.style.display = 'none';
-            console.log('[CHAT] Help chat window closed on exam completion');
         }
-
-        deactivateAntiCheat();
 
         if (examApp.timerInterval) {
             clearInterval(examApp.timerInterval);
         }
 
+        showNotification('Submitting solution...', 'info');
+
+        // Try socket first, but also use HTTP API as fallback
         if (examApp.socket && examApp.socket.connected) {
             examApp.socket.emit('exam-complete', {
                 sessionId: examApp.sessionId,
@@ -327,16 +287,29 @@ function completeExam(reason = 'unknown') {
             });
         }
 
-        // Show brief "Submitting..." notification instead of dialog
-        showNotification('Изпращане на решението...', 'info');
+        // Also call HTTP API to ensure completion is recorded
+        try {
+            await fetch('/api/exam-complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: examApp.sessionId,
+                    reason: reason,
+                    timestamp: Date.now()
+                })
+            });
+        } catch (e) {
+            console.warn('HTTP completion fallback failed:', e);
+        }
 
-        // Show completion screen after 2 seconds
         setTimeout(() => {
             exitExam(reason);
         }, 2000);
 
     } catch (error) {
         console.error('Error completing exam:', error);
+        // Still exit even if there's an error
+        exitExam(reason);
     }
 }
 
@@ -345,29 +318,11 @@ function exitExam(reason = 'unknown') {
         const examApp = window.ExamApp;
         examApp.completionInProgress = true;
         examApp.isLoggedIn = false;
-        examApp.antiCheatActive = false;
 
         // Close help chat window if open
         const helpChatWindow = document.querySelector('.help-chat-window');
         if (helpChatWindow) {
             helpChatWindow.style.display = 'none';
-            console.log('[CHAT] Help chat window closed on exam exit');
-        }
-
-        deactivateAntiCheat();
-
-        // CRITICAL: Hide fullscreen warning overlay immediately
-        const warningOverlay = document.querySelector('.fullscreen-warning-overlay');
-        if (warningOverlay) {
-            warningOverlay.style.display = 'none';
-            console.log('Fullscreen warning overlay hidden');
-        }
-
-        // CRITICAL: Exit fullscreen immediately
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => {
-                console.log('Failed to exit fullscreen:', err);
-            });
         }
 
         if (examApp.timerInterval) {
@@ -386,29 +341,17 @@ function exitExam(reason = 'unknown') {
             });
         }
 
-        // For force-disconnect, show screen IMMEDIATELY (no delay)
-        const isForceDisconnect = reason.includes('force') || reason.includes('violation') || reason.includes('suspicious');
+        hideExamComponent();
+        showCompletionScreen(reason);
+        examApp.completionInProgress = false;
 
-        if (isForceDisconnect) {
-            hideExamComponent();
-            showCompletionScreen(reason);
-            examApp.completionInProgress = false;
-            console.log(`❌ EXAM TERMINATED: ${reason}`);
-        } else {
-            setTimeout(() => {
-                hideExamComponent();
-                showCompletionScreen(reason);
-                examApp.completionInProgress = false;
-            }, 2000);
-            console.log(`Exam exited: ${reason}`);
-        }
+        console.log(`Exam exited: ${reason}`);
 
     } catch (error) {
         console.error('Error during exam exit:', error);
     }
 }
 
-// CRITICAL: Export exitExam to global scope so socket.js can call it
 window.exitExam = exitExam;
 
 function showLoginComponent() {
@@ -448,90 +391,32 @@ function showCompletionScreen(reason = 'unknown') {
     const completionComponent = document.getElementById('completion-component');
 
     if (completionComponent) {
-        // Fill in student info
         const studentNameEl = document.getElementById('completion-student-name');
         const studentClassEl = document.getElementById('completion-student-class');
         const completionTimeEl = document.getElementById('completion-time');
 
-        if (studentNameEl) studentNameEl.textContent = examApp.studentName || 'Неизвестен';
-        if (studentClassEl) studentClassEl.textContent = examApp.studentClass || 'Неизвестен';
+        if (studentNameEl) studentNameEl.textContent = examApp.studentName || 'Unknown';
+        if (studentClassEl) studentClassEl.textContent = examApp.studentClass || 'Unknown';
         if (completionTimeEl) {
             const now = new Date();
-            completionTimeEl.textContent = now.toLocaleString('bg-BG');
+            completionTimeEl.textContent = now.toLocaleString('en-US');
         }
 
-        // Change title and message based on reason
         const titleEl = document.getElementById('completion-title');
         const messageEl = document.getElementById('completion-message');
 
-        const isForceDisconnect = reason && (reason.includes('force') || reason.includes('violation') || reason.includes('suspicious'));
-
-        if (isForceDisconnect) {
-            if (titleEl) {
-                titleEl.textContent = '❌ ИЗПИТЪТ Е ПРЕКРАТЕН';
-                titleEl.style.color = '#dc2626';
-            }
-            if (messageEl) {
-                messageEl.textContent = 'Изпитът беше прекратен поради нарушение на правилата на изпита (напускане от fullscreen 3 пъти).';
-                messageEl.style.color = '#dc2626';
-                messageEl.style.fontWeight = 'bold';
-                messageEl.style.fontSize = '1.4rem';
-            }
-        } else {
-            if (titleEl) {
-                titleEl.textContent = '✅ Изпитът приключи успешно!';
-                titleEl.style.color = '#059669';
-            }
-            if (messageEl) {
-                messageEl.textContent = 'Вашето решение е изпратено успешно.';
-                messageEl.style.color = '#4a5568';
-            }
+        if (titleEl) {
+            titleEl.textContent = 'Exam Completed Successfully!';
+            titleEl.style.color = '#059669';
+        }
+        if (messageEl) {
+            messageEl.textContent = 'Your solution has been submitted successfully.';
+            messageEl.style.color = '#4a5568';
         }
 
         completionComponent.style.display = 'block';
-
-        // Exit fullscreen when showing completion screen
-        if (document.fullscreenElement) {
-            console.log('Exiting fullscreen mode...');
-            document.exitFullscreen().catch(err => {
-                console.log('Failed to exit fullscreen:', err);
-            });
-        }
     }
 }
-
-function hideCompletionScreen() {
-    const completionComponent = document.getElementById('completion-component');
-    if (completionComponent) {
-        completionComponent.style.display = 'none';
-    }
-}
-
-function showPreExamComponent() {
-    const preExamComponent = document.getElementById('pre-exam-component');
-    if (preExamComponent) {
-        preExamComponent.style.display = 'flex';
-    }
-}
-
-function hidePreExamComponent() {
-    const preExamComponent = document.getElementById('pre-exam-component');
-    if (preExamComponent) {
-        preExamComponent.style.display = 'none';
-    }
-}
-
-function updatePreExamDisplay(studentName, studentClass, sessionId) {
-    const nameEl = document.getElementById('pre-exam-student-name');
-    const classEl = document.getElementById('pre-exam-student-class');
-    const sessionEl = document.getElementById('pre-exam-session-id');
-
-    if (nameEl) nameEl.textContent = studentName || 'Неизвестен';
-    if (classEl) classEl.textContent = studentClass || 'Неизвестен';
-    if (sessionEl) sessionEl.textContent = sessionId || 'Неизвестен';
-}
-
-// OLD FUNCTION REMOVED - setupPreExamButton not needed anymore
 
 function showNotification(message, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${message}`);
@@ -557,27 +442,19 @@ function showError(message) {
 }
 
 function preventDefaultBehaviors() {
+    // Minimal prevention - SEB handles the rest
     document.addEventListener('contextmenu', e => e.preventDefault());
-
-    document.addEventListener('dragstart', e => e.preventDefault());
-    document.addEventListener('drop', e => e.preventDefault());
-
-    document.addEventListener('selectstart', e => {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-            e.preventDefault();
-        }
-    });
 }
 
 function setupGlobalErrorHandler() {
     window.addEventListener('error', (event) => {
         console.error('Global error:', event.error);
-        showError(`Грешка: ${event.error?.message || 'Неизвестна грешка'}`);
+        showError(`Error: ${event.error?.message || 'Unknown error'}`);
     });
 
     window.addEventListener('unhandledrejection', (event) => {
         console.error('Unhandled promise rejection:', event.reason);
-        showError(`Грешка: ${event.reason?.message || 'Неизвестна грешка'}`);
+        showError(`Error: ${event.reason?.message || 'Unknown error'}`);
     });
 }
 
@@ -590,42 +467,26 @@ function setupWindowFunctions() {
     window.handleTimeWarning = handleTimeWarning;
     window.handleExamExpired = handleExamExpired;
 
-    // Assign functions to ExamApp for external access
     examApp.startExam = startExam;
     examApp.completeExam = completeExam;
     examApp.exitExam = exitExam;
-    examApp.resetLoginState = () => resetLoginState(examApp);
-    examApp.getLoginState = () => getLoginState(examApp);
-    examApp.getTermsAcceptanceInfo = () => getTermsAcceptanceInfo(examApp);
 }
 
-/**
- * Detect if the device is mobile or tablet
- */
 function detectMobileDevice() {
     const userAgent = navigator.userAgent.toLowerCase();
-    
-    // Check for mobile devices
     const mobileKeywords = [
         'android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry',
         'iemobile', 'opera mini', 'mobile', 'tablet', 'kindle', 'silk'
     ];
-    
+
     const isMobile = mobileKeywords.some(keyword => userAgent.includes(keyword));
-    
-    // Additional checks
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const smallScreen = window.innerWidth <= 768 || window.innerHeight <= 600;
-    
-    // Check for mobile-specific features
     const isMobileUA = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
     return isMobile || (hasTouch && smallScreen) || isMobileUA;
 }
 
-/**
- * Block mobile access with error message
- */
 function blockMobileAccess() {
     document.body.innerHTML = `
         <div style="
@@ -646,105 +507,17 @@ function blockMobileAccess() {
                 border-radius: 10px;
                 max-width: 500px;
             ">
-                <h1 style="font-size: 48px; margin-bottom: 20px;">Mobile ×</h1>
-                <h2 style="margin-bottom: 20px;">Мобилни устройства не се поддържат</h2>
+                <h1 style="font-size: 48px; margin-bottom: 20px;">Mobile</h1>
+                <h2 style="margin-bottom: 20px;">Mobile Devices Not Supported</h2>
                 <p style="font-size: 18px; line-height: 1.6;">
-                    Изпитът може да се провежда само на лаптоп или настолен компютър.
-                    <br><br>
-                    Моля, използвайте компютър с:
-                </p>
-                <ul style="text-align: left; display: inline-block; margin: 20px 0;">
-                    <li>Windows, macOS или Linux</li>
-                    <li>Chrome, Firefox, Edge или Safari браузър</li>
-                    <li>Минимална резолюция 1280x720</li>
-                    <li>Физическа клавиатура и мишка</li>
-                </ul>
-                <p style="margin-top: 30px; opacity: 0.8;">
-                    За въпроси се свържете с преподавателя.
+                    The exam can only be taken on a laptop or desktop computer.
                 </p>
             </div>
         </div>
     `;
 }
 
-/**
- * Block VM access with detailed error message
- */
-function blockVMAccess(vmDetection) {
-    const message = formatVMMessage(vmDetection);
-    const indicators = vmDetection.indicators.join('<br>• ');
-
-    document.body.innerHTML = `
-        <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        ">
-            <div style="
-                background: rgba(0,0,0,0.3);
-                padding: 40px;
-                border-radius: 10px;
-                max-width: 600px;
-            ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠</h1>
-                <h2 style="margin-bottom: 20px; font-size: 32px;">Виртуална машина засечена!</h2>
-                <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
-                    Изпитът <strong>НЕ МОЖЕ</strong> да се провежда във виртуална среда.
-                </p>
-
-                <div style="
-                    background: rgba(255,255,255,0.1);
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin-bottom: 30px;
-                    text-align: left;
-                ">
-                    <h3 style="margin-top: 0;">Засечени индикатори:</h3>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        • ${indicators}
-                    </ul>
-                    <p style="margin-bottom: 0; opacity: 0.8; font-size: 14px;">
-                        Confidence: ${vmDetection.confidence}%
-                    </p>
-                </div>
-
-                <p style="font-size: 16px; line-height: 1.6;">
-                    <strong>Моля, влезте от реално устройство:</strong>
-                </p>
-                <ul style="text-align: left; display: inline-block; margin: 20px 0;">
-                    <li>Физически лаптоп или настолен компютър</li>
-                    <li>Без VirtualBox, VMware, Parallels и др.</li>
-                    <li>Без Wine или други емулатори</li>
-                    <li>Реална физическа машина</li>
-                </ul>
-
-                <p style="margin-top: 30px; opacity: 0.9; font-size: 14px;">
-                    За въпроси или технически проблеми се свържете с преподавателя.
-                </p>
-
-                <p style="margin-top: 20px; opacity: 0.7; font-size: 12px;">
-                    Тази проверка е задължителна за сигурността на изпита.
-                </p>
-            </div>
-        </div>
-    `;
-
-    // Log to console for debugging
-    console.log('VM Detection blocked access:', vmDetection);
-}
-
-/**
- * Simple confirmation dialog that works in fullscreen
- */
 function showSimpleConfirm(message, onConfirm, onCancel) {
-    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'custom-dialog-overlay';
     overlay.style.cssText = `
@@ -760,7 +533,6 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
         z-index: 999999;
     `;
 
-    // Create dialog with inline styles for guaranteed appearance
     const dialog = document.createElement('div');
     dialog.style.cssText = `
         background: white;
@@ -772,7 +544,7 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
     `;
     dialog.innerHTML = `
         <div style="margin-bottom: 1.5rem;">
-            <h2 style="color: #2d3748; font-size: 1.5rem; font-weight: 600; margin: 0;">Потвърдете действието</h2>
+            <h2 style="color: #2d3748; font-size: 1.5rem; font-weight: 600; margin: 0;">Confirm Action</h2>
         </div>
         <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">${message}</p>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
@@ -785,8 +557,7 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
                 cursor: pointer;
                 background: #e2e8f0;
                 color: #2d3748;
-                transition: all 0.2s;
-            ">Не</button>
+            ">No</button>
             <button id="confirm-yes" style="
                 padding: 0.75rem 1.5rem;
                 font-size: 1rem;
@@ -796,40 +567,19 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
                 cursor: pointer;
                 background: #667eea;
                 color: white;
-                transition: all 0.2s;
-            ">Да</button>
+            ">Yes</button>
         </div>
     `;
 
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Handle button clicks
     const yesBtn = document.getElementById('confirm-yes');
     const noBtn = document.getElementById('confirm-cancel');
 
     const cleanup = () => {
         document.body.removeChild(overlay);
     };
-
-    // Add hover effects
-    yesBtn.addEventListener('mouseenter', () => {
-        yesBtn.style.background = '#5568d3';
-        yesBtn.style.transform = 'translateY(-1px)';
-        yesBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-    });
-    yesBtn.addEventListener('mouseleave', () => {
-        yesBtn.style.background = '#667eea';
-        yesBtn.style.transform = 'translateY(0)';
-        yesBtn.style.boxShadow = 'none';
-    });
-
-    noBtn.addEventListener('mouseenter', () => {
-        noBtn.style.background = '#cbd5e0';
-    });
-    noBtn.addEventListener('mouseleave', () => {
-        noBtn.style.background = '#e2e8f0';
-    });
 
     yesBtn.addEventListener('click', () => {
         cleanup();
@@ -841,127 +591,5 @@ function showSimpleConfirm(message, onConfirm, onCancel) {
         if (onCancel) onCancel();
     });
 
-    // Focus yes button
     setTimeout(() => yesBtn.focus(), 100);
 }
-
-/**
- * Show minimal fullscreen button that enters fullscreen mode
- */
-function showMinimalFullscreenButton() {
-    const overlay = document.createElement('div');
-    overlay.id = 'fullscreen-button-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999999;
-        cursor: pointer;
-    `;
-
-    const button = document.createElement('button');
-    button.style.cssText = `
-        background: white;
-        color: #dc3545;
-        border: none;
-        padding: 30px 60px;
-        font-size: 28px;
-        font-weight: bold;
-        border-radius: 12px;
-        cursor: pointer;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        animation: pulse 1.5s infinite;
-    `;
-    button.innerHTML = '🖥️ Влез в Fullscreen режим';
-
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
-            50% { transform: scale(1.08); box-shadow: 0 12px 40px rgba(0,0,0,0.7); }
-            100% { transform: scale(1); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
-        }
-    `;
-    document.head.appendChild(style);
-
-    overlay.appendChild(button);
-    document.body.appendChild(overlay);
-
-    let examStarting = false;  // Flag to prevent double initialization
-
-    const startExamFullscreen = async () => {
-        if (examStarting) {
-            console.log('WARNING: Exam already starting, ignoring duplicate call');
-            return;
-        }
-
-        examStarting = true;
-
-        try {
-            const success = enterFullscreenMode();
-            if (success) {
-                overlay.remove();
-                style.remove();
-
-                // CRITICAL: Hide login component and show exam component
-                hideLoginComponent();
-                showExamComponent();
-
-                // Initialize everything AFTER exam component is shown
-                const examApp = window.ExamApp;
-                const sessionData = examApp.pendingSessionData;
-
-                updateStudentDisplay(
-                    examApp.studentName,
-                    examApp.studentClass,
-                    examApp.sessionId
-                );
-
-                // Start timer IMMEDIATELY before Monaco initialization
-                startExamTimer(sessionData.timeLeft || examApp.examDuration);
-
-                await initializeMonaco();
-                setupTabs();
-
-                // Initialize advanced anti-cheat modules
-                initializeAdvancedAntiCheat();
-
-                // Initialize help chat
-                if (examApp.socket) {
-                    examApp.helpChat = new HelpChat(examApp.socket);
-                    examApp.helpChat.requestNotificationPermission();
-                }
-
-                // Restore code for continuing sessions
-                if (!sessionData.isNewSession && sessionData.lastCode && examApp.editor) {
-                    examApp.editor.setValue(sessionData.lastCode);
-                    const minutesLeft = Math.floor(sessionData.timeLeft / 60000);
-                    showNotification(`Сесията е възстановена. Остават ${minutesLeft} минути`, 'info');
-                } else {
-                    showNotification('Изпитът започна успешно!', 'success');
-                }
-            } else {
-                showError('Моля, разрешете fullscreen режим');
-                examStarting = false;
-            }
-        } catch (error) {
-            console.error('Failed to enter fullscreen:', error);
-            showError('Моля, разрешете fullscreen режим');
-            examStarting = false;
-        }
-    };
-
-    button.addEventListener('click', startExamFullscreen);
-    // Removed overlay click listener to prevent double initialization
-
-    setTimeout(() => {
-        button.focus();
-    }, 100);
-}
-

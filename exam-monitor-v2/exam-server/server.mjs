@@ -218,6 +218,32 @@ app.use('/api/project/run/:sessionId', (req, res, next) => {
     express.static(projectPath)(req, res, next);
 });
 
+// Get students list by class (uses same classes.json as login validation)
+app.get('/api/students/:studentClass', async (req, res) => {
+    try {
+        const { studentClass } = req.params;
+        const fs = await import('fs/promises');
+        const path = await import('path');
+
+        // Use classes.json to ensure consistency with login validation
+        const classesPath = path.join(__dirname, 'data', 'classes.json');
+
+        try {
+            const data = await fs.readFile(classesPath, 'utf8');
+            const classesData = JSON.parse(data);
+
+            const students = classesData.students?.[studentClass] || [];
+            res.json({ success: true, students });
+        } catch (error) {
+            console.warn('Classes file not found, returning empty list');
+            res.json({ success: true, students: [] });
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        res.status(500).json({ success: false, error: 'Failed to load students' });
+    }
+});
+
 app.post('/api/student-login', async (req, res) => {
     try {
         const { studentName, studentClass } = req.body;
@@ -237,6 +263,30 @@ app.post('/api/student-login', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error during login'
+        });
+    }
+});
+
+// HTTP endpoint for exam completion (fallback when WebSocket not available)
+app.post('/api/exam-complete', async (req, res) => {
+    try {
+        const { sessionId, reason, timestamp } = req.body;
+
+        if (!sessionId) {
+            return res.status(400).json({ success: false, message: 'Session ID required' });
+        }
+
+        console.log(`Exam completed via HTTP: ${sessionId} - Reason: ${reason}`);
+
+        // Mark session as completed
+        await sessionManager.completeSession(sessionId, reason);
+
+        res.json({ success: true, message: 'Exam completed successfully' });
+    } catch (error) {
+        console.error('Exam completion error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during exam completion'
         });
     }
 });

@@ -21,7 +21,7 @@ export class PanelResizer {
         this.createResizeHandles();
         this.bindEvents();
         this.loadSavedSizes();
-        console.log('📏 Panel Resizer initialized');
+        console.log('Panel Resizer initialized');
     }
 
     /**
@@ -66,7 +66,7 @@ export class PanelResizer {
             target.appendChild(handle);
         }
 
-        console.log(`✅ Resize handle created: ${handleId} for ${targetId}`);
+        console.log(`Resize handle created: ${handleId} for ${targetId}`);
     }
 
     /**
@@ -426,7 +426,7 @@ export class PanelResizer {
         });
         
         // Remove event listeners would require storing references
-        console.log('📏 Panel Resizer destroyed');
+        console.log('Panel Resizer destroyed');
     }
 }
 

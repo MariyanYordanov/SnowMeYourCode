@@ -81,15 +81,15 @@ export function loadStarterProject() {
 
     const starterFiles = {
         'index.html': `<!DOCTYPE html>
-<html lang="bg">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моят проект</title>
+    <title>My Project</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Добре дошли!</h1>
+    <h1>Welcome!</h1>
     <div id="app"></div>
     <script src="script.js"></script>
 </body>
@@ -121,12 +121,12 @@ h1 {
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }`,
-        'script.js': `// Вашият код
-console.log("Здравей, свят!");
+        'script.js': `// Your code
+console.log("Hello, world!");
 
 function main() {
     const app = document.getElementById('app');
-    app.innerHTML = '<p>Започнете да пишете код...</p>';
+    app.innerHTML = '<p>Start writing code...</p>';
 }
 
 document.addEventListener('DOMContentLoaded', main);`

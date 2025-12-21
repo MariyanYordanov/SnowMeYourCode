@@ -40,7 +40,7 @@ export class StudentValidator {
             return {
                 valid: false,
                 type: 'error',
-                message: 'Грешка при зареждане на конфигурацията на класовете'
+                message: 'Error loading class configuration'
             };
         }
 
@@ -49,7 +49,7 @@ export class StudentValidator {
             return {
                 valid: false,
                 type: VALIDATION_RESULTS.INVALID_CLASS,
-                message: `Клас "${studentClass}" не е валиден. Валидни класове: ${this.classes.validClasses.join(', ')}`
+                message: `Class "${studentClass}" is not valid. Valid classes: ${this.classes.validClasses.join(', ')}`
             };
         }
 
@@ -58,7 +58,7 @@ export class StudentValidator {
             return {
                 valid: false,
                 type: VALIDATION_RESULTS.INVALID_STUDENT,
-                message: 'Името трябва да съдържа само български букви и интервали'
+                message: 'Name must contain only Cyrillic letters and spaces'
             };
         }
 
@@ -68,14 +68,14 @@ export class StudentValidator {
             return {
                 valid: false,
                 type: VALIDATION_RESULTS.STUDENT_NOT_IN_CLASS,
-                message: `Студент "${studentName}" не е записан в клас "${studentClass}". Студенти в този клас: ${classStudents.join(', ')}`
+                message: `Student "${studentName}" is not enrolled in class "${studentClass}". Students in this class: ${classStudents.join(', ')}`
             };
         }
 
         return {
             valid: true,
             type: VALIDATION_RESULTS.VALID,
-            message: 'Валиден студент'
+            message: 'Valid student'
         };
     }
 

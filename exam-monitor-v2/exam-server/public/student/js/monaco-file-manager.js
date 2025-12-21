@@ -97,7 +97,7 @@ export class MonacoFileManager {
             if (item.type === 'folder') {
                 // Check if folder should be collapsed
                 const isCollapsed = this.collapsedFolders.has(item.path);
-                const toggleIcon = hasChildren ? (isCollapsed ? '▶' : '▼') : '▶';
+                const toggleIcon = hasChildren ? this.getChevronIcon(!isCollapsed) : '<span style="width:12px;display:inline-block"></span>';
                 const childrenStyle = isCollapsed ? ' style="display: none;"' : '';
 
                 // Folder with collapse/expand
@@ -111,9 +111,9 @@ export class MonacoFileManager {
                             <span class="tree-icon">${icon}</span>
                             <span class="tree-name">${name}</span>
                             <span class="tree-actions">
-                                <button class="tree-action-btn new-folder-btn" data-path="${item.path}" title="Нова папка">📁</button>
-                                <button class="tree-action-btn new-file-btn" data-path="${item.path}" title="Нов файл">📄</button>
-                                <button class="tree-action-btn delete-folder-btn" data-path="${item.path}" title="Изтриване на папка">🗑️</button>
+                                <button class="tree-action-btn new-folder-btn" data-path="${item.path}" title="New Folder">${this.getActionIcon('new-folder')}</button>
+                                <button class="tree-action-btn new-file-btn" data-path="${item.path}" title="New File">${this.getActionIcon('new-file')}</button>
+                                <button class="tree-action-btn delete-folder-btn" data-path="${item.path}" title="Delete Folder">${this.getActionIcon('delete')}</button>
                             </span>
                         </div>
                         ${hasChildren ? `<div class="folder-children"${childrenStyle}>${this.renderTreeLevel(item.children, indent + 1)}</div>` : ''}
@@ -126,11 +126,12 @@ export class MonacoFileManager {
                          data-path="${item.path}"
                          data-type="${item.type}"
                          style="padding-left: ${indent * 20}px">
+                        <span class="folder-toggle"><span style="width:12px;display:inline-block"></span></span>
                         <span class="tree-icon">${icon}</span>
                         <span class="tree-name">${name}</span>
                         <span class="tree-actions">
-                            <button class="tree-action-btn rename-btn" data-path="${item.path}" title="Преименуване">✏️</button>
-                            <button class="tree-action-btn delete-btn" data-path="${item.path}" title="Изтриване">🗑️</button>
+                            <button class="tree-action-btn rename-btn" data-path="${item.path}" title="Rename">${this.getActionIcon('rename')}</button>
+                            <button class="tree-action-btn delete-btn" data-path="${item.path}" title="Delete">${this.getActionIcon('delete')}</button>
                         </span>
                     </div>
                 `;
@@ -238,12 +239,12 @@ export class MonacoFileManager {
         if (isCollapsed) {
             // Expand folder
             children.style.display = 'block';
-            toggle.textContent = '▼';
+            toggle.innerHTML = this.getChevronIcon(true);
             this.collapsedFolders.delete(folderPath);
         } else {
             // Collapse folder
             children.style.display = 'none';
-            toggle.textContent = '▶';
+            toggle.innerHTML = this.getChevronIcon(false);
             this.collapsedFolders.add(folderPath);
         }
     }
@@ -393,7 +394,7 @@ export class MonacoFileManager {
             return false;
         } catch (error) {
             console.error('Save failed:', error);
-            this.showNotification('Грешка при запазване', 'error');
+            this.showNotification('Error saving file', 'error');
             return false;
         }
     }
@@ -414,7 +415,7 @@ export class MonacoFileManager {
 
     async createNewFile(fileName) {
         if (!fileName) {
-            fileName = await prompt('Име на файл (напр. app.js, style.css, index.html):');
+            fileName = await prompt('File name (e.g. app.js, style.css, index.html):');
             if (!fileName) return;
         }
 
@@ -422,8 +423,8 @@ export class MonacoFileManager {
         fileName = this.sanitizeFileName(fileName);
         if (!fileName) {
             await showInfoDialog({
-                title: 'Невалидно име',
-                message: 'Моля използвайте само букви, цифри, точки и тирета.'
+                title: 'Invalid Name',
+                message: 'Please use only letters, numbers, dots and dashes.'
             });
             return;
         }
@@ -431,8 +432,8 @@ export class MonacoFileManager {
         // Check if file already exists
         if (this.models.has(fileName)) {
             await showInfoDialog({
-                title: 'Файлът съществува',
-                message: `Файл "${fileName}" вече съществува!`
+                title: 'File Exists',
+                message: `File "${fileName}" already exists!`
             });
             return;
         }
@@ -451,15 +452,15 @@ export class MonacoFileManager {
      * Create a new file inside a specific folder
      */
     async createFileInFolder(folderPath) {
-        const fileName = await prompt('Име на файл (напр. app.js, style.css):');
+        const fileName = await prompt('File name (e.g. app.js, style.css):');
         if (!fileName) return;
 
         // Sanitize filename
         const sanitized = this.sanitizeFileName(fileName);
         if (!sanitized) {
             await showInfoDialog({
-                title: 'Невалидно име',
-                message: 'Моля използвайте само букви, цифри, точки и тирета.'
+                title: 'Invalid Name',
+                message: 'Please use only letters, numbers, dots and dashes.'
             });
             return;
         }
@@ -470,8 +471,8 @@ export class MonacoFileManager {
         // Check if file already exists
         if (this.models.has(fullPath)) {
             await showInfoDialog({
-                title: 'Файлът съществува',
-                message: `Файл "${fullPath}" вече съществува!`
+                title: 'File Exists',
+                message: `File "${fullPath}" already exists!`
             });
             return;
         }
@@ -493,15 +494,15 @@ export class MonacoFileManager {
      * Create a new folder
      */
     async createNewFolder() {
-        const folderName = await prompt('Име на папка (напр. src, utils, components):');
+        const folderName = await prompt('Folder name (e.g. src, utils, components):');
         if (!folderName) return;
 
         // Sanitize folder name
         const sanitized = this.sanitizeFolderName(folderName);
         if (!sanitized) {
             await showInfoDialog({
-                title: 'Невалидно име',
-                message: 'Моля използвайте само букви, цифри и тирета.'
+                title: 'Invalid Name',
+                message: 'Please use only letters, numbers and dashes.'
             });
             return;
         }
@@ -522,13 +523,13 @@ export class MonacoFileManager {
 
         if (!result.success) {
             await showInfoDialog({
-                title: 'Грешка',
-                message: `Грешка при създаване на папка: ${result.error}`
+                title: 'Error',
+                message: `Error creating folder: ${result.error}`
             });
             return;
         }
 
-        console.log('✅ Folder created on server:', sanitized);
+        console.log('Folder created on server:', sanitized);
 
         // Refresh the file tree to show the new folder
         await this.loadProjectStructure(window.ExamApp?.sessionId);
@@ -538,12 +539,12 @@ export class MonacoFileManager {
      * Create a subfolder inside an existing folder
      */
     async createSubFolder(parentFolderPath) {
-        console.log('🔍 createSubFolder called with path:', parentFolderPath);
+        console.log('createSubFolder called with path:', parentFolderPath);
 
-        const folderName = await prompt('Име на папка (напр. utils, helpers):');
+        const folderName = await prompt('Folder name (e.g. utils, helpers):');
         if (!folderName) return;
 
-        console.log('📝 User entered folder name:', folderName);
+        console.log('User entered folder name:', folderName);
 
         // Remove file extension if user accidentally added one
         let cleanFolderName = folderName;
@@ -554,7 +555,7 @@ export class MonacoFileManager {
             const fileExtensions = ['.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.json', '.txt', '.md'];
             if (fileExtensions.includes(extension.toLowerCase())) {
                 cleanFolderName = cleanFolderName.substring(0, lastDot);
-                console.warn('⚠️ Removed file extension from folder name:', {
+                console.warn('Removed file extension from folder name:', {
                     original: folderName,
                     cleaned: cleanFolderName
                 });
@@ -565,13 +566,13 @@ export class MonacoFileManager {
         const sanitized = this.sanitizeFolderName(cleanFolderName);
         if (!sanitized) {
             await showInfoDialog({
-                title: 'Невалидно име',
-                message: 'Моля използвайте само букви, цифри и тирета.'
+                title: 'Invalid Name',
+                message: 'Please use only letters, numbers and dashes.'
             });
             return;
         }
 
-        console.log('✅ Sanitized folder name:', sanitized);
+        console.log('Sanitized folder name:', sanitized);
 
         // If parentFolderPath is a file path, extract the directory
         let actualParentPath = parentFolderPath;
@@ -588,7 +589,7 @@ export class MonacoFileManager {
             } else {
                 actualParentPath = ''; // Root level
             }
-            console.warn('⚠️ File path detected, extracting parent folder:', {
+            console.warn('File path detected, extracting parent folder:', {
                 original: parentFolderPath,
                 extracted: actualParentPath
             });
@@ -613,13 +614,13 @@ export class MonacoFileManager {
 
         if (!result.success) {
             await showInfoDialog({
-                title: 'Грешка',
-                message: `Грешка при създаване на папка: ${result.error}`
+                title: 'Error',
+                message: `Error creating folder: ${result.error}`
             });
             return;
         }
 
-        console.log('✅ Folder created on server:', fullFolderPath);
+        console.log('Folder created on server:', fullFolderPath);
 
         // Refresh the file tree to show the new folder
         await this.loadProjectStructure(window.ExamApp?.sessionId);
@@ -627,7 +628,7 @@ export class MonacoFileManager {
 
     async deleteFile(path) {
         try {
-            const confirmed = await confirm(`Сигурни ли сте, че искате да изтриете "${path}"?`);
+            const confirmed = await confirm(`Are you sure you want to delete "${path}"?`);
 
             if (!confirmed) return;
 
@@ -650,27 +651,27 @@ export class MonacoFileManager {
                 await this.loadProjectStructure(window.ExamApp?.sessionId);
 
                 await showInfoDialog({
-                    title: 'Успех',
-                    message: `Файлът "${path}" е изтрит.`
+                    title: 'Success',
+                    message: `File "${path}" has been deleted.`
                 });
             } else {
                 await showInfoDialog({
-                    title: 'Грешка',
-                    message: 'Не може да се изтрие файлът.'
+                    title: 'Error',
+                    message: 'Cannot delete file.'
                 });
             }
         } catch (error) {
             console.error('Delete failed:', error);
             await showInfoDialog({
-                title: 'Грешка',
-                message: 'Грешка при изтриване на файл.'
+                title: 'Error',
+                message: 'Error deleting file.'
             });
         }
     }
 
     async deleteFolder(folderPath) {
         try {
-            const confirmed = await confirm(`Сигурни ли сте, че искате да изтриете папката "${folderPath}" и цялото ѝ съдържание?`);
+            const confirmed = await confirm(`Are you sure you want to delete folder "${folderPath}" and all its contents?`);
 
             if (!confirmed) return;
 
@@ -699,20 +700,20 @@ export class MonacoFileManager {
                 await this.loadProjectStructure(window.ExamApp?.sessionId);
 
                 await showInfoDialog({
-                    title: 'Успех',
-                    message: `Папката "${folderPath}" е изтрита.`
+                    title: 'Success',
+                    message: `Folder "${folderPath}" has been deleted.`
                 });
             } else {
                 await showInfoDialog({
-                    title: 'Грешка',
-                    message: 'Не може да се изтрие папката.'
+                    title: 'Error',
+                    message: 'Cannot delete folder.'
                 });
             }
         } catch (error) {
             console.error('Delete folder failed:', error);
             await showInfoDialog({
-                title: 'Грешка',
-                message: 'Грешка при изтриване на папка.'
+                title: 'Error',
+                message: 'Error deleting folder.'
             });
         }
     }
@@ -720,15 +721,15 @@ export class MonacoFileManager {
     async renameFile(oldPath) {
         try {
             const fileName = oldPath.split('/').pop();
-            const newName = await prompt(`Ново име за "${fileName}":`, fileName);
+            const newName = await prompt(`New name for "${fileName}":`, fileName);
 
             if (!newName || newName === fileName) return;
 
             const sanitized = this.sanitizeFileName(newName);
             if (!sanitized) {
                 await showInfoDialog({
-                    title: 'Невалидно име',
-                    message: 'Моля използвайте само букви, цифри, точки и тирета.'
+                    title: 'Invalid Name',
+                    message: 'Please use only letters, numbers, dots and dashes.'
                 });
                 return;
             }
@@ -741,8 +742,8 @@ export class MonacoFileManager {
             // Check if new name already exists
             if (this.models.has(newPath)) {
                 await showInfoDialog({
-                    title: 'Файлът съществува',
-                    message: `Файл "${newPath}" вече съществува!`
+                    title: 'File Exists',
+                    message: `File "${newPath}" already exists!`
                 });
                 return;
             }
@@ -784,20 +785,20 @@ export class MonacoFileManager {
                 await this.loadProjectStructure(window.ExamApp?.sessionId);
 
                 await showInfoDialog({
-                    title: 'Успех',
-                    message: `Файлът е преименуван на "${sanitized}".`
+                    title: 'Success',
+                    message: `File renamed to "${sanitized}".`
                 });
             } else {
                 await showInfoDialog({
-                    title: 'Грешка',
-                    message: 'Не може да се преименува файлът.'
+                    title: 'Error',
+                    message: 'Cannot rename file.'
                 });
             }
         } catch (error) {
             console.error('Rename failed:', error);
             await showInfoDialog({
-                title: 'Грешка',
-                message: 'Грешка при преименуване на файл.'
+                title: 'Error',
+                message: 'Error renaming file.'
             });
         }
     }
@@ -886,64 +887,110 @@ export class MonacoFileManager {
 
     getIconForItem(item) {
         if (item.type === 'folder') {
-            return '🟧';  // Orange folder icon
+            return this.getFolderIcon();
         }
 
-        // VS Code-style file type indicators
-        const iconMap = {
-            // JavaScript / TypeScript
-            'js': 'JS',      // Text indicator for JS
-            'mjs': 'MJS',
-            'jsx': '⚛️',     // React
-            'ts': 'TS',      // Text indicator for TS
-            'tsx': '⚛️',
+        return this.getFileIconSvg(item.extension);
+    }
 
-            // Web
-            'html': '🌐',
-            'htm': '🌐',
-            'css': '🎨',
-            'scss': '💅',
-            'sass': '💅',
-            'less': '💄',
+    /**
+     * Get folder icon SVG (VS Code style)
+     */
+    getFolderIcon() {
+        return `<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.5 3C1.5 2.17 2.17 1.5 3 1.5H6.29L7.79 3H13C13.83 3 14.5 3.67 14.5 4.5V12C14.5 12.83 13.83 13.5 13 13.5H3C2.17 13.5 1.5 12.83 1.5 12V3Z" fill="#C09553"/>
+            <path d="M1.5 5H14.5V12C14.5 12.83 13.83 13.5 13 13.5H3C2.17 13.5 1.5 12.83 1.5 12V5Z" fill="#CFA65C"/>
+        </svg>`;
+    }
 
-            // Data formats
-            'json': '{ }',
-            'xml': '📋',
-            'yml': '⚙️',
-            'yaml': '⚙️',
+    /**
+     * Get file icon SVG based on extension (VS Code / Seti style)
+     */
+    getFileIconSvg(extension) {
+        const icons = {
+            // JavaScript
+            'js': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#F7DF1E"/><text x="8" y="12" font-family="Arial" font-size="8" font-weight="bold" fill="#000" text-anchor="middle">JS</text></svg>`,
+            'mjs': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#F7DF1E"/><text x="8" y="12" font-family="Arial" font-size="7" font-weight="bold" fill="#000" text-anchor="middle">MJS</text></svg>`,
+            'jsx': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#61DAFB"/><text x="8" y="12" font-family="Arial" font-size="7" font-weight="bold" fill="#000" text-anchor="middle">JSX</text></svg>`,
+
+            // TypeScript
+            'ts': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#3178C6"/><text x="8" y="12" font-family="Arial" font-size="8" font-weight="bold" fill="#FFF" text-anchor="middle">TS</text></svg>`,
+            'tsx': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#3178C6"/><text x="8" y="12" font-family="Arial" font-size="7" font-weight="bold" fill="#FFF" text-anchor="middle">TSX</text></svg>`,
+
+            // HTML
+            'html': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 1L2.5 14L8 15.5L13.5 14L15 1H1Z" fill="#E44D26"/><path d="M8 2.5V14L12.5 12.8L13.8 2.5H8Z" fill="#F16529"/><path d="M4 5H12L11.8 7H5.5L5.7 9H11.5L11 12L8 13L5 12L4.8 10H6.5L6.6 11L8 11.4L9.4 11L9.6 9H4.3L4 5Z" fill="#FFF"/></svg>`,
+            'htm': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 1L2.5 14L8 15.5L13.5 14L15 1H1Z" fill="#E44D26"/><path d="M8 2.5V14L12.5 12.8L13.8 2.5H8Z" fill="#F16529"/><path d="M4 5H12L11.8 7H5.5L5.7 9H11.5L11 12L8 13L5 12L4.8 10H6.5L6.6 11L8 11.4L9.4 11L9.6 9H4.3L4 5Z" fill="#FFF"/></svg>`,
+
+            // CSS
+            'css': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 1L2.5 14L8 15.5L13.5 14L15 1H1Z" fill="#1572B6"/><path d="M8 2.5V14L12.5 12.8L13.8 2.5H8Z" fill="#33A9DC"/><path d="M11 5H4L4.2 7H10.8L10.3 11L8 11.8L5.7 11L5.5 9H7L7.1 10L8 10.3L8.9 10L9 8H4.4L4 5H11Z" fill="#FFF"/></svg>`,
+            'scss': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#CD6799"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">SCSS</text></svg>`,
+            'sass': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#CD6799"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">SASS</text></svg>`,
+            'less': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#1D365D"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">LESS</text></svg>`,
+
+            // JSON
+            'json': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#F5A623"/><text x="8" y="9" font-family="Arial" font-size="9" font-weight="bold" fill="#000" text-anchor="middle">{}</text></svg>`,
+
+            // Markdown
+            'md': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#083FA1"/><text x="8" y="12" font-family="Arial" font-size="8" font-weight="bold" fill="#FFF" text-anchor="middle">M</text></svg>`,
 
             // Python
-            'py': '🐍',
-
-            // Markdown & Docs
-            'md': '📝',
-            'txt': '📄',
-            'pdf': '📕',
+            'py': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#3776AB"/><path d="M5 3H11V6H8V7H11V13H5V10H8V9H5V3Z" fill="#FFD43B"/><circle cx="6.5" cy="4.5" r="0.8" fill="#3776AB"/><circle cx="9.5" cy="11.5" r="0.8" fill="#3776AB"/></svg>`,
 
             // Images
-            'png': '🖼️',
-            'jpg': '🖼️',
-            'jpeg': '🖼️',
-            'gif': '🖼️',
-            'svg': '🔶',
-            'ico': '🖼️',
+            'png': `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="#8B5CF6"/><circle cx="5" cy="5" r="2" fill="#FFF" opacity="0.8"/><path d="M1 11L5 7L8 10L11 6L15 11V13C15 14.1 14.1 15 13 15H3C1.9 15 1 14.1 1 13V11Z" fill="#FFF" opacity="0.6"/></svg>`,
+            'jpg': `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="#8B5CF6"/><circle cx="5" cy="5" r="2" fill="#FFF" opacity="0.8"/><path d="M1 11L5 7L8 10L11 6L15 11V13C15 14.1 14.1 15 13 15H3C1.9 15 1 14.1 1 13V11Z" fill="#FFF" opacity="0.6"/></svg>`,
+            'jpeg': `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="#8B5CF6"/><circle cx="5" cy="5" r="2" fill="#FFF" opacity="0.8"/><path d="M1 11L5 7L8 10L11 6L15 11V13C15 14.1 14.1 15 13 15H3C1.9 15 1 14.1 1 13V11Z" fill="#FFF" opacity="0.6"/></svg>`,
+            'gif': `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="#10B981"/><circle cx="5" cy="5" r="2" fill="#FFF" opacity="0.8"/><path d="M1 11L5 7L8 10L11 6L15 11V13C15 14.1 14.1 15 13 15H3C1.9 15 1 14.1 1 13V11Z" fill="#FFF" opacity="0.6"/></svg>`,
+            'svg': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#FFB13B"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#000" text-anchor="middle">SVG</text></svg>`,
+            'ico': `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="#8B5CF6"/><rect x="4" y="4" width="8" height="8" rx="1" fill="#FFF" opacity="0.6"/></svg>`,
 
-            // Config files
-            'gitignore': '📌',
-            'gitkeep': '·',
-            'env': '🔐',
-            'lock': '🔒',
+            // Config
+            'gitignore': `<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F05032"/><circle cx="8" cy="8" r="3" fill="#FFF"/></svg>`,
+            'env': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#4DB33D"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">ENV</text></svg>`,
 
             // Handlebars
-            'hbs': '{{ }}',
-            'handlebars': '{{ }}',
+            'hbs': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#F0772B"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">HBS</text></svg>`,
 
-            // Other
-            'zip': '📦',
-            'rar': '📦'
+            // Text
+            'txt': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 1H10L13 4V14C13 14.55 12.55 15 12 15H3C2.45 15 2 14.55 2 14V2C2 1.45 2.45 1 3 1Z" fill="#90A4AE"/><path d="M10 1V4H13" fill="#78909C"/><path d="M4 7H11M4 9H11M4 11H8" stroke="#FFF" stroke-width="1"/></svg>`,
+
+            // XML/YAML
+            'xml': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#FF6600"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">XML</text></svg>`,
+            'yml': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#CB171E"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">YML</text></svg>`,
+            'yaml': `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#CB171E"/><text x="8" y="11" font-family="Arial" font-size="6" font-weight="bold" fill="#FFF" text-anchor="middle">YAML</text></svg>`,
+
+            // Archives
+            'zip': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 1H13C13.55 1 14 1.45 14 2V14C14 14.55 13.55 15 13 15H3C2.45 15 2 14.55 2 14V2C2 1.45 2.45 1 3 1Z" fill="#7B68EE"/><path d="M7 2H9V3H7V4H9V5H7V6H9V7H7V8H9V10H7V8" fill="#FFF"/></svg>`,
+            'rar': `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 1H13C13.55 1 14 1.45 14 2V14C14 14.55 13.55 15 13 15H3C2.45 15 2 14.55 2 14V2C2 1.45 2.45 1 3 1Z" fill="#7B68EE"/><path d="M7 2H9V3H7V4H9V5H7V6H9V7H7V8H9V10H7V8" fill="#FFF"/></svg>`
         };
 
-        return iconMap[item.extension] || '📄';
+        // Default file icon
+        const defaultIcon = `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 1H10L13 4V14C13 14.55 12.55 15 12 15H3C2.45 15 2 14.55 2 14V2C2 1.45 2.45 1 3 1Z" fill="#90A4AE"/><path d="M10 1V4H13" fill="#78909C"/></svg>`;
+
+        return icons[extension] || defaultIcon;
+    }
+
+    /**
+     * Get chevron icon for folder toggle
+     */
+    getChevronIcon(isExpanded) {
+        if (isExpanded) {
+            return `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`;
+        }
+        return `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`;
+    }
+
+    /**
+     * Get action button icons
+     */
+    getActionIcon(type) {
+        const icons = {
+            'new-file': `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1H8L11 4V12C11 12.55 10.55 13 10 13H3C2.45 13 2 12.55 2 12V2C2 1.45 2.45 1 3 1Z" stroke="currentColor" fill="none" stroke-width="1"/><path d="M8 1V4H11" stroke="currentColor" fill="none" stroke-width="1"/><path d="M5 8H9M7 6V10" stroke="currentColor" stroke-width="1.2"/></svg>`,
+            'new-folder': `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M1 3C1 2.45 1.45 2 2 2H5L6.5 3.5H12C12.55 3.5 13 3.95 13 4.5V11C13 11.55 12.55 12 12 12H2C1.45 12 1 11.55 1 11V3Z" stroke="currentColor" fill="none" stroke-width="1"/><path d="M5 8H9M7 6V10" stroke="currentColor" stroke-width="1.2"/></svg>`,
+            'rename': `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M2 10L9 3L11 5L4 12H2V10Z" stroke="currentColor" fill="none" stroke-width="1"/><path d="M8 4L10 6" stroke="currentColor" stroke-width="1"/></svg>`,
+            'delete': `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 4H11L10.2 12C10.15 12.55 9.7 13 9.15 13H4.85C4.3 13 3.85 12.55 3.8 12L3 4Z" stroke="currentColor" fill="none" stroke-width="1"/><path d="M2 4H12" stroke="currentColor" stroke-width="1"/><path d="M5 4V2.5C5 2.22 5.22 2 5.5 2H8.5C8.78 2 9 2.22 9 2.5V4" stroke="currentColor" fill="none" stroke-width="1"/><path d="M5.5 6V11M8.5 6V11" stroke="currentColor" stroke-width="0.8"/></svg>`
+        };
+        return icons[type] || '';
     }
 
     getFileIcon(path) {

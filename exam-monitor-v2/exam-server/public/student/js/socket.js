@@ -24,6 +24,8 @@ export function setupSocket() {
         socket.on('server-message', handleServerMessage);
         socket.on('reconnect', handleReconnect);
         socket.on('reconnect_error', handleReconnectError);
+        socket.on('teacher-warning', handleTeacherWarning);
+        socket.on('exam-terminated', handleExamTerminated);
 
         console.log('Socket setup completed');
         return socket;
@@ -108,12 +110,12 @@ function showSessionRestoreBlocked() {
                 max-width: 600px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             ">
-                <h1 style="font-size: 64px; margin-bottom: 20px;">⚠</h1>
+                <h1 style="font-size: 64px; margin-bottom: 20px;">!</h1>
                 <h2 style="margin-bottom: 20px; font-size: 28px; color: #dc3545;">
-                    Сесията е прекъсната
+                    Session Interrupted
                 </h2>
                 <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #495057;">
-                    От съображения за сигурност, <strong>не можете да възстановите сесия</strong> след refresh на прозореца.
+                    For security reasons, <strong>you cannot restore a session</strong> after refreshing the window.
                 </p>
 
                 <div style="
@@ -124,13 +126,13 @@ function showSessionRestoreBlocked() {
                     text-align: left;
                 ">
                     <p style="margin: 0; font-size: 16px; color: #856404;">
-                        <strong>Причина:</strong> Изпитът се провежда в защитен kiosk режим.
-                        При опит за излизане или refresh, изпитът автоматично се прекратява.
+                        <strong>Reason:</strong> The exam is conducted in secure kiosk mode.
+                        Any attempt to exit or refresh will automatically terminate the exam.
                     </p>
                 </div>
 
                 <p style="font-size: 16px; color: #6c757d; margin-bottom: 30px;">
-                    Моля, <strong>влезте наново</strong> за да започнете изпита отначало.
+                    Please <strong>log in again</strong> to start the exam from the beginning.
                 </p>
 
                 <button
@@ -150,11 +152,11 @@ function showSessionRestoreBlocked() {
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'"
                 >
-                    Презареди и влез отново
+                    Reload and Login Again
                 </button>
 
                 <p style="margin-top: 30px; opacity: 0.7; font-size: 14px; color: #6c757d;">
-                    При влизане ще се отвори нов защитен прозорец
+                    A new secure window will open when you login
                 </p>
             </div>
         </div>
@@ -233,12 +235,191 @@ function handleReconnect(attemptNumber) {
     const examApp = window.ExamApp;
 
     if (examApp?.showNotification) {
-        examApp.showNotification('Връзката е възстановена', 'success');
+        examApp.showNotification('Connection restored', 'success');
     }
 }
 
 function handleReconnectError(error) {
     console.error('Reconnection failed:', error);
+}
+
+function handleTeacherWarning(data) {
+    console.warn('Teacher warning received:', data);
+
+    // Show warning modal to student
+    showTeacherWarningModal(data.message || 'Please follow exam rules');
+}
+
+function showTeacherWarningModal(message) {
+    // Remove any existing warning modal
+    const existingModal = document.getElementById('teacher-warning-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create warning modal
+    const modal = document.createElement('div');
+    modal.id = 'teacher-warning-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        ">
+            <div style="
+                width: 80px;
+                height: 80px;
+                background: #fef3c7;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 20px;
+            ">
+                <span style="font-size: 40px; color: #f59e0b;">!</span>
+            </div>
+
+            <h2 style="
+                color: #dc2626;
+                font-size: 24px;
+                margin-bottom: 16px;
+                font-weight: 700;
+            ">WARNING FROM TEACHER</h2>
+
+            <p style="
+                color: #4b5563;
+                font-size: 18px;
+                line-height: 1.6;
+                margin-bottom: 30px;
+            ">${message}</p>
+
+            <button id="warning-acknowledge-btn" style="
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+                border: none;
+                padding: 14px 40px;
+                font-size: 16px;
+                font-weight: 600;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">I Understand</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Add click handler to close
+    document.getElementById('warning-acknowledge-btn').addEventListener('click', () => {
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+    });
+
+    // Also close on clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => modal.remove(), 300);
+        }
+    });
+}
+
+function handleExamTerminated(data) {
+    console.error('Exam terminated by teacher:', data);
+
+    // Show termination screen
+    showTerminationScreen(data.message || 'Your exam has been terminated by the instructor');
+}
+
+function showTerminationScreen(message) {
+    // FIRST: Exit fullscreen immediately
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    }
+
+    // Hide any warning overlays
+    const warningOverlay = document.querySelector('.fullscreen-warning-overlay');
+    if (warningOverlay) {
+        warningOverlay.style.display = 'none';
+        warningOverlay.remove();
+    }
+
+    // Remove fullscreen-exited class
+    document.body.classList.remove('fullscreen-exited');
+
+    // Replace entire body with termination message
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="
+                background: rgba(255,255,255,0.1);
+                padding: 60px;
+                border-radius: 20px;
+                max-width: 600px;
+                backdrop-filter: blur(10px);
+            ">
+                <div style="
+                    width: 100px;
+                    height: 100px;
+                    background: rgba(255,255,255,0.2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 30px;
+                ">
+                    <span style="font-size: 50px;">X</span>
+                </div>
+
+                <h1 style="
+                    font-size: 36px;
+                    margin-bottom: 20px;
+                    font-weight: 700;
+                ">EXAM TERMINATED</h1>
+
+                <p style="
+                    font-size: 20px;
+                    line-height: 1.6;
+                    margin-bottom: 30px;
+                    opacity: 0.9;
+                ">${message}</p>
+
+                <p style="font-size: 16px; opacity: 0.7; margin: 0;">
+                    The exam has ended.
+                </p>
+            </div>
+        </div>
+    `;
+
 }
 
 export function sendCodeUpdate(code, filename = 'main.js') {

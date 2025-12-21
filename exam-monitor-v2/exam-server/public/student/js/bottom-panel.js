@@ -17,13 +17,32 @@ export class BottomPanelManager {
       info: 'i',
       warn: '!',
       error: 'x',
-      success: '✓'
+      success: 'OK'
     };
 
     // Initialize
     this.setupTabs();
     this.setupResizing();
     this.setupClearButton();
+    this.setupPreviewConsoleListener();
+  }
+
+  /**
+   * Listen for console messages from preview iframe
+   */
+  setupPreviewConsoleListener() {
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'preview-console') {
+        const { method, args } = event.data;
+        const message = args.join(' ');
+        this.addMessage(method, message);
+
+        // Auto-switch to console tab when there's output
+        if (this.currentTab !== 'console') {
+          this.switchTab('console');
+        }
+      }
+    });
   }
 
   /**
@@ -62,6 +81,21 @@ export class BottomPanelManager {
         content.classList.remove('active');
       }
     });
+
+    // Auto-refresh preview when switching to preview tab
+    if (tabName === 'preview') {
+      this.triggerPreviewRefresh();
+    }
+  }
+
+  /**
+   * Trigger preview refresh using the PreviewManager
+   */
+  triggerPreviewRefresh() {
+    // Use the PreviewManager from ExamApp if available
+    if (window.ExamApp?.previewManager) {
+      window.ExamApp.previewManager.refreshPreview();
+    }
   }
 
   /**
@@ -339,7 +373,7 @@ export class BottomPanelManager {
     };
 
     this.resizeHandle.addEventListener('mousedown', onMouseDown);
-    console.log('✅ Bottom panel resizing initialized');
+    console.log('Bottom panel resizing initialized');
   }
 
   /**

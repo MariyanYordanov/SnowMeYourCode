@@ -14,10 +14,10 @@ let activeDialog = null;
  */
 export function showCompletionDialog(options = {}) {
     const defaultOptions = {
-        title: 'Напускане на изпита',
-        message: 'Потвърдете напускане на изпита.',
-        confirmText: 'Да, напускам',
-        cancelText: 'Не, продължавам',
+        title: 'Leave Exam',
+        message: 'Confirm leaving the exam.',
+        confirmText: 'Yes, leave',
+        cancelText: 'No, continue',
         type: 'completion'
     };
 
@@ -40,12 +40,12 @@ export function showCompletionDialog(options = {}) {
  * @param {string} violationMessage - The violation message to display
  * @returns {Promise<boolean>} - User choice
  */
-export function showViolationExitDialog(violationMessage = 'Искате ли да напуснете изпита?') {
+export function showViolationExitDialog(violationMessage = 'Do you want to leave the exam?') {
     const options = {
-        title: 'Нарушение на правилата',
+        title: 'Rule Violation',
         message: violationMessage,
-        confirmText: 'Да, напускам',
-        cancelText: 'Не, продължавам',
+        confirmText: 'Yes, leave',
+        cancelText: 'No, continue',
         type: 'violation'
     };
 
@@ -68,9 +68,9 @@ export function showViolationExitDialog(violationMessage = 'Искате ли д
  */
 export function showInfoDialog(options = {}) {
     const defaultOptions = {
-        title: 'Информация',
-        message: 'Информационно съобщение',
-        confirmText: 'Разбрах',
+        title: 'Information',
+        message: 'Information message',
+        confirmText: 'OK',
         type: 'info',
         showCancel: false
     };
@@ -108,12 +108,12 @@ export function prompt(message, defaultValue = '') {
 
         dialog.innerHTML = `
             <div class="dialog-header">
-                <h2 class="dialog-title">Въведете данни</h2>
+                <h2 class="dialog-title">Enter Data</h2>
             </div>
             <p class="dialog-message">${message}</p>
             <input type="text" class="dialog-input" value="${defaultValue}" />
             <div class="dialog-buttons">
-                <button class="dialog-btn dialog-btn-cancel" data-action="cancel">Отказ</button>
+                <button class="dialog-btn dialog-btn-cancel" data-action="cancel">Cancel</button>
                 <button class="dialog-btn dialog-btn-confirm dialog-btn-info" data-action="confirm">OK</button>
             </div>
         `;
@@ -180,12 +180,12 @@ export function confirm(message) {
 
         dialog.innerHTML = `
             <div class="dialog-header">
-                <h2 class="dialog-title">Потвърдете действието</h2>
+                <h2 class="dialog-title">Confirm Action</h2>
             </div>
             <p class="dialog-message">${message}</p>
             <div class="dialog-buttons">
-                <button class="dialog-btn dialog-btn-cancel dialog-btn-success" data-action="cancel">Не</button>
-                <button class="dialog-btn dialog-btn-confirm dialog-btn-danger" data-action="confirm">Да</button>
+                <button class="dialog-btn dialog-btn-cancel dialog-btn-success" data-action="cancel">No</button>
+                <button class="dialog-btn dialog-btn-confirm dialog-btn-danger" data-action="confirm">Yes</button>
             </div>
         `;
 

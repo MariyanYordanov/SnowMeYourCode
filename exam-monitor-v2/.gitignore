@@ -42,3 +42,9 @@ Thumbs.db
 # Test coverage
 coverage/
 .nyc_output/
+
+# Testing directory
+testing/
+
+# Practice-server
+practice-server

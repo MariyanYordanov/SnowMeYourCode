@@ -363,10 +363,6 @@ class SmartTeacherDashboard {
             this.updateFullscreenStatus(data);
         });
 
-        this.socket.on('student-fullscreen-violation', (data) => {
-            this.handleFullscreenViolation(data);
-        });
-
         this.socket.on('student-terminated', (data) => {
             this.handleStudentTermination(data);
         });
@@ -778,30 +774,6 @@ class SmartTeacherDashboard {
     }
 
     /**
-     * Handle fullscreen violation
-     */
-    handleFullscreenViolation(data) {
-        const student = this.students.get(data.sessionId);
-        if (student) {
-            student.violationCount = data.attempt;
-            student.fullscreenStatus = 'violation';
-            student.lastViolation = data.reason;
-
-            if (!student.activities) student.activities = [];
-            student.activities.unshift({
-                type: 'violation',
-                activity: `Fullscreen violation #${data.attempt}: ${data.reason}`,
-                severity: 'critical',
-                timestamp: data.timestamp
-            });
-
-            this.renderStudent(student);
-            this.updateStats();
-            this.showNotification(`ALERT: Fullscreen violation: ${student.studentName}`, 'error');
-        }
-    }
-
-    /**
      * Handle student termination
      */
     handleStudentTermination(data) {
@@ -812,7 +784,7 @@ class SmartTeacherDashboard {
 
             this.renderStudent(student);
             this.updateStats();
-            this.showNotification(`🚫 Exam terminated: ${student.studentName}`, 'error');
+            this.showNotification(`Exam terminated: ${student.studentName}`, 'error');
         }
     }
 
@@ -940,7 +912,6 @@ class SmartTeacherDashboard {
     renderFullscreenStatus(student) {
         const statusConfig = {
             'entered': { class: 'active', icon: '[OK]', text: 'Fullscreen Active' },
-            'violation': { class: 'violation', icon: '[!]', text: 'Fullscreen Violation' },
             'entering': { class: 'inactive', icon: '[...]', text: 'Entering Fullscreen' },
             'unknown': { class: 'inactive', icon: '[?]', text: 'Fullscreen Unknown' }
         };
@@ -1003,8 +974,8 @@ class SmartTeacherDashboard {
         return `
             <div class="inline-chat-section">
                 <div class="inline-chat-header">
-                    <span>💬 Chat</span>
-                    <button class="inline-chat-close" onclick="teacherDashboard.toggleStudentChat('${student.sessionId}')">✕</button>
+                    <span>Chat</span>
+                    <button class="inline-chat-close" onclick="teacherDashboard.toggleStudentChat('${student.sessionId}')">X</button>
                 </div>
                 <div class="inline-chat-messages" id="inline-chat-${student.sessionId}">
                     ${messagesHTML}
@@ -1395,7 +1366,7 @@ class SmartTeacherDashboard {
         const notification = document.createElement('div');
         notification.className = 'help-notification';
         notification.innerHTML = `
-            <strong>🆘 Help Request from ${data.studentName}</strong><br>
+            <strong>Help Request from ${data.studentName}</strong><br>
             <small>${data.studentClass}</small><br>
             ${data.message.length > 100 ? data.message.substring(0, 100) + '...' : data.message}
         `;
@@ -1611,4 +1582,4 @@ if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
 
-console.log('🚀 Smart Teacher Dashboard loaded and ready');
+console.log('Smart Teacher Dashboard loaded and ready');

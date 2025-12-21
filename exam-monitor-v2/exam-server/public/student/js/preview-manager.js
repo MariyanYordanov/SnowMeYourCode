@@ -8,13 +8,32 @@ export class PreviewManager {
         this.currentFiles = new Map();
         this.autoRefresh = true;
         this.refreshDebounceTimer = null;
-        
+        this.isRefreshing = false;
+
         this.init();
     }
 
     init() {
-        // Preview frame is no longer needed as we open directly in new tab
-        console.log('Preview Manager initialized');
+        // Get preview frame element when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.previewFrame = document.getElementById('preview-frame');
+                console.log('Preview Manager initialized', this.previewFrame ? 'with iframe' : 'without iframe');
+            });
+        } else {
+            this.previewFrame = document.getElementById('preview-frame');
+            console.log('Preview Manager initialized', this.previewFrame ? 'with iframe' : 'without iframe');
+        }
+    }
+
+    /**
+     * Ensure preview frame is available
+     */
+    ensureFrame() {
+        if (!this.previewFrame) {
+            this.previewFrame = document.getElementById('preview-frame');
+        }
+        return this.previewFrame;
     }
 
 
@@ -22,6 +41,12 @@ export class PreviewManager {
      * Update preview with current project files
      */
     async refreshPreview() {
+        // Prevent multiple simultaneous refreshes
+        if (this.isRefreshing) {
+            return;
+        }
+        this.isRefreshing = true;
+
         try {
             const sessionId = window.ExamApp?.sessionId;
             if (!sessionId) {
@@ -29,32 +54,61 @@ export class PreviewManager {
                 return;
             }
 
-            // Get current project files
-            const response = await fetch(`/api/project/files?sessionId=${sessionId}`);
-            const result = await response.json();
+            // Get currently open file from editor
+            const currentFile = this.getCurrentHTMLFile();
 
-            if (!result.success || !result.files) {
-                this.showPreviewMessage('No project files found');
-                return;
+            if (currentFile) {
+                // Preview the currently open HTML file
+                await this.loadHTMLPreview(currentFile, sessionId);
+            } else {
+                // No HTML file open - try to find index.html or any HTML file
+                const response = await fetch(`/api/project/files?sessionId=${sessionId}`);
+                const result = await response.json();
+
+                if (!result.success || !result.files) {
+                    this.showPreviewMessage('No project files found');
+                    return;
+                }
+
+                // Find HTML entry point - prefer index.html
+                const htmlFile = result.files.find(f => f.name === 'index.html' || f.path === 'index.html') ||
+                                 result.files.find(f => f.name.endsWith('.html'));
+
+                if (!htmlFile) {
+                    this.showPreviewMessage('No HTML file found. Open an HTML file to see preview.');
+                    return;
+                }
+
+                await this.loadHTMLPreview(htmlFile.path || htmlFile.name, sessionId);
             }
-
-            // Find HTML entry point
-            const htmlFile = result.files.find(f => 
-                f.name === 'index.html' || f.path === 'index.html' || 
-                f.name.endsWith('.html')
-            );
-
-            if (!htmlFile) {
-                this.showPreviewMessage('No HTML file found. Create an index.html file to see preview.');
-                return;
-            }
-
-            // Load and preview the HTML file
-            await this.loadHTMLPreview(htmlFile.path || htmlFile.name, sessionId);
 
         } catch (error) {
             console.error('Preview refresh failed:', error);
             this.showPreviewMessage('Error loading preview');
+        } finally {
+            this.isRefreshing = false;
+        }
+    }
+
+    /**
+     * Get currently open HTML file path from Monaco editor
+     */
+    getCurrentHTMLFile() {
+        try {
+            const editor = window.ExamApp?.editor;
+            if (!editor) return null;
+
+            const model = editor.getModel();
+            if (!model) return null;
+
+            const uri = model.uri.path;
+            if (uri && uri.endsWith('.html')) {
+                // Remove leading slash if present
+                return uri.startsWith('/') ? uri.substring(1) : uri;
+            }
+            return null;
+        } catch (e) {
+            return null;
         }
     }
 
@@ -63,30 +117,18 @@ export class PreviewManager {
      */
     async loadHTMLPreview(htmlFileName, sessionId) {
         try {
-            // Get HTML content
-            const htmlResponse = await fetch(`/api/project/file/${encodeURIComponent(htmlFileName)}?sessionId=${sessionId}`);
-            const htmlResult = await htmlResponse.json();
-
-            if (!htmlResult.success) {
-                this.showPreviewMessage('Could not load HTML file');
+            this.ensureFrame();
+            if (!this.previewFrame) {
+                console.error('Preview frame not found');
                 return;
             }
 
-            // Create preview document
-            let htmlContent = htmlResult.content;
-            
-            // Inject base tag to resolve relative paths
-            const baseTag = `<base href="/api/project/preview/${sessionId}/">`;
-            if (htmlContent.includes('<head>')) {
-                htmlContent = htmlContent.replace('<head>', `<head>${baseTag}`);
-            } else if (htmlContent.includes('<html>')) {
-                htmlContent = htmlContent.replace('<html>', `<html><head>${baseTag}</head>`);
-            } else {
-                htmlContent = `<head>${baseTag}</head>${htmlContent}`;
-            }
+            // Build the preview URL - encode each path segment separately
+            const encodedPath = htmlFileName.split('/').map(part => encodeURIComponent(part)).join('/');
+            const previewUrl = `/api/project/preview/${encodeURIComponent(sessionId)}/${encodedPath}`;
 
-            // Update iframe with new content
-            this.updatePreviewFrame(htmlContent);
+            // Load directly via src - server injects console interceptor
+            this.previewFrame.src = previewUrl;
 
         } catch (error) {
             console.error('Error loading HTML preview:', error);
@@ -95,19 +137,17 @@ export class PreviewManager {
     }
 
     /**
-     * Update iframe with HTML content
+     * Update iframe with HTML content (for messages only)
      */
     updatePreviewFrame(htmlContent) {
-        if (!this.previewFrame) return;
+        this.ensureFrame();
+        if (!this.previewFrame) {
+            console.error('Preview frame not found');
+            return;
+        }
 
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        
-        this.previewFrame.onload = () => {
-            URL.revokeObjectURL(url);
-        };
-        
-        this.previewFrame.src = url;
+        // Use srcdoc for simple HTML messages
+        this.previewFrame.srcdoc = htmlContent;
     }
 
     /**

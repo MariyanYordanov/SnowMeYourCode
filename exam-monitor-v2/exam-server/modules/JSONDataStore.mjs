@@ -318,6 +318,58 @@ export class JSONDataStore {
     }
 
     /**
+     * Save student code file
+     */
+    async saveStudentCode(sessionId, codeData) {
+        try {
+            const studentDir = await this.findStudentDirectoryBySession(sessionId);
+            if (!studentDir) {
+                console.warn(`Student directory not found for session ${sessionId}`);
+                return;
+            }
+
+            const codeDir = path.join(studentDir, 'code');
+            await fs.mkdir(codeDir, { recursive: true });
+
+            const filename = codeData.filename || 'main.js';
+            const codePath = path.join(codeDir, filename);
+            await fs.writeFile(codePath, codeData.code);
+
+        } catch (error) {
+            console.error(`Error saving student code:`, error);
+        }
+    }
+
+    /**
+     * Log suspicious activity for a student
+     */
+    async logSuspiciousActivity(sessionId, activityData) {
+        try {
+            const studentDir = await this.findStudentDirectoryBySession(sessionId);
+            if (!studentDir) {
+                console.warn(`Student directory not found for session ${sessionId}`);
+                return;
+            }
+
+            const logPath = path.join(studentDir, 'activity-log.json');
+
+            let activities = [];
+            try {
+                const existingData = await fs.readFile(logPath, 'utf8');
+                activities = JSON.parse(existingData);
+            } catch (e) {
+                // File doesn't exist yet, start with empty array
+            }
+
+            activities.push(activityData);
+            await fs.writeFile(logPath, JSON.stringify(activities, null, 2));
+
+        } catch (error) {
+            console.error(`Error logging suspicious activity:`, error);
+        }
+    }
+
+    /**
      * Get exam statistics
      */
     async getExamStatistics() {
