@@ -19,9 +19,8 @@ exam-server/data/classes/*/
 exam-server/data/sessions/*/
 !exam-server/data/sessions/.gitkeep
 
-# Practice server student data
-practice-server/data/student-data/
-!practice-server/data/student-data/.gitkeep
+# Practice server 
+practice-server/
 
 # Environment variables
 .env
@@ -45,6 +44,3 @@ coverage/
 
 # Testing directory
 testing/
-
-# Practice-server
-practice-server
