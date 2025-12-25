@@ -319,6 +319,7 @@ export class JSONDataStore {
 
     /**
      * Save student code file
+     * Saves to project-files/ directory to be consistent with HTTP API
      */
     async saveStudentCode(sessionId, codeData) {
         try {
@@ -328,15 +329,93 @@ export class JSONDataStore {
                 return;
             }
 
-            const codeDir = path.join(studentDir, 'code');
-            await fs.mkdir(codeDir, { recursive: true });
+            // Use project-files directory to match HTTP API
+            const projectDir = path.join(studentDir, 'project-files');
+            await fs.mkdir(projectDir, { recursive: true });
 
             const filename = codeData.filename || 'main.js';
-            const codePath = path.join(codeDir, filename);
-            await fs.writeFile(codePath, codeData.code);
+            const filePath = path.join(projectDir, filename);
+
+            // Create parent directories for nested file paths (e.g., "01. Subtraction/subtract.js")
+            const fileDir = path.dirname(filePath);
+            await fs.mkdir(fileDir, { recursive: true });
+
+            await fs.writeFile(filePath, codeData.code);
 
         } catch (error) {
             console.error(`Error saving student code:`, error);
+        }
+    }
+
+    /**
+     * Get all student files from the file system
+     * Returns an object with filename -> content mapping
+     * Only reads actual files from disk (not from memory cache)
+     */
+    async getStudentFiles(sessionId) {
+        try {
+            const studentDir = await this.findStudentDirectoryBySession(sessionId);
+            if (!studentDir) {
+                return {};
+            }
+
+            const projectDir = path.join(studentDir, 'project-files');
+
+            try {
+                await fs.access(projectDir);
+            } catch {
+                return {}; // project-files directory doesn't exist
+            }
+
+            const files = {};
+            await this.readFilesRecursively(projectDir, '', files);
+            return files;
+
+        } catch (error) {
+            console.error(`Error getting student files for ${sessionId}:`, error);
+            return {};
+        }
+    }
+
+    /**
+     * Recursively read files from a directory
+     * @param {string} dir - Directory to read
+     * @param {string} relativePath - Current relative path
+     * @param {object} files - Object to store filename -> content mappings
+     */
+    async readFilesRecursively(dir, relativePath, files) {
+        try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+
+            for (const entry of entries) {
+                // Skip node_modules and system files
+                if (['node_modules', '.git', '.DS_Store', 'package-lock.json'].includes(entry.name)) {
+                    continue;
+                }
+
+                const fullPath = path.join(dir, entry.name);
+                const filePath = relativePath ? path.posix.join(relativePath, entry.name) : entry.name;
+
+                if (entry.isDirectory()) {
+                    await this.readFilesRecursively(fullPath, filePath, files);
+                } else {
+                    // Only read text files (code files)
+                    const ext = path.extname(entry.name).toLowerCase();
+                    const textExtensions = ['.js', '.mjs', '.ts', '.html', '.css', '.json', '.md', '.txt', '.jsx', '.tsx', '.vue', '.svelte'];
+
+                    if (textExtensions.includes(ext)) {
+                        try {
+                            const content = await fs.readFile(fullPath, 'utf8');
+                            files[filePath] = content;
+                        } catch (readError) {
+                            // Skip files that can't be read
+                            console.warn(`Could not read file ${filePath}:`, readError.message);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            // Directory might not exist or be readable
         }
     }
 

@@ -808,45 +808,69 @@ export class MonacoFileManager {
     }
 
     /**
-     * Sanitize folder name
+     * Sanitize folder name - supports Cyrillic and other Unicode letters
      */
     sanitizeFolderName(folderName) {
         if (!folderName || typeof folderName !== 'string') return null;
 
-        // Remove non-ASCII characters and invalid chars
-        folderName = folderName
-            .trim()
-            .replace(/[^\w-]/g, '') // Only allow word chars and hyphens (no dots for folders)
-            .toLowerCase();
+        // Trim whitespace
+        folderName = folderName.trim();
+        if (!folderName) return null;
+
+        // Remove dangerous characters but keep Unicode letters (including Cyrillic)
+        // Allow: letters (any language), numbers, hyphens, underscores, spaces
+        folderName = folderName.replace(/[<>:"/\\|?*.\x00-\x1f]/g, '');
+
+        // Replace multiple spaces with single space
+        folderName = folderName.replace(/\s+/g, ' ').trim();
+
+        // Check if anything remains
+        if (!folderName) return null;
 
         // Limit length
         if (folderName.length > 50) {
             folderName = folderName.substring(0, 50);
         }
 
-        return folderName || null;
+        return folderName;
     }
 
     /**
-     * Sanitize filename
+     * Sanitize filename - supports Cyrillic and other Unicode letters
      */
     sanitizeFileName(fileName) {
         if (!fileName || typeof fileName !== 'string') return null;
 
-        // Remove non-ASCII characters and invalid chars
-        fileName = fileName
-            .trim()
-            .replace(/[^\w\.-]/g, '') // Only allow word chars, dots, hyphens
-            .toLowerCase();
+        // Trim whitespace
+        fileName = fileName.trim();
+        if (!fileName) return null;
+
+        // Remove dangerous characters but keep Unicode letters (including Cyrillic)
+        // Allow: letters (any language), numbers, dots, hyphens, underscores
+        fileName = fileName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '');
+
+        // Replace spaces with underscores
+        fileName = fileName.replace(/\s+/g, '_');
+
+        // Remove leading/trailing dots and spaces
+        fileName = fileName.replace(/^[.\s]+|[.\s]+$/g, '');
+
+        // Check if anything remains
+        if (!fileName) return null;
 
         // Ensure it has an extension
         if (!fileName.includes('.')) {
             fileName += '.js'; // Default to .js
         }
 
+        // Check that the name part (before extension) is not empty
+        const namePart = fileName.substring(0, fileName.lastIndexOf('.'));
+        if (!namePart) return null;
+
         // Limit length
         if (fileName.length > 50) {
-            fileName = fileName.substring(0, 47) + fileName.substring(fileName.lastIndexOf('.'));
+            const ext = fileName.substring(fileName.lastIndexOf('.'));
+            fileName = fileName.substring(0, 50 - ext.length) + ext;
         }
 
         return fileName;

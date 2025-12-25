@@ -282,9 +282,6 @@ export class SessionManager {
             });
         }
 
-        // Save updates
-        await this.dataStore.saveSession(session);
-
         // Save code if provided (no logging - too frequent)
         if (data.code !== undefined) {
             // Use filename or default to main.js (handle empty string too)
@@ -292,6 +289,14 @@ export class SessionManager {
             // Initialize files object if not exists
             if (!session.files) {
                 session.files = {};
+            }
+            // Initialize modifiedFiles set if not exists
+            if (!session.modifiedFiles) {
+                session.modifiedFiles = [];
+            }
+            // Track which files have been modified by student
+            if (!session.modifiedFiles.includes(filename)) {
+                session.modifiedFiles.push(filename);
             }
             // Store code per file
             session.files[filename] = data.code;
@@ -301,6 +306,9 @@ export class SessionManager {
                 code: data.code
             });
         }
+
+        // Save session (including modifiedFiles list) - AFTER updating modifiedFiles
+        await this.dataStore.saveSession(session);
 
         // Log suspicious activity if provided (keep this logging)
         if (data.suspicious) {
@@ -393,8 +401,9 @@ export class SessionManager {
     /**
      * Get all active sessions for teacher dashboard
      * Now includes completed/terminated sessions for visibility
+     * Only shows files that were modified by student (not template files)
      */
-    getActiveSessions() {
+    async getActiveSessions() {
         const sessions = [];
         for (const session of this.sessions.values()) {
             // Skip cleared sessions
@@ -409,8 +418,11 @@ export class SessionManager {
                 session.status === SESSION_STATES.DISCONNECTED) {
 
                 if (timeLeft > 0) {
+                    // Get only modified files (filter by modifiedFiles list)
+                    const modifiedFiles = await this.getModifiedFilesOnly(session);
                     sessions.push({
                         ...session,
+                        files: modifiedFiles,
                         timeLeft: timeLeft,
                         formattedTimeLeft: this.formatTimeLeft(timeLeft)
                     });
@@ -423,8 +435,11 @@ export class SessionManager {
             else if (session.status === SESSION_STATES.COMPLETED ||
                      session.status === SESSION_STATES.EXPIRED ||
                      session.terminationType) {
+                // Get only modified files for completed sessions too
+                const modifiedFiles = await this.getModifiedFilesOnly(session);
                 sessions.push({
                     ...session,
+                    files: modifiedFiles,
                     timeLeft: 0,
                     formattedTimeLeft: '00:00:00',
                     status: session.terminationType ? 'terminated' : session.status
@@ -432,6 +447,52 @@ export class SessionManager {
             }
         }
         return sessions;
+    }
+
+    /**
+     * Get only files that were modified by student
+     * Reads from disk but filters to only include files in modifiedFiles list
+     */
+    async getModifiedFilesOnly(session) {
+        // If no modifiedFiles tracked, return empty (student hasn't edited anything)
+        if (!session.modifiedFiles || session.modifiedFiles.length === 0) {
+            return {};
+        }
+
+        // Load all files from disk
+        const allFiles = await this.dataStore.getStudentFiles(session.sessionId);
+
+        // Filter to only include modified files
+        const modifiedFiles = {};
+        for (const filename of session.modifiedFiles) {
+            if (allFiles[filename] !== undefined) {
+                modifiedFiles[filename] = allFiles[filename];
+            }
+        }
+
+        return modifiedFiles;
+    }
+
+    /**
+     * Track a file as modified (called from HTTP API when file is saved)
+     * @param {string} sessionId - The session ID
+     * @param {string} filename - The filename that was modified
+     */
+    async trackModifiedFile(sessionId, filename) {
+        const session = this.sessions.get(sessionId);
+        if (!session) return;
+
+        // Initialize modifiedFiles if not exists
+        if (!session.modifiedFiles) {
+            session.modifiedFiles = [];
+        }
+
+        // Add to modifiedFiles if not already tracked
+        if (!session.modifiedFiles.includes(filename)) {
+            session.modifiedFiles.push(filename);
+            // Save session to persist the change
+            await this.dataStore.saveSession(session);
+        }
     }
 
     /**

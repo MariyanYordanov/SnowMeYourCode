@@ -5,6 +5,7 @@ import { previewManager } from './preview-manager.js';
 import { HelpChat } from './help-chat.js';
 import { PanelResizer } from './panel-resizer.js';
 import { BottomPanelManager } from './bottom-panel.js';
+import { DocsManager } from './docs-manager.js';
 
 import {
     setupLoginForm,
@@ -44,6 +45,7 @@ window.ExamApp = {
     editor: null,
     fileManager: null,
     previewManager: previewManager,
+    docsManager: null,
 
     sessionId: null,
     studentName: null,
@@ -97,6 +99,7 @@ function initializeApp() {
         examApp.sidebarManager = new SidebarManager();
         examApp.panelResizer = new PanelResizer();
         examApp.bottomPanel = new BottomPanelManager();
+        examApp.docsManager = new DocsManager();
 
         console.log('App initialized successfully (SEB Mode - No Anticheat)');
 

@@ -858,8 +858,10 @@ class SmartTeacherDashboard {
             const preview = escapeHtml(code.substring(0, 300)) + (code.length > 300 ? '...' : '');
             const lines = code.split('\n').length;
             const displayName = filename || 'main.js';
+            // Escape filename for use in onclick attribute
+            const escapedFilename = displayName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             return `
-                <div class="file-item">
+                <div class="file-item" onclick="teacherDashboard.openCodePreview('${student.sessionId}', '${escapedFilename}')">
                     <div class="file-header">
                         <span class="file-name">${escapeHtml(displayName)}</span>
                         <span class="file-stats">${lines} lines, ${code.length} chars</span>
@@ -1547,6 +1549,79 @@ class SmartTeacherDashboard {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Open code preview modal for a specific file
+     */
+    openCodePreview(sessionId, filename) {
+        const student = this.students.get(sessionId);
+        if (!student || !student.files) return;
+
+        const code = student.files[filename];
+        if (code === undefined) return;
+
+        const modal = document.getElementById('code-preview-modal');
+        const studentNameEl = document.getElementById('modal-student-name');
+        const fileNameEl = document.getElementById('modal-file-name');
+        const codeContentEl = document.getElementById('modal-code-content');
+        const statsEl = document.getElementById('modal-code-stats');
+
+        if (!modal) return;
+
+        // Set student name
+        studentNameEl.textContent = student.studentName || sessionId;
+
+        // Set filename
+        fileNameEl.textContent = filename;
+
+        // Set code content (escaped)
+        const escapedCode = this.escapeHtml(code);
+        codeContentEl.innerHTML = `<code>${escapedCode}</code>`;
+
+        // Set stats
+        const lines = code.split('\n').length;
+        statsEl.textContent = `${lines} lines, ${code.length} characters`;
+
+        // Show modal
+        modal.style.display = 'flex';
+
+        // Add event listeners for closing
+        const closeBtn = document.getElementById('close-code-modal');
+
+        // Remove previous listeners to avoid duplicates
+        closeBtn.onclick = () => this.closeCodePreview();
+
+        // Close on click outside
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeCodePreview();
+            }
+        };
+
+        // Close on Escape key
+        this._escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeCodePreview();
+            }
+        };
+        document.addEventListener('keydown', this._escapeHandler);
+    }
+
+    /**
+     * Close code preview modal
+     */
+    closeCodePreview() {
+        const modal = document.getElementById('code-preview-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+
+        // Remove escape key listener
+        if (this._escapeHandler) {
+            document.removeEventListener('keydown', this._escapeHandler);
+            this._escapeHandler = null;
+        }
     }
 }
 

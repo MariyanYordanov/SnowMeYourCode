@@ -13,12 +13,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const router = Router();
-
 // Multer configuration removed - using exam-files approach instead
 
 // Project templates removed - using exam-files approach instead
 // All templates are now served from practice-server/exam-files/
+
+/**
+ * Factory function to create router with sessionManager
+ */
+export default function createProjectRoutes(sessionManager) {
+    const router = Router();
 
 /**
  * GET /api/project/files - Get project file structure
@@ -134,6 +138,7 @@ router.get('/file/:filename', async (req, res) => {
  * POST /api/project/file - Create new file
  */
 router.post('/file', async (req, res) => {
+    let filePath = null;
     try {
         const { sessionId, filename, content = '' } = req.body;
 
@@ -144,11 +149,34 @@ router.post('/file', async (req, res) => {
         const decodedSessionId = decodeURIComponent(sessionId);
         const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
         const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
-        const filePath = path.join(projectDir, filename);
+        filePath = path.join(projectDir, filename);
 
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        // Check if the target path already exists as a directory
+        try {
+            const stats = await fs.stat(filePath);
+            if (stats.isDirectory()) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Cannot create file: a folder with this name already exists',
+                    details: `"${filename}" is already a folder. Please use a different filename.`
+                });
+            }
+            // File already exists
+            return res.status(409).json({
+                success: false,
+                error: 'File already exists',
+                details: `"${filename}" already exists. Use update instead.`
+            });
+        } catch (statError) {
+            // Path doesn't exist - that's what we want for creating new file
+            if (statError.code !== 'ENOENT') {
+                throw statError;
+            }
         }
 
         // Ensure directory exists
@@ -165,7 +193,10 @@ router.post('/file', async (req, res) => {
 
     } catch (error) {
         console.error('Error creating file:', error);
-        res.status(500).json({ success: false, error: 'Failed to create file' });
+        if (filePath) {
+            console.error('   File path:', filePath);
+        }
+        res.status(500).json({ success: false, error: 'Failed to create file', details: error.message });
     }
 });
 
@@ -173,6 +204,7 @@ router.post('/file', async (req, res) => {
  * PUT /api/project/file/:filename - Update file content
  */
 router.put('/file/:filename', async (req, res) => {
+    let filePath = null;
     try {
         const { sessionId, content } = req.body;
         const { filename } = req.params;
@@ -184,21 +216,43 @@ router.put('/file/:filename', async (req, res) => {
         const decodedSessionId = decodeURIComponent(sessionId);
         const classFromSession = decodedSessionId.split('-')[0].toUpperCase();
         const projectDir = path.join(__dirname, '..', 'data', 'classes', classFromSession, decodedSessionId, 'project-files');
-        const filePath = path.join(projectDir, decodeURIComponent(filename));
+        filePath = path.join(projectDir, decodeURIComponent(filename));
 
         // Security check
         if (!filePath.startsWith(projectDir)) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
+        // Check if the target path is a directory (can't write file to a directory path)
+        try {
+            const stats = await fs.stat(filePath);
+            if (stats.isDirectory()) {
+                console.error('Cannot write file - path is a directory:', filePath);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Cannot save: path is a folder, not a file',
+                    details: `"${filename}" is a folder. Please use a different filename.`
+                });
+            }
+        } catch (statError) {
+            // File doesn't exist yet - that's fine, we'll create it
+            if (statError.code !== 'ENOENT') {
+                throw statError;
+            }
+        }
+
         // Ensure parent directory exists
         const parentDir = path.dirname(filePath);
-        console.log('Creating parent directory:', parentDir);
         await fs.mkdir(parentDir, { recursive: true });
 
         // Update file
-        console.log('Writing file:', filePath);
         await fs.writeFile(filePath, content, 'utf8');
+
+        // Track this file as modified in the session
+        if (sessionManager) {
+            const decodedFilename = decodeURIComponent(filename);
+            sessionManager.trackModifiedFile(decodedSessionId, decodedFilename);
+        }
 
         console.log('File saved successfully:', filename);
         res.json({
@@ -208,7 +262,9 @@ router.put('/file/:filename', async (req, res) => {
 
     } catch (error) {
         console.error('Error updating file:', error);
-        console.error('   File path:', filePath);
+        if (filePath) {
+            console.error('   File path:', filePath);
+        }
         console.error('   Error details:', error.message, error.code);
         res.status(500).json({ success: false, error: 'Failed to update file', details: error.message });
     }
@@ -822,4 +878,5 @@ router.get('/preview/:sessionId/*', async (req, res) => {
     }
 });
 
-export default router;
+    return router;
+}

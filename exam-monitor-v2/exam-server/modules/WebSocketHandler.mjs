@@ -494,12 +494,12 @@ export class WebSocketHandler {
     /**
      * Handle teacher joining dashboard
      */
-    handleTeacherJoin(socket) {
+    async handleTeacherJoin(socket) {
         socket.join('teachers');
         this.teacherSockets.add(socket);
 
-        // Send current active students
-        const activeSessions = this.sessionManager.getActiveSessions();
+        // Send current active students (files are loaded from disk to sync deletions)
+        const activeSessions = await this.sessionManager.getActiveSessions();
         const studentsData = activeSessions.map(session => ({
             sessionId: session.sessionId,
             studentName: session.studentName,

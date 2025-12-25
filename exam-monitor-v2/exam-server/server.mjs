@@ -105,7 +105,7 @@ app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/index.html'));
 });
 
-app.use('/api/project', projectRoutes);
+app.use('/api/project', projectRoutes(sessionManager));
 
 // Exam files API
 app.get('/api/exam-files', async (req, res) => {

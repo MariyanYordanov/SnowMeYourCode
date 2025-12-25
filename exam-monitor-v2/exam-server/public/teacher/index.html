@@ -102,6 +102,25 @@
 
     </div> <!-- End dashboard-content -->
 
+    <!-- Code Preview Modal -->
+    <div id="code-preview-modal" class="code-preview-modal" style="display: none;">
+        <div class="code-preview-container">
+            <div class="code-preview-header">
+                <div class="code-preview-title">
+                    <span class="code-preview-student" id="modal-student-name">Student Name</span>
+                    <span class="code-preview-file" id="modal-file-name">filename.js</span>
+                </div>
+                <button class="code-preview-close" id="close-code-modal">&times;</button>
+            </div>
+            <div class="code-preview-content">
+                <pre id="modal-code-content"><code></code></pre>
+            </div>
+            <div class="code-preview-footer">
+                <span class="code-preview-stats" id="modal-code-stats">0 lines, 0 chars</span>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="/teacher/teacher.js"></script>
 </body>

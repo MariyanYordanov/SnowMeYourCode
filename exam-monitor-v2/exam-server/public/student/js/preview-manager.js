@@ -17,11 +17,11 @@ export class PreviewManager {
         // Get preview frame element when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                this.previewFrame = document.getElementById('preview-frame');
+                this.ensureFrame();
                 console.log('Preview Manager initialized', this.previewFrame ? 'with iframe' : 'without iframe');
             });
         } else {
-            this.previewFrame = document.getElementById('preview-frame');
+            this.ensureFrame();
             console.log('Preview Manager initialized', this.previewFrame ? 'with iframe' : 'without iframe');
         }
     }
@@ -31,7 +31,9 @@ export class PreviewManager {
      */
     ensureFrame() {
         if (!this.previewFrame) {
-            this.previewFrame = document.getElementById('preview-frame');
+            // Try both possible preview frame IDs
+            this.previewFrame = document.getElementById('preview-frame') ||
+                               document.getElementById('preview-tab-frame');
         }
         return this.previewFrame;
     }
@@ -45,6 +47,14 @@ export class PreviewManager {
         if (this.isRefreshing) {
             return;
         }
+
+        // Check if preview frame exists (preview tab might not be open)
+        this.ensureFrame();
+        if (!this.previewFrame) {
+            // Preview is not visible, skip refresh
+            return;
+        }
+
         this.isRefreshing = true;
 
         try {

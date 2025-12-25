@@ -91,8 +91,9 @@
                 <aside id="exam-sidebar" class="exam-sidebar">
                     <div class="sidebar-tabs">
                         <button class="sidebar-tab active" data-panel="files">Files</button>
+                        <button class="sidebar-tab" data-panel="docs">Docs</button>
                     </div>
-        
+
                     <div class="sidebar-content">
                         <div id="files-panel" class="sidebar-panel active">
                             <div class="panel-header">
@@ -105,7 +106,19 @@
                                 </div>
                             </div>
                         </div>
-        
+
+                        <div id="docs-panel" class="sidebar-panel">
+                            <div class="panel-header">
+                                <h3 class="text-sm font-medium m-0">JS Reference</h3>
+                            </div>
+                            <div class="docs-search">
+                                <input type="text" id="docs-search-input" class="input input-sm" placeholder="Search docs...">
+                            </div>
+                            <div id="docs-content" class="docs-content">
+                                <!-- Docs will be loaded here -->
+                            </div>
+                        </div>
+
                     </div>
                 </aside>
         
