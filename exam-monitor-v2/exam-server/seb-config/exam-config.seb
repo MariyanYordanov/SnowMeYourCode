@@ -44,17 +44,6 @@
             <key>regex</key>
             <false/>
         </dict>
-        <!-- Allow localhost -->
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>localhost*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
         <!-- Allow MDN -->
         <dict>
             <key>action</key>
