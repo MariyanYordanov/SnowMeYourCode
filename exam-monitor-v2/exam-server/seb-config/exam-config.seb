@@ -11,7 +11,7 @@
     <!-- Start URL - CHANGE THIS TO YOUR SERVER IP -->
     <!-- For testing: use localhost. For real exam: use your network IP like 192.168.1.100 -->
     <key>startURL</key>
-    <string>http://127.0.0.1:8080/student/</string>
+    <string>http://192.168.0.223:8080/student/</string>
 
     <!-- Additional allowed URLs (MDN documentation) -->
     <!-- TEMPORARILY DISABLED FOR TESTING -->
@@ -23,24 +23,14 @@
 
     <key>URLFilterRules</key>
     <array>
-        <!-- Allow exam server (localhost for testing, change for production) -->
+        <!-- Allow exam server -->
         <dict>
             <key>action</key>
             <integer>1</integer>
             <key>active</key>
             <true/>
             <key>expression</key>
-            <string>localhost*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>127.0.0.1*</string>
+            <string>192.168.0.223*</string>
             <key>regex</key>
             <false/>
         </dict>
@@ -460,7 +450,7 @@
     <!-- Quit URL - when student navigates here, SEB will close -->
     <!-- The exam completion page can redirect here to close SEB -->
     <key>quitURL</key>
-    <string>http://localhost:8080/quit-exam</string>
+    <string>http://192.168.0.223:8080/quit-exam</string>
 
     <key>quitURLConfirm</key>
     <true/>
