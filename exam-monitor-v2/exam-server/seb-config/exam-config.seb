@@ -2,104 +2,38 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- ==================== MINIMAL SEB CONFIG ==================== -->
+    <!-- This is a MINIMAL configuration for TESTING -->
+    <!-- Only blocks fullscreen exit, everything else is allowed -->
+
     <!-- ==================== BASIC SETTINGS ==================== -->
 
-    <!-- Use modern WKWebView instead of deprecated WebView (required for macOS) -->
+    <!-- Use modern WKWebView (required for macOS) -->
     <key>browserWindowWebView</key>
     <integer>3</integer>
 
-    <!-- Enable JavaScript (required for Monaco Editor and Socket.IO) -->
+    <!-- Enable JavaScript (REQUIRED for Monaco Editor and Socket.IO) -->
     <key>enableJavaScript</key>
     <true/>
 
-    <!-- Allow WebSocket connections (required for Socket.IO) -->
+    <!-- Allow WebSocket connections (REQUIRED for Socket.IO) -->
     <key>allowWebSocket</key>
     <true/>
 
-    <!-- Start URL - CHANGE THIS TO YOUR SERVER IP -->
-    <!-- For testing: use localhost. For real exam: use your network IP like 192.168.1.100 -->
+    <!-- Start URL - UPDATE THIS TO YOUR IP -->
     <key>startURL</key>
-    <string>http://192.168.0.223:8080/student/</string>
+    <string>http://localhost:8080/student/</string>
 
-    <!-- Additional allowed URLs (MDN documentation) -->
-    <!-- TEMPORARILY DISABLED FOR TESTING -->
+    <!-- Disable URL filtering for testing -->
     <key>URLFilterEnable</key>
     <false/>
 
     <key>URLFilterEnableContentFilter</key>
     <false/>
 
-    <key>URLFilterRules</key>
-    <array>
-        <!-- Allow exam server -->
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>192.168.0.223*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <!-- Allow MDN -->
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>developer.mozilla.org*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <!-- Allow MDN CDN resources -->
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>*.mozilla.org*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>*.mozilla.net*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <!-- Allow Monaco Editor CDN -->
-        <dict>
-            <key>action</key>
-            <integer>1</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>cdnjs.cloudflare.com*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-        <!-- Block everything else -->
-        <dict>
-            <key>action</key>
-            <integer>0</integer>
-            <key>active</key>
-            <true/>
-            <key>expression</key>
-            <string>*</string>
-            <key>regex</key>
-            <false/>
-        </dict>
-    </array>
-
     <!-- ==================== BROWSER SETTINGS ==================== -->
 
+    <!-- Fullscreen mode -->
     <key>browserViewMode</key>
     <integer>1</integer>
 
@@ -112,6 +46,7 @@
     <key>mainBrowserWindowPositioning</key>
     <integer>1</integer>
 
+    <!-- Hide browser chrome -->
     <key>enableBrowserWindowToolbar</key>
     <false/>
 
@@ -133,6 +68,7 @@
     <key>showInputLanguage</key>
     <false/>
 
+    <!-- Disable zoom -->
     <key>enableZoomPage</key>
     <false/>
 
@@ -142,7 +78,7 @@
     <key>zoomMode</key>
     <integer>0</integer>
 
-    <!-- Allow new browser windows for MDN tabs -->
+    <!-- Allow new browser windows -->
     <key>newBrowserWindowByLinkPolicy</key>
     <integer>2</integer>
 
@@ -152,31 +88,13 @@
     <key>newBrowserWindowByLinkBlockForeign</key>
     <false/>
 
-    <key>newBrowserWindowByLinkWidth</key>
-    <string>1000</string>
-
-    <key>newBrowserWindowByLinkHeight</key>
-    <string>800</string>
-
     <!-- ==================== SECURITY SETTINGS ==================== -->
 
-    <!-- TESTING MODE: Set to true for testing, false for real exams -->
+    <!-- Allow quit for TESTING (set to false for production) -->
     <key>allowQuit</key>
     <true/>
 
-    <!-- For real exams, use quit password instead of allowQuit -->
-    <!-- To generate password hash: use SEB Config Tool or online SHA256 generator -->
-    <!-- Example: password "teacher123" -> hash it with SHA256 -->
-    <key>ignoreExitKeys</key>
-    <false/>
-
-    <!-- Quit password (SHA256 hash) - empty for testing, set for production -->
-    <!-- To set: hash your password with SHA256, e.g., "exam2024" -->
-    <key>hashedQuitPassword</key>
-    <string></string>
-
-    <!-- Exit keys: Ctrl+Q (Mac) or F3 (can be customized) -->
-    <!-- Key codes: 12=Q, 99=F3, 100=F4, etc. -->
+    <!-- Exit keys: Ctrl+Q -->
     <key>exitKey1</key>
     <integer>17</integer>
 
@@ -186,18 +104,27 @@
     <key>exitKey3</key>
     <integer>0</integer>
 
+    <key>ignoreExitKeys</key>
+    <false/>
+
+    <key>hashedQuitPassword</key>
+    <string></string>
+
     <key>allowPreferencesWindow</key>
     <false/>
 
+    <!-- BLOCK switching to other apps (main anti-cheat feature) -->
     <key>allowSwitchToApplications</key>
     <false/>
 
     <key>allowFlashFullscreen</key>
     <false/>
 
+    <!-- Allow PDF viewing -->
     <key>allowPDFPlugIn</key>
     <true/>
 
+    <!-- Block camera/mic -->
     <key>allowVideoCapture</key>
     <false/>
 
@@ -207,6 +134,7 @@
     <key>allowScreenSharing</key>
     <false/>
 
+    <!-- Allow spell check -->
     <key>allowSpellCheck</key>
     <true/>
 
@@ -220,232 +148,98 @@
     <false/>
 
     <!-- ==================== KEYBOARD SETTINGS ==================== -->
+    <!-- MINIMAL BLOCKING - Only block Alt+Tab and Alt+Esc -->
 
+    <!-- Block Alt+Esc (window switching) -->
     <key>enableAltEsc</key>
     <false/>
 
+    <!-- Block Alt+Tab (window switching) -->
     <key>enableAltTab</key>
     <false/>
 
+    <!-- Block Alt+F4 (close window) -->
     <key>enableAltF4</key>
     <false/>
 
+    <!-- Block Windows key -->
     <key>enableStartMenu</key>
     <false/>
 
+    <!-- ALLOW right mouse button for context menus -->
     <key>enableRightMouse</key>
-    <false/>
+    <true/>
 
+    <!-- Block Print Screen -->
     <key>enablePrintScreen</key>
     <false/>
 
+    <!-- ALLOW Ctrl+Esc -->
     <key>enableCtrlEsc</key>
-    <false/>
+    <true/>
 
+    <!-- ALLOW ESC (needed for dialogs) -->
     <key>enableEsc</key>
-    <false/>
+    <true/>
 
+    <!-- ALLOW all F-keys (F1-F12) -->
     <key>enableF1</key>
-    <false/>
+    <true/>
 
     <key>enableF2</key>
-    <false/>
+    <true/>
 
     <key>enableF3</key>
-    <false/>
+    <true/>
 
     <key>enableF4</key>
-    <false/>
+    <true/>
 
     <key>enableF5</key>
     <true/>
 
     <key>enableF6</key>
-    <false/>
+    <true/>
 
     <key>enableF7</key>
-    <false/>
+    <true/>
 
     <key>enableF8</key>
-    <false/>
+    <true/>
 
     <key>enableF9</key>
-    <false/>
+    <true/>
 
     <key>enableF10</key>
-    <false/>
+    <true/>
 
     <key>enableF11</key>
-    <false/>
+    <true/>
 
     <key>enableF12</key>
-    <false/>
+    <true/>
 
     <!-- ==================== CLIPBOARD / COPY-PASTE ==================== -->
 
-    <!-- Allow copy/paste WITHIN the browser -->
+    <!-- Allow copy/paste within browser -->
     <key>enablePrivateClipboard</key>
     <true/>
 
-    <!-- Block copy/paste FROM other apps -->
+    <!-- Block clipboard from other apps -->
     <key>enableClipboardControl</key>
     <true/>
 
     <!-- ==================== PROCESS MONITORING ==================== -->
 
+    <!-- Disable process monitoring for testing -->
     <key>monitorProcesses</key>
-    <true/>
+    <false/>
 
     <key>allowedProcesses</key>
     <array></array>
 
     <key>prohibitedProcesses</key>
-    <array>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>Remote Desktop</string>
-            <key>executable</key>
-            <string>mstsc.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>TeamViewer</string>
-            <key>executable</key>
-            <string>TeamViewer.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>AnyDesk</string>
-            <key>executable</key>
-            <string>AnyDesk.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>Discord</string>
-            <key>executable</key>
-            <string>Discord.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>Telegram</string>
-            <key>executable</key>
-            <string>Telegram.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>Skype</string>
-            <key>executable</key>
-            <string>Skype.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>Slack</string>
-            <key>executable</key>
-            <string>slack.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-        <dict>
-            <key>active</key>
-            <true/>
-            <key>currentUser</key>
-            <true/>
-            <key>description</key>
-            <string>VS Code</string>
-            <key>executable</key>
-            <string>Code.exe</string>
-            <key>identifier</key>
-            <string></string>
-            <key>originalName</key>
-            <string></string>
-            <key>os</key>
-            <integer>1</integer>
-            <key>strongKill</key>
-            <true/>
-        </dict>
-    </array>
+    <array></array>
 
     <!-- ==================== ADDITIONAL SETTINGS ==================== -->
 
@@ -455,15 +249,13 @@
     <key>browserExamKey</key>
     <string></string>
 
-    <!-- Quit URL - when student navigates here, SEB will close -->
-    <!-- The exam completion page can redirect here to close SEB -->
+    <!-- Quit URL - when student submits exam -->
     <key>quitURL</key>
-    <string>http://192.168.0.223:8080/quit-exam</string>
+    <string>http://localhost:8080/quit-exam</string>
 
     <key>quitURLConfirm</key>
     <true/>
 
-    <!-- Detect when quit URL is visited and close SEB -->
     <key>quitURLRestart</key>
     <false/>
 

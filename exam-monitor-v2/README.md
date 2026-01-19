@@ -49,19 +49,36 @@ exam-monitor-v2/
 ## Getting Started
 
 ### Initial Installation
+
+**IMPORTANT:** You need to install dependencies in multiple locations:
+
 ```bash
+# 1. Install main project dependencies (includes concurrently, testing tools)
 npm install
+
+# 2. Install exam-server dependencies
+cd exam-server
+npm install
+cd ..
+
+# 3. Install practice-server dependencies
+cd practice-server
+npm install
+cd ..
 ```
 
 ### Starting the Servers
+
 ```bash
-# Start both exam + practice servers
-npm start
+# Start both exam + practice servers (RECOMMENDED)
+npm run dev
 
-# Or start only exam server
+# Or start both servers without concurrently
+npm start              # Starts only exam-server
+npm run start-practice # In another terminal - starts practice-server
+
+# Or start individually
 cd exam-server && node server.mjs
-
-# Or start only practice server
 cd practice-server && node server.mjs
 ```
 

@@ -27,31 +27,52 @@ exam-monitor-v2/
 
 ## How to Run
 
-### Start the servers:
+### Initial Installation:
 ```bash
+# From the project root (exam-monitor-v2/)
+npm install
+
+# Install exam-server dependencies
 cd exam-server
 npm install
-npm start
+cd ..
+
+# Install practice-server dependencies
+cd practice-server
+npm install
+cd ..
 ```
 
-The server runs on `http://0.0.0.0:8080`
+### Start the servers:
+```bash
+# From the project root (exam-monitor-v2/)
+# This starts BOTH exam-server and practice-server
+npm run dev
+```
+
+**Servers:**
+- **Exam Server**: `http://0.0.0.0:8080`
+- **Practice Server**: `http://0.0.0.0:3030`
 
 ### Access points:
 - **Student interface**: `http://<server-ip>:8080/student/`
 - **Teacher dashboard**: `http://<server-ip>:8080/teacher/`
+- **Practice API**: `http://<server-ip>:3030/`
+- **Practice Admin**: `http://<server-ip>:3030/admin`
 
 ### Teacher login credentials:
 - Username: `admin`, Password: `exam-admin-2024`
 - Username: `teacher`, Password: `teacher-pass-2024`
 
-## Current Network Configuration
+## Network Configuration
 
-The SEB config is set up for local network testing:
-- **Server IP**: `192.168.0.223`
-- **Port**: `8080`
-
-If you're on a different network, update the IP in:
-- `exam-server/seb-config/exam-config.seb` (startURL, quitURL, URLFilterRules)
+To configure the server for your network:
+1. Find your server's IP address (`ipconfig` on Windows, `ifconfig` on macOS/Linux)
+2. Update the IP in `exam-server/seb-config/exam-config.seb`:
+   - `startURL`
+   - `quitURL`
+   - `URLFilterRules`
+3. Set the port (default: `8080`)
 
 ## Safe Exam Browser (SEB) Setup
 
