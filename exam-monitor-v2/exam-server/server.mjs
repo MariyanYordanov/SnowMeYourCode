@@ -105,6 +105,45 @@ app.get('/student', (req, res) => {
     res.sendFile(join(__dirname, 'public/student/index.html'));
 });
 
+// Quit exam endpoint for SEB to close
+app.get('/quit-exam', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Exam Completed</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    background: #1a1a2e;
+                    color: #fff;
+                }
+                .message {
+                    text-align: center;
+                    padding: 40px;
+                    background: #16213e;
+                    border-radius: 10px;
+                }
+                h1 { color: #4ade80; margin-bottom: 20px; }
+                p { color: #94a3b8; }
+            </style>
+        </head>
+        <body>
+            <div class="message">
+                <h1>Exam Completed</h1>
+                <p>You can now close Safe Exam Browser.</p>
+                <p>Your solution has been submitted successfully.</p>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
 app.use('/api/project', projectRoutes(sessionManager));
 
 // Exam files API

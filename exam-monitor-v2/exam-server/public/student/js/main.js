@@ -418,6 +418,11 @@ function showCompletionScreen(reason = 'unknown') {
         }
 
         completionComponent.style.display = 'block';
+
+        // Redirect to quit-exam URL after 3 seconds (for SEB to close)
+        setTimeout(() => {
+            window.location.href = '/quit-exam';
+        }, 3000);
     }
 }
 

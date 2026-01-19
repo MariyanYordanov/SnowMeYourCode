@@ -8,6 +8,14 @@
     <key>browserWindowWebView</key>
     <integer>3</integer>
 
+    <!-- Enable JavaScript (required for Monaco Editor and Socket.IO) -->
+    <key>enableJavaScript</key>
+    <true/>
+
+    <!-- Allow WebSocket connections (required for Socket.IO) -->
+    <key>allowWebSocket</key>
+    <true/>
+
     <!-- Start URL - CHANGE THIS TO YOUR SERVER IP -->
     <!-- For testing: use localhost. For real exam: use your network IP like 192.168.1.100 -->
     <key>startURL</key>
