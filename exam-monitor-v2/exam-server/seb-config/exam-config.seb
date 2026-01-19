@@ -22,7 +22,7 @@
 
     <!-- Start URL - UPDATE THIS TO YOUR IP -->
     <key>startURL</key>
-    <string>http://localhost:8080/student/</string>
+    <string>http://192.168.0.223:8080/student/</string>
 
     <!-- Disable URL filtering for testing -->
     <key>URLFilterEnable</key>
@@ -251,7 +251,7 @@
 
     <!-- Quit URL - when student submits exam -->
     <key>quitURL</key>
-    <string>http://localhost:8080/quit-exam</string>
+    <string>http://192.168.0.223:8080/quit-exam</string>
 
     <key>quitURLConfirm</key>
     <true/>
