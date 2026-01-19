@@ -1,5 +1,8 @@
 # Exam Monitor v2.0
 
+### for Windows - SEB 3.8.0
+### for macOS - SEB 3.3.2
+
 > Web-based programming exam system with built-in anti-cheat protection
 
 ## What does it do?
